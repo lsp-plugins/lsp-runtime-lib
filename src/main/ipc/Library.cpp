@@ -131,8 +131,8 @@ namespace lsp
 
         void Library::swap(Library *dst)
         {
-            ::swap(dst->hDlSym, hDlSym);
-            ::swap(dst->nLastError, nLastError);
+            lsp::swap(dst->hDlSym, hDlSym);
+            lsp::swap(dst->nLastError, nLastError);
         }
 
         status_t Library::get_module_file(LSPString *path, const void *ptr)
