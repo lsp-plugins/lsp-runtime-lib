@@ -5,8 +5,8 @@
  *      Author: sadko
  */
 
-#include <core/debug.h>
-#include <core/ipc/Library.h>
+#include <lsp-plug.in/common/debug.h>
+#include <lsp-plug.in/runtime/ipc/Library.h>
 
 namespace lsp
 {

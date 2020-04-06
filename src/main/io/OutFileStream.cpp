@@ -5,9 +5,9 @@
  *      Author: sadko
  */
 
-#include <core/io/StdioFile.h>
-#include <core/io/NativeFile.h>
-#include <core/io/OutFileStream.h>
+#include <lsp-plug.in/runtime/io/StdioFile.h>
+#include <lsp-plug.in/runtime/io/NativeFile.h>
+#include <lsp-plug.in/runtime/io/OutFileStream.h>
 
 namespace lsp
 {

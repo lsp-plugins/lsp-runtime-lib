@@ -5,8 +5,9 @@
  *      Author: sadko
  */
 
-#include <core/io/charset.h>
-#include <dsp/endian.h>
+#include <lsp-plug.in/common/endian.h>
+#include <lsp-plug.in/runtime/io/charset.h>
+
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>

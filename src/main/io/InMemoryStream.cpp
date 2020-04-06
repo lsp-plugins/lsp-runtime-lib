@@ -5,7 +5,7 @@
  *      Author: sadko
  */
 
-#include <core/io/InMemoryStream.h>
+#include <lsp-plug.in/runtime/io/InMemoryStream.h>
 
 namespace lsp
 {

@@ -5,7 +5,7 @@
  *      Author: sadko
  */
 
-#include <core/io/NativeFile.h>
+#include <lsp-plug.in/runtime/io/NativeFile.h>
 
 #if defined(PLATFORM_WINDOWS)
     #include <fileapi.h>

@@ -5,7 +5,7 @@
  *      Author: sadko
  */
 
-#include <core/io/IOutSequence.h>
+#include <lsp-plug.in/runtime/io/IOutSequence.h>
 
 namespace lsp
 {

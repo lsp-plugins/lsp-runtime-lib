@@ -5,8 +5,8 @@
  *      Author: sadko
  */
 
-#include <core/io/File.h>
-#include <core/debug.h>
+#include <lsp-plug.in/runtime/io/File.h>
+#include <lsp-plug.in/common/debug.h>
 
 #ifdef PLATFORM_WINDOWS
     #include <fileapi.h>

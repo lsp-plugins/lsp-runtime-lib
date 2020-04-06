@@ -5,7 +5,7 @@
  *      Author: sadko
  */
 
-#include <core/io/OutMemoryStream.h>
+#include <lsp-plug.in/runtime/io/OutMemoryStream.h>
 
 namespace lsp
 {

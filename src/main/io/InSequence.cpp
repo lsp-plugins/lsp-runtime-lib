@@ -5,12 +5,13 @@
  *      Author: sadko
  */
 
+#include <lsp-plug.in/runtime/io/charset.h>
+#include <lsp-plug.in/runtime/io/StdioFile.h>
+#include <lsp-plug.in/runtime/io/NativeFile.h>
+#include <lsp-plug.in/runtime/io/InFileStream.h>
+#include <lsp-plug.in/runtime/io/InSequence.h>
+
 #include <errno.h>
-#include <core/io/charset.h>
-#include <core/io/StdioFile.h>
-#include <core/io/NativeFile.h>
-#include <core/io/InFileStream.h>
-#include <core/io/InSequence.h>
 
 #define CBUF_SIZE        0x1000
 #define BBUF_SIZE        0x4000

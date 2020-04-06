@@ -5,9 +5,11 @@
  *      Author: sadko
  */
 
-#include <core/io/IInStream.h>
-#include <core/io/IOutStream.h>
-#include <core/status.h>
+#include <lsp-plug.in/runtime/io/IInStream.h>
+#include <lsp-plug.in/runtime/io/IOutStream.h>
+#include <lsp-plug.in/common/status.h>
+
+#include <stdlib.h>
 
 namespace lsp
 {

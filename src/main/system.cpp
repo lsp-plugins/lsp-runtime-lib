@@ -6,7 +6,7 @@
  */
 
 
-#include <core/system.h>
+#include <lsp-plug.in/runtime/system.h>
 
 #ifdef PLATFORM_WINDOWS
     #include <winbase.h>

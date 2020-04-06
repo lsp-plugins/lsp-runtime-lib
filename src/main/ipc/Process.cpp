@@ -5,15 +5,14 @@
  *      Author: sadko
  */
 
-#include <core/debug.h>
-#include <core/ipc/Process.h>
+#include <lsp-plug.in/common/debug.h>
+#include <lsp-plug.in/runtime/ipc/Process.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <data/cstorage.h>
 #include <time.h>
-#include <core/io/OutFileStream.h>
-#include <core/io/InFileStream.h>
+#include <lsp-plug.in/runtime/io/OutFileStream.h>
+#include <lsp-plug.in/runtime/io/InFileStream.h>
 
 #if defined(PLATFORM_WINDOWS)
     #include <processthreadsapi.h>

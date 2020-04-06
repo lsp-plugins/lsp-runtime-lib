@@ -5,7 +5,7 @@
  *      Author: sadko
  */
 
-#include <core/io/CharsetEncoder.h>
+#include <lsp-plug.in/runtime/io/CharsetEncoder.h>
 #include <errno.h>
 
 #define DATA_BUFSIZE    0x1000

@@ -5,8 +5,8 @@
  *      Author: sadko
  */
 
-#include <core/types.h>
-#include <core/ipc/ITask.h>
+#include <lsp-plug.in/common/types.h>
+#include <lsp-plug.in/runtime/ipc/ITask.h>
 
 namespace lsp
 {

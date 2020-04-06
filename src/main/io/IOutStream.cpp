@@ -5,8 +5,8 @@
  *      Author: sadko
  */
 
-#include <core/io/IOutStream.h>
-#include <core/status.h>
+#include <lsp-plug.in/runtime/io/IOutStream.h>
+#include <lsp-plug.in/common/status.h>
 
 namespace lsp
 {

@@ -5,7 +5,7 @@
  *      Author: sadko
  */
 
-#include <core/ipc/Mutex.h>
+#include <lsp-plug.in/runtime/ipc/Mutex.h>
 #include <errno.h>
 
 namespace lsp

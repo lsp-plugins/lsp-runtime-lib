@@ -5,17 +5,17 @@
  *      Author: sadko
  */
 
-#include <core/types.h>
-#include <core/stdlib/stdio.h>
-#include <core/stdlib/string.h>
+#include <lsp-plug.in/common/types.h>
+#include <lsp-plug.in/common/alloc.h>
+#include <lsp-plug.in/stdlib/stdio.h>
+#include <lsp-plug.in/stdlib/string.h>
+#include <lsp-plug.in/runtime/io/charset.h>
+#include <lsp-plug.in/runtime/LSPString.h>
 
 #include <stdlib.h>
 #include <errno.h>
 #include <wctype.h>
 #include <stdarg.h>
-
-#include <core/io/charset.h>
-#include <core/LSPString.h>
 
 #define GRANULARITY     0x20
 #define BUF_SIZE        0x200
@@ -1934,7 +1934,7 @@ namespace lsp
     {
         const char *utf8 = get_utf8(first, last);
         size_t offset = (pTemp != NULL) ? pTemp->nOffset : 0;
-        char *ptr = (utf8 != NULL) ? reinterpret_cast<char *>(lsp_memdup(utf8, offset)) : NULL;
+        char *ptr = (utf8 != NULL) ? reinterpret_cast<char *>(lsp::memdup(utf8, offset)) : NULL;
         if (bytes != NULL)
             *bytes = (ptr != NULL) ? offset : 0;
         return ptr;
@@ -1944,7 +1944,7 @@ namespace lsp
     {
         const lsp_utf16_t *utf16 = get_utf16(first, last);
         size_t offset = (pTemp != NULL) ? pTemp->nOffset : 0;
-        lsp_utf16_t *ptr = (utf16 != NULL) ? reinterpret_cast<lsp_utf16_t *>(lsp_memdup(utf16, offset)) : NULL;
+        lsp_utf16_t *ptr = (utf16 != NULL) ? reinterpret_cast<lsp_utf16_t *>(lsp::memdup(utf16, offset)) : NULL;
         if (bytes != NULL)
             *bytes = (ptr != NULL) ? offset : 0;
         return ptr;
@@ -1954,7 +1954,7 @@ namespace lsp
     {
         const char *ascii = get_ascii(first, last);
         size_t offset = (pTemp != NULL) ? pTemp->nOffset : 0;
-        char *ptr = (ascii != NULL) ? reinterpret_cast<char *>(lsp_memdup(ascii, offset)) : NULL;
+        char *ptr = (ascii != NULL) ? reinterpret_cast<char *>(lsp::memdup(ascii, offset)) : NULL;
         if (bytes != NULL)
             *bytes = (ptr != NULL) ? offset : 0;
         return ptr;
@@ -1964,7 +1964,7 @@ namespace lsp
     {
         const char *native = get_native(first, last, charset);
         size_t offset = (pTemp != NULL) ? pTemp->nOffset : 0;
-        char *ptr = (native != NULL) ? reinterpret_cast<char *>(lsp_memdup(native, offset)) : NULL;
+        char *ptr = (native != NULL) ? reinterpret_cast<char *>(lsp::memdup(native, offset)) : NULL;
         if (bytes != NULL)
             *bytes = (ptr != NULL) ? offset : 0;
         return ptr;

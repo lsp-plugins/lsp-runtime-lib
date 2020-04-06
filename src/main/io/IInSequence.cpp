@@ -5,7 +5,7 @@
  *      Author: sadko
  */
 
-#include <core/io/IInSequence.h>
+#include <lsp-plug.in/runtime/io/IInSequence.h>
 
 namespace lsp
 {

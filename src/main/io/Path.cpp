@@ -5,10 +5,10 @@
  *      Author: sadko
  */
 
-#include <core/io/Path.h>
-#include <core/io/File.h>
-#include <core/io/Dir.h>
-#include <string.h>
+#include <lsp-plug.in/runtime/io/Path.h>
+#include <lsp-plug.in/runtime/io/File.h>
+#include <lsp-plug.in/runtime/io/Dir.h>
+#include <lsp-plug.in/stdlib/string.h>
 
 #if defined(PLATFORM_WINDOWS)
     #include <windows.h>

@@ -5,8 +5,8 @@
  *      Author: sadko
  */
 
-#include <core/debug.h>
-#include <core/ipc/NativeExecutor.h>
+#include <lsp-plug.in/common/debug.h>
+#include <lsp-plug.in/runtime/ipc/NativeExecutor.h>
 
 namespace lsp
 {
