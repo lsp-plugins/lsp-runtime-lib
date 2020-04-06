@@ -5,10 +5,10 @@
  *      Author: sadko
  */
 
-#ifndef LSP_PLUG_IN_RUNTIME_IO_STRINWRITER_H_
-#define LSP_PLUG_IN_RUNTIME_IO_STRINWRITER_H_
+#ifndef LSP_PLUG_IN_IO_STRINWRITER_H_
+#define LSP_PLUG_IN_IO_STRINWRITER_H_
 
-#include <lsp-plug.in/runtime/io/IOutSequence.h>
+#include <lsp-plug.in/io/IOutSequence.h>
 
 namespace lsp
 {
@@ -54,4 +54,4 @@ namespace lsp
     }
 } /* namespace lsp */
 
-#endif /* LSP_PLUG_IN_RUNTIME_IO_STRINWRITER_H_ */
+#endif /* LSP_PLUG_IN_IO_STRINWRITER_H_ */

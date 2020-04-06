@@ -5,11 +5,11 @@
  *      Author: sadko
  */
 
-#include <lsp-plug.in/runtime/io/charset.h>
-#include <lsp-plug.in/runtime/io/StdioFile.h>
-#include <lsp-plug.in/runtime/io/NativeFile.h>
-#include <lsp-plug.in/runtime/io/OutFileStream.h>
-#include <lsp-plug.in/runtime/io/OutSequence.h>
+#include <lsp-plug.in/io/charset.h>
+#include <lsp-plug.in/io/StdioFile.h>
+#include <lsp-plug.in/io/NativeFile.h>
+#include <lsp-plug.in/io/OutFileStream.h>
+#include <lsp-plug.in/io/OutSequence.h>
 
 #include <errno.h>
 

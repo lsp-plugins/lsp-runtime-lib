@@ -5,14 +5,14 @@
  *      Author: sadko
  */
 
-#ifndef LSP_PLUG_IN_RUNTIME_IO_CHARSETENCODER_H_
-#define LSP_PLUG_IN_RUNTIME_IO_CHARSETENCODER_H_
+#ifndef LSP_PLUG_IN_IO_CHARSETENCODER_H_
+#define LSP_PLUG_IN_IO_CHARSETENCODER_H_
 
 #include <lsp-plug.in/common/status.h>
-#include <lsp-plug.in/runtime/io/charset.h>
-#include <lsp-plug.in/runtime/io/File.h>
-#include <lsp-plug.in/runtime/io/IInSequence.h>
-#include <lsp-plug.in/runtime/io/IOutStream.h>
+#include <lsp-plug.in/io/charset.h>
+#include <lsp-plug.in/io/File.h>
+#include <lsp-plug.in/io/IInSequence.h>
+#include <lsp-plug.in/io/IOutStream.h>
 
 namespace lsp
 {
@@ -134,4 +134,4 @@ namespace lsp
     } /* namespace io */
 } /* namespace lsp */
 
-#endif /* LSP_PLUG_IN_RUNTIME_IO_CHARSETENCODER_H_ */
+#endif /* LSP_PLUG_IN_IO_CHARSETENCODER_H_ */

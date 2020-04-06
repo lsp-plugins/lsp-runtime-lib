@@ -5,7 +5,7 @@
  *      Author: sadko
  */
 
-#include <lsp-plug.in/runtime/io/StdioFile.h>
+#include <lsp-plug.in/io/StdioFile.h>
 
 #include <errno.h>
 #include <sys/stat.h>

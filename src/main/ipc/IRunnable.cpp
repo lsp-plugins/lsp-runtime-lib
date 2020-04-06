@@ -5,7 +5,7 @@
  *      Author: sadko
  */
 
-#include <lsp-plug.in/runtime/ipc/IRunnable.h>
+#include <lsp-plug.in/ipc/IRunnable.h>
 
 namespace lsp
 {

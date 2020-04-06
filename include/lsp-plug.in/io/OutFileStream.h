@@ -5,14 +5,14 @@
  *      Author: sadko
  */
 
-#ifndef LSP_PLUG_IN_RUNTIME_IO_OUTFILESTREAM_H_
-#define LSP_PLUG_IN_RUNTIME_IO_OUTFILESTREAM_H_
+#ifndef LSP_PLUG_IN_IO_OUTFILESTREAM_H_
+#define LSP_PLUG_IN_IO_OUTFILESTREAM_H_
 
 #include <lsp-plug.in/stdlib/stdio.h>
 #include <lsp-plug.in/runtime/LSPString.h>
-#include <lsp-plug.in/runtime/io/Path.h>
-#include <lsp-plug.in/runtime/io/File.h>
-#include <lsp-plug.in/runtime/io/IOutStream.h>
+#include <lsp-plug.in/io/Path.h>
+#include <lsp-plug.in/io/File.h>
+#include <lsp-plug.in/io/IOutStream.h>
 
 namespace lsp
 {
@@ -58,4 +58,4 @@ namespace lsp
     } /* namespace io */
 } /* namespace lsp */
 
-#endif /* LSP_PLUG_IN_RUNTIME_IO_OUTFILESTREAM_H_ */
+#endif /* LSP_PLUG_IN_IO_OUTFILESTREAM_H_ */

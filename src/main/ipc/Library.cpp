@@ -6,7 +6,7 @@
  */
 
 #include <lsp-plug.in/common/debug.h>
-#include <lsp-plug.in/runtime/ipc/Library.h>
+#include <lsp-plug.in/ipc/Library.h>
 
 namespace lsp
 {

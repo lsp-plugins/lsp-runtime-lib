@@ -5,11 +5,11 @@
  *      Author: sadko
  */
 
-#ifndef LSP_PLUG_IN_RUNTIME_IPC_IEXECUTOR_H_
-#define LSP_PLUG_IN_RUNTIME_IPC_IEXECUTOR_H_
+#ifndef LSP_PLUG_IN_IPC_IEXECUTOR_H_
+#define LSP_PLUG_IN_IPC_IEXECUTOR_H_
 
 #include <lsp-plug.in/common/types.h>
-#include <lsp-plug.in/runtime/ipc/ITask.h>
+#include <lsp-plug.in/ipc/ITask.h>
 
 namespace lsp
 {
@@ -70,4 +70,4 @@ namespace lsp
     } /* namespace ipc */
 } /* namespace lsp */
 
-#endif /* LSP_PLUG_IN_RUNTIME_IPC_IEXECUTOR_H_ */
+#endif /* LSP_PLUG_IN_IPC_IEXECUTOR_H_ */

@@ -6,13 +6,13 @@
  */
 
 #include <lsp-plug.in/common/debug.h>
-#include <lsp-plug.in/runtime/ipc/Process.h>
+#include <lsp-plug.in/ipc/Process.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-#include <lsp-plug.in/runtime/io/OutFileStream.h>
-#include <lsp-plug.in/runtime/io/InFileStream.h>
+#include <lsp-plug.in/io/OutFileStream.h>
+#include <lsp-plug.in/io/InFileStream.h>
 
 #if defined(PLATFORM_WINDOWS)
     #include <processthreadsapi.h>

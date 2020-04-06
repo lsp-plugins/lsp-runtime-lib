@@ -5,13 +5,13 @@
  *      Author: sadko
  */
 
-#ifndef INCLUDE_LSP_PLUG_IN_RUNTIME_IO_FILE_H_
-#define INCLUDE_LSP_PLUG_IN_RUNTIME_IO_FILE_H_
+#ifndef INCLUDE_LSP_PLUG_IN_IO_FILE_H_
+#define INCLUDE_LSP_PLUG_IN_IO_FILE_H_
 
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/runtime/LSPString.h>
-#include <lsp-plug.in/runtime/io/Path.h>
+#include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/stdlib/stdio.h>
 
 namespace lsp
@@ -250,4 +250,4 @@ namespace lsp
     } /* namespace io */
 } /* namespace lsp */
 
-#endif /* INCLUDE_LSP_PLUG_IN_RUNTIME_IO_FILE_H_ */
+#endif /* INCLUDE_LSP_PLUG_IN_IO_FILE_H_ */

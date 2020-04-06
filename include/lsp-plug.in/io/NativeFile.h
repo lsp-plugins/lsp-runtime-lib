@@ -1,28 +1,28 @@
 /*
- * StdlibFile.h
+ * NativeFile.h
  *
- *  Created on: 6 мар. 2019 г.
+ *  Created on: 7 мар. 2019 г.
  *      Author: sadko
  */
 
-#ifndef LSP_PLUG_IN_RUNTIME_IO_STDIOFILE_H_
-#define LSP_PLUG_IN_RUNTIME_IO_STDIOFILE_H_
+#ifndef LSP_PLUG_IN_IO_NATIVEFILE_H_
+#define LSP_PLUG_IN_IO_NATIVEFILE_H_
 
-#include <lsp-plug.in/runtime/io/File.h>
 #include <lsp-plug.in/common/types.h>
-#include <lsp-plug.in/stdlib/stdio.h>
-#include <lsp-plug.in/runtime/io/Path.h>
+#include <lsp-plug.in/runtime/LSPString.h>
+#include <lsp-plug.in/io/Path.h>
+#include <lsp-plug.in/io/File.h>
 
 namespace lsp
 {
     namespace io
     {
         /**
-         * This class provides file interface that uses <stdio.h> file functions
+         * This class provides file interface that uses low-level file functions
          * at the backend for file operations. Also this class allows to
-         * wrap standard FILE * pointer into an object instance.
+         * wrap native file descriptor into an object instance.
          */
-        class StdioFile: public File
+        class NativeFile: public File
         {
             private:
                 enum flags_t
@@ -33,15 +33,15 @@ namespace lsp
                 };
 
             protected:
-                FILE       *pFD;
-                size_t      nFlags;
+                lsp_fhandle_t   hFD;
+                size_t          nFlags;
 
             private:
-                StdioFile &operator = (const StdioFile &fd);        // Deny copying
+                NativeFile &operator = (const NativeFile &fd);        // Deny copying
 
             public:
-                explicit StdioFile();
-                virtual ~StdioFile();
+                explicit NativeFile();
+                virtual ~NativeFile();
 
             public:
                 /**
@@ -75,7 +75,7 @@ namespace lsp
                  * @param close close the file descriptor on close() call
                  * @return status of operation
                  */
-                status_t    wrap(FILE *fd, bool close);
+                status_t    wrap(lsp_fhandle_t fd, bool close);
 
                 /**
                  * Wrap the standard file descriptor
@@ -84,7 +84,7 @@ namespace lsp
                  * @param close close the file descriptor on close() call
                  * @return status of operation
                  */
-                status_t    wrap(FILE *fd, size_t mode, bool close);
+                status_t    wrap(lsp_fhandle_t fd, size_t mode, bool close);
 
                 /**
                  * Read binary file
@@ -127,7 +127,7 @@ namespace lsp
                  * @param type seek type
                  * @return status of operation
                  */
-                virtual status_t seek(wssize_t pos, size_t type);
+                virtual status_t seek(wssize_t pos, size_t type = FSK_SET);
 
                 /**
                  * Obtain current file's position
@@ -177,4 +177,4 @@ namespace lsp
     } /* namespace io */
 } /* namespace lsp */
 
-#endif /* LSP_PLUG_IN_RUNTIME_IO_STDIOFILE_H_ */
+#endif /* LSP_PLUG_IN_IO_NATIVEFILE_H_ */

@@ -5,16 +5,16 @@
  *      Author: sadko
  */
 
-#ifndef LSP_PLUG_IN_RUNTIME_IPC_PROCESS_H_
-#define LSP_PLUG_IN_RUNTIME_IPC_PROCESS_H_
+#ifndef LSP_PLUG_IN_IPC_PROCESS_H_
+#define LSP_PLUG_IN_IPC_PROCESS_H_
 
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
 
 #include <data/cvector.h>
 #include <lsp-plug.in/runtime/LSPString.h>
-#include <lsp-plug.in/runtime/io/IInStream.h>
-#include <lsp-plug.in/runtime/io/IOutStream.h>
+#include <lsp-plug.in/io/IInStream.h>
+#include <lsp-plug.in/io/IOutStream.h>
 
 #include <unistd.h>
 
@@ -372,4 +372,4 @@ namespace lsp
     } /* namespace ipc */
 } /* namespace lsp */
 
-#endif /* LSP_PLUG_IN_RUNTIME_IPC_PROCESS_H_ */
+#endif /* LSP_PLUG_IN_IPC_PROCESS_H_ */

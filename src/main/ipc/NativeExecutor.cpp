@@ -6,7 +6,7 @@
  */
 
 #include <lsp-plug.in/common/debug.h>
-#include <lsp-plug.in/runtime/ipc/NativeExecutor.h>
+#include <lsp-plug.in/ipc/NativeExecutor.h>
 
 namespace lsp
 {

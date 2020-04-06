@@ -5,9 +5,9 @@
  *      Author: sadko
  */
 
-#include <lsp-plug.in/runtime/io/NativeFile.h>
-#include <lsp-plug.in/runtime/io/StdioFile.h>
-#include <lsp-plug.in/runtime/io/InFileStream.h>
+#include <lsp-plug.in/io/NativeFile.h>
+#include <lsp-plug.in/io/StdioFile.h>
+#include <lsp-plug.in/io/InFileStream.h>
 
 namespace lsp
 {

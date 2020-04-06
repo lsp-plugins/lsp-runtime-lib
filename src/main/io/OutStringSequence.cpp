@@ -5,7 +5,7 @@
  *      Author: sadko
  */
 
-#include <lsp-plug.in/runtime/io/OutStringSequence.h>
+#include <lsp-plug.in/io/OutStringSequence.h>
 
 namespace lsp
 {

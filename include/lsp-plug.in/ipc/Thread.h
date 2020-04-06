@@ -5,8 +5,8 @@
  *      Author: sadko
  */
 
-#ifndef INCLUDE_LSP_PLUG_IN_RUNTIME_IPC_THREAD_H_
-#define INCLUDE_LSP_PLUG_IN_RUNTIME_IPC_THREAD_H_
+#ifndef INCLUDE_LSP_PLUG_IN_IPC_THREAD_H_
+#define INCLUDE_LSP_PLUG_IN_IPC_THREAD_H_
 
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
@@ -17,7 +17,7 @@
     #include <pthread.h>
 #endif /* PLATFORM_WINDOWS */
 
-#include <lsp-plug.in/runtime/ipc/IRunnable.h>
+#include <lsp-plug.in/ipc/IRunnable.h>
 
 namespace lsp
 {
@@ -161,4 +161,4 @@ namespace lsp
     } /* namespace ipc */
 } /* namespace lsp */
 
-#endif /* INCLUDE_LSP_PLUG_IN_RUNTIME_IPC_THREAD_H_ */
+#endif /* INCLUDE_LSP_PLUG_IN_IPC_THREAD_H_ */

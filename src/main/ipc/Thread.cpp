@@ -7,7 +7,7 @@
 
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/atomic.h>
-#include <lsp-plug.in/runtime/ipc/Thread.h>
+#include <lsp-plug.in/ipc/Thread.h>
 
 #include <time.h>
 #include <errno.h>

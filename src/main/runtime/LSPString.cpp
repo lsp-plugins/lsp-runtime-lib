@@ -9,7 +9,7 @@
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/stdlib/stdio.h>
 #include <lsp-plug.in/stdlib/string.h>
-#include <lsp-plug.in/runtime/io/charset.h>
+#include <lsp-plug.in/io/charset.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 
 #include <stdlib.h>

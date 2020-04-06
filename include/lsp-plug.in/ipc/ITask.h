@@ -5,11 +5,11 @@
  *      Author: sadko
  */
 
-#ifndef LSP_PLUG_IN_RUNTIME_IPC_ITASK_H_
-#define LSP_PLUG_IN_RUNTIME_IPC_ITASK_H_
+#ifndef LSP_PLUG_IN_IPC_ITASK_H_
+#define LSP_PLUG_IN_IPC_ITASK_H_
 
 #include <lsp-plug.in/common/status.h>
-#include <lsp-plug.in/runtime/ipc/IRunnable.h>
+#include <lsp-plug.in/ipc/IRunnable.h>
 
 namespace lsp
 {
@@ -106,4 +106,4 @@ namespace lsp
 
 } /* namespace lsp */
 
-#endif /* LSP_PLUG_IN_RUNTIME_IPC_ITASK_H_ */
+#endif /* LSP_PLUG_IN_IPC_ITASK_H_ */

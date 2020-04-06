@@ -5,7 +5,7 @@
  *      Author: sadko
  */
 
-#include <lsp-plug.in/runtime/io/Dir.h>
+#include <lsp-plug.in/io/Dir.h>
 
 #ifdef PLATFORM_WINDOWS
     #include <fileapi.h>

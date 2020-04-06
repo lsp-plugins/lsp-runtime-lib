@@ -5,8 +5,8 @@
  *      Author: sadko
  */
 
-#ifndef LSP_PLUG_IN_RUNTIME_IO_IOUTSEQUENCE_H_
-#define LSP_PLUG_IN_RUNTIME_IO_IOUTSEQUENCE_H_
+#ifndef LSP_PLUG_IN_IO_IOUTSEQUENCE_H_
+#define LSP_PLUG_IN_IO_IOUTSEQUENCE_H_
 
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
@@ -156,4 +156,4 @@ namespace lsp
 
 } /* namespace lsp */
 
-#endif /* LSP_PLUG_IN_RUNTIME_IO_IOUTSEQUENCE_H_ */
+#endif /* LSP_PLUG_IN_IO_IOUTSEQUENCE_H_ */

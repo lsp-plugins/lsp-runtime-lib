@@ -9,9 +9,9 @@
 #define CORE_NATIVEEXECUTOR_H_
 
 #include <lsp-plug.in/common/atomic.h>
-#include <lsp-plug.in/runtime/ipc/Thread.h>
-#include <lsp-plug.in/runtime/ipc/IExecutor.h>
-#include <lsp-plug.in/runtime/ipc/ITask.h>
+#include <lsp-plug.in/ipc/Thread.h>
+#include <lsp-plug.in/ipc/IExecutor.h>
+#include <lsp-plug.in/ipc/ITask.h>
 
 namespace lsp
 {

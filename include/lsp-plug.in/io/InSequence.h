@@ -5,17 +5,17 @@
  *      Author: sadko
  */
 
-#ifndef LSP_PLUG_IN_RUNTIME_IO_INSEQUENCE_H_
-#define LSP_PLUG_IN_RUNTIME_IO_INSEQUENCE_H_
+#ifndef LSP_PLUG_IN_IO_INSEQUENCE_H_
+#define LSP_PLUG_IN_IO_INSEQUENCE_H_
 
 #include <stdio.h>
 #include <lsp-plug.in/common/types.h>
-#include <lsp-plug.in/runtime/io/charset.h>
-#include <lsp-plug.in/runtime/io/Path.h>
-#include <lsp-plug.in/runtime/io/File.h>
-#include <lsp-plug.in/runtime/io/CharsetDecoder.h>
-#include <lsp-plug.in/runtime/io/IInSequence.h>
-#include <lsp-plug.in/runtime/io/IInStream.h>
+#include <lsp-plug.in/io/charset.h>
+#include <lsp-plug.in/io/Path.h>
+#include <lsp-plug.in/io/File.h>
+#include <lsp-plug.in/io/CharsetDecoder.h>
+#include <lsp-plug.in/io/IInSequence.h>
+#include <lsp-plug.in/io/IInStream.h>
 
 namespace lsp
 {
@@ -113,4 +113,4 @@ namespace lsp
     }
 } /* namespace lsp */
 
-#endif /* LSP_PLUG_IN_RUNTIME_IO_INSEQUENCE_H_ */
+#endif /* LSP_PLUG_IN_IO_INSEQUENCE_H_ */

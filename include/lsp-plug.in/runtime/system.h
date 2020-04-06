@@ -11,7 +11,7 @@
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/runtime/LSPString.h>
-#include <lsp-plug.in/runtime/io/Path.h>
+#include <lsp-plug.in/io/Path.h>
 
 namespace lsp
 {

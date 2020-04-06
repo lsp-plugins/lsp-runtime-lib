@@ -5,13 +5,13 @@
  *      Author: sadko
  */
 
-#ifndef LSP_PLUG_IN_RUNTIME_IO_DIR_H_
-#define LSP_PLUG_IN_RUNTIME_IO_DIR_H_
+#ifndef LSP_PLUG_IN_IO_DIR_H_
+#define LSP_PLUG_IN_IO_DIR_H_
 
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/runtime/LSPString.h>
-#include <lsp-plug.in/runtime/io/Path.h>
-#include <lsp-plug.in/runtime/io/File.h>
+#include <lsp-plug.in/io/Path.h>
+#include <lsp-plug.in/io/File.h>
 
 #ifdef PLATFORM_WINDOWS
     #include <fileapi.h>
@@ -259,4 +259,4 @@ namespace lsp
     } /* namespace io */
 } /* namespace lsp */
 
-#endif /* LSP_PLUG_IN_RUNTIME_IO_DIR_H_ */
+#endif /* LSP_PLUG_IN_IO_DIR_H_ */

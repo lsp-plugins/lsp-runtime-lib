@@ -5,10 +5,10 @@
  *      Author: sadko
  */
 
-#ifndef LSP_PLUG_IN_RUNTIME_IO_STRINGREADER_H_
-#define LSP_PLUG_IN_RUNTIME_IO_STRINGREADER_H_
+#ifndef LSP_PLUG_IN_IO_STRINGREADER_H_
+#define LSP_PLUG_IN_IO_STRINGREADER_H_
 
-#include <lsp-plug.in/runtime/io/IInSequence.h>
+#include <lsp-plug.in/io/IInSequence.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 
 namespace lsp
@@ -53,4 +53,4 @@ namespace lsp
     }
 } /* namespace lsp */
 
-#endif /* LSP_PLUG_IN_RUNTIME_IO_STRINGREADER_H_ */
+#endif /* LSP_PLUG_IN_IO_STRINGREADER_H_ */

@@ -5,8 +5,8 @@
  *      Author: sadko
  */
 
-#ifndef INCLUDE_LSP_PLUG_IN_RUNTIME_IO_PATH_H_
-#define INCLUDE_LSP_PLUG_IN_RUNTIME_IO_PATH_H_
+#ifndef INCLUDE_LSP_PLUG_IN_IO_PATH_H_
+#define INCLUDE_LSP_PLUG_IN_IO_PATH_H_
 
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/runtime/LSPString.h>
@@ -160,4 +160,4 @@ namespace lsp
     }
 } /* namespace lsp */
 
-#endif /* INCLUDE_LSP_PLUG_IN_RUNTIME_IO_PATH_H_ */
+#endif /* INCLUDE_LSP_PLUG_IN_IO_PATH_H_ */

@@ -5,8 +5,8 @@
  *      Author: sadko
  */
 
-#include <lsp-plug.in/runtime/io/IInStream.h>
-#include <lsp-plug.in/runtime/io/IOutStream.h>
+#include <lsp-plug.in/io/IInStream.h>
+#include <lsp-plug.in/io/IOutStream.h>
 #include <lsp-plug.in/common/status.h>
 
 #include <stdlib.h>

@@ -5,12 +5,12 @@
  *      Author: sadko
  */
 
-#ifndef LSP_PLUG_IN_RUNTIME_IPC_LIBRARY_H_
-#define LSP_PLUG_IN_RUNTIME_IPC_LIBRARY_H_
+#ifndef LSP_PLUG_IN_IPC_LIBRARY_H_
+#define LSP_PLUG_IN_IPC_LIBRARY_H_
 
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
-#include <lsp-plug.in/runtime/io/Path.h>
+#include <lsp-plug.in/io/Path.h>
 
 #if defined(PLATFORM_WINDOWS)
     #include <libloaderapi.h>
@@ -136,4 +136,4 @@ namespace lsp
     } /* namespace io */
 } /* namespace lsp */
 
-#endif /* LSP_PLUG_IN_RUNTIME_IPC_LIBRARY_H_ */
+#endif /* LSP_PLUG_IN_IPC_LIBRARY_H_ */

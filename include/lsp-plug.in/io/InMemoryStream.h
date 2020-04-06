@@ -5,10 +5,10 @@
  *      Author: sadko
  */
 
-#ifndef LSP_PLUG_IN_RUNTIME_IO_INMEMORYSTREAM_H_
-#define LSP_PLUG_IN_RUNTIME_IO_INMEMORYSTREAM_H_
+#ifndef LSP_PLUG_IN_IO_INMEMORYSTREAM_H_
+#define LSP_PLUG_IN_IO_INMEMORYSTREAM_H_
 
-#include <lsp-plug.in/runtime/io/IInStream.h>
+#include <lsp-plug.in/io/IInStream.h>
 
 namespace lsp
 {
@@ -96,4 +96,4 @@ namespace lsp
     } /* namespace io */
 } /* namespace lsp */
 
-#endif /* LSP_PLUG_IN_RUNTIME_IO_INMEMORYSTREAM_H_ */
+#endif /* LSP_PLUG_IN_IO_INMEMORYSTREAM_H_ */

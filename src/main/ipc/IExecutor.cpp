@@ -6,7 +6,7 @@
  */
 
 #include <lsp-plug.in/common/types.h>
-#include <lsp-plug.in/runtime/ipc/IExecutor.h>
+#include <lsp-plug.in/ipc/IExecutor.h>
 
 namespace lsp
 {
