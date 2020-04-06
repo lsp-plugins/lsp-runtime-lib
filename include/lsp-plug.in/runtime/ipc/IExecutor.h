@@ -8,9 +8,8 @@
 #ifndef LSP_PLUG_IN_RUNTIME_IPC_IEXECUTOR_H_
 #define LSP_PLUG_IN_RUNTIME_IPC_IEXECUTOR_H_
 
-#include <core/types.h>
-#include <core/ipc/ITask.h>
-#include <dsp/dsp.h>
+#include <lsp-plug.in/common/types.h>
+#include <lsp-plug.in/runtime/ipc/ITask.h>
 
 namespace lsp
 {
@@ -39,16 +38,10 @@ namespace lsp
 
                 static inline void run_task(ITask *task)
                 {
-                    // Enable DSP context for executor service
-                    dsp::context_t ctx;
-                    dsp::start(&ctx);
-
                     task->nState    = ITask::TS_RUNNING;
                     task->nCode     = 0;
                     task->nCode     = task->run();
                     task->nState    = ITask::TS_COMPLETED;
-
-                    dsp::finish(&ctx);
                 }
 
             private:

@@ -8,8 +8,8 @@
 #ifndef INCLUDE_LSP_PLUG_IN_RUNTIME_IPC_MUTEX_H_
 #define INCLUDE_LSP_PLUG_IN_RUNTIME_IPC_MUTEX_H_
 
-#include <core/types.h>
-#include <dsp/atomic.h>
+#include <lsp-plug.in/common/types.h>
+#include <lsp-plug.in/common/atomic.h>
 
 #if defined(PLATFORM_WINDOWS)
     #include <synchapi.h>

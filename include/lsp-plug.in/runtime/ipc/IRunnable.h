@@ -5,10 +5,10 @@
  *      Author: sadko
  */
 
-#ifndef INCLUDE_LSP_PLUG_IN_RUNTIME_IPC_IRUNNABLE_H_
-#define INCLUDE_LSP_PLUG_IN_RUNTIME_IPC_IRUNNABLE_H_
+#ifndef LSP_PLUG_IN_RUNTIME_IPC_IRUNNABLE_H_
+#define LSP_PLUG_IN_RUNTIME_IPC_IRUNNABLE_H_
 
-#include <core/status.h>
+#include <lsp-plug.in/common/status.h>
 
 namespace lsp
 {
@@ -37,4 +37,4 @@ namespace lsp
     } /* namespace ipc */
 } /* namespace lsp */
 
-#endif /* INCLUDE_LSP_PLUG_IN_RUNTIME_IPC_IRUNNABLE_H_ */
+#endif /* LSP_PLUG_IN_RUNTIME_IPC_IRUNNABLE_H_ */

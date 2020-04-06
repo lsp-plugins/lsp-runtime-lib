@@ -8,9 +8,9 @@
 #ifndef LSP_PLUG_IN_RUNTIME_IO_IINSEQUENCE_H_
 #define LSP_PLUG_IN_RUNTIME_IO_IINSEQUENCE_H_
 
-#include <core/types.h>
-#include <core/status.h>
-#include <core/LSPString.h>
+#include <lsp-plug.in/common/types.h>
+#include <lsp-plug.in/common/status.h>
+#include <lsp-plug.in/runtime/LSPString.h>
 #include <iconv.h>
 
 namespace lsp

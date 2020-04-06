@@ -8,11 +8,11 @@
 #ifndef LSP_PLUG_IN_RUNTIME_IO_CHARSETENCODER_H_
 #define LSP_PLUG_IN_RUNTIME_IO_CHARSETENCODER_H_
 
-#include <core/status.h>
-#include <core/io/charset.h>
-#include <core/io/File.h>
-#include <core/io/IInSequence.h>
-#include <core/io/IOutStream.h>
+#include <lsp-plug.in/common/status.h>
+#include <lsp-plug.in/runtime/io/charset.h>
+#include <lsp-plug.in/runtime/io/File.h>
+#include <lsp-plug.in/runtime/io/IInSequence.h>
+#include <lsp-plug.in/runtime/io/IOutStream.h>
 
 namespace lsp
 {

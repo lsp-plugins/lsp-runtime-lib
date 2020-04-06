@@ -8,7 +8,9 @@
 #ifndef LSP_PLUG_IN_RUNTIME_LSPSTRING_H_
 #define LSP_PLUG_IN_RUNTIME_LSPSTRING_H_
 
-#include <core/types.h>
+#include <lsp-plug.in/common/types.h>
+#include <lsp-plug.in/stdlib/string.h>
+#include <stdlib.h>
 #include <stdarg.h>
 
 namespace lsp
@@ -41,10 +43,10 @@ namespace lsp
             bool            resize_temp(size_t n) const;
             bool            grow_temp(size_t n) const;
 
-            static inline lsp_wchar_t *xmalloc(size_t size) { return reinterpret_cast<lsp_wchar_t *>(::malloc(size * sizeof(lsp_wchar_t))); }
-            static inline lsp_wchar_t *xrealloc(lsp_wchar_t * ptr, size_t size) { return reinterpret_cast<lsp_wchar_t *>(::realloc(ptr, size * sizeof(lsp_wchar_t))); };
-            static inline void xfree(lsp_wchar_t *ptr) { ::free(ptr); }
-            static inline void xmove(lsp_wchar_t *dst, const lsp_wchar_t *src, size_t n) { ::memmove(dst, src, n * sizeof(lsp_wchar_t)); }
+            static inline lsp_wchar_t *xmalloc(size_t size)                                 { return reinterpret_cast<lsp_wchar_t *>(::malloc(size * sizeof(lsp_wchar_t))); }
+            static inline lsp_wchar_t *xrealloc(lsp_wchar_t * ptr, size_t size)             { return reinterpret_cast<lsp_wchar_t *>(::realloc(ptr, size * sizeof(lsp_wchar_t))); };
+            static inline void xfree(lsp_wchar_t *ptr)                                      { ::free(ptr); }
+            static inline void xmove(lsp_wchar_t *dst, const lsp_wchar_t *src, size_t n)    { ::memmove(dst, src, n * sizeof(lsp_wchar_t)); }
             static inline size_t xlen(const lsp_wchar_t *s);
 
 #ifdef ARCH_LE

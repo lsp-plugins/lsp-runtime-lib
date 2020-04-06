@@ -8,8 +8,8 @@
 #ifndef LSP_PLUG_IN_RUNTIME_IO_IOUTSTREAM_H_
 #define LSP_PLUG_IN_RUNTIME_IO_IOUTSTREAM_H_
 
-#include <core/types.h>
-#include <core/status.h>
+#include <lsp-plug.in/common/types.h>
+#include <lsp-plug.in/common/status.h>
 
 namespace lsp
 {

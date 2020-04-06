@@ -8,8 +8,8 @@
 #ifndef LSP_PLUG_IN_RUNTIME_IPC_ITASK_H_
 #define LSP_PLUG_IN_RUNTIME_IPC_ITASK_H_
 
-#include <core/status.h>
-#include <core/ipc/IRunnable.h>
+#include <lsp-plug.in/common/status.h>
+#include <lsp-plug.in/runtime/ipc/IRunnable.h>
 
 namespace lsp
 {

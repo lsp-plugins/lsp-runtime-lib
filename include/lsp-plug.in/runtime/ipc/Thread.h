@@ -8,8 +8,8 @@
 #ifndef INCLUDE_LSP_PLUG_IN_RUNTIME_IPC_THREAD_H_
 #define INCLUDE_LSP_PLUG_IN_RUNTIME_IPC_THREAD_H_
 
-#include <core/types.h>
-#include <core/status.h>
+#include <lsp-plug.in/common/types.h>
+#include <lsp-plug.in/common/status.h>
 
 #if defined(PLATFORM_WINDOWS)
     #include <processthreadsapi.h>
@@ -17,7 +17,7 @@
     #include <pthread.h>
 #endif /* PLATFORM_WINDOWS */
 
-#include <core/ipc/IRunnable.h>
+#include <lsp-plug.in/runtime/ipc/IRunnable.h>
 
 namespace lsp
 {

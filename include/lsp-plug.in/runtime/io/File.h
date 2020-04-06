@@ -8,11 +8,11 @@
 #ifndef INCLUDE_LSP_PLUG_IN_RUNTIME_IO_FILE_H_
 #define INCLUDE_LSP_PLUG_IN_RUNTIME_IO_FILE_H_
 
-#include <core/types.h>
-#include <core/status.h>
-#include <core/LSPString.h>
-#include <core/io/Path.h>
-#include <core/stdlib/stdio.h>
+#include <lsp-plug.in/common/types.h>
+#include <lsp-plug.in/common/status.h>
+#include <lsp-plug.in/runtime/LSPString.h>
+#include <lsp-plug.in/runtime/io/Path.h>
+#include <lsp-plug.in/stdlib/stdio.h>
 
 namespace lsp
 {

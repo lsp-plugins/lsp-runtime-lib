@@ -9,13 +9,13 @@
 #define LSP_PLUG_IN_RUNTIME_IO_INSEQUENCE_H_
 
 #include <stdio.h>
-#include <core/types.h>
-#include <core/io/charset.h>
-#include <core/io/Path.h>
-#include <core/io/File.h>
-#include <core/io/CharsetDecoder.h>
-#include <core/io/IInSequence.h>
-#include <core/io/IInStream.h>
+#include <lsp-plug.in/common/types.h>
+#include <lsp-plug.in/runtime/io/charset.h>
+#include <lsp-plug.in/runtime/io/Path.h>
+#include <lsp-plug.in/runtime/io/File.h>
+#include <lsp-plug.in/runtime/io/CharsetDecoder.h>
+#include <lsp-plug.in/runtime/io/IInSequence.h>
+#include <lsp-plug.in/runtime/io/IInStream.h>
 
 namespace lsp
 {

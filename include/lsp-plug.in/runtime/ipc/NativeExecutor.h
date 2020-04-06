@@ -8,10 +8,10 @@
 #ifndef CORE_NATIVEEXECUTOR_H_
 #define CORE_NATIVEEXECUTOR_H_
 
-#include <dsp/atomic.h>
-#include <core/ipc/Thread.h>
-#include <core/ipc/IExecutor.h>
-#include <core/ipc/ITask.h>
+#include <lsp-plug.in/common/atomic.h>
+#include <lsp-plug.in/runtime/ipc/Thread.h>
+#include <lsp-plug.in/runtime/ipc/IExecutor.h>
+#include <lsp-plug.in/runtime/ipc/ITask.h>
 
 namespace lsp
 {

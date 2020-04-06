@@ -8,11 +8,11 @@
 #ifndef LSP_PLUG_IN_RUNTIME_IO_OUTFILESTREAM_H_
 #define LSP_PLUG_IN_RUNTIME_IO_OUTFILESTREAM_H_
 
-#include <core/stdlib/stdio.h>
-#include <core/LSPString.h>
-#include <core/io/Path.h>
-#include <core/io/File.h>
-#include <core/io/IOutStream.h>
+#include <lsp-plug.in/stdlib/stdio.h>
+#include <lsp-plug.in/runtime/LSPString.h>
+#include <lsp-plug.in/runtime/io/Path.h>
+#include <lsp-plug.in/runtime/io/File.h>
+#include <lsp-plug.in/runtime/io/IOutStream.h>
 
 namespace lsp
 {

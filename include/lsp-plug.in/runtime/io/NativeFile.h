@@ -8,10 +8,10 @@
 #ifndef LSP_PLUG_IN_RUNTIME_IO_NATIVEFILE_H_
 #define LSP_PLUG_IN_RUNTIME_IO_NATIVEFILE_H_
 
-#include <core/types.h>
-#include <core/LSPString.h>
-#include <core/io/Path.h>
-#include <core/io/File.h>
+#include <lsp-plug.in/common/types.h>
+#include <lsp-plug.in/runtime/LSPString.h>
+#include <lsp-plug.in/runtime/io/Path.h>
+#include <lsp-plug.in/runtime/io/File.h>
 
 namespace lsp
 {
