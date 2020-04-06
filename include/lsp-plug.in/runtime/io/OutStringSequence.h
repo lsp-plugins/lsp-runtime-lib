@@ -8,7 +8,7 @@
 #ifndef LSP_PLUG_IN_RUNTIME_IO_STRINWRITER_H_
 #define LSP_PLUG_IN_RUNTIME_IO_STRINWRITER_H_
 
-#include <core/io/IOutSequence.h>
+#include <lsp-plug.in/runtime/io/IOutSequence.h>
 
 namespace lsp
 {

@@ -8,7 +8,7 @@
 #ifndef LSP_PLUG_IN_RUNTIME_IO_INMEMORYSTREAM_H_
 #define LSP_PLUG_IN_RUNTIME_IO_INMEMORYSTREAM_H_
 
-#include <core/io/IInStream.h>
+#include <lsp-plug.in/runtime/io/IInStream.h>
 
 namespace lsp
 {
