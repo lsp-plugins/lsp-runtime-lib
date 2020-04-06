@@ -1,69 +1,109 @@
-#!/usr/bin/make -f
+CONFIG                 := $(CURDIR)/.config.mk
 
-# Location
-BASEDIR                    := $(CURDIR)
-MODULES                    := $(BASEDIR)/modules
-BUILDDIR                   := $(BASEDIR)/.build
-CONFIG                     := $(BASEDIR)/.config.mk
+include $(CONFIG)
+include $(CURDIR)/../project.mk
 
-# Basic initialization
-# Checks
-ifeq ("$(wildcard $(CONFIG))", "")
-  CONFIGURED          = 0
-else
-  CONFIGURED          = 1
+rwildcard               = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
+CXX_SRCMAIN             = $(call rwildcard, main, *.cpp)
+CXX_SRCTEST             = $(call rwildcard, test, *.cpp)
+CXX_SRC                 = $(CXX_SRCMAIN)
+CXX_OBJ                 = $(patsubst %.cpp, $($(ARTIFACT_VARS)_BIN)/%.o, $(CXX_SRC))
+CXX_FILE                = $(patsubst $($(ARTIFACT_VARS)_BIN)/%.o,%.cpp, $(@))
+CXX_HEADERS             = $(foreach hdr,$(ARTIFACT_HEADERS),$(call rwildcard, $($(ARTIFACT_VARS)_INC)/$(hdr), *.h)
+CXX_INSTHEADERS         = $(patsubst $($(ARTIFACT_VARS)_INC)/%,$(DESTDIR)$(PREFIX)/include/%,$(CXX_HEADERS))
+
+ARTIFACT_BIN            = $($(ARTIFACT_VARS)_BIN)
+ARTIFACT_LIB            = $(ARTIFACT_BIN)/$($(ARTIFACT_VARS)_NAME)-$($(ARTIFACT_VARS)_VERSION)$(LIBRARY_EXT)
+ARTIFACT_TESTBIN        = $(ARTIFACT_BIN)/$($(ARTIFACT_VARS)_NAME)-test$(EXECUTABLE_EXT)
+ARTIFACT_OBJ            = $($(ARTIFACT_VARS)_OBJ)
+ARTIFACT_MFLAGS         = $($(ARTIFACT_VARS)_MFLAGS)
+
+INCLUDE_DEPS            = $(foreach dep, $(DEPENDENCIES) $(ARTIFACT_VARS), $(if $($(dep)_INC), -I$($(dep)_INC)))
+BUILD_DEPS              = $(foreach dep, $(DEPENDENCIES), $(if $($(dep)_OBJ), $(dep)))
+LINKER_OBJS             = $(foreach dep, $(DEPENDENCIES), $(if $($(dep)_OBJ), $($(dep)_OBJ)))
+LINKER_LIBS             = $(foreach dep, $(DEPENDENCIES), $(if $($(dep)_LIB), $($(dep)_LIB)))
+BUILD_ALL               = $(ARTIFACT_LIB)
+
+ifeq ($(TEST), 1)
+  ifeq ($($(ARTIFACT_VARS)_TESTING),1)
+    CXX_SRC                += $(CXX_SRCTEST)
+    BUILD_ALL              += $(ARTIFACT_TESTBIN)
+  endif
+  DEPENDENCIES           += $(TEST_DEPENDENCIES)
 endif
 
-include $(BASEDIR)/project.mk
+ifeq ($(NO_DEPENDENCIES),1)
+  BUILD_DEPS              =
+endif
 
-# Setup paths
-CHK_CONFIG                  = test -f "$(CONFIG)" || (echo "System not properly configured. Please launch 'make config' first" && exit 1)
+CXX_DEPS                = $(foreach src,$(CXX_SRCMAIN) $(CXX_SRCTEST),$(patsubst %.cpp,$(ARTIFACT_BIN)/%.d,$(src)))
+CXX_DEPFILE             = $(patsubst $(ARTIFACT_BIN)/%.d,%.cpp,$(@))
+CXX_DEPTARGET           = $(patsubst $(ARTIFACT_BIN)/%.d,%.o,$(@))
 
-.DEFAULT_GOAL              := all
-.PHONY: all compile install uninstall depend clean
+.DEFAULT_GOAL = all
+.PHONY: compile depend dep_clean all install uninstall
+.PHONY: $(BUILD_DEPS)
 
-compile all install uninstall depend:
-	@$(CHK_CONFIG)
-	@$(MAKE) -s -C "$(BASEDIR)/src" $(@) CONFIG="$(CONFIG)" DESTDIR="$(DESTDIR)"
+compile: $(ARTIFACT_OBJ)
 
-clean:
-	@echo "Cleaning build directory $(BUILDDIR)"
-	@-rm -rf $(BUILDDIR)
-	@echo "Clean OK"
-	
-# Module-related tasks
-.PHONY: fetch prune
-fetch:
-	@echo "Fetching source code dependencies"
-	@$(MAKE) -s -f "make/modules.mk" $(@) BASEDIR="$(BASEDIR)" CONFIG="$(CONFIG)"
-	@echo "Fetch OK"
+all: $(BUILD_ALL)
 
-prune: clean
-	@echo "Pruning the whole project tree"
-	@$(MAKE) -s -f "make/modules.mk" prune BASEDIR="$(BASEDIR)" CONFIG="$(CONFIG)"
-	@-rm -rf "$(CONFIG)"
-	@echo "Prune OK"
+dep_clean:
 
-# Configuration-related targets
-.PHONY: config help
+$(CXX_DEPS): dep_clean
+	@echo "  dep  [$(ARTIFACT_NAME)] $(CXX_DEPFILE)"
+	@mkdir -p $(dir $(@))
+	$(CXX) -MM -MT "\$$($(ARTIFACT_VARS)_BIN)/$(CXX_DEPTARGET)" -MF $(@) $(CXX_DEPFILE) $(CXXFLAGS) $(INCLUDE) $(INCLUDE_DEPS)
 
-testconfig:
-	@$(MAKE) -s -f "$(BASEDIR)/make/configure.mk" $(@) CONFIG="$(CONFIG)" TEST="1" $(MAKEFLAGS)
+depend: $(CXX_DEPS)
+	$(foreach dep,$(DEPENDENCIES) $(ARTIFACT_VARS),\
+	  $(if $($(dep)_INC), \
+	    $(eval SED_RULES += s/$(shell echo "$($(dep)_INC)" | sed "s/\\//\\\\\//g")/\$$$$\\($(dep)_INC\\)/g;)\
+	  )\
+	  $(if $($(dep)_BIN), \
+	    $(eval SED_RULES += s/$(shell echo "$($(dep)_BIN)" | sed "s/\\//\\\\\//g")/\\$$$$\\($(dep)_BIN\\)/g;)\
+	  )\
+	)
+	@cat $(CXX_DEPS) | sed -E "$(SED_RULES)" >Makefile.d
 
-config:
-	@$(MAKE) -s -f "$(BASEDIR)/make/configure.mk" $(@) CONFIG="$(CONFIG)" $(MAKEFLAGS)
+$(BUILD_DEPS):
+	@echo "make $(notdir $($(@)_OBJ))"
+	@$(MAKE) -s -C "$($(@)_PATH)" compile CONFIG="$(CONFIG)" NO_DEPENDENCIES="1"
 
-help:
-	@echo "Available targets:"
-	@echo "  all                       Build all binaries"
-	@echo "  clean                     Clean all build files and configuration file"
-	@echo "  config                    Configure build"
-	@echo "  depend                    Update build dependencies for current project"
-	@echo "  fetch                     Fetch all source code dependencies from git"
-	@echo "  help                      Print this help message"
-	@echo "  info                      Output build configuration"
-	@echo "  install                   Install all binaries into the system"
-	@echo "  uninstall                 Uninstall binaries"
-	@echo ""
-	@$(MAKE) -s -f "$(BASEDIR)/make/configure.mk" $(@)
-	@echo ""
+$(ARTIFACT_OBJ): $(BUILD_DEPS) $(CXX_OBJ)
+	@echo "  $(LD)   [$(ARTIFACT_NAME)] $(notdir $(ARTIFACT_OBJ))"
+	@$(LD) -o $(ARTIFACT_OBJ) -r $(CXX_OBJ)
+
+$(ARTIFACT_LIB): $(ARTIFACT_OBJ)
+	@echo "  $(CXX)  [$(ARTIFACT_NAME)] $(notdir $(ARTIFACT_LIB))"
+	@$(CXX) -o $(ARTIFACT_LIB) $(LINKER_OBJS) $(ARTIFACT_OBJ) $(SO_FLAGS) $(LINKER_LIBS)
+
+$(ARTIFACT_TESTBIN): $(ARTIFACT_OBJ)
+	@echo "  $(CXX)  [$(ARTIFACT_NAME)] $(notdir $(ARTIFACT_TESTBIN))"
+	@$(CXX) -o $(ARTIFACT_TESTBIN) $(LINKER_OBJS) $(ARTIFACT_OBJ) $(EXE_FLAGS) $(LINKER_LIBS)
+
+$(CXX_OBJ):
+	@echo "  $(CXX)  [$(ARTIFACT_NAME)] $(CXX_FILE)"
+	@mkdir -p $(dir $@)
+	@$(CXX) -o $(@) -c $(CXX_FILE) -fPIC $(CXXFLAGS) $(ARTIFACT_MFLAGS) $(INCLUDE) $(INCLUDE_DEPS)
+
+install: all
+	@echo "Installing $($(ARTIFACT_VARS)_NAME)"
+	@mkdir -p "$(DESTDIR)$(PREFIX)/include"
+	@mkdir -p "$(DESTDIR)$(PREFIX)/lib"
+	@cp -r $($(ARTIFACT_VARS)_INC)/* "$(DESTDIR)$(PREFIX)/include/"
+	@echo $(INSTALL) $(ARTIFACT_LIB) -t "$(DESTDIR)$(PREFIX)/lib"
+	@$(INSTALL) $(ARTIFACT_LIB) -t "$(DESTDIR)$(PREFIX)/lib"
+	@ln -sf $(notdir $(ARTIFACT_LIB)) "$(DESTDIR)$(PREFIX)/lib/$($(ARTIFACT_VARS)_NAME)$(LIBRARY_EXT)"
+	@echo "Install OK"
+
+uninstall:
+	@echo "Uninstalling $($(ARTIFACT_VARS)_NAME)"
+	@-rm -f "$(DESTDIR)$(PREFIX)/lib/$(notdir $(ARTIFACT_LIB))"
+	@-rm -f "$(DESTDIR)$(PREFIX)/lib/$($(ARTIFACT_VARS)_NAME)$(LIBRARY_EXT)"
+	@echo rm -f $(CXX_INSTHEADERS)
+	@-rm -f $(CXX_INSTHEADERS)
+	@echo "Uninstall OK"
+
+# Dependencies
+-include $(CURDIR)/Makefile.d
