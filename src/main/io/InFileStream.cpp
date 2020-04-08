@@ -79,7 +79,7 @@ namespace lsp
             return set_error(res);
         }
 
-        status_t InFileStream::wrap_native(lsp_fhandle_t fd, bool close)
+        status_t InFileStream::wrap_native(fhandle_t fd, bool close)
         {
             if (pFD != NULL)
                 return set_error(STATUS_BAD_STATE);

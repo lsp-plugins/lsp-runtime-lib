@@ -8,6 +8,7 @@
 #ifndef LSP_PLUG_IN_RUNTIME_LSPSTRING_H_
 #define LSP_PLUG_IN_RUNTIME_LSPSTRING_H_
 
+#include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/stdlib/string.h>
 #include <stdlib.h>

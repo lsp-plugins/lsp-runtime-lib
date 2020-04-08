@@ -8,11 +8,12 @@
 #ifndef LSP_PLUG_IN_IO_OUTFILESTREAM_H_
 #define LSP_PLUG_IN_IO_OUTFILESTREAM_H_
 
-#include <lsp-plug.in/stdlib/stdio.h>
+#include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/io/File.h>
 #include <lsp-plug.in/io/IOutStream.h>
+#include <lsp-plug.in/stdlib/stdio.h>
 
 namespace lsp
 {
@@ -34,7 +35,7 @@ namespace lsp
             public:
                 status_t wrap(FILE *fd, bool close);
 
-                status_t wrap_native(lsp_fhandle_t fd, bool close);
+                status_t wrap_native(fhandle_t fd, bool close);
 
                 status_t wrap(File *fd, size_t flags);
 

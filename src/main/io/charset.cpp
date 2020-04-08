@@ -6,11 +6,12 @@
  */
 
 #include <lsp-plug.in/common/endian.h>
+#include <lsp-plug.in/stdlib/string.h>
+#include <lsp-plug.in/stdlib/stdio.h>
 #include <lsp-plug.in/io/charset.h>
 
 #include <errno.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 namespace lsp
 {

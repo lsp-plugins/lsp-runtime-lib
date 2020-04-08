@@ -8,8 +8,9 @@
 #ifndef LSP_PLUG_IN_IO_INFILESTREAM_H_
 #define LSP_PLUG_IN_IO_INFILESTREAM_H_
 
-#include <lsp-plug.in/stdlib/stdio.h>
+#include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/runtime/LSPString.h>
+#include <lsp-plug.in/stdlib/stdio.h>
 #include <lsp-plug.in/io/File.h>
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/io/IInStream.h>
@@ -47,7 +48,7 @@ namespace lsp
                  * @param close close file descriptor on close()
                  * @return status of operation
                  */
-                status_t wrap_native(lsp_fhandle_t fd, bool close);
+                status_t wrap_native(fhandle_t fd, bool close);
 
                 /** Wrap file descriptor. The Reader should be in closed state.
                  *

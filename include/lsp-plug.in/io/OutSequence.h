@@ -8,7 +8,7 @@
 #ifndef LSP_PLUG_IN_IO_OUTSEQUENCE_H_
 #define LSP_PLUG_IN_IO_OUTSEQUENCE_H_
 
-#include <stdio.h>
+#include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/io/charset.h>
 #include <lsp-plug.in/io/Path.h>
@@ -16,6 +16,7 @@
 #include <lsp-plug.in/io/CharsetEncoder.h>
 #include <lsp-plug.in/io/IOutStream.h>
 #include <lsp-plug.in/io/IOutSequence.h>
+#include <lsp-plug.in/stdlib/stdio.h>
 
 namespace lsp
 {
@@ -45,7 +46,7 @@ namespace lsp
             public:
                 status_t wrap(FILE *fd, bool close, const char *charset = NULL);
 
-                status_t wrap_native(lsp_fhandle_t fd, bool close, const char *charset = NULL);
+                status_t wrap_native(fhandle_t fd, bool close, const char *charset = NULL);
 
                 status_t wrap(File *fd, size_t flags, const char *charset = NULL);
 

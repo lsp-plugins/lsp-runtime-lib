@@ -8,6 +8,7 @@
 #ifndef CORE_NATIVEEXECUTOR_H_
 #define CORE_NATIVEEXECUTOR_H_
 
+#include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/common/atomic.h>
 #include <lsp-plug.in/ipc/Thread.h>
 #include <lsp-plug.in/ipc/IExecutor.h>

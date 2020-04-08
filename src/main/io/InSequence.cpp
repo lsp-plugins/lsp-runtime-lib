@@ -94,7 +94,7 @@ namespace lsp
             return set_error(res);
         }
 
-        status_t InSequence::wrap_native(lsp_fhandle_t fd, bool close, const char *charset)
+        status_t InSequence::wrap_native(fhandle_t fd, bool close, const char *charset)
         {
             if (pIS != NULL)
                 return set_error(STATUS_BAD_STATE);

@@ -6,6 +6,8 @@
  */
 
 #include <lsp-plug.in/io/InMemoryStream.h>
+#include <lsp-plug.in/stdlib/string.h>
+#include <stdlib.h>
 
 namespace lsp
 {

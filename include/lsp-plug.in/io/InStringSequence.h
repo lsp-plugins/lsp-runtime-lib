@@ -8,8 +8,9 @@
 #ifndef LSP_PLUG_IN_IO_STRINGREADER_H_
 #define LSP_PLUG_IN_IO_STRINGREADER_H_
 
-#include <lsp-plug.in/io/IInSequence.h>
+#include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/runtime/LSPString.h>
+#include <lsp-plug.in/io/IInSequence.h>
 
 namespace lsp
 {

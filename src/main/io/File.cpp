@@ -218,7 +218,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t File::stat(lsp_fhandle_t fd, fattr_t *attr)
+        status_t File::stat(fhandle_t fd, fattr_t *attr)
         {
             if (attr == NULL)
                 return STATUS_BAD_ARGUMENTS;

@@ -8,6 +8,7 @@
 #ifndef INCLUDE_LSP_PLUG_IN_IO_FILE_H_
 #define INCLUDE_LSP_PLUG_IN_IO_FILE_H_
 
+#include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/runtime/LSPString.h>
@@ -191,7 +192,7 @@ namespace lsp
                  * @param attr structure to return file attributes
                  * @return status of operation
                  */
-                static status_t stat(lsp_fhandle_t fd, fattr_t *attr);
+                static status_t stat(fhandle_t fd, fattr_t *attr);
 
                 /**
                  * Obtain file information

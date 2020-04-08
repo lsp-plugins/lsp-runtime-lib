@@ -8,9 +8,10 @@
 #ifndef LSP_PLUG_IN_IO_IOUTSEQUENCE_H_
 #define LSP_PLUG_IN_IO_IOUTSEQUENCE_H_
 
+#include <lsp-plug.in/runtime/version.h>
+#include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
-#include <lsp-plug.in/runtime/LSPString.h>
 
 namespace lsp
 {

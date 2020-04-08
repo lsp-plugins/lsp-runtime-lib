@@ -8,6 +8,7 @@
 #ifndef LSP_PLUG_IN_IO_CHARSETENCODER_H_
 #define LSP_PLUG_IN_IO_CHARSETENCODER_H_
 
+#include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/io/charset.h>
 #include <lsp-plug.in/io/File.h>

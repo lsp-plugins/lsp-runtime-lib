@@ -8,8 +8,9 @@
 #ifndef LSP_PLUG_IN_IO_NATIVEFILE_H_
 #define LSP_PLUG_IN_IO_NATIVEFILE_H_
 
-#include <lsp-plug.in/common/types.h>
+#include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/runtime/LSPString.h>
+#include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/io/File.h>
 
@@ -33,7 +34,7 @@ namespace lsp
                 };
 
             protected:
-                lsp_fhandle_t   hFD;
+                fhandle_t       hFD;
                 size_t          nFlags;
 
             private:
@@ -75,7 +76,7 @@ namespace lsp
                  * @param close close the file descriptor on close() call
                  * @return status of operation
                  */
-                status_t    wrap(lsp_fhandle_t fd, bool close);
+                status_t    wrap(fhandle_t fd, bool close);
 
                 /**
                  * Wrap the standard file descriptor
@@ -84,7 +85,7 @@ namespace lsp
                  * @param close close the file descriptor on close() call
                  * @return status of operation
                  */
-                status_t    wrap(lsp_fhandle_t fd, size_t mode, bool close);
+                status_t    wrap(fhandle_t fd, size_t mode, bool close);
 
                 /**
                  * Read binary file

@@ -8,10 +8,11 @@
 #ifndef LSP_PLUG_IN_IO_STDIOFILE_H_
 #define LSP_PLUG_IN_IO_STDIOFILE_H_
 
+#include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/io/File.h>
+#include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/stdlib/stdio.h>
-#include <lsp-plug.in/io/Path.h>
 
 namespace lsp
 {

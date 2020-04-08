@@ -8,8 +8,9 @@
 #ifndef INCLUDE_LSP_PLUG_IN_IO_PATH_H_
 #define INCLUDE_LSP_PLUG_IN_IO_PATH_H_
 
-#include <lsp-plug.in/common/status.h>
+#include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/runtime/LSPString.h>
+#include <lsp-plug.in/common/status.h>
 
 namespace lsp
 {

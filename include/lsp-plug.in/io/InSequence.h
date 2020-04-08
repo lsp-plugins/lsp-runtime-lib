@@ -8,7 +8,7 @@
 #ifndef LSP_PLUG_IN_IO_INSEQUENCE_H_
 #define LSP_PLUG_IN_IO_INSEQUENCE_H_
 
-#include <stdio.h>
+#include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/io/charset.h>
 #include <lsp-plug.in/io/Path.h>
@@ -16,6 +16,7 @@
 #include <lsp-plug.in/io/CharsetDecoder.h>
 #include <lsp-plug.in/io/IInSequence.h>
 #include <lsp-plug.in/io/IInStream.h>
+#include <lsp-plug.in/stdlib/stdio.h>
 
 namespace lsp
 {
@@ -55,7 +56,7 @@ namespace lsp
                  * @param charset character set to use, system charset if NULL
                  * @return status of operation
                  */
-                status_t wrap_native(lsp_fhandle_t fd, bool close, const char *charset = NULL);
+                status_t wrap_native(fhandle_t fd, bool close, const char *charset = NULL);
 
                 /** Wrap file descriptor. The Sequence should be in closed state.
                  *

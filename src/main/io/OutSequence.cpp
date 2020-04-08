@@ -103,7 +103,7 @@ namespace lsp
             return set_error(STATUS_OK);
         }
 
-        status_t OutSequence::wrap_native(lsp_fhandle_t fd, bool close, const char *charset)
+        status_t OutSequence::wrap_native(fhandle_t fd, bool close, const char *charset)
         {
             if (pOS != NULL)
                 return set_error(STATUS_BAD_STATE);

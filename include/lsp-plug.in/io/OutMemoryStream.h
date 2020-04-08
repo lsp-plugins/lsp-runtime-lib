@@ -8,6 +8,7 @@
 #ifndef LSP_PLUG_IN_IO_OUTMEMORYSTREAM_H_
 #define LSP_PLUG_IN_IO_OUTMEMORYSTREAM_H_
 
+#include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/io/IOutStream.h>
 
 namespace lsp

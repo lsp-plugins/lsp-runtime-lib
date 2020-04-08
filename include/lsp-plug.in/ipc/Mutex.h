@@ -8,6 +8,7 @@
 #ifndef INCLUDE_LSP_PLUG_IN_IPC_MUTEX_H_
 #define INCLUDE_LSP_PLUG_IN_IPC_MUTEX_H_
 
+#include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/atomic.h>
 

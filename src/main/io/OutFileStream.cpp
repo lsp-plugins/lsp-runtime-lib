@@ -8,6 +8,7 @@
 #include <lsp-plug.in/io/StdioFile.h>
 #include <lsp-plug.in/io/NativeFile.h>
 #include <lsp-plug.in/io/OutFileStream.h>
+#include <lsp-plug.in/stdlib/stdio.h>
 
 namespace lsp
 {
@@ -79,7 +80,7 @@ namespace lsp
             return set_error(res);
         }
 
-        status_t OutFileStream::wrap_native(lsp_fhandle_t fd, bool close)
+        status_t OutFileStream::wrap_native(fhandle_t fd, bool close)
         {
             if (pFD != NULL)
                 return set_error(STATUS_BAD_STATE);

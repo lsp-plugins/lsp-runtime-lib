@@ -8,12 +8,13 @@
 #ifndef LSP_PLUG_IN_IO_CHARSETDECODER_H_
 #define LSP_PLUG_IN_IO_CHARSETDECODER_H_
 
+#include <lsp-plug.in/runtime/version.h>
+#include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/io/charset.h>
 #include <lsp-plug.in/io/File.h>
 #include <lsp-plug.in/io/IInStream.h>
 #include <lsp-plug.in/io/IOutSequence.h>
-#include <lsp-plug.in/runtime/LSPString.h>
 
 namespace lsp
 {

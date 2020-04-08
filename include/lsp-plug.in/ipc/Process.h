@@ -8,13 +8,13 @@
 #ifndef LSP_PLUG_IN_IPC_PROCESS_H_
 #define LSP_PLUG_IN_IPC_PROCESS_H_
 
+#include <lsp-plug.in/runtime/version.h>
+#include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
-
-#include <data/cvector.h>
-#include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/io/IInStream.h>
 #include <lsp-plug.in/io/IOutStream.h>
+#include <lsp-plug.in/lltl/parray.h>
 
 #include <unistd.h>
 
@@ -45,8 +45,8 @@ namespace lsp
 
             private:
                 LSPString               sCommand;
-                cvector<LSPString>      vArgs;
-                cvector<envvar_t>       vEnv;
+                lltl::parray<LSPString> vArgs;
+                lltl::parray<envvar_t>  vEnv;
                 pstatus_t               nStatus;
                 int                     nExitCode;
 
@@ -68,8 +68,8 @@ namespace lsp
                 io::IInStream          *pStdErr;
 
             protected:
-                static void     destroy_args(cvector<LSPString> *args);
-                static void     destroy_env(cvector<envvar_t> *env);
+                static void     destroy_args(lltl::parray<LSPString> *args);
+                static void     destroy_env(lltl::parray<envvar_t> *env);
                 void            close_handles();
 
 #ifdef PLATFORM_WINDOWS
@@ -77,8 +77,8 @@ namespace lsp
                 status_t        build_argv(LSPString *dst);
                 status_t        build_envp(LSPString *dst);
 #else
-                status_t        build_argv(cvector<char> *dst);
-                status_t        build_envp(cvector<char> *dst);
+                status_t        build_argv(lltl::parray<char> *dst);
+                status_t        build_envp(lltl::parray<char> *dst);
                 status_t        spawn_process(const char *cmd, char * const *argv, char * const *envp);
                 status_t        vfork_process(const char *cmd, char * const *argv, char * const *envp);
                 status_t        fork_process(const char *cmd, char * const *argv, char * const *envp);

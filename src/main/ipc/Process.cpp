@@ -95,24 +95,17 @@ namespace lsp
 #endif /* PLATFORM_WINDOWS */
         }
     
-        void Process::destroy_args(cvector<LSPString> *args)
+        void Process::destroy_args(lltl::parray<LSPString> *args)
         {
             for (size_t i=0, n=args->size(); i<n; ++i)
-            {
-                LSPString *arg = args->at(i);
-                delete arg;
-            }
+                delete args->uget(i);
             args->flush();
         }
 
-        void Process::destroy_env(cvector<envvar_t> *env)
+        void Process::destroy_env(lltl::parray<envvar_t> *env)
         {
             for (size_t i=0, n=env->size(); i<n; ++i)
-            {
-                envvar_t *var= env->at(i);
-                delete var;
-            }
-            env->flush();
+                delete env->uget(i);
         }
 
         status_t Process::set_command(const LSPString *cmd)
@@ -299,12 +292,7 @@ namespace lsp
             if (arg == NULL)
                 return STATUS_NO_MEM;
 
-            if (!arg->set(value))
-            {
-                delete arg;
-                return STATUS_NO_MEM;
-            }
-            if (!vArgs.insert(arg, index))
+            if ((!arg->set(value)) || (!vArgs.insert(index, arg)))
             {
                 delete arg;
                 return STATUS_NO_MEM;
@@ -324,12 +312,7 @@ namespace lsp
             if (arg == NULL)
                 return STATUS_NO_MEM;
 
-            if (!arg->set_utf8(value))
-            {
-                delete arg;
-                return STATUS_NO_MEM;
-            }
-            if (!vArgs.insert(arg, index))
+            if ((!arg->set_utf8(value)) || (!vArgs.insert(index, arg)))
             {
                 delete arg;
                 return STATUS_NO_MEM;
@@ -363,7 +346,7 @@ namespace lsp
             envvar_t *var;
             for (size_t i=0, n=vEnv.size(); i<n; ++i)
             {
-                var = vEnv.at(i);
+                var = vEnv.uget(i);
                 if (var->name.equals(key))
                     return (var->value.set(value)) ? STATUS_OK : STATUS_NO_MEM;
             }
@@ -371,16 +354,12 @@ namespace lsp
             if ((var = new envvar_t) == NULL)
                 return STATUS_NO_MEM;
 
-            if ((!var->name.set(key)) || (!var->value.set(value)))
+            if ((!var->name.set(key)) || (!var->value.set(value)) || (!vEnv.add(var)))
             {
                 delete var;
                 return STATUS_NO_MEM;
             }
-            if (!vEnv.add(var))
-            {
-                delete var;
-                return STATUS_NO_MEM;
-            }
+
             return STATUS_OK;
         }
 
@@ -408,13 +387,13 @@ namespace lsp
 
             for (size_t i=0, n=vEnv.size(); i<n; ++i)
             {
-                envvar_t *var = vEnv.at(i);
+                envvar_t *var = vEnv.uget(i);
                 if (var->name.equals(key))
                 {
                     if (value != NULL)
                         value->swap(&var->value);
                     delete var;
-                    vEnv.remove(i, true);
+                    vEnv.qremove(i);
                     return STATUS_OK;
                 }
             }
@@ -435,7 +414,7 @@ namespace lsp
 
             for (size_t i=0, n=vEnv.size(); i<n; ++i)
             {
-                envvar_t *var = vEnv.at(i);
+                envvar_t *var = vEnv.uget(i);
                 if (var->name.equals(&k))
                 {
                     if (value != NULL)
@@ -446,7 +425,7 @@ namespace lsp
                         *value          = dup;
                     }
                     delete var;
-                    vEnv.remove(i, true);
+                    vEnv.qremove(i);
                     return STATUS_OK;
                 }
             }
@@ -467,15 +446,15 @@ namespace lsp
 
             for (size_t i=0, n=vEnv.size(); i<n; ++i)
             {
-                envvar_t *var = vEnv.at(i);
-                if (var->name.equals(&k))
-                {
-                    if (value != NULL)
-                        value->swap(&var->value);
-                    delete var;
-                    vEnv.remove(i, true);
-                    return STATUS_OK;
-                }
+                envvar_t *var = vEnv.uget(i);
+                if (!var->name.equals(&k))
+                    continue;
+
+                if (value != NULL)
+                    value->swap(&var->value);
+                delete var;
+                vEnv.qremove(i);
+                return STATUS_OK;
             }
 
             return STATUS_NOT_FOUND;
@@ -493,16 +472,16 @@ namespace lsp
 
             for (size_t i=0, n=vEnv.size(); i<n; ++i)
             {
-                envvar_t *var = vEnv.at(i);
-                if (var->name.equals(key))
+                envvar_t *var = vEnv.uget(i);
+                if (!var->name.equals(key))
+                    continue;
+
+                if (value != NULL)
                 {
-                    if (value != NULL)
-                    {
-                        if (!value->set(&var->value))
-                            return STATUS_NO_MEM;
-                    }
-                    return STATUS_OK;
+                    if (!value->set(&var->value))
+                        return STATUS_NO_MEM;
                 }
+                return STATUS_OK;
             }
 
             return STATUS_NOT_FOUND;
@@ -519,16 +498,16 @@ namespace lsp
 
             for (size_t i=0, n=vEnv.size(); i<n; ++i)
             {
-                envvar_t *var = vEnv.at(i);
-                if (var->name.equals(&k))
+                envvar_t *var = vEnv.uget(i);
+                if (!var->name.equals(&k))
+                    continue;
+
+                if (value != NULL)
                 {
-                    if (value != NULL)
-                    {
-                        if (!value->set(&var->value))
-                            return STATUS_NO_MEM;
-                    }
-                    return STATUS_OK;
+                    if (!value->set(&var->value))
+                        return STATUS_NO_MEM;
                 }
+                return STATUS_OK;
             }
 
             return STATUS_NOT_FOUND;
@@ -545,18 +524,18 @@ namespace lsp
 
             for (size_t i=0, n=vEnv.size(); i<n; ++i)
             {
-                envvar_t *var = vEnv.at(i);
-                if (var->name.equals(&k))
+                envvar_t *var = vEnv.uget(i);
+                if (!var->name.equals(&k))
+                    continue;
+
+                if (value != NULL)
                 {
-                    if (value != NULL)
-                    {
-                        char *dup       = var->value.clone_utf8();
-                        if (dup == NULL)
-                            return STATUS_NO_MEM;
-                        *value          = dup;
-                    }
-                    return STATUS_OK;
+                    char *dup       = var->value.clone_utf8();
+                    if (dup == NULL)
+                        return STATUS_NO_MEM;
+                    *value          = dup;
                 }
+                return STATUS_OK;
             }
 
             return STATUS_NOT_FOUND;
@@ -981,11 +960,11 @@ namespace lsp
             return pStdErr;
         }
 #else
-        static void drop_data(cvector<char> *v)
+        static void drop_data(lltl::parray<char> *v)
         {
             for (size_t i=0, n=v->size(); i<n; ++i)
             {
-                char *ptr = v->at(i);
+                char *ptr = v->uget(i);
                 if (ptr != NULL)
                     ::free(ptr);
             }
@@ -1011,7 +990,7 @@ namespace lsp
             }
         }
 
-        status_t Process::build_argv(cvector<char> *dst)
+        status_t Process::build_argv(lltl::parray<char> *dst)
         {
             char *s;
 
@@ -1024,7 +1003,7 @@ namespace lsp
             // Add all other arguments
             for (size_t i=0, n=vArgs.size(); i<n; ++i)
             {
-                LSPString *arg = vArgs.at(i);
+                LSPString *arg = vArgs.uget(i);
                 if (arg == NULL)
                     continue;
 
@@ -1038,17 +1017,17 @@ namespace lsp
             }
 
             // Add terminator
-            return (dst->add(NULL)) ? STATUS_OK : STATUS_NO_MEM;
+            return (dst->add(static_cast<char *>(NULL))) ? STATUS_OK : STATUS_NO_MEM;
         }
 
-        status_t Process::build_envp(cvector<char> *dst)
+        status_t Process::build_envp(lltl::parray<char> *dst)
         {
             char *s;
 
             LSPString tmp;
             for (size_t i=0, n=vEnv.size(); i<n; ++i)
             {
-                envvar_t *var = vEnv.at(i);
+                envvar_t *var = vEnv.uget(i);
                 if (var == NULL)
                     continue;
                 if (!tmp.set(&var->name))
@@ -1067,7 +1046,7 @@ namespace lsp
                     return STATUS_NO_MEM;
                 }
             }
-            return (dst->add(NULL)) ? STATUS_OK : STATUS_NO_MEM;
+            return (dst->add(static_cast<char *>(NULL))) ? STATUS_OK : STATUS_NO_MEM;
         }
 
         status_t Process::spawn_process(const char *cmd, char * const *argv, char * const *envp)
@@ -1269,7 +1248,7 @@ namespace lsp
                 return STATUS_NO_MEM;
 
             // Form argv
-            cvector<char> argv;
+            lltl::parray<char> argv;
             status_t res = build_argv(&argv);
             if (res != STATUS_OK)
             {
@@ -1279,23 +1258,23 @@ namespace lsp
             }
 
             // Form envp
-            cvector<char> envp;
+            lltl::parray<char> envp;
             res = build_envp(&envp);
             if (res == STATUS_OK)
             {
                 // Different behaviour, depending on POSIX_SPAWN_USEVFORK presence
                 #if defined(__USE_GNU) || defined(POSIX_SPAWN_USEVFORK)
-                    res    = spawn_process(cmd, argv.get_array(), envp.get_array());
+                    res    = spawn_process(cmd, argv.array(), envp.array());
                     if (res != STATUS_OK)
-                        res    = vfork_process(cmd, argv.get_array(), envp.get_array());
+                        res    = vfork_process(cmd, argv.array(), envp.array());
                 #else
-                    res    = vfork_process(cmd, argv.get_array(), envp.get_array());
+                    res    = vfork_process(cmd, argv.array(), envp.array());
                     if (res != STATUS_OK)
-                        res    = spawn_process(cmd, argv.get_array(), envp.get_array());
+                        res    = spawn_process(cmd, argv.array(), envp.array());
                 #endif /* __USE_GNU */
 
                 if (res != STATUS_OK)
-                    res    = fork_process(cmd, argv.get_array(), envp.get_array());
+                    res    = fork_process(cmd, argv.array(), envp.array());
             }
 
             // Close redirected file handles
@@ -1473,7 +1452,7 @@ namespace lsp
 
         status_t Process::copy_env()
         {
-            cvector<envvar_t> env;
+            lltl::parray<envvar_t> env;
             LSPString k, v;
 
         #ifdef PLATFORM_WINDOWS
@@ -1530,7 +1509,7 @@ namespace lsp
             } // for
 
             // Commit result
-            vEnv.swap_data(&env);
+            vEnv.swap(&env);
             destroy_env(&env);
 
             return STATUS_OK;

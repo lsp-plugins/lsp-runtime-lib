@@ -18,7 +18,7 @@
     #include <errno.h>
 #endif /* PLATFORM_UNIX_COMPATIBLE */
 
-#define BAD_FD      lsp_fhandle_t(-1)
+#define BAD_FD      fhandle_t(-1)
 
 namespace lsp
 {
@@ -148,7 +148,7 @@ namespace lsp
                     oflags     |= O_DIRECT;
             #endif /* __USE_GNU */
 
-            lsp_fhandle_t fd    = ::open(path->get_native(), oflags, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+            fhandle_t fd        = ::open(path->get_native(), oflags, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
             if (fd < 0)
             {
                 int code = errno;
@@ -185,7 +185,7 @@ namespace lsp
             return open(path->as_string(), mode);
         }
 
-        status_t NativeFile::wrap(lsp_fhandle_t fd, bool close)
+        status_t NativeFile::wrap(fhandle_t fd, bool close)
         {
             // Check state
             if (hFD != BAD_FD)
@@ -196,7 +196,7 @@ namespace lsp
             return set_error(STATUS_OK);
         }
 
-        status_t NativeFile::wrap(lsp_fhandle_t fd, size_t mode, bool close)
+        status_t NativeFile::wrap(fhandle_t fd, size_t mode, bool close)
         {
             // Check state
             if (hFD != BAD_FD)

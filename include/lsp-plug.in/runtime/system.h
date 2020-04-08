@@ -8,9 +8,10 @@
 #ifndef LSP_PLUG_IN_RUNTIME_SYSTEM_H_
 #define LSP_PLUG_IN_RUNTIME_SYSTEM_H_
 
+#include <lsp-plug.in/runtime/version.h>
+#include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
-#include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/io/Path.h>
 
 namespace lsp
