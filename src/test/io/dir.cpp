@@ -110,7 +110,7 @@ UTEST_BEGIN("runtime.io", dir)
         printf("Removing: %s\n", p.as_native());
         UTEST_ASSERT(io::File::remove(&p) == STATUS_IS_DIRECTORY);
         UTEST_ASSERT(io::Dir::remove(&p) == STATUS_OK);
-        UTEST_ASSERT(io::Dir::remove(&bp) == STATUS_NOT_EMPTY);
+        UTEST_ASSERT(io::Dir::remove(&bp) != STATUS_OK);
 
         // Recursively remove directory until we reach the base path
         UTEST_ASSERT(p.parent() == STATUS_OK);

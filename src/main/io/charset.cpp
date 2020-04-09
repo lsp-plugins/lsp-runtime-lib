@@ -5,6 +5,7 @@
  *      Author: sadko
  */
 
+#include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/common/endian.h>
 #include <lsp-plug.in/stdlib/string.h>
 #include <lsp-plug.in/stdlib/stdio.h>

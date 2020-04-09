@@ -102,7 +102,7 @@ namespace lsp
             if (mode & FM_DIRECT)
                 atts           |= FILE_FLAG_NO_BUFFERING;
 
-            lsp_fhandle_t fd = CreateFileW(path->get_utf16(), oflags, shflags, NULL, cmode, atts, NULL);
+            fhandle_t fd = CreateFileW(path->get_utf16(), oflags, shflags, NULL, cmode, atts, NULL);
             if (fd == INVALID_HANDLE_VALUE)
                 return set_error(STATUS_IO_ERROR);
 

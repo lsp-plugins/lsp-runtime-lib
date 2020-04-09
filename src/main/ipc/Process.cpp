@@ -709,7 +709,7 @@ namespace lsp
 
             for (size_t i=0, n=vArgs.size(); i<n; ++i)
             {
-                LSPString *arg = vArgs.at(i);
+                LSPString *arg = vArgs.uget(i);
                 if (!dst->append(' '))
                     return STATUS_NO_MEM;
                 res = append_arg_escaped(dst, arg);
@@ -724,7 +724,7 @@ namespace lsp
         {
             for (size_t i=0, n=vEnv.size(); i<n; ++i)
             {
-                envvar_t *env = vEnv.at(i);
+                envvar_t *env = vEnv.uget(i);
                 if (!dst->append(&env->name))
                     return STATUS_NO_MEM;
                 if (!dst->append('='))

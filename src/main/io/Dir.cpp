@@ -673,6 +673,8 @@ namespace lsp
                     return STATUS_NOT_FOUND;
                 case ERROR_DIR_NOT_EMPTY:
                     return STATUS_NOT_EMPTY;
+                case ERROR_SHARING_VIOLATION:
+                    return STATUS_PERMISSION_DENIED;
                 default:
                     return STATUS_IO_ERROR;
             }

@@ -241,7 +241,7 @@ namespace lsp
                 res = get_env_var("APPDATA", &upath);
                 if (res != STATUS_OK)
                 {
-                    res = get_home_directory(upath);
+                    res = get_home_directory(&upath);
                     if (res != STATUS_OK)
                         return res;
                     if (!upath.append_ascii(FILE_SEPARATOR_S ".config"))
