@@ -10,8 +10,8 @@ PROFILE                    := 0
 TRACE                      := 0
 
 include $(BASEDIR)/make/system.mk
-include $(BASEDIR)/make/tools.mk
 include $(BASEDIR)/project.mk
+include $(BASEDIR)/make/tools.mk
 include $(BASEDIR)/dependencies.mk
 
 DEPENDENCIES               += $(TEST_DEPENDENCIES)
