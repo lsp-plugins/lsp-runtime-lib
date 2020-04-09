@@ -16,7 +16,7 @@ static const status_t statuses[] =
     STATUS_OK, STATUS_NOT_FOUND, STATUS_BAD_ARGUMENTS, STATUS_CANCELLED
 };
 
-UTEST_BEGIN("core.ipc", executor)
+UTEST_BEGIN("runtime.ipc", executor)
 
     class TestTask: public ipc::ITask
     {

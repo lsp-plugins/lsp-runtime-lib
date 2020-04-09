@@ -212,7 +212,7 @@ namespace lsp
     };
 }
 
-UTEST_BEGIN("core.io", charset)
+UTEST_BEGIN("runtime.io", charset)
 
     void check_utf8_to_utfX()
     {

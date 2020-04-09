@@ -106,6 +106,7 @@ namespace lsp
         {
             for (size_t i=0, n=env->size(); i<n; ++i)
                 delete env->uget(i);
+            env->flush();
         }
 
         status_t Process::set_command(const LSPString *cmd)

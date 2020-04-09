@@ -10,7 +10,7 @@
 
 using namespace lsp;
 
-UTEST_BEGIN("core.ipc", thread)
+UTEST_BEGIN("runtime.ipc", thread)
     class TestThread: public ipc::Thread
     {
         private:

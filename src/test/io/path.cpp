@@ -80,7 +80,7 @@ static const char *cpaths[] =
     NULL, NULL
 };
 
-UTEST_BEGIN("core.io", path)
+UTEST_BEGIN("runtime.io", path)
 
 //    status_t    get_parent(char *path, size_t maxlen) const;
 //    status_t    set_parent(const char *path);

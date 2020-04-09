@@ -11,7 +11,7 @@
 
 using namespace lsp;
 
-UTEST_BEGIN("core.ipc", mutex)
+UTEST_BEGIN("runtime.ipc", mutex)
 
     status_t execute(int *shared, ipc::Mutex *mutex)
     {

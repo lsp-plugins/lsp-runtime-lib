@@ -14,7 +14,7 @@
 using namespace lsp;
 using namespace lsp::io;
 
-UTEST_BEGIN("core.io", file)
+UTEST_BEGIN("runtime.io", file)
 
     void testClosedFile(const char *label, File &fd)
     {
@@ -217,7 +217,7 @@ UTEST_BEGIN("core.io", file)
             printf("Testing %s...\n", label);
 
             LSPString path;
-            UTEST_ASSERT(path.fmt_utf8("tmp/utest-nonexisting-%s.tmp", full_name()));
+            UTEST_ASSERT(path.fmt_utf8("%s" FILE_SEPARATOR_S "utest-nonexisting-%s.tmp", tempdir(), full_name()));
 
             UTEST_ASSERT(fd.open(&path, File::FM_WRITE) != STATUS_OK);
             UTEST_ASSERT(fd.close() == STATUS_OK);
@@ -231,7 +231,7 @@ UTEST_BEGIN("core.io", file)
         StdioFile std_fd;
         NativeFile native_fd;
 
-        UTEST_ASSERT(path.fmt_utf8("tmp/utest-%s.tmp", full_name()));
+        UTEST_ASSERT(path.fmt_utf8("%s" FILE_SEPARATOR_S "utest-%s.tmp", tempdir(), full_name()));
 
         // Test closed files, all should fail the same way
         testClosedFile("test_closed_file (abstract)", none_fd);

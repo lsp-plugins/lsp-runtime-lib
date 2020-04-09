@@ -18,7 +18,7 @@
 using namespace lsp;
 using namespace lsp::io;
 
-UTEST_BEGIN("core.io", sequence)
+UTEST_BEGIN("runtime.io", sequence)
 
     void testDecodeFile(const LSPString *src, const LSPString *dst, const char *charset)
     {
@@ -132,13 +132,13 @@ UTEST_BEGIN("core.io", sequence)
         delete [] b2;
     }
 
-    void testFileCoding(const char *src, const char *charset)
+    void testFileCoding(const char *base, const char *src, const char *charset)
     {
         LSPString fenc, fdec, fsrc;
-        UTEST_ASSERT(fenc.fmt_utf8("tmp/utest-%s-encoded.tmp", full_name()));
-        UTEST_ASSERT(fdec.fmt_utf8("tmp/utest-%s-decoded.tmp", full_name()));
+        UTEST_ASSERT(fenc.fmt_utf8("%s" FILE_SEPARATOR_S "utest-%s-encoded.tmp", tempdir(), full_name()));
+        UTEST_ASSERT(fdec.fmt_utf8("%s" FILE_SEPARATOR_S "utest-%s-decoded.tmp", tempdir(), full_name()));
 
-        UTEST_ASSERT(fsrc.set_utf8(src));
+        UTEST_ASSERT(fsrc.fmt_utf8("%s" FILE_SEPARATOR_S "%s" FILE_SEPARATOR_S "%s", resources(), base, src));
         printf("Testing encoders on file %s...\n", fsrc.get_native());
         testDecodeFile(&fsrc, &fenc, charset);
         testEncodeFile(&fenc, &fdec, charset);
@@ -147,12 +147,14 @@ UTEST_BEGIN("core.io", sequence)
 
     UTEST_MAIN
     {
-        testFileCoding("res/test/io/iconv/01-de-utf16le.txt", "UTF-16LE");
-        testFileCoding("res/test/io/iconv/01-de-utf8.txt", "UTF-8");
-        testFileCoding("res/test/io/iconv/02-ja-utf16le.txt", "UTF-16LE");
-        testFileCoding("res/test/io/iconv/02-ja-utf8.txt", "UTF-8");
-        testFileCoding("res/test/io/iconv/03-ru-cp1251.txt", "CP1251");
-        testFileCoding("res/test/io/iconv/03-ru-utf16le.txt", "UTF-16LE");
-        testFileCoding("res/test/io/iconv/03-ru-utf8.txt", "UTF-8");
+        const char *base = "io" FILE_SEPARATOR_S "iconv";
+
+        testFileCoding(base, "01-de-utf16le.txt", "UTF-16LE");
+        testFileCoding(base, "01-de-utf8.txt", "UTF-8");
+        testFileCoding(base, "02-ja-utf16le.txt", "UTF-16LE");
+        testFileCoding(base, "02-ja-utf8.txt", "UTF-8");
+        testFileCoding(base, "03-ru-cp1251.txt", "CP1251");
+        testFileCoding(base, "03-ru-utf16le.txt", "UTF-16LE");
+        testFileCoding(base, "03-ru-utf8.txt", "UTF-8");
     }
 UTEST_END

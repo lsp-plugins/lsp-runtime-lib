@@ -14,7 +14,7 @@ using namespace lsp;
 
 #define ENV_VAR_NAME        "LSP_TEST_ENV_VAR"
 
-UTEST_BEGIN("core.ipc", process)
+UTEST_BEGIN("runtime.ipc", process)
     UTEST_TIMELIMIT(10)
 
     void test_envs(ipc::Process &p)

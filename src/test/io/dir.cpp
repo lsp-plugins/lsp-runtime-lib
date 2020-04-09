@@ -11,7 +11,7 @@
 
 using namespace lsp;
 
-UTEST_BEGIN("core.io", dir)
+UTEST_BEGIN("runtime.io", dir)
 
     void testReadDir(const char *dir, bool full)
     {
@@ -89,11 +89,13 @@ UTEST_BEGIN("core.io", dir)
             UTEST_ASSERT(p.current() == STATUS_OK);
             printf("Current path is: %s\n", p.as_native());
         }
+        else
+        {
+            UTEST_ASSERT(p.set(tempdir()) == STATUS_OK);
+            printf("Temporary path is: %s\n", p.as_native());
+        }
 
-        UTEST_ASSERT(p.append_child("tmp") == STATUS_OK);
         UTEST_ASSERT(bp.set(&p) == STATUS_OK)
-        printf("Temporary path is: %s\n", p.as_native());
-
         UTEST_ASSERT(p.append_child(full_name()) == STATUS_OK);
 
         printf("Creating directory: %s\n", p.as_native());
@@ -112,20 +114,30 @@ UTEST_BEGIN("core.io", dir)
 
         // Recursively remove directory until we reach the base path
         UTEST_ASSERT(p.parent() == STATUS_OK);
-        while (!p.equals(&bp))
+        do
         {
             printf("Removing: %s\n", p.as_native());
             UTEST_ASSERT(io::Dir::remove(&p) == STATUS_OK);
             UTEST_ASSERT(p.parent() == STATUS_OK);
-        }
+        } while (!p.equals(&bp));
     }
 
     UTEST_MAIN
     {
-        testReadDir("res/test/io/iconv", false);
-        testReadDir("res/test/io/iconv", true);
-        testCreateDir("some/long/path", true);
-        testCreateDir("another/long/path", false);
+        char path[PATH_MAX];
+        char c = FILE_SEPARATOR_C;
+
+        ::sprintf(path, "%s" "%c" "io" "%c" "iconv",
+                resources(), c, c);
+
+        testReadDir(path, false);
+        testReadDir(path, true);
+
+        ::sprintf(path, "some" "%c" "long" "%c" "path", c, c);
+        testCreateDir(path, true);
+
+        ::sprintf(path, "another" "%c" "long" "%c" "path", c, c);
+        testCreateDir(path, false);
     }
 
 UTEST_END
