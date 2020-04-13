@@ -1621,7 +1621,7 @@ namespace lsp
         }
 
         // Set encoded utf-16 values
-        bool res = set_utf16(buf, slen >> 1);
+        bool res = set_utf16(buf, slen);
         free(buf);
 
         return res;
