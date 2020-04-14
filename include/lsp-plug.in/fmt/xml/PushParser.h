@@ -8,6 +8,7 @@
 #ifndef LSP_PLUG_IN_FMT_XML_PUSHPARSER_H_
 #define LSP_PLUG_IN_FMT_XML_PUSHPARSER_H_
 
+#include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/fmt/xml/PullParser.h>
 #include <lsp-plug.in/fmt/xml/IXMLHandler.h>
 #include <lsp-plug.in/lltl/parray.h>

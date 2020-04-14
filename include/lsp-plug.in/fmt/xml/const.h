@@ -8,6 +8,7 @@
 #ifndef LSP_PLUG_IN_FMT_XML_CONST_H_
 #define LSP_PLUG_IN_FMT_XML_CONST_H_
 
+#include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/common/types.h>
 
 namespace lsp

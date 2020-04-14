@@ -8,6 +8,7 @@
 #ifndef LSP_PLUG_IN_FMT_JSON_TOKENIZER_H_
 #define LSP_PLUG_IN_FMT_JSON_TOKENIZER_H_
 
+#include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/io/IInSequence.h>
 #include <lsp-plug.in/fmt/json/token.h>

@@ -8,6 +8,7 @@
 #ifndef LSP_PLUG_IN_FMT_JSON_SERIALIZER_H_
 #define LSP_PLUG_IN_FMT_JSON_SERIALIZER_H_
 
+#include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/io/IOutStream.h>
 #include <lsp-plug.in/io/IOutSequence.h>
