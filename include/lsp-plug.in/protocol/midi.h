@@ -25,11 +25,10 @@ namespace lsp
             union
             {
                 uint8_t         bparams[2];     // Byte parameters
-                uint16_t        wparam;         // Word parameter
 
                 struct
                 {
-                    uint8_t         pitch;           // Note key
+                    uint8_t         pitch;         // Note key
                     uint8_t         velocity;      // Note velocity
                 } note;
 
@@ -39,8 +38,18 @@ namespace lsp
                     uint8_t         value;         // Value
                 } ctl;
 
+                struct
+                {
+                    uint8_t         pitch;          // Note key
+                    uint8_t         pressure;       // Note pressure
+                } atouch;
+
+                struct
+                {
+                    uint8_t         pressure;        // Channel pressure
+                } chn;
+
                 uint8_t         program;         // program
-                uint8_t         aftertouch;      // pressure
                 uint16_t        bend;
 
                 struct

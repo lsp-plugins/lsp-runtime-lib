@@ -1,269 +1,115 @@
 /*
  * midi.cpp
  *
- *  Created on: 14 марта 2016 г.
+ *  Created on: 14 апр. 2020 г.
  *      Author: sadko
  */
 
-#include <lsp-plug.in/common/status.h>
+#include <lsp-plug.in/test-fw/utest.h>
+#include <lsp-plug.in/test-fw/helpers.h>
 #include <lsp-plug.in/protocol/midi.h>
-
-#include <stdlib.h>
 
 namespace lsp
 {
-    namespace midi
+    static const uint8_t message[]=
     {
-        static size_t decode_system_message(event_t *ev, const uint8_t *b)
-        {
-            ssize_t size;
-
-            switch (b[0])
-            {
-                case MIDI_MSG_SYSTEM_EXCLUSIVE: // TODO
-                    return -STATUS_NOT_IMPLEMENTED;
-
-                case MIDI_MSG_MTC_QUARTER:
-                    if ((b[1]) & 0x80)
-                        return -STATUS_CORRUPTED;
-                    if ((b[2]) & 0x80)
-                        return -STATUS_CORRUPTED;
-                    ev->mtc.type            = b[1] >> 4;
-                    ev->mtc.value           = b[1] & 0x0f;
-                    size                    = 3;
-                    break;
-
-                case MIDI_MSG_SONG_POS:
-                    if ((b[1]) & 0x80)
-                        return -STATUS_CORRUPTED;
-                    if ((b[2]) & 0x80)
-                        return -STATUS_CORRUPTED;
-                    ev->wparam              = uint16_t(b[1] << 7) | uint16_t(b[2]);
-                    size                    = 3;
-                    break;
-
-                case MIDI_MSG_SONG_SELECT:
-                    if ((b[1]) & 0x80)
-                        return -STATUS_CORRUPTED;
-                    ev->song                = b[1];
-                    ev->bparams[1]          = 0;
-                    size                    = 2;
-                    break;
-
-                case MIDI_MSG_TUNE_REQUEST:
-                case MIDI_MSG_END_EXCLUSIVE:
-                case MIDI_MSG_CLOCK:
-                case MIDI_MSG_START:
-                case MIDI_MSG_CONTINUE:
-                case MIDI_MSG_STOP:
-                case MIDI_MSG_ACTIVE_SENSING:
-                case MIDI_MSG_RESET:
-                    ev->bparams[0]          = 0;
-                    ev->bparams[1]          = 0;
-                    size                    = 1;
-                    break;
-
-                default:
-                    return -STATUS_BAD_FORMAT;
-            }
-
-            ev->timestamp           = 0;
-            ev->type                = b[0];
-            ev->channel             = 0;
-
-            return size;
-        }
-
-        ssize_t decode(event_t *ev, const uint8_t *b)
-        {
-            ssize_t size;
-            if (!((b[0]) & 0x80))
-                return - STATUS_CORRUPTED;
-
-            switch ((b[0]) & 0xf0)
-            {
-                case MIDI_MSG_NOTE_OFF:
-                case MIDI_MSG_NOTE_ON:
-                case MIDI_MSG_NOTE_PRESSURE:
-                case MIDI_MSG_NOTE_CONTROLLER:
-                case MIDI_MSG_PROGRAM_CHANGE:
-                case MIDI_MSG_CHANNEL_PRESSURE:
-                    if ((b[1]) & 0x80)
-                        return -STATUS_CORRUPTED;
-                    if ((b[2]) & 0x80)
-                        return -STATUS_CORRUPTED;
-                    ev->bparams[0]          = b[1];
-                    ev->bparams[1]          = b[2];
-                    size                    = 3;
-                    break;
-
-                case MIDI_MSG_PITCH_BEND:
-                    if ((b[1]) & 0x80)
-                        return -STATUS_CORRUPTED;
-                    if ((b[2]) & 0x80)
-                        return -STATUS_CORRUPTED;
-                    ev->bend                = uint16_t(b[1] << 7) | uint16_t(b[2]);
-                    size                    = 3;
-                    break;
-
-                case MIDI_MSG_SYSTEM_EXCLUSIVE:
-                    return decode_system_message(ev, b);
-
-                default:
-                    return -STATUS_CORRUPTED;
-            }
-
-            ev->timestamp           = 0;
-            ev->type                = b[0] & 0xf0;
-            ev->channel             = b[0] & 0x0f;
-
-            return size;
-        }
-
-        ssize_t encode(uint8_t *bytes, const event_t *ev)
-        {
-            if (!(ev->type & 0x80))
-                return -STATUS_BAD_FORMAT;
-
-            switch (ev->type)
-            {
-                case MIDI_MSG_NOTE_OFF:
-                case MIDI_MSG_NOTE_ON:
-                case MIDI_MSG_NOTE_PRESSURE:
-                case MIDI_MSG_NOTE_CONTROLLER:
-                case MIDI_MSG_PROGRAM_CHANGE:
-                case MIDI_MSG_CHANNEL_PRESSURE:
-                    if (ev->channel >= 0x10)
-                        return -STATUS_BAD_FORMAT;
-                    if (ev->bparams[0] >= 0x80)
-                        return -STATUS_BAD_FORMAT;
-                    if (ev->bparams[0] >= 0x80)
-                        return -STATUS_BAD_FORMAT;
-                    bytes[0]    = ev->type | ev->channel;
-                    bytes[1]    = ev->bparams[0];
-                    bytes[2]    = ev->bparams[1];
-                    return 3;
-
-                case MIDI_MSG_PITCH_BEND:
-                    if (ev->channel >= 0x10)
-                        return -STATUS_BAD_FORMAT;
-                    if (ev->bend >= 0x4000)
-                        return -STATUS_BAD_FORMAT;
-                    bytes[0]    = ev->type | ev->channel;
-                    bytes[1]    = ev->bend >> 7;
-                    bytes[2]    = ev->bend & 0x7f;
-                    return 3;
-
-                case MIDI_MSG_SYSTEM_EXCLUSIVE: // TODO
-                    return -STATUS_NOT_IMPLEMENTED;
-
-                case MIDI_MSG_MTC_QUARTER:
-                    if (ev->mtc.type >= 0x08)
-                        return -STATUS_BAD_FORMAT;
-                    if (ev->mtc.value >= 0x10)
-                        return -STATUS_BAD_FORMAT;
-                    bytes[0]    = ev->type;
-                    bytes[1]    = (ev->mtc.type << 4) | (ev->mtc.value);
-                    return 2;
-
-                case MIDI_MSG_SONG_POS:
-                    if (ev->wparam >= 0x4000)
-                        return -STATUS_BAD_FORMAT;
-                    bytes[0]    = ev->type;
-                    bytes[1]    = ev->wparam >> 7;
-                    bytes[2]    = ev->wparam & 0x7f;
-                    return 3;
-
-                case MIDI_MSG_SONG_SELECT:
-                    if (ev->song >= 0x80)
-                        return -STATUS_BAD_FORMAT;
-                    bytes[0]    = ev->type;
-                    bytes[1]    = ev->song;
-                    return 2;
-
-                case MIDI_MSG_TUNE_REQUEST:
-                case MIDI_MSG_END_EXCLUSIVE:
-                case MIDI_MSG_CLOCK:
-                case MIDI_MSG_START:
-                case MIDI_MSG_CONTINUE:
-                case MIDI_MSG_STOP:
-                case MIDI_MSG_ACTIVE_SENSING:
-                case MIDI_MSG_RESET:
-                    bytes[0]    = ev->type;
-                    return 1;
-
-                default:
-                    return -STATUS_BAD_FORMAT;
-            }
-
-            return -STATUS_BAD_FORMAT;
-        }
-
-        ssize_t size_of(const event_t *ev)
-        {
-            if (!(ev->type & 0x80))
-                return -STATUS_BAD_FORMAT;
-
-            switch (ev->type)
-            {
-                case MIDI_MSG_NOTE_OFF:
-                case MIDI_MSG_NOTE_ON:
-                case MIDI_MSG_NOTE_PRESSURE:
-                case MIDI_MSG_NOTE_CONTROLLER:
-                case MIDI_MSG_PROGRAM_CHANGE:
-                case MIDI_MSG_CHANNEL_PRESSURE:
-                    if (ev->channel >= 0x10)
-                        return -STATUS_BAD_FORMAT;
-                    if (ev->bparams[0] >= 0x80)
-                        return -STATUS_BAD_FORMAT;
-                    if (ev->bparams[0] >= 0x80)
-                        return -STATUS_BAD_FORMAT;
-                    return 3;
-
-                case MIDI_MSG_PITCH_BEND:
-                    if (ev->channel >= 0x10)
-                        return -STATUS_BAD_FORMAT;
-                    if (ev->bend >= 0x4000)
-                        return -STATUS_BAD_FORMAT;
-                    return 3;
-
-                case MIDI_MSG_SYSTEM_EXCLUSIVE: // TODO
-                    return -STATUS_NOT_IMPLEMENTED;
-
-                case MIDI_MSG_MTC_QUARTER:
-                    if (ev->mtc.type >= 0x08)
-                        return -STATUS_BAD_FORMAT;
-                    if (ev->mtc.value >= 0x10)
-                        return -STATUS_BAD_FORMAT;
-                    return 2;
-
-                case MIDI_MSG_SONG_POS:
-                    if (ev->wparam >= 0x4000)
-                        return -STATUS_BAD_FORMAT;
-                    return 3;
-
-                case MIDI_MSG_SONG_SELECT:
-                    if (ev->song >= 0x80)
-                        return -STATUS_BAD_FORMAT;
-                    return 2;
-
-                case MIDI_MSG_TUNE_REQUEST:
-                case MIDI_MSG_END_EXCLUSIVE:
-                case MIDI_MSG_CLOCK:
-                case MIDI_MSG_START:
-                case MIDI_MSG_CONTINUE:
-                case MIDI_MSG_STOP:
-                case MIDI_MSG_ACTIVE_SENSING:
-                case MIDI_MSG_RESET:
-                    return 1;
-
-                default:
-                    return -STATUS_BAD_FORMAT;
-            }
-
-            return -STATUS_BAD_FORMAT;
-        }
-    }
+        0x9c, 0x3e, 0x3c,   // Note on: channel = 0x0c, note = 0x3e, velocity = 0x3c
+        0x83, 0x5a, 0x45,   // Note off: channel = 0x03, note = 0x5a, velocity = 0x45
+        0xb2, 0x08, 0x7f,   // Controller: channel = 0x02, balance msb = 0x7f
+        0xb2, 0x28, 0x7e,   // Controller: channel = 0x02, balance lsb = 0x7e
+        0xb4, 0x40, 0x0f,   // Controller: channel = 0x04, sustain = 0x0f
+        0xf1, 0x5c,         // MTC Quarter: type = 0x05, value = 0x0c
+        0xae, 0x40, 0x44,   // Aftertourch: channel = 0x0e, note = 0x40, velocity = 0x44
+        0xc3, 0x63,         // Program change: channel = 0x03, program = 0x63
+        0xd8, 0x55,         // Channel pressure: channel = 0x08, pressure = 0x55
+        0xe7, 0x3c, 0x22,   // Pitch bend: channel = 0x07, bend = 0x113c
+        0xf2, 0x1e, 0x22,   // Song position select: position = 0x111e
+        0xf3, 0x42,         // Song select: song = 0x42
+        0xf8,               // MIDI Clock
+        0x00                // Invalid message
+    };
 }
+
+UTEST_BEGIN("runtime.protocol", midi)
+    void test_decode()
+    {
+        midi::event_t ev;
+        const uint8_t *b = message;
+
+        UTEST_ASSERT(midi::decode(&ev, b) == 3);
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_NOTE_ON))
+        UTEST_ASSERT((ev.channel == 0x0c) && (ev.note.pitch == 0x3e) && (ev.note.velocity == 0x3c));
+        b += 3;
+
+        UTEST_ASSERT(midi::decode(&ev, b) == 3);
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_NOTE_OFF))
+        UTEST_ASSERT((ev.channel == 0x03) && (ev.note.pitch == 0x5a) && (ev.note.velocity == 0x45));
+        b += 3;
+
+        UTEST_ASSERT(midi::decode(&ev, b) == 3);
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_NOTE_CONTROLLER))
+        UTEST_ASSERT((ev.channel == 0x02) && (ev.ctl.control == midi::MIDI_CTL_MSB_BALANCE) && (ev.ctl.value == 0x7f));
+        b += 3;
+
+        UTEST_ASSERT(midi::decode(&ev, b) == 3);
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_NOTE_CONTROLLER))
+        UTEST_ASSERT((ev.channel == 0x02) && (ev.ctl.control == midi::MIDI_CTL_LSB_BALANCE) && (ev.ctl.value == 0x7e));
+        b += 3;
+
+        UTEST_ASSERT(midi::decode(&ev, b) == 3);
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_NOTE_CONTROLLER))
+        UTEST_ASSERT((ev.channel == 0x04) && (ev.ctl.control == midi::MIDI_CTL_SUSTAIN) && (ev.ctl.value == 0x0f));
+        b += 3;
+
+        UTEST_ASSERT(midi::decode(&ev, b) == 2);
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_MTC_QUARTER))
+        UTEST_ASSERT((ev.mtc.type == 0x05) && (ev.mtc.value == 0x0c));
+        b += 2;
+
+        UTEST_ASSERT(midi::decode(&ev, b) == 3);
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_NOTE_PRESSURE))
+        UTEST_ASSERT((ev.channel == 0x0e) && (ev.atouch.pitch == 0x40) && (ev.atouch.pressure = 0x44));
+        b += 3;
+
+        UTEST_ASSERT(midi::decode(&ev, b) == 2);
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_PROGRAM_CHANGE))
+        UTEST_ASSERT((ev.channel == 0x03) && (ev.program == 0x63));
+        b += 2;
+
+        UTEST_ASSERT(midi::decode(&ev, b) == 2);
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_CHANNEL_PRESSURE))
+        UTEST_ASSERT((ev.channel == 0x08) && (ev.chn.pressure = 0x55));
+        b += 2;
+
+        UTEST_ASSERT(midi::decode(&ev, b) == 3);
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_PITCH_BEND))
+        UTEST_ASSERT((ev.channel == 0x07) && (ev.bend = 0x113c));
+        b += 3;
+
+        UTEST_ASSERT(midi::decode(&ev, b) == 3);
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_SONG_POS))
+        UTEST_ASSERT((ev.beats = 0x111e));
+        b += 3;
+
+        UTEST_ASSERT(midi::decode(&ev, b) == 2);
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_SONG_SELECT))
+        UTEST_ASSERT((ev.song = 0x42));
+        b += 2;
+
+        UTEST_ASSERT(midi::decode(&ev, b) == 1);
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_CLOCK))
+        b += 1;
+
+        UTEST_ASSERT(midi::decode(&ev, b) == -STATUS_CORRUPTED);
+    }
+
+    UTEST_MAIN
+    {
+        #define CALL(v) printf("Executing " #v "...\n"); v();
+
+        CALL(test_decode);
+    }
+UTEST_END;
+
 
 
