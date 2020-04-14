@@ -7,6 +7,7 @@
 
 #include <lsp-plug.in/test-fw/utest.h>
 #include <lsp-plug.in/test-fw/helpers.h>
+#include <lsp-plug.in/test-fw/ByteBuffer.h>
 #include <lsp-plug.in/protocol/midi.h>
 
 namespace lsp
@@ -103,11 +104,123 @@ UTEST_BEGIN("runtime.protocol", midi)
         UTEST_ASSERT(midi::decode(&ev, b) == -STATUS_CORRUPTED);
     }
 
+    void test_encode()
+    {
+        uint8_t buf[0x100];
+
+        midi::event_t ev;
+        uint8_t *b = buf;
+
+        ev.type             = midi::MIDI_MSG_NOTE_ON;
+        ev.channel          = 0x0c;
+        ev.note.pitch       = 0x3e;
+        ev.note.velocity    = 0x3c;
+        UTEST_ASSERT(midi::size_of(&ev) == 3);
+        UTEST_ASSERT(midi::encode(b, &ev) == 3);
+        b += 3;
+
+        ev.type             = midi::MIDI_MSG_NOTE_OFF;
+        ev.channel          = 0x03;
+        ev.note.pitch       = 0x5a;
+        ev.note.velocity    = 0x45;
+        UTEST_ASSERT(midi::size_of(&ev) == 3);
+        UTEST_ASSERT(midi::encode(b, &ev) == 3);
+        b += 3;
+
+        ev.type             = midi::MIDI_MSG_NOTE_CONTROLLER;
+        ev.channel          = 0x02;
+        ev.ctl.control      = midi::MIDI_CTL_MSB_BALANCE;
+        ev.ctl.value        = 0x7f;
+        UTEST_ASSERT(midi::size_of(&ev) == 3);
+        UTEST_ASSERT(midi::encode(b, &ev) == 3);
+        b += 3;
+
+        ev.type             = midi::MIDI_MSG_NOTE_CONTROLLER;
+        ev.channel          = 0x02;
+        ev.ctl.control      = midi::MIDI_CTL_LSB_BALANCE;
+        ev.ctl.value        = 0x7e;
+        UTEST_ASSERT(midi::size_of(&ev) == 3);
+        UTEST_ASSERT(midi::encode(b, &ev) == 3);
+        b += 3;
+
+        ev.type             = midi::MIDI_MSG_NOTE_CONTROLLER;
+        ev.channel          = 0x04;
+        ev.ctl.control      = midi::MIDI_CTL_SUSTAIN;
+        ev.ctl.value        = 0x0f;
+        UTEST_ASSERT(midi::size_of(&ev) == 3);
+        UTEST_ASSERT(midi::encode(b, &ev) == 3);
+        b += 3;
+
+        ev.type             = midi::MIDI_MSG_MTC_QUARTER;
+        ev.mtc.type         = 0x05;
+        ev.mtc.value        = 0x0c;
+        UTEST_ASSERT(midi::size_of(&ev) == 2);
+        UTEST_ASSERT(midi::encode(b, &ev) == 2);
+        b += 2;
+
+        ev.type             = midi::MIDI_MSG_NOTE_PRESSURE;
+        ev.channel          = 0x0e;
+        ev.atouch.pitch     = 0x40;
+        ev.atouch.pressure  = 0x44;
+        UTEST_ASSERT(midi::size_of(&ev) == 3);
+        UTEST_ASSERT(midi::encode(b, &ev) == 3);
+        b += 3;
+
+        ev.type             = midi::MIDI_MSG_PROGRAM_CHANGE;
+        ev.channel          = 0x03;
+        ev.program          = 0x63;
+        UTEST_ASSERT(midi::size_of(&ev) == 2);
+        UTEST_ASSERT(midi::encode(b, &ev) == 2);
+        b += 2;
+
+        ev.type             = midi::MIDI_MSG_CHANNEL_PRESSURE;
+        ev.channel          = 0x08;
+        ev.chn.pressure     = 0x55;
+        UTEST_ASSERT(midi::size_of(&ev) == 2);
+        UTEST_ASSERT(midi::encode(b, &ev) == 2);
+        b += 2;
+
+        ev.type             = midi::MIDI_MSG_PITCH_BEND;
+        ev.channel          = 0x07;
+        ev.bend             = 0x113c;
+        UTEST_ASSERT(midi::size_of(&ev) == 3);
+        UTEST_ASSERT(midi::encode(b, &ev) == 3);
+        b += 3;
+
+        ev.type             = midi::MIDI_MSG_SONG_POS;
+        ev.beats            = 0x111e;
+        UTEST_ASSERT(midi::size_of(&ev) == 3);
+        UTEST_ASSERT(midi::encode(b, &ev) == 3);
+        b += 3;
+
+        ev.type             = midi::MIDI_MSG_SONG_SELECT;
+        ev.song             = 0x42;
+        UTEST_ASSERT(midi::size_of(&ev) == 2);
+        UTEST_ASSERT(midi::encode(b, &ev) == 2);
+        b += 2;
+
+        ev.type             = midi::MIDI_MSG_CLOCK;
+        UTEST_ASSERT(midi::size_of(&ev) == 1);
+        UTEST_ASSERT(midi::encode(b, &ev) == 1);
+        b += 1;
+
+        if (::memcmp(buf, message, b-buf) != 0)
+        {
+            ByteBuffer b1(message, b-buf);
+            ByteBuffer b2(buf, b-buf);
+
+            b1.dump("msg");
+            b2.dump("buf");
+            UTEST_FAIL_MSG("Failed comparison of byte buffers");
+        }
+    }
+
     UTEST_MAIN
     {
         #define CALL(v) printf("Executing " #v "...\n"); v();
 
         CALL(test_decode);
+        CALL(test_encode);
     }
 UTEST_END;
 

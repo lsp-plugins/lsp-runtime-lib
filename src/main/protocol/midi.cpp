@@ -213,8 +213,8 @@ namespace lsp
                     if (ev->bend >= 0x4000)
                         return -STATUS_BAD_FORMAT;
                     bytes[0]    = ev->type | ev->channel;
-                    bytes[1]    = ev->bend >> 7;
-                    bytes[2]    = ev->bend & 0x7f;
+                    bytes[1]    = ev->bend & 0x7f;
+                    bytes[2]    = ev->bend >> 7;
                     return 3;
 
                 case MIDI_MSG_SYSTEM_EXCLUSIVE: // TODO
