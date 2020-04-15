@@ -546,7 +546,7 @@ namespace lsp
             uint8_t x[4];
             size_t n        = midi::encode(x, event);
             if (n < 0)
-                return STATUS_BAD_ARGUMENTS;
+                return -n;
             return forge_parameter(ref, FPT_MIDI_MESSAGE, &x, n);
         }
 

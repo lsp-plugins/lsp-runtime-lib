@@ -64,7 +64,7 @@ namespace lsp
         } event_t;
     #pragma pack(pop)
 
-        enum midi_message_t
+        enum message_t
         {
             MIDI_MSG_NOTE_OFF               = 0x80,
             MIDI_MSG_NOTE_ON                = 0x90,
@@ -87,7 +87,7 @@ namespace lsp
             MIDI_MSG_RESET                  = 0xff
         };
 
-        enum midi_controller_t
+        enum controller_t
         {
             MIDI_CTL_MSB_BANK               = 0x00,
             MIDI_CTL_MSB_MODWHEEL           = 0x01,
