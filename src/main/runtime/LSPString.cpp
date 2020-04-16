@@ -6,6 +6,7 @@
  */
 
 #include <lsp-plug.in/common/types.h>
+#include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/stdlib/stdio.h>
 #include <lsp-plug.in/stdlib/string.h>
@@ -2073,194 +2074,191 @@ namespace lsp
         return n;
     }
 
-    bool LSPString::fmt_append_native(const char *fmt...)
+    ssize_t LSPString::fmt_append_native(const char *fmt...)
     {
         LSPString tmp;
         va_list vl;
-
         va_start(vl, fmt);
-        bool res = tmp.vfmt_native(fmt, vl);
+        ssize_t res = tmp.vfmt_native(fmt, vl);
         va_end(vl);
-        if (res)
-            res = append(&tmp);
-        return res;
+        if (res < 0)
+            return -res;
+        return (append(&tmp)) ? res : -STATUS_NO_MEM;
     }
 
-    bool LSPString::fmt_preend_native(const char *fmt...)
+    ssize_t LSPString::fmt_preend_native(const char *fmt...)
     {
         LSPString tmp;
         va_list vl;
-
         va_start(vl, fmt);
-        bool res = tmp.vfmt_native(fmt, vl);
+        ssize_t res = tmp.vfmt_native(fmt, vl);
         va_end(vl);
-        if (res)
-            res = prepend(&tmp);
-        return res;
+        if (res < 0)
+            return res;
+        return (prepend(&tmp)) ? res : -STATUS_NO_MEM;
     }
 
-    bool LSPString::fmt_native(const char *fmt...)
+    ssize_t LSPString::fmt_native(const char *fmt...)
     {
         va_list vl;
         va_start(vl, fmt);
-        bool res = vfmt_native(fmt, vl);
+        ssize_t res = vfmt_native(fmt, vl);
         va_end(vl);
-
         return res;
     }
 
-    bool LSPString::vfmt_append_native(const char *fmt, va_list args)
+    ssize_t LSPString::vfmt_append_native(const char *fmt, va_list args)
     {
         LSPString tmp;
-        if (!tmp.vfmt_native(fmt, args))
-            return false;
-        return append(&tmp);
+        ssize_t res = tmp.vfmt_native(fmt, args);
+        if (res < 0)
+            return res;
+        return (append(&tmp)) ? res : -STATUS_NO_MEM;
     }
 
-    bool LSPString::vfmt_preend_native(const char *fmt, va_list args)
+    ssize_t LSPString::vfmt_preend_native(const char *fmt, va_list args)
     {
         LSPString tmp;
-        if (!tmp.vfmt_native(fmt, args))
-            return false;
-        return prepend(&tmp);
+        ssize_t res = tmp.vfmt_native(fmt, args);
+        if (res < 0)
+            return res;
+        return (prepend(&tmp)) ? res : -STATUS_NO_MEM;
     }
 
-    bool LSPString::vfmt_native(const char *fmt, va_list args)
+    ssize_t LSPString::vfmt_native(const char *fmt, va_list args)
     {
         char *ptr = NULL;
-        int count = vasprintf(&ptr, fmt, args);
-        if (ptr == NULL)
-            return false;
-
-        bool res = set_native(ptr, count);
+        ssize_t res = vasprintf(&ptr, fmt, args);
+        if ((ptr == NULL) || (res < 0))
+            return -STATUS_NO_MEM;
+        if (!set_native(ptr, res))
+            res     = -STATUS_NO_MEM;
         free(ptr);
         return res;
     }
 
-    bool LSPString::fmt_append_ascii(const char *fmt...)
+    ssize_t LSPString::fmt_append_ascii(const char *fmt...)
     {
         LSPString tmp;
         va_list vl;
-
         va_start(vl, fmt);
-        bool res = tmp.vfmt_ascii(fmt, vl);
+        ssize_t res = tmp.vfmt_ascii(fmt, vl);
         va_end(vl);
-        if (res)
-            res = append(&tmp);
-        return res;
+        if (res < 0)
+            return res;
+        return (append(&tmp)) ? res : -STATUS_NO_MEM;
     }
 
-    bool LSPString::fmt_prepend_ascii(const char *fmt...)
+    ssize_t LSPString::fmt_prepend_ascii(const char *fmt...)
     {
         LSPString tmp;
         va_list vl;
-
         va_start(vl, fmt);
-        bool res = tmp.vfmt_ascii(fmt, vl);
+        ssize_t res = tmp.vfmt_ascii(fmt, vl);
         va_end(vl);
-        if (res)
-            res = prepend(&tmp);
-        return res;
+        if (res < 0)
+            return res;
+        return (prepend(&tmp)) ? res : -STATUS_NO_MEM;
     }
 
-    bool LSPString::fmt_ascii(const char *fmt...)
+    ssize_t LSPString::fmt_ascii(const char *fmt...)
     {
         va_list vl;
         va_start(vl, fmt);
-        bool res = vfmt_ascii(fmt, vl);
+        ssize_t res = vfmt_ascii(fmt, vl);
         va_end(vl);
-
         return res;
     }
 
-    bool LSPString::vfmt_append_ascii(const char *fmt, va_list args)
+    ssize_t LSPString::vfmt_append_ascii(const char *fmt, va_list args)
     {
         LSPString tmp;
-        if (!tmp.vfmt_ascii(fmt, args))
-            return false;
-        return append(&tmp);
+        ssize_t res = tmp.vfmt_ascii(fmt, args);
+        if (res < 0)
+            return res;
+        return (append(&tmp)) ? res : -STATUS_NO_MEM;
     }
 
-    bool LSPString::vfmt_prepend_ascii(const char *fmt, va_list args)
+    ssize_t LSPString::vfmt_prepend_ascii(const char *fmt, va_list args)
     {
         LSPString tmp;
-        if (!tmp.vfmt_ascii(fmt, args))
-            return false;
-        return prepend(&tmp);
+        ssize_t res = tmp.vfmt_ascii(fmt, args);
+        if (res < 0)
+            return res;
+        return (prepend(&tmp)) ? res : -STATUS_NO_MEM;
     }
 
-    bool LSPString::vfmt_ascii(const char *fmt, va_list args)
+    ssize_t LSPString::vfmt_ascii(const char *fmt, va_list args)
     {
         char *ptr = NULL;
-        int count = vasprintf(&ptr, fmt, args);
-        if (ptr == NULL)
-            return false;
-
-        bool res = set_ascii(ptr, count);
+        ssize_t res = vasprintf(&ptr, fmt, args);
+        if ((ptr == NULL) || (res < 0))
+            return -STATUS_NO_MEM;
+        if (!set_ascii(ptr, res))
+            res     = -STATUS_NO_MEM;
         free(ptr);
         return res;
     }
 
-    bool LSPString::fmt_append_utf8(const char *fmt...)
+    ssize_t LSPString::fmt_append_utf8(const char *fmt...)
     {
         LSPString tmp;
         va_list vl;
-
         va_start(vl, fmt);
-        bool res = tmp.vfmt_utf8(fmt, vl);
+        ssize_t res = tmp.vfmt_utf8(fmt, vl);
         va_end(vl);
-        if (res)
-            res = append(&tmp);
-        return res;
+        if (res < 0)
+            return res;
+        return (append(&tmp)) ? res : -STATUS_NO_MEM;
     }
 
-    bool LSPString::fmt_prepend_utf8(const char *fmt...)
+    ssize_t LSPString::fmt_prepend_utf8(const char *fmt...)
     {
         LSPString tmp;
         va_list vl;
-
         va_start(vl, fmt);
-        bool res = tmp.vfmt_utf8(fmt, vl);
+        ssize_t res = tmp.vfmt_utf8(fmt, vl);
         va_end(vl);
-        if (res)
-            res = prepend(&tmp);
-        return res;
+        if (res < 0)
+            return res;
+        return (prepend(&tmp)) ? res : -STATUS_NO_MEM;
     }
 
-    bool LSPString::fmt_utf8(const char *fmt...)
+    ssize_t LSPString::fmt_utf8(const char *fmt...)
     {
         va_list vl;
         va_start(vl, fmt);
-        bool res = vfmt_utf8(fmt, vl);
+        ssize_t res = vfmt_utf8(fmt, vl);
         va_end(vl);
-
         return res;
     }
 
-    bool LSPString::vfmt_append_utf8(const char *fmt, va_list args)
+    ssize_t LSPString::vfmt_append_utf8(const char *fmt, va_list args)
     {
         LSPString tmp;
-        if (!tmp.vfmt_utf8(fmt, args))
-            return false;
-        return append(&tmp);
+        ssize_t res = tmp.vfmt_utf8(fmt, args);
+        if (res < 0)
+            return res;
+        return (append(&tmp)) ? res : -STATUS_NO_MEM;
     }
 
-    bool LSPString::vfmt_prepend_utf8(const char *fmt, va_list args)
+    ssize_t LSPString::vfmt_prepend_utf8(const char *fmt, va_list args)
     {
         LSPString tmp;
-        if (!tmp.vfmt_utf8(fmt, args))
-            return false;
-        return prepend(&tmp);
+        status_t res = tmp.vfmt_utf8(fmt, args);
+        if (res < 0)
+            return res;
+        return (prepend(&tmp)) ? res : -STATUS_NO_MEM;
     }
 
-    bool LSPString::vfmt_utf8(const char *fmt, va_list args)
+    ssize_t LSPString::vfmt_utf8(const char *fmt, va_list args)
     {
         char *ptr = NULL;
-        int count = vasprintf(&ptr, fmt, args);
-        if (ptr == NULL)
-            return false;
-
-        bool res = set_utf8(ptr, count);
+        ssize_t res = vasprintf(&ptr, fmt, args);
+        if ((ptr == NULL) || (res < 0))
+            return -STATUS_NO_MEM;
+        if (!set_utf8(ptr, res))
+            res     = -STATUS_NO_MEM;
         free(ptr);
         return res;
     }

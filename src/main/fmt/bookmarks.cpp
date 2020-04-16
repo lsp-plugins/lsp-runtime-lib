@@ -169,9 +169,11 @@ namespace lsp
                 bookmark_t *bm = dst->uget(i);
                 if (bm == NULL) // Remove all NULL entries
                 {
-                    if (!dst->remove(i))
+                    size_t sz = dst->size();
+                    if (dst->remove(i))
+                        ++nc;
+                    else if (dst->size() == sz)
                         return STATUS_NO_MEM;
-                    ++nc;
                     continue;
                 }
                 else

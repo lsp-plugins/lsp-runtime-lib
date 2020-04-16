@@ -55,9 +55,10 @@ namespace lsp
         status_t File::open(const io::Path *path)
         {
             LSPString fpath;
-            if (!path->get(&fpath))
-                return STATUS_NO_MEM;
-            return open(&fpath);
+            status_t res = path->get(&fpath);
+            if (res == STATUS_OK)
+                res  = open(&fpath);
+            return res;
         }
     
         status_t File::open(const LSPString *path)
@@ -128,9 +129,10 @@ namespace lsp
         status_t File::create(const io::Path *path)
         {
             LSPString fpath;
-            if (!path->get(&fpath))
-                return STATUS_NO_MEM;
-            return create(&fpath);
+            status_t res = path->get(&fpath);
+            if (res == STATUS_OK)
+                res = create(&fpath);
+            return res;
         }
 
         status_t File::create(const LSPString *path)

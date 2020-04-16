@@ -478,29 +478,29 @@ namespace lsp
             /**
              * Formatting functions, internally asprintf functin is used
              */
-            bool fmt_append_native(const char *fmt...);
-            bool fmt_preend_native(const char *fmt...);
-            bool fmt_native(const char *fmt...);
+            ssize_t fmt_append_native(const char *fmt...);
+            ssize_t fmt_preend_native(const char *fmt...);
+            ssize_t fmt_native(const char *fmt...);
 
-            bool vfmt_append_native(const char *fmt, va_list args);
-            bool vfmt_preend_native(const char *fmt, va_list args);
-            bool vfmt_native(const char *fmt, va_list args);
+            ssize_t vfmt_append_native(const char *fmt, va_list args);
+            ssize_t vfmt_preend_native(const char *fmt, va_list args);
+            ssize_t vfmt_native(const char *fmt, va_list args);
 
-            bool fmt_append_ascii(const char *fmt...);
-            bool fmt_prepend_ascii(const char *fmt...);
-            bool fmt_ascii(const char *fmt...);
+            ssize_t fmt_append_ascii(const char *fmt...);
+            ssize_t fmt_prepend_ascii(const char *fmt...);
+            ssize_t fmt_ascii(const char *fmt...);
 
-            bool vfmt_append_ascii(const char *fmt, va_list args);
-            bool vfmt_prepend_ascii(const char *fmt, va_list args);
-            bool vfmt_ascii(const char *fmt, va_list args);
+            ssize_t vfmt_append_ascii(const char *fmt, va_list args);
+            ssize_t vfmt_prepend_ascii(const char *fmt, va_list args);
+            ssize_t vfmt_ascii(const char *fmt, va_list args);
 
-            bool fmt_append_utf8(const char *fmt...);
-            bool fmt_prepend_utf8(const char *fmt...);
-            bool fmt_utf8(const char *fmt...);
+            ssize_t fmt_append_utf8(const char *fmt...);
+            ssize_t fmt_prepend_utf8(const char *fmt...);
+            ssize_t fmt_utf8(const char *fmt...);
 
-            bool vfmt_append_utf8(const char *fmt, va_list args);
-            bool vfmt_prepend_utf8(const char *fmt, va_list args);
-            bool vfmt_utf8(const char *fmt, va_list args);
+            ssize_t vfmt_append_utf8(const char *fmt, va_list args);
+            ssize_t vfmt_prepend_utf8(const char *fmt, va_list args);
+            ssize_t vfmt_utf8(const char *fmt, va_list args);
     };
     
 } /* namespace lsp */
