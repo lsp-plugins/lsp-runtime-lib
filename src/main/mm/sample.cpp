@@ -143,8 +143,8 @@ namespace lsp
             return true;
         }
 
-        #define CVT_SHIFT(TYPE)         (1 << (sizeof(TYPE)*8 - 1))
-        #define CVT_RANGE(TYPE)         ((1 << (sizeof(TYPE)*8 - 1))-1)
+        #define CVT_SHIFT(TYPE)         (uint32_t(1 << (sizeof(TYPE)*8 - 1)))
+        #define CVT_RANGE(TYPE)         (uint32_t(1 << (sizeof(TYPE)*8 - 1))-1)
 
         #define CVT_UI_TO_UI(DTYPE, STYPE, SHIFT) \
             for (STYPE *sptr = static_cast<STYPE *>(src); samples > 0; --samples, ++sptr, ++dptr) \
@@ -220,10 +220,10 @@ namespace lsp
 
         #define CVT_F64_TO_UI(DTYPE) \
             for (f64_t *sptr = static_cast<f64_t *>(src); samples > 0; --samples, ++sptr, ++dptr) \
-                *dptr   = (DTYPE)(*sptr * float(CVT_RANGE(DTYPE))) + (DTYPE)CVT_SHIFT(DTYPE);
+                *dptr   = (DTYPE)(*sptr * double(CVT_RANGE(DTYPE))) + (DTYPE)CVT_SHIFT(DTYPE);
         #define CVT_F64_TO_SI(DTYPE) \
             for (f64_t *sptr = static_cast<f64_t *>(src); samples > 0; --samples, ++sptr, ++dptr) \
-                *dptr   = (DTYPE)(*sptr * float(CVT_RANGE(DTYPE)));
+                *dptr   = (DTYPE)(*sptr * double(CVT_RANGE(DTYPE)));
 
         #define CVT_F64_TO_XI(DTYPE) \
             if (sign) \
@@ -244,7 +244,6 @@ namespace lsp
                     if (sign)   CVT_SI_TO_UI(uint8_t, uint8_t, )
                     else        ::memcpy(dptr, src, samples * sizeof(uint8_t));
                     return true;
-
                 case SFMT_S8:
                     if (sign)   ::memcpy(dptr, src, samples * sizeof(uint8_t));
                     else        CVT_UI_TO_SI(uint8_t, uint8_t, )
@@ -268,7 +267,36 @@ namespace lsp
 
         bool convert_to_16bit(void *dst, void *src, size_t samples, size_t to, size_t from)
         {
-            // TODO
+            int sign = sformat_signed(to);
+            if (sign < 0)
+                return false;
+            uint16_t *dptr = static_cast<uint16_t *>(dst);
+
+            switch (sformat_format(from))
+            {
+                case SFMT_U8:  CVT_UI_TO_XI(uint16_t, uint8_t, << 8)    return true;
+                case SFMT_S8:  CVT_SI_TO_XI(uint16_t, uint8_t, << 8)    return true;
+
+                case SFMT_U16:
+                    if (sign)   CVT_SI_TO_UI(uint16_t, uint16_t, )
+                    else        ::memcpy(dptr, src, samples * sizeof(uint16_t));
+                    return true;
+                case SFMT_S16:
+                    if (sign)   ::memcpy(dptr, src, samples * sizeof(uint16_t));
+                    else        CVT_UI_TO_SI(uint16_t, uint16_t, )
+                    return true;
+
+                case SFMT_U24: CVT_U24_TO_XI(uint16_t, >> 16)           return true;
+                case SFMT_S24: CVT_S24_TO_XI(uint16_t, >> 16)           return true;
+                case SFMT_U32: CVT_UI_TO_XI(uint16_t, uint32_t, >> 16)  return true;
+                case SFMT_S32: CVT_SI_TO_XI(uint16_t, uint32_t, >> 16)  return true;
+                case SFMT_F32: CVT_F32_TO_XI(uint16_t)                  return true;
+                case SFMT_F64: CVT_F64_TO_XI(uint16_t)                  return true;
+
+                default:
+                    break;
+            }
+
             return false;
         }
 
@@ -280,7 +308,38 @@ namespace lsp
 
         bool convert_to_32bit(void *dst, void *src, size_t samples, size_t to, size_t from)
         {
-            // TODO
+            int sign = sformat_signed(to);
+            if (sign < 0)
+                return false;
+            uint32_t *dptr = static_cast<uint32_t *>(dst);
+
+            switch (sformat_format(from))
+            {
+                case SFMT_U8:  CVT_UI_TO_XI(uint32_t, uint8_t, << 24)   return true;
+                case SFMT_S8:  CVT_SI_TO_XI(uint32_t, uint8_t, << 24)   return true;
+
+                case SFMT_U16: CVT_UI_TO_XI(uint32_t, uint16_t, << 16)  return true;
+                case SFMT_S16: CVT_SI_TO_XI(uint32_t, uint16_t, << 16)  return true;
+
+                case SFMT_U24: CVT_U24_TO_XI(uint32_t, )                return true;
+                case SFMT_S24: CVT_S24_TO_XI(uint32_t, )                return true;
+
+                case SFMT_U32:
+                    if (sign)   CVT_SI_TO_UI(uint32_t, uint32_t, )
+                    else        ::memcpy(dptr, src, samples * sizeof(uint32_t));
+                    return true;
+                case SFMT_S32:
+                    if (sign)   ::memcpy(dptr, src, samples * sizeof(uint32_t));
+                    else        CVT_UI_TO_SI(uint32_t, uint32_t, )
+                    return true;
+
+                case SFMT_F32: CVT_F32_TO_XI(uint32_t)                  return true;
+                case SFMT_F64: CVT_F64_TO_XI(uint32_t)                  return true;
+
+                default:
+                    break;
+            }
+
             return false;
         }
 
