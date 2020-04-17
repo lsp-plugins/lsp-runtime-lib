@@ -25,17 +25,18 @@ namespace lsp
                 IInAudioStream & operator = (const IInAudioStream &);
 
             protected:
-                wssize_t        nOffset;            // Offset from beginning, negative if closed
-                status_t        nErrorCode;         // Last error code
-                uint8_t        *pBuffer;            // Buffer for sample format conversion
-                audio_stream_t  sFormat;            // Audio stream format
+                wssize_t            nOffset;            // Offset from beginning, negative if closed
+                status_t            nErrorCode;         // Last error code
+                uint8_t            *pBuffer;            // Buffer for sample format conversion
+                size_t              nBufSize;           // Size of buffer
+                audio_stream_t      sFormat;            // Audio stream format
 
             protected:
-                inline status_t     set_error(status_t error) { return nErrorCode = error; }
+                inline status_t     set_error(status_t error)   { return nErrorCode = error; }
 
-                virtual ssize_t     direct_read(void *dst, size_t nframes);
+                virtual ssize_t     direct_read(void *dst, size_t nframes, size_t *fmt);
 
-                virtual ssize_t     conv_read(void *dst, size_t nframes, sformat_t fmt);
+                virtual ssize_t     conv_read(void *dst, size_t nframes, size_t fmt);
 
             public:
                 explicit IInAudioStream();
@@ -46,14 +47,39 @@ namespace lsp
                  *
                  * @return last I/O error code
                  */
-                inline status_t     last_error() const  { return nErrorCode; };
+                inline status_t     last_error() const          { return nErrorCode; };
 
                 /**
                  * Obtain the information about audio stream
-                 * @param dst
-                 * @return
+                 * @param dst destination to store the audio stream information
+                 * @return status of operation
                  */
-                status_t            info(audio_stream_t *dst);
+                status_t            info(audio_stream_t *dst) const;
+
+                /**
+                 * Get sample rate
+                 * @return sample rate
+                 */
+                inline size_t       sample_rate() const         { return sFormat.srate;         }
+
+                /**
+                 * Get number of channels
+                 * @return number of channels
+                 */
+                inline size_t       channels() const            { return sFormat.channels;      }
+
+                /**
+                 * Get overall duration
+                 * @return overall number of frames available in audio stream,
+                 * negative if number of frames can not be estimated
+                 */
+                inline wssize_t     length() const              { return sFormat.frames;        }
+
+                /**
+                 * Get sample format
+                 * @return sample format
+                 */
+                inline size_t       format() const              { return sFormat.format;        }
 
                 /**
                  * Close audio stream

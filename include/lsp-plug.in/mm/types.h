@@ -22,18 +22,24 @@ namespace lsp
         {
             SFMT_NONE,
 
-            SFMT_U8,
-            SFMT_S8,
-            SFMT_U16,
-            SFMT_S16,
-            SFMT_U24,
-            SFMT_S24,
-            SFMT_U32,
-            SFMT_S32,
-            SFMT_U64,
-            SFMT_S64,
-            SFMT_F32,
-            SFMT_F64
+            SFMT_U8         = 0 << 2,
+            SFMT_S8         = 1 << 2,
+            SFMT_U16        = 2 << 2,
+            SFMT_S16        = 3 << 2,
+            SFMT_U24        = 4 << 2,
+            SFMT_S24        = 5 << 2,
+            SFMT_U32        = 6 << 2,
+            SFMT_S32        = 7 << 2,
+            SFMT_U64        = 8 << 2,
+            SFMT_S64        = 9 << 2,
+            SFMT_F32        = 10 << 2,
+            SFMT_F64        = 11 << 2,
+
+            SFMT_DFL        = 0,
+            SFMT_LE         = 1,
+            SFMT_BE         = 2,
+            SFMT_EMASK      = 0x03,
+            SFMT_CPU        = __IF_LEBE(SFMT_LE, SFMT_BE)
         };
 
         typedef float       f32_t;
@@ -43,11 +49,16 @@ namespace lsp
         {
             size_t      srate;          // Sample rate
             size_t      channels;       // Number of channels
-            wsize_t     frames;         // Number of frames
-            sformat_t   format;         // Sample format
+            wssize_t    frames;         // Number of frames
+            size_t      format;         // Sample format
         } audio_stream_t;
 
-        size_t  size_of(sformat_t fmt);
+        inline size_t   sformat_endian(size_t fmt)        { return fmt & SFMT_EMASK;        }
+        inline size_t   sformat_format(size_t fmt)        { return fmt & (~SFMT_EMASK);     }
+        int             sformat_sign(size_t fmt);
+        ssize_t         sformat_signed(size_t fmt);
+        ssize_t         sformat_unsigned(size_t fmt);
+        size_t          sformat_size_of(size_t fmt);
     }
 }
 

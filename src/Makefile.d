@@ -86,6 +86,32 @@ $(LSP_RUNTIME_LIB_BIN)/main/protocol/midi.o: main/protocol/midi.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/protocol/midi.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h
+$(LSP_RUNTIME_LIB_BIN)/main/mm/types.o: main/mm/types.cpp \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h
+$(LSP_RUNTIME_LIB_BIN)/main/mm/sample.o: main/mm/sample.cpp \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/endian.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/arch/x86/endian.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/sample.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h
+$(LSP_RUNTIME_LIB_BIN)/main/mm/IOutAudioStream.o: \
+ main/mm/IOutAudioStream.cpp \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IOutAudioStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h
+$(LSP_RUNTIME_LIB_BIN)/main/mm/IInAudioStream.o: \
+ main/mm/IInAudioStream.cpp \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IInAudioStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/sample.h
 $(LSP_RUNTIME_LIB_BIN)/main/ipc/Thread.o: main/ipc/Thread.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/atomic.h \
