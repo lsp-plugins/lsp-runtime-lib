@@ -173,16 +173,6 @@ namespace lsp
             return conv_read(dst, nframes, SFMT_S32 | SFMT_CPU);
         }
 
-        ssize_t IInAudioStream::read(uint64_t *dst, size_t nframes)
-        {
-            return conv_read(dst, nframes, SFMT_U64 | SFMT_CPU);
-        }
-
-        ssize_t IInAudioStream::read(int64_t *dst, size_t nframes)
-        {
-            return conv_read(dst, nframes, SFMT_S64 | SFMT_CPU);
-        }
-
         ssize_t IInAudioStream::read(f32_t *dst, size_t nframes)
         {
             return conv_read(dst, nframes, SFMT_F32 | SFMT_CPU);

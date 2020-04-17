@@ -30,10 +30,8 @@ namespace lsp
             SFMT_S24        = 5 << 2,
             SFMT_U32        = 6 << 2,
             SFMT_S32        = 7 << 2,
-            SFMT_U64        = 8 << 2,
-            SFMT_S64        = 9 << 2,
-            SFMT_F32        = 10 << 2,
-            SFMT_F64        = 11 << 2,
+            SFMT_F32        = 8 << 2,
+            SFMT_F64        = 9 << 2,
 
             SFMT_DFL        = 0,
             SFMT_LE         = 1,

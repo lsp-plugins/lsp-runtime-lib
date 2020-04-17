@@ -120,8 +120,6 @@ namespace lsp
                 virtual ssize_t     read(int16_t *dst, size_t nframes);
                 virtual ssize_t     read(uint32_t *dst, size_t nframes);
                 virtual ssize_t     read(int32_t *dst, size_t nframes);
-                virtual ssize_t     read(uint64_t *dst, size_t nframes);
-                virtual ssize_t     read(int64_t *dst, size_t nframes);
                 virtual ssize_t     read(f32_t *dst, size_t nframes);
                 virtual ssize_t     read(f64_t *dst, size_t nframes);
 
@@ -136,8 +134,6 @@ namespace lsp
                 inline ssize_t      read_s16(void *dst, size_t nframes)     { return read(static_cast<int16_t *>(dst), nframes);    }
                 inline ssize_t      read_u32(void *dst, size_t nframes)     { return read(static_cast<uint32_t *>(dst), nframes);   }
                 inline ssize_t      read_s32(void *dst, size_t nframes)     { return read(static_cast<int32_t *>(dst), nframes);    }
-                inline ssize_t      read_u64(void *dst, size_t nframes)     { return read(static_cast<uint64_t *>(dst), nframes);   }
-                inline ssize_t      read_s64(void *dst, size_t nframes)     { return read(static_cast<int64_t *>(dst), nframes);    }
                 inline ssize_t      read_f32(void *dst, size_t nframes)     { return read(static_cast<f32_t *>(dst), nframes);      }
                 inline ssize_t      read_f64(void *dst, size_t nframes)     { return read(static_cast<f64_t *>(dst), nframes);      }
         };

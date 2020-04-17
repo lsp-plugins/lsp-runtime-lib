@@ -19,8 +19,6 @@ namespace lsp
                 case SFMT_U16: case SFMT_S16: return sizeof(uint16_t);
                 case SFMT_U24: case SFMT_S24: case SFMT_U32: case SFMT_S32:
                     return sizeof(uint32_t);
-                case SFMT_U64: case SFMT_S64:
-                    return sizeof(uint64_t);
                 case SFMT_F32:
                     return sizeof(f32_t);
                 case SFMT_F64:
@@ -40,14 +38,12 @@ namespace lsp
                 case SFMT_U16:
                 case SFMT_U24:
                 case SFMT_U32:
-                case SFMT_U64:
                     return 0;
 
                 case SFMT_S8:
                 case SFMT_S16:
                 case SFMT_S24:
                 case SFMT_S32:
-                case SFMT_S64:
                 case SFMT_F32:
                 case SFMT_F64:
                     return 1;
@@ -68,14 +64,12 @@ namespace lsp
                 case SFMT_U16:  return SFMT_S16 | endian;
                 case SFMT_U24:  return SFMT_S24 | endian;
                 case SFMT_U32:  return SFMT_S32 | endian;
-                case SFMT_U64:  return SFMT_S64 | endian;
                     return 0;
 
                 case SFMT_S8:
                 case SFMT_S16:
                 case SFMT_S24:
                 case SFMT_S32:
-                case SFMT_S64:
                 case SFMT_F32:
                 case SFMT_F64:
                     return fmt;
@@ -96,14 +90,12 @@ namespace lsp
                 case SFMT_S16:  return SFMT_U16 | endian;
                 case SFMT_S24:  return SFMT_U24 | endian;
                 case SFMT_S32:  return SFMT_U32 | endian;
-                case SFMT_S64:  return SFMT_U64 | endian;
                     return 0;
 
                 case SFMT_U8:
                 case SFMT_U16:
                 case SFMT_U24:
                 case SFMT_U32:
-                case SFMT_U64:
                 case SFMT_F32:
                 case SFMT_F64:
                     return fmt;
