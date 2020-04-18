@@ -37,7 +37,52 @@ namespace lsp
             SFMT_LE         = 1,
             SFMT_BE         = 2,
             SFMT_EMASK      = 0x03,
-            SFMT_CPU        = __IF_LEBE(SFMT_LE, SFMT_BE)
+            SFMT_CPU        = __IF_LEBE(SFMT_LE, SFMT_BE),
+
+            // Shortened sample format definitions
+            SFMT_U8_LE      = SFMT_U8 | SFMT_LE,
+            SFMT_S8_LE      = SFMT_S8 | SFMT_LE,
+            SFMT_U16_LE     = SFMT_U16 | SFMT_LE,
+            SFMT_S16_LE     = SFMT_S16 | SFMT_LE,
+            SFMT_U24_LE     = SFMT_U24 | SFMT_LE,
+            SFMT_S24_LE     = SFMT_S24 | SFMT_LE,
+            SFMT_U32_LE     = SFMT_U32 | SFMT_LE,
+            SFMT_S32_LE     = SFMT_S32 | SFMT_LE,
+            SFMT_F32_LE     = SFMT_F32 | SFMT_LE,
+            SFMT_F64_LE     = SFMT_F64 | SFMT_LE,
+
+            SFMT_U8_BE      = SFMT_U8 | SFMT_BE,
+            SFMT_S8_BE      = SFMT_S8 | SFMT_BE,
+            SFMT_U16_BE     = SFMT_U16 | SFMT_BE,
+            SFMT_S16_BE     = SFMT_S16 | SFMT_BE,
+            SFMT_U24_BE     = SFMT_U24 | SFMT_BE,
+            SFMT_S24_BE     = SFMT_S24 | SFMT_BE,
+            SFMT_U32_BE     = SFMT_U32 | SFMT_BE,
+            SFMT_S32_BE     = SFMT_S32 | SFMT_BE,
+            SFMT_F32_BE     = SFMT_F32 | SFMT_BE,
+            SFMT_F64_BE     = SFMT_F64 | SFMT_BE,
+
+            SFMT_U8_DFL      = SFMT_U8 | SFMT_DFL,
+            SFMT_S8_DFL      = SFMT_S8 | SFMT_DFL,
+            SFMT_U16_DFL     = SFMT_U16 | SFMT_DFL,
+            SFMT_S16_DFL     = SFMT_S16 | SFMT_DFL,
+            SFMT_U24_DFL     = SFMT_U24 | SFMT_DFL,
+            SFMT_S24_DFL     = SFMT_S24 | SFMT_DFL,
+            SFMT_U32_DFL     = SFMT_U32 | SFMT_DFL,
+            SFMT_S32_DFL     = SFMT_S32 | SFMT_DFL,
+            SFMT_F32_DFL     = SFMT_F32 | SFMT_DFL,
+            SFMT_F64_DFL     = SFMT_F64 | SFMT_DFL,
+
+            SFMT_U8_CPU      = SFMT_U8 | SFMT_CPU,
+            SFMT_S8_CPU      = SFMT_S8 | SFMT_CPU,
+            SFMT_U16_CPU     = SFMT_U16 | SFMT_CPU,
+            SFMT_S16_CPU     = SFMT_S16 | SFMT_CPU,
+            SFMT_U24_CPU     = SFMT_U24 | SFMT_CPU,
+            SFMT_S24_CPU     = SFMT_S24 | SFMT_CPU,
+            SFMT_U32_CPU     = SFMT_U32 | SFMT_CPU,
+            SFMT_S32_CPU     = SFMT_S32 | SFMT_CPU,
+            SFMT_F32_CPU     = SFMT_F32 | SFMT_CPU,
+            SFMT_F64_CPU     = SFMT_F64 | SFMT_CPU
         };
 
         typedef float       f32_t;

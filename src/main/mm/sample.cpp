@@ -9,6 +9,54 @@
 #include <lsp-plug.in/mm/sample.h>
 #include <lsp-plug.in/stdlib/string.h>
 
+/*
+ * TODO: fix floating-point rounding
+ *
+ * https://www.cs.cmu.edu/~rbd/papers/cmj-float-to-int.html
+ *
+ * Most audio programs convert floating point samples to integer samples and write
+ * them to a file or an audio output device. I will assume that ‘‘correct’’ behavior
+ * is to round to the nearest integer value. Dealing with scale factors and overflow
+ * are also important issues, but there is no standard and the best approach may depend
+ * on the application. I will limit my discussion to rounding, which is where this bug occurs.
+ *
+ * The natural way to implement the conversion is to scale each floating point sample
+ * to some appropriate range (-32767 to 32767) and assign it to a signed 16-bit integer as follows:
+ *      float f; // assume -32768 <= f <= 32767
+ *      int i; // could also be “shortint”
+ *      i = (int) f; // “(int) f” means “convert f to an int”
+ *
+ * The default float-to-integer conversion in C does not round to the nearest integer,
+ * but instead truncates toward zero. That means that signal values in the open interval (–1.0, 1.0)
+ * are all converted to zero (0). This interval is twice as large as the interval mapping to any other
+ * integer, and this introduces a nonlinear distortion into the signal. This is not just an issue of
+ * truncation versus rounding. It is well known that rounding to the nearest integer can be achieved by adding 0.5
+ * and rounding down, but the following C assignment is incorrect:
+ *
+ *      i = (int)(f + 0.5);
+ *
+ * C does not round negative numbers down, so values in the interval (-1.5, 0.5) are converted to zero.
+ * In contrast, a correct conversion should map only the interval (-0.5, 0.5) to zero.
+ * There are several ways to perform rounding for audio, and, surprisingly, proper rounding can be faster
+ * than the default conversion in C. The direct implementation is to treat positive and negative numbers as
+ * different cases:
+ *
+ *      float f; // assume -32768 <= f <= 32767
+ *      int i; // could also be “shortint”
+ *      if(f > 0) { i = (int)(f + 0.5); }
+ *      else { i = (int)(f - 0.5); }
+ *
+ * This code has the problem of taking a branch, which is very slow relative to arithmetic on modern
+ * processors. However, this is a good approach if you can combine the rounding with testing for peak
+ * values and clipping out-ofrange values, which also treat positive and negative samples separately.
+ * An elegant approach, suggested by Phil Burk, the developer of JSyn and co-developer of PortAudio,
+ * is to offset the sample values to make them all positive, perform rounding, and then shift back.
+ * Note that I add an extra 0.5 before truncating to simulate rounding behavior:
+ *
+ *      i = (((int) (f + 32768.5)) - 32768)
+ *
+ */
+
 namespace lsp
 {
     namespace mm
@@ -17,8 +65,12 @@ namespace lsp
 
         static inline uint32_t read24bit(const uint8_t *p)
         {
-            __IF_LE(return (uint32_t(p[0])) | (uint32_t(p[1]) << 8) | (uint32_t(p[2]) << 16));
-            __IF_BE(return (uint32_t(p[2])) | (uint32_t(p[1]) << 8) | (uint32_t(p[0]) << 16));
+            uint32_t res =
+                __IF_LEBE(
+                    (uint32_t(p[0])) | (uint32_t(p[1]) << 8) | (uint32_t(p[2]) << 16),
+                    (uint32_t(p[2])) | (uint32_t(p[1]) << 8) | (uint32_t(p[0]) << 16)
+                );
+            return res;
         }
 
         static inline void write24bit(uint8_t *p, uint32_t x)
@@ -35,7 +87,7 @@ namespace lsp
             )
         }
 
-        bool sample_endian_to_cpu(void *buf, size_t samples, size_t format)
+        bool sample_endian_swap(void *buf, size_t samples, size_t format)
         {
             size_t fmt = sformat_endian(format);
             if (fmt == __IF_LEBE(SFMT_LE, SFMT_BE))
@@ -121,7 +173,7 @@ namespace lsp
             if (sign) \
                 CVT_SI_TO_SI(DTYPE, STYPE, SHIFT) \
             else \
-                CVT_SI_TO_SI(DTYPE, STYPE, SHIFT)
+                CVT_SI_TO_UI(DTYPE, STYPE, SHIFT)
 
         // Integer 24-bit conversions
         #define CVT_U24_TO_UI(DTYPE, SHIFT) \
@@ -245,7 +297,7 @@ namespace lsp
 
         bool convert_to_8bit(void *dst, void *src, size_t samples, size_t to, size_t from)
         {
-            int sign = sformat_signed(to);
+            int sign = sformat_sign(to);
             if (sign < 0)
                 return false;
             uint8_t *dptr = static_cast<uint8_t *>(dst);
@@ -253,12 +305,12 @@ namespace lsp
             switch (sformat_format(from))
             {
                 case SFMT_U8:
-                    if (sign)   CVT_SI_TO_UI(uint8_t, uint8_t, )
+                    if (sign)   CVT_UI_TO_SI(uint8_t, uint8_t, )
                     else        ::memcpy(dptr, src, samples * sizeof(uint8_t));
                     return true;
                 case SFMT_S8:
                     if (sign)   ::memcpy(dptr, src, samples * sizeof(uint8_t));
-                    else        CVT_UI_TO_SI(uint8_t, uint8_t, )
+                    else        CVT_SI_TO_UI(uint8_t, uint8_t, )
                     return true;
 
                 case SFMT_U16: CVT_UI_TO_XI(uint8_t, uint16_t, >> 8)    return true;
@@ -279,7 +331,7 @@ namespace lsp
 
         bool convert_to_16bit(void *dst, void *src, size_t samples, size_t to, size_t from)
         {
-            int sign = sformat_signed(to);
+            int sign = sformat_sign(to);
             if (sign < 0)
                 return false;
             uint16_t *dptr = static_cast<uint16_t *>(dst);
@@ -290,12 +342,12 @@ namespace lsp
                 case SFMT_S8:  CVT_SI_TO_XI(uint16_t, uint8_t, << 8)    return true;
 
                 case SFMT_U16:
-                    if (sign)   CVT_SI_TO_UI(uint16_t, uint16_t, )
+                    if (sign)   CVT_UI_TO_SI(uint16_t, uint16_t, )
                     else        ::memcpy(dptr, src, samples * sizeof(uint16_t));
                     return true;
                 case SFMT_S16:
                     if (sign)   ::memcpy(dptr, src, samples * sizeof(uint16_t));
-                    else        CVT_UI_TO_SI(uint16_t, uint16_t, )
+                    else        CVT_SI_TO_UI(uint16_t, uint16_t, )
                     return true;
 
                 case SFMT_U24: CVT_U24_TO_XI(uint16_t, >> 8)            return true;
@@ -314,7 +366,7 @@ namespace lsp
 
         bool convert_to_24bit(void *dst, void *src, size_t samples, size_t to, size_t from)
         {
-            int sign = sformat_signed(to);
+            int sign = sformat_sign(to);
             if (sign < 0)
                 return false;
             uint8_t *dptr = static_cast<uint8_t *>(dst);
@@ -328,12 +380,12 @@ namespace lsp
                 case SFMT_S16: CVT_SI_TO_XI24(uint16_t, << 8)           return true;
 
                 case SFMT_U24:
-                    if (sign)   CVT_SI24_TO_UI24()
+                    if (sign)   CVT_UI24_TO_SI24()
                     else        ::memcpy(dptr, src, samples * sizeof(uint8_t) * 3);
                     return true;
                 case SFMT_S24:
                     if (sign)   ::memcpy(dptr, src, samples * sizeof(uint8_t) * 3);
-                    else        CVT_UI24_TO_SI24()
+                    else        CVT_SI24_TO_UI24()
                     return true;
 
                 case SFMT_U32: CVT_UI_TO_XI24(uint32_t, >> 16)          return true;
@@ -350,7 +402,7 @@ namespace lsp
 
         bool convert_to_32bit(void *dst, void *src, size_t samples, size_t to, size_t from)
         {
-            int sign = sformat_signed(to);
+            int sign = sformat_sign(to);
             if (sign < 0)
                 return false;
             uint32_t *dptr = static_cast<uint32_t *>(dst);
@@ -367,12 +419,12 @@ namespace lsp
                 case SFMT_S24: CVT_S24_TO_XI(uint32_t, << 8)            return true;
 
                 case SFMT_U32:
-                    if (sign)   CVT_SI_TO_UI(uint32_t, uint32_t, )
+                    if (sign)   CVT_UI_TO_SI(uint32_t, uint32_t, )
                     else        ::memcpy(dptr, src, samples * sizeof(uint32_t));
                     return true;
                 case SFMT_S32:
                     if (sign)   ::memcpy(dptr, src, samples * sizeof(uint32_t));
-                    else        CVT_UI_TO_SI(uint32_t, uint32_t, )
+                    else        CVT_SI_TO_UI(uint32_t, uint32_t, )
                     return true;
 
                 case SFMT_F32: CVT_F32_TO_XI(uint32_t)                  return true;
@@ -447,8 +499,8 @@ namespace lsp
 
         bool convert_samples(void *dst, void *src, size_t samples, size_t to, size_t from)
         {
-            // Convert sample endianess
-            if (!sample_endian_to_cpu(src, samples, from))
+            // Convert source sample endianess
+            if (!sample_endian_swap(src, samples, from))
                 return false;
 
             // Apply sample conversion
@@ -479,6 +531,10 @@ namespace lsp
                 default:
                     break;
             }
+
+            // Convert target sample endianess
+            if (!sample_endian_swap(dst, samples, to))
+                return false;
 
             return false;
         }
