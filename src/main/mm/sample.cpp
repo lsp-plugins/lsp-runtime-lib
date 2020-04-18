@@ -252,10 +252,10 @@ namespace lsp
         // Float conversions
         #define CVT_F32_TO_UI(DTYPE) \
             for (f32_t *sptr = static_cast<f32_t *>(src); samples > 0; --samples, ++sptr, ++dptr) \
-                *dptr   = (DTYPE)(*sptr * float(CVT_RANGE(DTYPE))) + (DTYPE)CVT_SHIFT(DTYPE);
+                *dptr   = (DTYPE)(*sptr * f32_t(CVT_RANGE(DTYPE))) + (DTYPE)CVT_SHIFT(DTYPE);
         #define CVT_F32_TO_SI(DTYPE) \
             for (f32_t *sptr = static_cast<f32_t *>(src); samples > 0; --samples, ++sptr, ++dptr) \
-                *dptr   = (DTYPE)(*sptr * float(CVT_RANGE(DTYPE)));
+                *dptr   = (DTYPE)(*sptr * f32_t(CVT_RANGE(DTYPE)));
 
         #define CVT_F32_TO_XI(DTYPE) \
             if (sign) \
@@ -267,10 +267,10 @@ namespace lsp
         // Double conversions
         #define CVT_F64_TO_UI(DTYPE) \
             for (f64_t *sptr = static_cast<f64_t *>(src); samples > 0; --samples, ++sptr, ++dptr) \
-                *dptr   = (DTYPE)(*sptr * double(CVT_RANGE(DTYPE))) + (DTYPE)CVT_SHIFT(DTYPE);
+                *dptr   = (DTYPE)(*sptr * f64_t(CVT_RANGE(DTYPE))) + (DTYPE)CVT_SHIFT(DTYPE);
         #define CVT_F64_TO_SI(DTYPE) \
             for (f64_t *sptr = static_cast<f64_t *>(src); samples > 0; --samples, ++sptr, ++dptr) \
-                *dptr   = (DTYPE)(*sptr * double(CVT_RANGE(DTYPE)));
+                *dptr   = (DTYPE)(*sptr * f64_t(CVT_RANGE(DTYPE)));
 
         #define CVT_F64_TO_XI(DTYPE) \
             if (sign) \
@@ -278,6 +278,7 @@ namespace lsp
             else \
                 CVT_F64_TO_UI(DTYPE)
 
+        // Floating-point conversions
         #define CVT_FX_TO_SI24(STYPE) \
             for (STYPE *sptr = static_cast<STYPE *>(src); samples > 0; --samples, ++sptr, dptr += 3) \
                 write24bit(dptr, int32_t(*sptr * 0x7fffff));
@@ -289,6 +290,19 @@ namespace lsp
                 CVT_FX_TO_SI24(STYPE) \
             else \
                 CVT_FX_TO_UI24(STYPE)
+
+        #define CVT_FX_TO_UI32(STYPE) \
+            for (STYPE *sptr = static_cast<STYPE *>(src); samples > 0; --samples, ++sptr, ++dptr) \
+                *dptr   = (uint32_t)(*sptr * f64_t(CVT_RANGE(uint32_t))) + (uint32_t)CVT_SHIFT(uint32_t);
+        #define CVT_FX_TO_SI32(STYPE) \
+            for (STYPE *sptr = static_cast<STYPE *>(src); samples > 0; --samples, ++sptr, ++dptr) \
+                *dptr   = (uint32_t)(*sptr * f64_t(CVT_RANGE(uint32_t)));
+
+        #define CVT_FX_TO_XI32(STYPE) \
+            if (sign) \
+                CVT_FX_TO_SI32(STYPE) \
+            else \
+                CVT_FX_TO_UI32(STYPE)
 
         #define CVT_FX_TO_FX(DTYPE, STYPE) \
             for (STYPE *sptr = static_cast<STYPE *>(src); samples > 0; --samples, ++sptr, ++dptr) \
@@ -388,8 +402,8 @@ namespace lsp
                     else        CVT_SI24_TO_UI24()
                     return true;
 
-                case SFMT_U32: CVT_UI_TO_XI24(uint32_t, >> 16)          return true;
-                case SFMT_S32: CVT_SI_TO_XI24(uint32_t, >> 16)          return true;
+                case SFMT_U32: CVT_UI_TO_XI24(uint32_t, >> 8)           return true;
+                case SFMT_S32: CVT_SI_TO_XI24(uint32_t, >> 8)           return true;
                 case SFMT_F32: CVT_FX_TO_XI24(f32_t)                    return true;
                 case SFMT_F64: CVT_FX_TO_XI24(f64_t)                    return true;
 
@@ -427,8 +441,8 @@ namespace lsp
                     else        CVT_SI_TO_UI(uint32_t, uint32_t, )
                     return true;
 
-                case SFMT_F32: CVT_F32_TO_XI(uint32_t)                  return true;
-                case SFMT_F64: CVT_F64_TO_XI(uint32_t)                  return true;
+                case SFMT_F32: CVT_FX_TO_XI32(f32_t)                    return true;
+                case SFMT_F64: CVT_FX_TO_XI32(f64_t)                    return true;
 
                 default:
                     break;

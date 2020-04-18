@@ -34,18 +34,37 @@ namespace lsp
     static const uint16_t u16f[]                = { 0xffff, 0xbfff, 0x8000, 0x4001, 0x0001 }; // TODO: fix scale
     static const uint16_t s16f[]                = { 0x7fff, 0x3fff, 0x0000, 0xc001, 0x8001 }; // TODO: fix scale
 
-    // u24 constants
-    #ifdef ARCH_BE
-        static const uint8_t u24s[]             = { 0xff, 0xff, 0xff,  0xbf, 0xff, 0xff,  0x80, 0x00, 0x00,  0x3f, 0xff, 0xff,  0x00, 0x00, 0x01 };
-        static const uint8_t s24s[]             = { 0x7f, 0xff, 0xff,  0x3f, 0xff, 0xff,  0x00, 0x00, 0x00,  0xbf, 0xff, 0xff,  0x80, 0x00, 0x01 };
-    #else /* ARCH_LE */
-        static const uint8_t u24s[]             = { 0xff, 0xff, 0xff,  0xff, 0xff, 0xbf,  0x00, 0x00, 0x80,  0xff, 0xff, 0x3f,  0x01, 0x00, 0x00 };
-        static const uint8_t s24s[]             = { 0xff, 0xff, 0x7f,  0xff, 0xff, 0x3f,  0x00, 0x00, 0x00,  0xff, 0xff, 0xbf,  0x01, 0x00, 0x80 };
-    #endif
+    // u24 constants in LE form
+    static const uint8_t u24s[]                 = { 0xff, 0xff, 0xff,  0xff, 0xff, 0xbf,  0x00, 0x00, 0x80,  0xff, 0xff, 0x3f,  0x01, 0x00, 0x00 };
+    static const uint8_t s24s[]                 = { 0xff, 0xff, 0x7f,  0xff, 0xff, 0x3f,  0x00, 0x00, 0x00,  0xff, 0xff, 0xbf,  0x01, 0x00, 0x80 };
+
+    static const uint8_t u24e16[]               = { 0x00, 0x00, 0xff,  0x00, 0x00, 0xbf,  0x00, 0x00, 0x80,  0x00, 0x00, 0x3f,  0x00, 0x00, 0x01 };
+    static const uint8_t s24e16[]               = { 0x00, 0x00, 0x7f,  0x00, 0x00, 0x3f,  0x00, 0x00, 0x00,  0x00, 0x00, 0xbf,  0x00, 0x00, 0x81 };
+
+    static const uint8_t u24e8[]                = { 0x00, 0xff, 0xff,  0x00, 0xff, 0xbf,  0x00, 0x00, 0x80,  0x00, 0xff, 0x3f,  0x00, 0x01, 0x00 };
+    static const uint8_t s24e8[]                = { 0x00, 0xff, 0x7f,  0x00, 0xff, 0x3f,  0x00, 0x00, 0x00,  0x00, 0xff, 0xbf,  0x00, 0x01, 0x80 };
+
+    static const uint8_t u24t[]                 = { 0xff, 0xff, 0xff,  0xff, 0xff, 0xbf,  0x00, 0x00, 0x80,  0xff, 0xff, 0x3f,  0x00, 0x00, 0x00 };
+    static const uint8_t s24t[]                 = { 0xff, 0xff, 0x7f,  0xff, 0xff, 0x3f,  0x00, 0x00, 0x00,  0xff, 0xff, 0xbf,  0x00, 0x00, 0x80 };
+
+    static const uint8_t u24f[]                 = { 0xff, 0xff, 0xff,  0xff, 0xff, 0xbf,  0x00, 0x00, 0x80,  0x01, 0x00, 0x40,  0x01, 0x00, 0x00 }; // TODO: fix scale
+    static const uint8_t s24f[]                 = { 0xff, 0xff, 0x7f,  0xff, 0xff, 0x3f,  0x00, 0x00, 0x00,  0x01, 0x00, 0xc0,  0x01, 0x00, 0x80 }; // TODO: fix scale
 
     // u32 constants
     static const uint32_t u32s[]                = { 0xffffffff, 0xbfffffff, 0x80000000, 0x3fffffff, 0x00000001 };
     static const uint32_t s32s[]                = { 0x7fffffff, 0x3fffffff, 0x00000000, 0xbfffffff, 0x80000001 };
+
+    static const uint32_t u32e8[]               = { 0xffffff00, 0xbfffff00, 0x80000000, 0x3fffff00, 0x00000100 };
+    static const uint32_t s32e8[]               = { 0x7fffff00, 0x3fffff00, 0x00000000, 0xbfffff00, 0x80000100 };
+
+    static const uint32_t u32e16[]              = { 0xffff0000, 0xbfff0000, 0x80000000, 0x3fff0000, 0x00010000 };
+    static const uint32_t s32e16[]              = { 0x7fff0000, 0x3fff0000, 0x00000000, 0xbfff0000, 0x80010000 };
+
+    static const uint32_t u32e24[]              = { 0xff000000, 0xbf000000, 0x80000000, 0x3f000000, 0x01000000 };
+    static const uint32_t s32e24[]              = { 0x7f000000, 0x3f000000, 0x00000000, 0xbf000000, 0x81000000 };
+
+    static const uint32_t u32f[]                = { 0xffffffff, 0xbfffffff, 0x80000000, 0x40000001, 0x00000001 };
+    static const uint32_t s32f[]                = { 0x7fffffff, 0x3fffffff, 0x00000000, 0xc0000001, 0x80000001 };
 
     // float constants
     static const mm::f32_t f32s[]               = { 1.0f, 0.5f, 0.0f, -0.5f, -1.0f };
@@ -80,12 +99,12 @@ UTEST_BEGIN("runtime.mm", sample)
 
         CVT("u8 ",  u8s,    u8s,     SFMT_U8_CPU);
         CVT("u16",  u8t,    u16s,    SFMT_U16_CPU);
-        CVT("u24",  u8t,    u24s,    SFMT_U24_CPU);
+        CVT("u24",  u8t,    u24s,    SFMT_U24_LE);
         CVT("u32",  u8t,    u32s,    SFMT_U32_CPU);
 
         CVT("s8 ",  u8s,    s8s,     SFMT_S8_CPU);
         CVT("s16",  u8t,    s16s,    SFMT_S16_CPU);
-        CVT("s24",  u8t,    s24s,    SFMT_S24_CPU);
+        CVT("s24",  u8t,    s24s,    SFMT_S24_LE);
         CVT("s32",  u8t,    s32s,    SFMT_S32_CPU);
 
         CVT("f32",  u8f,    f32s,    SFMT_F32_CPU);
@@ -101,12 +120,12 @@ UTEST_BEGIN("runtime.mm", sample)
 
         CVT("u8 ",  s8s,    u8s,     SFMT_U8_CPU);
         CVT("u16",  s8t,    u16s,    SFMT_U16_CPU);
-        CVT("u24",  s8t,    u24s,    SFMT_U24_CPU);
+        CVT("u24",  s8t,    u24s,    SFMT_U24_LE);
         CVT("u32",  s8t,    u32s,    SFMT_U32_CPU);
 
         CVT("s8 ",  s8s,    s8s,     SFMT_S8_CPU);
         CVT("s16",  s8t,    s16s,    SFMT_S16_CPU);
-        CVT("s24",  s8t,    s24s,    SFMT_S24_CPU);
+        CVT("s24",  s8t,    s24s,    SFMT_S24_LE);
         CVT("s32",  s8t,    s32s,    SFMT_S32_CPU);
 
         CVT("f32",  s8f,    f32s,    SFMT_F32_CPU);
@@ -122,12 +141,12 @@ UTEST_BEGIN("runtime.mm", sample)
 
         CVT("u8 ",  u16e8,  u8s,     SFMT_U8_CPU);
         CVT("u16",  u16s,   u16s,    SFMT_U16_CPU);
-        CVT("u24",  u16t,   u24s,    SFMT_U24_CPU);
+        CVT("u24",  u16t,   u24s,    SFMT_U24_LE);
         CVT("u32",  u16t,   u32s,    SFMT_U32_CPU);
 
         CVT("s8 ",  u16e8,  s8s,     SFMT_S8_CPU);
         CVT("s16",  u16s,   s16s,    SFMT_S16_CPU);
-        CVT("s24",  u16t,   s24s,    SFMT_S24_CPU);
+        CVT("s24",  u16t,   s24s,    SFMT_S24_LE);
         CVT("s32",  u16t,   s32s,    SFMT_S32_CPU);
 
         CVT("f32",  u16f,   f32s,    SFMT_F32_CPU);
@@ -143,16 +162,100 @@ UTEST_BEGIN("runtime.mm", sample)
 
         CVT("u8 ",  s16e8,  u8s,     SFMT_U8_CPU);
         CVT("u16",  s16s,   u16s,    SFMT_U16_CPU);
-        CVT("u24",  s16t,   u24s,    SFMT_U24_CPU);
+        CVT("u24",  s16t,   u24s,    SFMT_U24_LE);
         CVT("u32",  s16t,   u32s,    SFMT_U32_CPU);
 
         CVT("s8 ",  s16e8,  s8s,     SFMT_S8_CPU);
         CVT("s16",  s16s,   s16s,    SFMT_S16_CPU);
-        CVT("s24",  s16t,   s24s,    SFMT_S24_CPU);
+        CVT("s24",  s16t,   s24s,    SFMT_S24_LE);
         CVT("s32",  s16t,   s32s,    SFMT_S32_CPU);
 
         CVT("f32",  s16f,   f32s,    SFMT_F32_CPU);
         CVT("f64",  s16f,   f64s,    SFMT_F64_CPU);
+
+        #undef CVT
+    }
+
+    void test_to_u24()
+    {
+        #define CVT(msg, exp, src, from) \
+            test_cvt(msg " -> u24", exp, sizeof(exp), src, sizeof(src), mm::SFMT_U24_LE, mm::from);
+
+        CVT("u8 ",  u24e16, u8s,     SFMT_U8_CPU);
+        CVT("u16",  u24e8,  u16s,    SFMT_U16_CPU);
+        CVT("u24",  u24s,   u24s,    SFMT_U24_LE);
+        CVT("u32",  u24t,   u32s,    SFMT_U32_CPU);
+
+        CVT("s8 ",  u24e16, s8s,     SFMT_S8_CPU);
+        CVT("s16",  u24e8,  s16s,    SFMT_S16_CPU);
+        CVT("s24",  u24s,   s24s,    SFMT_S24_LE);
+        CVT("s32",  u24t,   s32s,    SFMT_S32_CPU);
+
+        CVT("f32",  u24f,   f32s,    SFMT_F32_CPU);
+        CVT("f64",  u24f,   f64s,    SFMT_F64_CPU);
+
+        #undef CVT
+    }
+
+    void test_to_s24()
+    {
+        #define CVT(msg, exp, src, from) \
+            test_cvt(msg " -> s24", exp, sizeof(exp), src, sizeof(src), mm::SFMT_S24_LE, mm::from);
+
+        CVT("u8 ",  s24e16, u8s,     SFMT_U8_CPU);
+        CVT("u16",  s24e8,  u16s,    SFMT_U16_CPU);
+        CVT("u24",  s24s,   u24s,    SFMT_U24_LE);
+        CVT("u32",  s24t,   u32s,    SFMT_U32_CPU);
+
+        CVT("s8 ",  s24e16, s8s,     SFMT_S8_CPU);
+        CVT("s16",  s24e8,  s16s,    SFMT_S16_CPU);
+        CVT("s24",  s24s,   s24s,    SFMT_S24_LE);
+        CVT("s32",  s24t,   s32s,    SFMT_S32_CPU);
+
+        CVT("f32",  s24f,   f32s,    SFMT_F32_CPU);
+        CVT("f64",  s24f,   f64s,    SFMT_F64_CPU);
+
+        #undef CVT
+    }
+
+    void test_to_u32()
+    {
+        #define CVT(msg, exp, src, from) \
+            test_cvt(msg " -> u32", exp, sizeof(exp), src, sizeof(src), mm::SFMT_U32_CPU, mm::from);
+
+        CVT("u8 ",  u32e24, u8s,     SFMT_U8_CPU);
+        CVT("u16",  u32e16, u16s,    SFMT_U16_CPU);
+        CVT("u24",  u32e8,  u24s,    SFMT_U24_LE);
+        CVT("u32",  u32s,   u32s,    SFMT_U32_CPU);
+
+        CVT("s8 ",  u32e24, s8s,     SFMT_S8_CPU);
+        CVT("s16",  u32e16, s16s,    SFMT_S16_CPU);
+        CVT("s24",  u32e8,  s24s,    SFMT_S24_LE);
+        CVT("s32",  u32s,   s32s,    SFMT_S32_CPU);
+
+        CVT("f32",  u32f,   f32s,    SFMT_F32_CPU);
+        CVT("f64",  u32f,   f64s,    SFMT_F64_CPU);
+
+        #undef CVT
+    }
+
+    void test_to_s32()
+    {
+        #define CVT(msg, exp, src, from) \
+            test_cvt(msg " -> s32", exp, sizeof(exp), src, sizeof(src), mm::SFMT_S32_CPU, mm::from);
+
+        CVT("u8 ",  s32e24, u8s,     SFMT_U8_CPU);
+        CVT("u16",  s32e16, u16s,    SFMT_U16_CPU);
+        CVT("u24",  s32e8,  u24s,    SFMT_U24_LE);
+        CVT("u32",  s32s,   u32s,    SFMT_U32_CPU);
+
+        CVT("s8 ",  s32e24, s8s,     SFMT_S8_CPU);
+        CVT("s16",  s32e16, s16s,    SFMT_S16_CPU);
+        CVT("s24",  s32e8,  s24s,    SFMT_S24_LE);
+        CVT("s32",  s32s,   s32s,    SFMT_S32_CPU);
+
+        CVT("f32",  s32f,   f32s,    SFMT_F32_CPU);
+        CVT("f64",  s32f,   f64s,    SFMT_F64_CPU);
 
         #undef CVT
     }
@@ -167,6 +270,10 @@ UTEST_BEGIN("runtime.mm", sample)
         CALL(test_to_s8);
         CALL(test_to_u16);
         CALL(test_to_s16);
+        CALL(test_to_u24);
+        CALL(test_to_s24);
+        CALL(test_to_u32);
+        CALL(test_to_s32);
     }
 UTEST_END;
 
