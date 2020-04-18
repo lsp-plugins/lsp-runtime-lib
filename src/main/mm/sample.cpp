@@ -157,11 +157,11 @@ namespace lsp
 
         #define CVT_UI_TO_FX(DTYPE, STYPE) \
             for (STYPE *sptr = static_cast<STYPE *>(src); samples > 0; --samples, ++sptr, ++dptr) \
-                *dptr   = ((STYPE)(*sptr - CVT_SHIFT(STYPE))) * (DTYPE(1.0) / CVT_RANGE(STYPE));
+                *dptr   = ((STYPE)(*sptr - CVT_SHIFT(STYPE))) * (DTYPE(1.0 / CVT_RANGE(STYPE)));
 
         #define CVT_SI_TO_FX(DTYPE, STYPE) \
             for (STYPE *sptr = static_cast<STYPE *>(src); samples > 0; --samples, ++sptr, ++dptr) \
-                *dptr   = ((STYPE)(*sptr)) * (DTYPE(1.0) / CVT_RANGE(STYPE));
+                *dptr   = ((STYPE)(*sptr)) * (DTYPE(1.0 / CVT_RANGE(STYPE)));
 
         #define CVT_UI_TO_XI(DTYPE, STYPE, SHIFT) \
             if (sign) \
@@ -198,7 +198,7 @@ namespace lsp
 
         #define CVT_S24_TO_FX(DTYPE) \
             for (uint8_t *sptr = static_cast<uint8_t *>(src); samples > 0; --samples, sptr += 3, ++dptr) \
-                *dptr   = (int32_t(read24bit(sptr)) * (DTYPE(1.0)/0x7fffff));
+                *dptr   = ((int32_t(read24bit(sptr) << 8) >> 8) * (DTYPE(1.0)/0x7fffff));
 
         #define CVT_U24_TO_XI(DTYPE, SHIFT) \
             if (sign) \
@@ -458,16 +458,15 @@ namespace lsp
             switch (sformat_format(from))
             {
                 case SFMT_U8:  CVT_UI_TO_FX(f32_t, int8_t)              return true;
-                case SFMT_S8:  CVT_UI_TO_FX(f32_t, int8_t)              return true;
-
+                case SFMT_S8:  CVT_SI_TO_FX(f32_t, int8_t)              return true;
                 case SFMT_U16: CVT_UI_TO_FX(f32_t, int16_t)             return true;
-                case SFMT_S16: CVT_UI_TO_FX(f32_t, int16_t)             return true;
+                case SFMT_S16: CVT_SI_TO_FX(f32_t, int16_t)             return true;
 
                 case SFMT_U24: CVT_U24_TO_FX(f32_t)                     return true;
                 case SFMT_S24: CVT_S24_TO_FX(f32_t)                     return true;
 
                 case SFMT_U32: CVT_UI_TO_FX(f32_t, int32_t)             return true;
-                case SFMT_S32: CVT_UI_TO_FX(f32_t, int32_t)             return true;
+                case SFMT_S32: CVT_SI_TO_FX(f32_t, int32_t)             return true;
 
                 case SFMT_F32:
                     ::memcpy(dptr, src, samples * sizeof(f32_t));
@@ -488,16 +487,16 @@ namespace lsp
             switch (sformat_format(from))
             {
                 case SFMT_U8:  CVT_UI_TO_FX(f64_t, int8_t)              return true;
-                case SFMT_S8:  CVT_UI_TO_FX(f64_t, int8_t)              return true;
+                case SFMT_S8:  CVT_SI_TO_FX(f64_t, int8_t)              return true;
 
                 case SFMT_U16: CVT_UI_TO_FX(f64_t, int16_t)             return true;
-                case SFMT_S16: CVT_UI_TO_FX(f64_t, int16_t)             return true;
+                case SFMT_S16: CVT_SI_TO_FX(f64_t, int16_t)             return true;
 
                 case SFMT_U24: CVT_U24_TO_FX(f64_t)                     return true;
                 case SFMT_S24: CVT_S24_TO_FX(f64_t)                     return true;
 
                 case SFMT_U32: CVT_UI_TO_FX(f64_t, int32_t)             return true;
-                case SFMT_S32: CVT_UI_TO_FX(f64_t, int32_t)             return true;
+                case SFMT_S32: CVT_SI_TO_FX(f64_t, int32_t)             return true;
 
                 case SFMT_F32: CVT_FX_TO_FX(f64_t, f32_t)               return true;
                 case SFMT_F64:

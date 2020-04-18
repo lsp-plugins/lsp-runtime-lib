@@ -92,6 +92,72 @@ UTEST_BEGIN("runtime.mm", sample)
             );
     }
 
+    void test_cvt_f32(const char *cvt, const void *dst, size_t nbdst, const void *src, size_t nbsrc, size_t to, size_t from, float tol)
+    {
+        printf("  checking %s conversion...\n", cvt);
+
+        ByteBuffer sb(src, nbsrc);
+        ByteBuffer eb(dst, nbdst);
+        ByteBuffer db(nbdst);
+        db.fill_zero();
+
+        UTEST_ASSERT(mm::convert_samples(db.data<uint8_t>(), sb.data<uint8_t>(), 5, to, from));
+        UTEST_ASSERT(sb.valid());
+        UTEST_ASSERT(db.valid());
+
+        mm::f32_t *a = db.data<mm::f32_t>();
+        mm::f32_t *b = eb.data<mm::f32_t>();
+
+        for (size_t i=0; i<5; ++i)
+        {
+            UTEST_ASSERT(
+                (abs(a[i] - b[i]) <= tol),
+
+                sb.dump("sb");
+                printf("db: ");
+                for (size_t j=0; j<5; ++j)
+                    printf("%e ", a[j]);
+                printf("\neb: ");
+                for (size_t j=0; j<5; ++j)
+                    printf("%e ", b[j]);
+                printf("\n");
+            );
+        }
+    }
+
+    void test_cvt_f64(const char *cvt, const void *dst, size_t nbdst, const void *src, size_t nbsrc, size_t to, size_t from, float tol)
+    {
+        printf("  checking %s conversion...\n", cvt);
+
+        ByteBuffer sb(src, nbsrc);
+        ByteBuffer eb(dst, nbdst);
+        ByteBuffer db(nbdst);
+        db.fill_zero();
+
+        UTEST_ASSERT(mm::convert_samples(db.data<uint8_t>(), sb.data<uint8_t>(), 5, to, from));
+        UTEST_ASSERT(sb.valid());
+        UTEST_ASSERT(db.valid());
+
+        mm::f64_t *a = db.data<mm::f64_t>();
+        mm::f64_t *b = eb.data<mm::f64_t>();
+
+        for (size_t i=0; i<5; ++i)
+        {
+            UTEST_ASSERT(
+                (abs(a[i] - b[i]) <= tol),
+
+                sb.dump("sb");
+                printf("db: ");
+                for (size_t j=0; j<5; ++j)
+                    printf("%e ", a[j]);
+                printf("\neb: ");
+                for (size_t j=0; j<5; ++j)
+                    printf("%e ", b[j]);
+                printf("\n");
+            );
+        }
+    }
+
     void test_to_u8()
     {
         #define CVT(msg, exp, src, from) \
@@ -260,6 +326,48 @@ UTEST_BEGIN("runtime.mm", sample)
         #undef CVT
     }
 
+    void test_to_f32()
+    {
+        #define CVT(msg, tol, src, from) \
+            test_cvt_f32(msg " -> f32", f32s, sizeof(f32s), src, sizeof(src), mm::SFMT_F32_CPU, mm::from, tol);
+
+        CVT("u8 ",  0.04,   u8s,     SFMT_U8_CPU);
+        CVT("u16",  1e-4,   u16s,    SFMT_U16_CPU);
+        CVT("u24",  2e-7,   u24s,    SFMT_U24_LE);
+        CVT("u32",  5e-9,   u32s,    SFMT_U32_CPU);
+
+        CVT("s8 ",  0.04,   s8s,     SFMT_S8_CPU);
+        CVT("s16",  1e-4,   s16s,    SFMT_S16_CPU);
+        CVT("s24",  2e-7,   s24s,    SFMT_S24_LE);
+        CVT("s32",  5e-9,   s32s,    SFMT_S32_CPU);
+
+        CVT("f32",  2e-7,   f32s,    SFMT_F32_CPU);
+        CVT("f64",  5e-10,  f64s,    SFMT_F64_CPU);
+
+        #undef CVT
+    }
+
+    void test_to_f64()
+    {
+        #define CVT(msg, tol, src, from) \
+            test_cvt_f64(msg " -> f64", f64s, sizeof(f64s), src, sizeof(src), mm::SFMT_F64_CPU, mm::from, tol);
+
+        CVT("u8 ",  0.04,   u8s,     SFMT_U8_CPU);
+        CVT("u16",  1e-4,   u16s,    SFMT_U16_CPU);
+        CVT("u24",  2e-7,   u24s,    SFMT_U24_LE);
+        CVT("u32",  5e-9,   u32s,    SFMT_U32_CPU);
+
+        CVT("s8 ",  0.04,   s8s,     SFMT_S8_CPU);
+        CVT("s16",  1e-4,   s16s,    SFMT_S16_CPU);
+        CVT("s24",  2e-7,   s24s,    SFMT_S24_LE);
+        CVT("s32",  5e-9,   s32s,    SFMT_S32_CPU);
+
+        CVT("f32",  2e-7,   f32s,    SFMT_F32_CPU);
+        CVT("f64",  5e-10,  f64s,    SFMT_F64_CPU);
+
+        #undef CVT
+    }
+
     UTEST_MAIN
     {
         #define CALL(func)  \
@@ -274,6 +382,8 @@ UTEST_BEGIN("runtime.mm", sample)
         CALL(test_to_s24);
         CALL(test_to_u32);
         CALL(test_to_s32);
+        CALL(test_to_f32);
+        CALL(test_to_f64);
     }
 UTEST_END;
 
