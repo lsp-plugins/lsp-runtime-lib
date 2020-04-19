@@ -9,8 +9,6 @@
 #include <lsp-plug.in/mm/sample.h>
 #include <stdlib.h>
 
-#define LSP_MM_IO_BUF_SIZE      0x1000
-
 namespace lsp
 {
     namespace mm
@@ -48,12 +46,35 @@ namespace lsp
                 pBuffer     = NULL;
             }
 
+            nOffset     = -1;   // Mark as closed
             return set_error(STATUS_OK);
         }
 
         wssize_t IInAudioStream::skip(wsize_t nframes)
         {
-            return -set_error(STATUS_NOT_IMPLEMENTED);
+            // Perform direct read
+            wssize_t nread = 0;
+            while (nframes > 0)
+            {
+                // Perform direct read
+                size_t direct_fmt   = -1;
+                size_t to_read      = (nframes > IO_BUF_SIZE) ? IO_BUF_SIZE : nframes;
+                ssize_t read        = direct_read(NULL, to_read, -1, &direct_fmt);
+                if (read < 0)
+                {
+                    if (nread <= 0)
+                        return read;
+                    break;
+                }
+
+                // Update position
+                nframes    -= read;
+            }
+
+            // Update statistics
+            set_error(STATUS_OK);
+            nOffset    += nread;
+            return nread;
         }
 
         wssize_t IInAudioStream::position()
@@ -63,12 +84,32 @@ namespace lsp
 
         wssize_t IInAudioStream::seek(wsize_t nframes)
         {
+            if (nOffset < 0)
+                return -set_error(STATUS_CLOSED);
+            else if (nOffset > wssize_t(nframes))
+                return -set_error(STATUS_NOT_SUPPORTED);
+
+            return skip(nframes - nOffset);
+        }
+
+        ssize_t IInAudioStream::direct_read(void *dst, size_t nframes, size_t rfmt, size_t *afmt)
+        {
             return -set_error(STATUS_NOT_IMPLEMENTED);
         }
 
-        ssize_t IInAudioStream::direct_read(void *dst, size_t nframes, size_t *fmt)
+        status_t IInAudioStream::ensure_capacity(size_t bytes)
         {
-            return -set_error(STATUS_NOT_IMPLEMENTED);
+            // Not enough space in temporary buffer?
+            if (nBufSize >= bytes)
+                return STATUS_OK;
+
+            // Perform buffer re-allocation
+            uint8_t *buf    = static_cast<uint8_t *>(::realloc(pBuffer, bytes));
+            if (buf == NULL)
+                return set_error(STATUS_NO_MEM);
+            pBuffer         = buf;
+
+            return STATUS_OK;
         }
 
         ssize_t IInAudioStream::conv_read(void *dst, size_t nframes, size_t fmt)
@@ -76,65 +117,39 @@ namespace lsp
             if (nOffset < 0)
                 return -set_error(STATUS_CLOSED);
 
-            size_t fsize    = sformat_size_of(sFormat.format) * sFormat.channels;
+            // Prepare pointers and remember frame size
+            size_t fsize    = sformat_size_of(fmt) * sFormat.channels;
             if (fsize <= 0)
                 return -set_error(STATUS_BAD_FORMAT);
             uint8_t *dptr   = static_cast<uint8_t *>(dst);
             size_t nread    = 0;
 
-            // Sample format matches?
-            size_t direct_fmt = 0;
-            if (fmt == sFormat.format)
+            // Perform direct read
+            while (nframes > 0)
             {
                 // Perform direct read
-                for (size_t left = nframes - nframes; left > 0; )
+                size_t direct_fmt   = -1;
+                size_t to_read      = (nframes > IO_BUF_SIZE) ? IO_BUF_SIZE : nframes;
+                ssize_t read        = direct_read(dst, to_read, fmt, &direct_fmt);
+                if (read < 0)
                 {
-                    ssize_t read = direct_read(dptr, left, &direct_fmt);
-                    if (read < 0)
-                    {
-                        if (nread <= 0)
-                            return read;
-                    }
-
-                    // Update position and pointers
-                    left   -= read;
-                    nread  += read;
-                    dptr   += fsize;
-                }
-            }
-            else
-            {
-                // Not enough space in temporary buffer?
-                if (nBufSize < fsize * LSP_MM_IO_BUF_SIZE)
-                {
-                    uint8_t *buf    = static_cast<uint8_t *>(::realloc(pBuffer, fsize * LSP_MM_IO_BUF_SIZE));
-                    if (buf == NULL)
-                        return -set_error(STATUS_NO_MEM);
-                    pBuffer         = buf;
+                    if (nread <= 0)
+                        return read;
+                    break;
                 }
 
-                // Perform direct read
-                for (size_t left = nframes - nframes; left > 0; )
+                // Need to perform conversion?
+                if (direct_fmt != fmt)
                 {
-                    size_t to_read  = (left > LSP_MM_IO_BUF_SIZE) ? LSP_MM_IO_BUF_SIZE : left;
-                    ssize_t read    = direct_read(pBuffer, to_read, &direct_fmt);
-                    if (read < 0)
-                    {
-                        if (nread <= 0)
-                            return read;
-                    }
-
-                    size_t samples = read * sFormat.channels;
-
-                    // Convert samples
-                    if (!convert_samples(dptr, pBuffer, samples, fmt, direct_fmt))
-                        return -set_error(STATUS_BAD_FORMAT);
-
-                    // Update pointers
-                    left   -= read;
-                    nread  += read;
-                    dptr   += fsize;
+                    // Data is stored in pBuffer which can be updated, perform sample conversion
+                    if (!convert_samples(dptr, pBuffer, to_read * sFormat.channels, fmt, direct_fmt))
+                        return -set_error(STATUS_UNSUPPORTED_FORMAT);
                 }
+
+                // Update position and pointers
+                nframes    -= read;
+                nread      += read;
+                dptr       += fsize * read;
             }
 
             // Update statistics

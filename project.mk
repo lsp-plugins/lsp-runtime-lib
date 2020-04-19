@@ -15,3 +15,12 @@ DEPENDENCIES = \
   LSP_COMMON_LIB \
   LSP_LLTL_LIB
 
+# For Linux-based systems, use libsndfile
+ifeq ($(PLATFORM),Linux)
+  DEPENDENCIES             += LIBSNDFILE
+endif
+
+# For BSD-based systems, use libsndfile
+ifeq ($(PLATFORM),Linux)
+  DEPENDENCIES             += LIBSNDFILE
+endif

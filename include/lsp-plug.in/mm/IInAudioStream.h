@@ -24,6 +24,9 @@ namespace lsp
             private:
                 IInAudioStream & operator = (const IInAudioStream &);
 
+            public:
+                static const size_t IO_BUF_SIZE         = 0x1000;
+
             protected:
                 wssize_t            nOffset;            // Offset from beginning, negative if closed
                 status_t            nErrorCode;         // Last error code
@@ -34,8 +37,37 @@ namespace lsp
             protected:
                 inline status_t     set_error(status_t error)   { return nErrorCode = error; }
 
-                virtual ssize_t     direct_read(void *dst, size_t nframes, size_t *fmt);
+                inline bool         is_closed() const           { return nOffset < 0; }
 
+                /**
+                 * Ensure that internal buffer has enough capacity to keep specified number of bytes
+                 * @param bytes number of bytes
+                 * @return status of operation
+                 */
+                status_t            ensure_capacity(size_t bytes);
+
+                /**
+                 * Perform direct read of sample data into the pBuffer of nBufSize size
+                 * If there is not enough place to store read frames, pBuffer should be resize
+                 * by using realloc() function. Use ensure_capacity() for better buffer approach.
+                 *
+                 * @param dst buffer to store samples directly if they don't need to be additionally
+                 *            converted after read, may be NULL. In this case samples should be read
+                 *            into the pBuffer
+                 * @param nframes number of frames to read
+                 * @param rfmt requested format of the data to read
+                 * @param afmt actual sample format that matches the best to the requested
+                 * @return number of frames actually read or negative error code
+                 */
+                virtual ssize_t     direct_read(void *dst, size_t nframes, size_t rfmt, size_t *afmt);
+
+                /**
+                 * Perform read with conversion
+                 * @param dst destination buffer to perform read
+                 * @param nframes number of frames to read
+                 * @param fmt the requested sample format
+                 * @return number of frames to read or negative error code
+                 */
                 virtual ssize_t     conv_read(void *dst, size_t nframes, size_t fmt);
 
             public:

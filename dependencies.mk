@@ -11,6 +11,9 @@ LSP_TEST_FW_VERSION        := 1.0.1
 LSP_TEST_FW_NAME           := lsp-test-fw
 LSP_TEST_FW_URL            := https://github.com/sadko4u/$(LSP_TEST_FW_NAME).git
 
+LIBSNDFILE_VERSION         := system
+LIBSNDFILE_NAME            := sndfile
+
 ifeq ($(PLATFORM),Windows)
   STDLIB_VERSION             := system
   STDLIB_LDFLAGS             := -lpthread
