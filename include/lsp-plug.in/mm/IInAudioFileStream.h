@@ -13,8 +13,7 @@
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/mm/IInAudioStream.h>
 
-#ifdef PLATFORM_WINDOWS
-#else
+#ifdef USE_LIBSNDFILE
     #include <sndfile.h>
 #endif
 
@@ -25,14 +24,13 @@ namespace lsp
         class IInAudioFileStream: public IInAudioStream
         {
             protected:
-            #ifdef PLATFORM_WINDOWS
-            #else
+            #ifdef USE_LIBSNDFILE
                 SNDFILE            *hHandle;
                 bool                bSeekable;
             #endif
 
             protected:
-            #ifndef PLATFORM_WINDOWS
+            #ifdef USE_LIBSNDFILE
                 static status_t     decode_sf_error(SNDFILE *fd);
             #endif
 

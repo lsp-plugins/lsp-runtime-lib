@@ -7,8 +7,7 @@
 
 #include <lsp-plug.in/mm/IInAudioFileStream.h>
 
-#ifdef PLAFORM_WINDOWS
-#else
+#ifdef USE_LIBSNDFILE
     #if (__SIZEOF_INT__ == 4)
         #define AFS_S32_CPU     mm::SFMT_S32_CPU
     #endif
@@ -18,7 +17,7 @@
     #elif ((__SIZEOF_SHORT__ == 4) && (!defined(AFS_S32_CPU)))
         #define AFS_S32_CPU     mm::SFMT_S32_CPU
     #endif
-#endif
+#endif /* USE_LIBSNDFILE */
 
 namespace lsp
 {
@@ -27,11 +26,10 @@ namespace lsp
         
         IInAudioFileStream::IInAudioFileStream()
         {
-        #ifdef PLATFORM_WINDOWS
-        #else
+        #ifdef USE_LIBSNDFILE
             hHandle     = NULL;
             bSeekable   = false;
-        #endif
+        #endif /* USE_LIBSNDFILE */
         }
         
         IInAudioFileStream::~IInAudioFileStream()
@@ -42,8 +40,7 @@ namespace lsp
 
         status_t IInAudioFileStream::close_handle()
         {
-        #ifdef PLATFORM_WINDOWS
-        #else
+        #ifdef USE_LIBSNDFILE
             if (hHandle == NULL)
                 return STATUS_OK;
 
@@ -54,10 +51,10 @@ namespace lsp
             nOffset     = -1;       // Mark as closed
 
             return set_error((res == 0) ? STATUS_OK : STATUS_IO_ERROR);
-        #endif
+        #endif /* USE_LIBSNDFILE */
         }
 
-        #ifndef PLATFORM_WINDOWS
+    #ifdef USE_LIBSNDFILE
         status_t IInAudioFileStream::decode_sf_error(SNDFILE *fd)
         {
             switch (sf_error(fd))
@@ -74,7 +71,7 @@ namespace lsp
                     return STATUS_UNKNOWN_ERR;
             }
         }
-        #endif
+    #endif /* USE_LIBSNDFILE */
 
         status_t IInAudioFileStream::open(const char *path)
         {
@@ -95,8 +92,7 @@ namespace lsp
 
         status_t IInAudioFileStream::open(const LSPString *path)
         {
-        #ifdef PLATFORM_WINDOWS
-        #else
+        #ifdef USE_LIBSNDFILE
             SF_INFO info;
             SNDFILE *sf;
 
@@ -126,9 +122,9 @@ namespace lsp
             hHandle             = sf;
             nOffset             = 0;
             bSeekable           = info.seekable;
-        #endif
 
             return set_error(STATUS_OK);
+        #endif /* USE_LIBSNDFILE */
         }
 
         status_t IInAudioFileStream::close()
@@ -139,8 +135,7 @@ namespace lsp
 
         ssize_t IInAudioFileStream::direct_read(void *dst, size_t nframes, size_t rfmt, size_t *afmt)
         {
-        #ifdef PLATFORM_WINDOWS
-        #else
+        #ifdef USE_LIBSNDFILE
             size_t fmt = sformat_format(rfmt);
             sf_count_t count;
             status_t res;
@@ -203,7 +198,7 @@ namespace lsp
 
             res = decode_sf_error(hHandle);
             return -((res == STATUS_OK) ? STATUS_EOF : res);
-        #endif
+        #endif /* USE_LIBSNDFILE */
         }
 
         wssize_t IInAudioFileStream::skip(wsize_t nframes)
@@ -211,21 +206,20 @@ namespace lsp
             if (is_closed())
                 return -set_error(STATUS_CLOSED);
 
-            #ifdef PLATFORM_WINDOWS
-            #else
-                if (!bSeekable)
-                    return IInAudioStream::skip(nframes);
+        #ifdef USE_LIBSNDFILE
+            if (!bSeekable)
+                return IInAudioStream::skip(nframes);
 
-                sf_count_t res = sf_seek(hHandle, nframes, SF_SEEK_CUR);
-                if (res >= 0)
-                {
-                    nOffset    += nframes;
-                    set_error(STATUS_OK);
-                    return nframes;
-                }
+            sf_count_t res = sf_seek(hHandle, nframes, SF_SEEK_CUR);
+            if (res >= 0)
+            {
+                nOffset    += nframes;
+                set_error(STATUS_OK);
+                return nframes;
+            }
 
-                return -set_error(decode_sf_error(hHandle));
-            #endif
+            return -set_error(decode_sf_error(hHandle));
+        #endif /* USE_LIBSNDFILE */
         }
 
         wssize_t IInAudioFileStream::seek(wsize_t nframes)
@@ -233,21 +227,20 @@ namespace lsp
             if (is_closed())
                 return -set_error(STATUS_CLOSED);
 
-            #ifdef PLATFORM_WINDOWS
-            #else
-                if (!bSeekable)
-                    return IInAudioStream::seek(nframes);
+        #ifdef USE_LIBSNDFILE
+            if (!bSeekable)
+                return IInAudioStream::seek(nframes);
 
-                sf_count_t res = sf_seek(hHandle, nframes, SF_SEEK_SET);
-                if (res >= 0)
-                {
-                    nOffset     = nframes;
-                    set_error(STATUS_OK);
-                    return nframes;
-                }
+            sf_count_t res = sf_seek(hHandle, nframes, SF_SEEK_SET);
+            if (res >= 0)
+            {
+                nOffset     = nframes;
+                set_error(STATUS_OK);
+                return nframes;
+            }
 
-                return -set_error(decode_sf_error(hHandle));
-            #endif
+            return -set_error(decode_sf_error(hHandle));
+        #endif /* USE_LIBSNDFILE */
         }
     
     } /* namespace mm */

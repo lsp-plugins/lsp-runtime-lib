@@ -21,6 +21,6 @@ ifeq ($(PLATFORM),Linux)
 endif
 
 # For BSD-based systems, use libsndfile
-ifeq ($(PLATFORM),Linux)
+ifeq ($(PLATFORM),BSD)
   DEPENDENCIES             += LIBSNDFILE
 endif
