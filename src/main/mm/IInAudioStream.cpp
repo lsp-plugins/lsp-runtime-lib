@@ -7,6 +7,7 @@
 
 #include <lsp-plug.in/mm/IInAudioStream.h>
 #include <lsp-plug.in/mm/sample.h>
+#include <lsp-plug.in/common/alloc.h>
 #include <stdlib.h>
 
 namespace lsp
@@ -104,10 +105,12 @@ namespace lsp
                 return STATUS_OK;
 
             // Perform buffer re-allocation
+            bytes           = align_size(bytes, 0x200);
             uint8_t *buf    = static_cast<uint8_t *>(::realloc(pBuffer, bytes));
             if (buf == NULL)
                 return set_error(STATUS_NO_MEM);
             pBuffer         = buf;
+            nBufSize        = bytes;
 
             return STATUS_OK;
         }
@@ -130,7 +133,7 @@ namespace lsp
                 // Perform direct read
                 size_t direct_fmt   = -1;
                 size_t to_read      = (nframes > IO_BUF_SIZE) ? IO_BUF_SIZE : nframes;
-                ssize_t read        = direct_read(dst, to_read, fmt, &direct_fmt);
+                ssize_t read        = direct_read(dptr, to_read, fmt, &direct_fmt);
                 if (read < 0)
                 {
                     if (nread <= 0)

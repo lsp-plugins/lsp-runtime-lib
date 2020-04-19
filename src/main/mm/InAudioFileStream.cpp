@@ -5,7 +5,7 @@
  *      Author: sadko
  */
 
-#include <lsp-plug.in/mm/IInAudioFileStream.h>
+#include <lsp-plug.in/mm/InAudioFileStream.h>
 
 #ifdef USE_LIBSNDFILE
     #if (__SIZEOF_INT__ == 4)
@@ -24,7 +24,7 @@ namespace lsp
     namespace mm
     {
         
-        IInAudioFileStream::IInAudioFileStream()
+        InAudioFileStream::InAudioFileStream()
         {
         #ifdef USE_LIBSNDFILE
             hHandle     = NULL;
@@ -32,13 +32,13 @@ namespace lsp
         #endif /* USE_LIBSNDFILE */
         }
         
-        IInAudioFileStream::~IInAudioFileStream()
+        InAudioFileStream::~InAudioFileStream()
         {
             IInAudioStream::close();
             close_handle();
         }
 
-        status_t IInAudioFileStream::close_handle()
+        status_t InAudioFileStream::close_handle()
         {
         #ifdef USE_LIBSNDFILE
             if (hHandle == NULL)
@@ -55,7 +55,7 @@ namespace lsp
         }
 
     #ifdef USE_LIBSNDFILE
-        status_t IInAudioFileStream::decode_sf_error(SNDFILE *fd)
+        status_t InAudioFileStream::decode_sf_error(SNDFILE *fd)
         {
             switch (sf_error(fd))
             {
@@ -73,7 +73,7 @@ namespace lsp
         }
     #endif /* USE_LIBSNDFILE */
 
-        status_t IInAudioFileStream::open(const char *path)
+        status_t InAudioFileStream::open(const char *path)
         {
             if (path == NULL)
                 return set_error(STATUS_BAD_ARGUMENTS);
@@ -83,14 +83,14 @@ namespace lsp
             return open(&xpath);
         }
 
-        status_t IInAudioFileStream::open(const io::Path *path)
+        status_t InAudioFileStream::open(const io::Path *path)
         {
             if (path == NULL)
                 return set_error(STATUS_BAD_ARGUMENTS);
             return open(path->as_string());
         }
 
-        status_t IInAudioFileStream::open(const LSPString *path)
+        status_t InAudioFileStream::open(const LSPString *path)
         {
         #ifdef USE_LIBSNDFILE
             SF_INFO info;
@@ -115,7 +115,7 @@ namespace lsp
                 case SF_FORMAT_PCM_32: sFormat.format = mm::SFMT_S32_CPU; break;
                 case SF_FORMAT_FLOAT:  sFormat.format = mm::SFMT_F32_CPU; break;
                 case SF_FORMAT_DOUBLE: sFormat.format = mm::SFMT_F64_CPU; break;
-                default:                sFormat.format = mm::SFMT_F32_CPU; break;
+                default:               sFormat.format = mm::SFMT_F32_CPU; break;
             }
 
             // Commit new state
@@ -127,13 +127,13 @@ namespace lsp
         #endif /* USE_LIBSNDFILE */
         }
 
-        status_t IInAudioFileStream::close()
+        status_t InAudioFileStream::close()
         {
             IInAudioStream::close();
             return close_handle();
         }
 
-        ssize_t IInAudioFileStream::direct_read(void *dst, size_t nframes, size_t rfmt, size_t *afmt)
+        ssize_t InAudioFileStream::direct_read(void *dst, size_t nframes, size_t rfmt, size_t *afmt)
         {
         #ifdef USE_LIBSNDFILE
             size_t fmt = sformat_format(rfmt);
@@ -201,7 +201,7 @@ namespace lsp
         #endif /* USE_LIBSNDFILE */
         }
 
-        wssize_t IInAudioFileStream::skip(wsize_t nframes)
+        wssize_t InAudioFileStream::skip(wsize_t nframes)
         {
             if (is_closed())
                 return -set_error(STATUS_CLOSED);
@@ -222,7 +222,7 @@ namespace lsp
         #endif /* USE_LIBSNDFILE */
         }
 
-        wssize_t IInAudioFileStream::seek(wsize_t nframes)
+        wssize_t InAudioFileStream::seek(wsize_t nframes)
         {
             if (is_closed())
                 return -set_error(STATUS_CLOSED);

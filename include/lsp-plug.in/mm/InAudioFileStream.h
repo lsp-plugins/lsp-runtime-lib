@@ -1,12 +1,12 @@
 /*
- * IInAudioFileStream.h
+ * InAudioFileStream.h
  *
  *  Created on: 19 апр. 2020 г.
  *      Author: sadko
  */
 
-#ifndef LSP_PLUG_IN_MM_IINAUDIOFILESTREAM_H_
-#define LSP_PLUG_IN_MM_IINAUDIOFILESTREAM_H_
+#ifndef LSP_PLUG_IN_MM_INAUDIOFILESTREAM_H_
+#define LSP_PLUG_IN_MM_INAUDIOFILESTREAM_H_
 
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/runtime/LSPString.h>
@@ -21,7 +21,7 @@ namespace lsp
 {
     namespace mm
     {
-        class IInAudioFileStream: public IInAudioStream
+        class InAudioFileStream: public IInAudioStream
         {
             protected:
             #ifdef USE_LIBSNDFILE
@@ -39,8 +39,8 @@ namespace lsp
                 status_t            close_handle();
 
             public:
-                explicit IInAudioFileStream();
-                virtual ~IInAudioFileStream();
+                explicit InAudioFileStream();
+                virtual ~InAudioFileStream();
 
             public:
                 /**
@@ -74,4 +74,4 @@ namespace lsp
     } /* namespace mm */
 } /* namespace lsp */
 
-#endif /* LSP_PLUG_IN_MM_IINAUDIOFILESTREAM_H_ */
+#endif /* LSP_PLUG_IN_MM_INAUDIOFILESTREAM_H_ */
