@@ -85,7 +85,6 @@ $(ARTIFACT_TESTBIN): $(ARTIFACT_OBJ)
 $(CXX_OBJ):
 	@echo "  $(CXX)  [$(ARTIFACT_NAME)] $(CXX_FILE)"
 	@mkdir -p $(dir $@)
-	@echo $(CXX) -o $(@) -c $(CXX_FILE) -fPIC $(CXXFLAGS) $(ARTIFACT_MFLAGS) $(INCLUDE) $(CFLAGS_DEPS)
 	@$(CXX) -o $(@) -c $(CXX_FILE) -fPIC $(CXXFLAGS) $(ARTIFACT_MFLAGS) $(INCLUDE) $(CFLAGS_DEPS)
 
 install: all
