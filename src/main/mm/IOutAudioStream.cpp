@@ -47,17 +47,17 @@ namespace lsp
         {
             // Not enough space in temporary buffer?
             if (nBufSize >= bytes)
-                return STATUS_OK;
+                return true;
 
             // Perform buffer re-allocation
             bytes           = align_size(bytes, 0x200);
             uint8_t *buf    = static_cast<uint8_t *>(::realloc(pBuffer, bytes));
             if (buf == NULL)
-                return set_error(STATUS_NO_MEM);
+                return false;
             pBuffer         = buf;
             nBufSize        = bytes;
 
-            return STATUS_OK;
+            return true;
         }
 
         ssize_t IOutAudioStream::direct_write(const void *src, size_t nframes, size_t fmt)
@@ -122,6 +122,7 @@ namespace lsp
             }
 
             set_error(STATUS_OK);
+            nOffset    += nwritten;
             return nwritten;
         }
 
