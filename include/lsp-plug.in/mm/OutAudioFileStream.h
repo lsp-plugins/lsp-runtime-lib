@@ -1,17 +1,17 @@
 /*
- * InAudioFileStream.h
+ * OutAudioFileStream.h
  *
- *  Created on: 19 апр. 2020 г.
+ *  Created on: 20 апр. 2020 г.
  *      Author: sadko
  */
 
-#ifndef LSP_PLUG_IN_MM_INAUDIOFILESTREAM_H_
-#define LSP_PLUG_IN_MM_INAUDIOFILESTREAM_H_
+#ifndef LSP_PLUG_IN_MM_OUTAUDIOFILESTREAM_H_
+#define LSP_PLUG_IN_MM_OUTAUDIOFILESTREAM_H_
 
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/io/Path.h>
-#include <lsp-plug.in/mm/IInAudioStream.h>
+#include <lsp-plug.in/mm/IOutAudioStream.h>
 
 #ifdef USE_LIBSNDFILE
     #include <sndfile.h>
@@ -21,12 +21,14 @@ namespace lsp
 {
     namespace mm
     {
-        class InAudioFileStream: public IInAudioStream
+        class OutAudioFileStream: public IOutAudioStream
         {
             private:
-                InAudioFileStream & operator = (const InAudioFileStream &);
+                OutAudioFileStream & operator = (const OutAudioFileStream &);
 
             protected:
+                size_t              nCodec;
+
             #ifdef USE_LIBSNDFILE
                 SNDFILE            *hHandle;
                 bool                bSeekable;
@@ -35,43 +37,50 @@ namespace lsp
             protected:
             #ifdef USE_LIBSNDFILE
                 static status_t     decode_sf_error(SNDFILE *fd);
+                static bool         select_sndfile_format(SF_INFO *info, audio_stream_t *fmt, size_t codec);
             #endif
 
-                virtual ssize_t     direct_read(void *dst, size_t nframes, size_t fmt);
+                virtual ssize_t     direct_write(const void *src, size_t nframes, size_t fmt);
 
-                virtual size_t      select_format(size_t fmt);
+                virtual size_t      select_format(size_t rfmt);
 
                 status_t            close_handle();
 
             public:
-                explicit InAudioFileStream();
-                virtual ~InAudioFileStream();
+                explicit OutAudioFileStream();
+                virtual ~OutAudioFileStream();
 
             public:
                 /**
-                 * Open audio stream
-                 * @param path path to the audio file
-                 * @return status of operation
+                 * Get codec used for output file
+                 * @return codec used for output file
                  */
-                virtual status_t    open(const char *path);
+                inline size_t       codec() const       { return nCodec; }
 
                 /**
                  * Open audio stream
                  * @param path path to the audio file
                  * @return status of operation
                  */
-                virtual status_t    open(const LSPString *path);
+                virtual status_t    open(const char *path, const audio_stream_t *fmt, size_t codec);
 
                 /**
                  * Open audio stream
                  * @param path path to the audio file
                  * @return status of operation
                  */
-                virtual status_t    open(const io::Path *path);
+                virtual status_t    open(const LSPString *path, const audio_stream_t *fmt, size_t codec);
+
+                /**
+                 * Open audio stream
+                 * @param path path to the audio file
+                 * @return status of operation
+                 */
+                virtual status_t    open(const io::Path *path, const audio_stream_t *fmt, size_t codec);
 
                 virtual status_t    close();
 
-                virtual wssize_t    skip(wsize_t nframes);
+                virtual status_t    flush();
 
                 virtual wssize_t    seek(wsize_t nframes);
         };
@@ -79,4 +88,4 @@ namespace lsp
     } /* namespace mm */
 } /* namespace lsp */
 
-#endif /* LSP_PLUG_IN_MM_INAUDIOFILESTREAM_H_ */
+#endif /* LSP_PLUG_IN_MM_OUTAUDIOFILESTREAM_H_ */

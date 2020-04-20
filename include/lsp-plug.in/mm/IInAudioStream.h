@@ -39,8 +39,6 @@ namespace lsp
 
                 inline status_t     set_error(status_t error)   { return nErrorCode = error; }
 
-                inline bool         is_closed() const           { return nOffset < 0; }
-
                 /**
                  * Ensure that internal buffer has enough capacity to keep specified number of bytes
                  * @param bytes number of bytes
@@ -79,6 +77,12 @@ namespace lsp
                 virtual ~IInAudioStream();
 
             public:
+                /**
+                 * Check whether audio stream is closed
+                 * @return true if audio stream is closed
+                 */
+                inline bool         is_closed() const           { return nOffset < 0; }
+
                 /** Get last I/O error code
                  *
                  * @return last I/O error code

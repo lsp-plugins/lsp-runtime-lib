@@ -73,6 +73,13 @@ namespace lsp
                 explicit IOutAudioStream();
                 virtual ~IOutAudioStream();
 
+            public:
+                /**
+                 * Check whether audio stream is closed
+                 * @return true if audio stream is closed
+                 */
+                inline bool         is_closed() const           { return nOffset < 0; }
+
                 /** Get last I/O error code
                  *
                  * @return last I/O error code

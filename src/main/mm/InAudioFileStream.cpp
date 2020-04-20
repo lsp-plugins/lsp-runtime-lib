@@ -92,6 +92,9 @@ namespace lsp
 
         status_t InAudioFileStream::open(const LSPString *path)
         {
+            if (!is_closed())
+                return -set_error(STATUS_OPENED);
+
         #ifdef USE_LIBSNDFILE
             SF_INFO info;
             SNDFILE *sf;
@@ -173,10 +176,6 @@ namespace lsp
         #ifdef USE_LIBSNDFILE
             sf_count_t count;
             status_t res;
-
-            // Always write to pBuffer if dst is NULL
-            if (dst == NULL)
-                dst         = pBuffer;
 
             switch (sformat_format(fmt))
             {
