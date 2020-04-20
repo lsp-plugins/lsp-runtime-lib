@@ -28,6 +28,19 @@ namespace lsp
         
         IInAudioStream::~IInAudioStream()
         {
+            do_close();
+        }
+
+        void IInAudioStream::do_close()
+        {
+            // Free allocated buffer if present
+            if (pBuffer != NULL)
+            {
+                ::free(pBuffer);
+                pBuffer     = NULL;
+            }
+
+            nOffset     = -1;   // Mark as closed
         }
     
         status_t IInAudioStream::info(audio_stream_t *dst) const
@@ -40,37 +53,46 @@ namespace lsp
 
         status_t IInAudioStream::close()
         {
-            // Free allocated buffer if present
-            if (pBuffer != NULL)
-            {
-                ::free(pBuffer);
-                pBuffer     = NULL;
-            }
-
-            nOffset     = -1;   // Mark as closed
+            do_close();
             return set_error(STATUS_OK);
         }
 
         wssize_t IInAudioStream::skip(wsize_t nframes)
         {
+            if (nframes == 0)
+            {
+                set_error(STATUS_OK);
+                return 0;
+            }
+
+            // Select format and check frame size
+            size_t afmt     = select_format(0);
+            size_t asize    = sformat_size_of(afmt) * sFormat.channels;
+            if (asize <= 0)
+                return -set_error(STATUS_UNSUPPORTED_FORMAT);
+
             // Perform direct read
             wssize_t nread = 0;
-            while (nframes > 0)
+            do
             {
-                // Perform direct read
-                size_t direct_fmt   = -1;
+                // Ensure capacity
                 size_t to_read      = (nframes > IO_BUF_SIZE) ? IO_BUF_SIZE : nframes;
-                ssize_t read        = direct_read(NULL, to_read, -1, &direct_fmt);
+                if (!ensure_capacity(to_read * asize))
+                    return -set_error(STATUS_NO_MEM);
+
+                // Perform read
+                ssize_t read        = direct_read(pBuffer, to_read, 0);
                 if (read < 0)
                 {
-                    if (nread <= 0)
-                        return read;
-                    break;
+                    if (nread > 0)
+                        break;
+                    set_error(-nread);
+                    return nread;
                 }
 
                 // Update position
                 nframes    -= read;
-            }
+            } while (nframes > 0);
 
             // Update statistics
             set_error(STATUS_OK);
@@ -93,26 +115,31 @@ namespace lsp
             return skip(nframes - nOffset);
         }
 
-        ssize_t IInAudioStream::direct_read(void *dst, size_t nframes, size_t rfmt, size_t *afmt)
+        ssize_t IInAudioStream::direct_read(void *dst, size_t nframes, size_t fmt)
         {
-            return -set_error(STATUS_NOT_IMPLEMENTED);
+            return -STATUS_NOT_IMPLEMENTED;
         }
 
-        status_t IInAudioStream::ensure_capacity(size_t bytes)
+        size_t IInAudioStream::select_format(size_t fmt)
+        {
+            return 0;
+        }
+
+        bool IInAudioStream::ensure_capacity(size_t bytes)
         {
             // Not enough space in temporary buffer?
             if (nBufSize >= bytes)
-                return STATUS_OK;
+                return true;
 
             // Perform buffer re-allocation
             bytes           = align_size(bytes, 0x200);
             uint8_t *buf    = static_cast<uint8_t *>(::realloc(pBuffer, bytes));
             if (buf == NULL)
-                return set_error(STATUS_NO_MEM);
+                return false;
             pBuffer         = buf;
             nBufSize        = bytes;
 
-            return STATUS_OK;
+            return true;
         }
 
         ssize_t IInAudioStream::conv_read(void *dst, size_t nframes, size_t fmt)
@@ -124,35 +151,69 @@ namespace lsp
             size_t fsize    = sformat_size_of(fmt) * sFormat.channels;
             if (fsize <= 0)
                 return -set_error(STATUS_BAD_FORMAT);
+
+            size_t afmt     = select_format(fmt);
+            size_t asize    = sformat_size_of(afmt) * sFormat.channels;
+            if (asize <= 0)
+                return -set_error(STATUS_UNSUPPORTED_FORMAT);
+
             uint8_t *dptr   = static_cast<uint8_t *>(dst);
             size_t nread    = 0;
 
             // Perform direct read
-            while (nframes > 0)
+            if (fmt != afmt)
             {
-                // Perform direct read
-                size_t direct_fmt   = -1;
-                size_t to_read      = (nframes > IO_BUF_SIZE) ? IO_BUF_SIZE : nframes;
-                ssize_t read        = direct_read(dptr, to_read, fmt, &direct_fmt);
-                if (read < 0)
+                while (nframes > 0)
                 {
-                    if (nread <= 0)
+                    // Ensure capacity
+                    size_t to_read      = (nframes > IO_BUF_SIZE) ? IO_BUF_SIZE : nframes;
+                    if (!ensure_capacity(to_read * asize))
+                        return -set_error(STATUS_NO_MEM);
+
+                    // Perform direct read
+                    ssize_t read = direct_read(pBuffer, to_read, afmt);
+
+                    // Analyze read status
+                    if (read < 0)
+                    {
+                        if (nread > 0)
+                            break;
+                        set_error(-read);
                         return read;
-                    break;
-                }
+                    }
 
-                // Need to perform conversion?
-                if (direct_fmt != fmt)
-                {
                     // Data is stored in pBuffer which can be updated, perform sample conversion
-                    if (!convert_samples(dptr, pBuffer, to_read * sFormat.channels, fmt, direct_fmt))
+                    if (!convert_samples(dptr, pBuffer, read * sFormat.channels, fmt, afmt))
                         return -set_error(STATUS_UNSUPPORTED_FORMAT);
-                }
 
-                // Update position and pointers
-                nframes    -= read;
-                nread      += read;
-                dptr       += fsize * read;
+                    // Update position and pointers
+                    nframes    -= read;
+                    nread      += read;
+                    dptr       += fsize * read;
+                }
+            }
+            else
+            {
+                while (nframes > 0)
+                {
+                    // Select number of frames and perform read
+                    size_t to_read      = (nframes > IO_BUF_SIZE) ? IO_BUF_SIZE : nframes;
+                    ssize_t read        = direct_read(dptr, to_read, afmt);
+
+                    // Analyze read status
+                    if (read < 0)
+                    {
+                        if (nread > 0)
+                            break;
+                        set_error(-read);
+                        return read;
+                    }
+
+                    // Update position and pointers
+                    nframes    -= read;
+                    nread      += read;
+                    dptr       += fsize * read;
+                }
             }
 
             // Update statistics

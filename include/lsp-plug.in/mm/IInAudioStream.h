@@ -35,6 +35,8 @@ namespace lsp
                 audio_stream_t      sFormat;            // Audio stream format
 
             protected:
+                void                do_close();
+
                 inline status_t     set_error(status_t error)   { return nErrorCode = error; }
 
                 inline bool         is_closed() const           { return nOffset < 0; }
@@ -44,22 +46,24 @@ namespace lsp
                  * @param bytes number of bytes
                  * @return status of operation
                  */
-                status_t            ensure_capacity(size_t bytes);
+                bool                ensure_capacity(size_t bytes);
 
                 /**
-                 * Perform direct read of sample data into the pBuffer of nBufSize size
-                 * If there is not enough place to store read frames, pBuffer should be resize
-                 * by using realloc() function. Use ensure_capacity() for better buffer approach.
+                 * Perform direct read of sample data into the buffer
                  *
-                 * @param dst buffer to store samples directly if they don't need to be additionally
-                 *            converted after read, may be NULL. In this case samples should be read
-                 *            into the pBuffer
+                 * @param dst buffer to store samples
                  * @param nframes number of frames to read
-                 * @param rfmt requested format of the data to read
-                 * @param afmt actual sample format that matches the best to the requested
+                 * @param fmt sample format selected for read
                  * @return number of frames actually read or negative error code
                  */
-                virtual ssize_t     direct_read(void *dst, size_t nframes, size_t rfmt, size_t *afmt);
+                virtual ssize_t     direct_read(void *dst, size_t nframes, size_t fmt);
+
+                /**
+                 * Select actual sample format for direct read
+                 * @param fmt the requested
+                 * @return actual sample format, by defaul 0 (not supported)
+                 */
+                virtual size_t      select_format(size_t fmt);
 
                 /**
                  * Perform read with conversion

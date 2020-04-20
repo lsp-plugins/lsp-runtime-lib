@@ -34,7 +34,9 @@ namespace lsp
                 static status_t     decode_sf_error(SNDFILE *fd);
             #endif
 
-                virtual ssize_t     direct_read(void *dst, size_t nframes, size_t rfmt, size_t *afmt);
+                virtual ssize_t     direct_read(void *dst, size_t nframes, size_t fmt);
+
+                virtual size_t      select_format(size_t fmt);
 
                 status_t            close_handle();
 

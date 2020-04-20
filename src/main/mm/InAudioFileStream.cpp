@@ -133,10 +133,44 @@ namespace lsp
             return close_handle();
         }
 
-        ssize_t InAudioFileStream::direct_read(void *dst, size_t nframes, size_t rfmt, size_t *afmt)
+        size_t InAudioFileStream::select_format(size_t fmt)
         {
         #ifdef USE_LIBSNDFILE
-            size_t fmt = sformat_format(rfmt);
+            switch (sformat_format(fmt))
+            {
+            #ifdef AFS_S32_CPU
+                case SFMT_S32:
+                case SFMT_U32:
+                case SFMT_S24:
+                case SFMT_U24:
+                    return SFMT_S32_CPU;
+            #endif
+
+            #ifdef AFS_S16_CPU
+                case SFMT_S16:
+                case SFMT_U16:
+                case SFMT_S8:
+                case SFMT_U8:
+                    return SFMT_S16_CPU;
+            #endif
+
+                case SFMT_F32:
+                    return SFMT_F32_CPU;
+
+                case SFMT_F64:
+                    return SFMT_F64_CPU;
+
+                default:
+                    break;
+            }
+
+            return SFMT_F32_CPU;
+        #endif
+        }
+
+        ssize_t InAudioFileStream::direct_read(void *dst, size_t nframes, size_t fmt)
+        {
+        #ifdef USE_LIBSNDFILE
             sf_count_t count;
             status_t res;
 
@@ -144,51 +178,26 @@ namespace lsp
             if (dst == NULL)
                 dst         = pBuffer;
 
-            switch (fmt)
+            switch (sformat_format(fmt))
             {
-                #ifdef AFS_S32_CPU
                 case SFMT_S32:
-                case SFMT_U32:
-                case SFMT_S24:
-                case SFMT_U24:
-                    if ((res = ensure_capacity(nframes * sFormat.channels * sizeof(int))) != STATUS_OK)
-                        return -set_error(res);
-                    count   = sf_readf_int(hHandle, static_cast<int *>((rfmt == SFMT_S32_CPU) ? dst : pBuffer), nframes);
-                    *afmt   = SFMT_S32_CPU;
+                    count   = sf_readf_int(hHandle, static_cast<int *>(dst), nframes);
                     break;
-                #endif
 
-                #ifdef AFS_S16_CPU
                 case SFMT_S16:
-                case SFMT_U16:
-                case SFMT_S8:
-                case SFMT_U8:
-                    if ((res = ensure_capacity(nframes * sFormat.channels * sizeof(short))) != STATUS_OK)
-                        return -set_error(res);
-                    count   = sf_readf_short(hHandle, static_cast<short *>((rfmt == SFMT_S16_CPU) ? dst : pBuffer), nframes);
-                    *afmt   = SFMT_S16_CPU;
+                    count   = sf_readf_short(hHandle, static_cast<short *>(dst), nframes);
                     break;
-                #endif
 
                 case SFMT_F32:
-                    if ((res = ensure_capacity(nframes * sFormat.channels * sizeof(float))) != STATUS_OK)
-                        return -set_error(res);
-                    count   = sf_readf_float(hHandle, static_cast<float *>((rfmt == SFMT_F32_CPU) ? dst : pBuffer), nframes);
-                    *afmt   = SFMT_F32_CPU;
+                    count   = sf_readf_float(hHandle, static_cast<float *>(dst), nframes);
                     break;
 
                 case SFMT_F64:
-                    if ((res = ensure_capacity(nframes * sFormat.channels * sizeof(double))) != STATUS_OK)
-                        return -set_error(res);
-                    count   = sf_readf_double(hHandle, static_cast<double *>((rfmt == SFMT_F64_CPU) ? dst : pBuffer), nframes);
-                    *afmt   = SFMT_F64_CPU;
+                    count   = sf_readf_double(hHandle, static_cast<double *>(dst), nframes);
                     break;
 
                 default: // Force SFMT_F32 sample format
-                    if ((res = ensure_capacity(nframes * sFormat.channels * sizeof(float))) != STATUS_OK)
-                        return -set_error(res);
-                    count   = sf_readf_float(hHandle, static_cast<float *>((rfmt == SFMT_F32_CPU) ? dst : pBuffer), nframes);
-                    *afmt   = SFMT_F32_CPU;
+                    count   = sf_readf_float(hHandle, static_cast<float *>(dst), nframes);
                     break;
             }
 
