@@ -5,8 +5,8 @@
  *      Author: sadko
  */
 
-#ifndef LSP_PLUG_IN_OBJ_PULLPARSER_H_
-#define LSP_PLUG_IN_OBJ_PULLPARSER_H_
+#ifndef LSP_PLUG_IN_FMT_OBJ_PULLPARSER_H_
+#define LSP_PLUG_IN_FMT_OBJ_PULLPARSER_H_
 
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/common/types.h>
@@ -195,4 +195,4 @@ namespace lsp
     }
 } /* namespace lsp */
 
-#endif /* LSP_PLUG_IN_OBJ_PULLPARSER_H_ */
+#endif /* LSP_PLUG_IN_FMT_OBJ_PULLPARSER_H_ */
