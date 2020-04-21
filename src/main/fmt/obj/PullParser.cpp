@@ -19,6 +19,10 @@ namespace lsp
         {
             pIn         = NULL;
             nWFlags     = 0;
+            pBuffer     = NULL;
+            nBufOff     = 0;
+            nBufLen     = 0;
+            bSkipLF     = false;
         }
 
         PullParser::~PullParser()
@@ -171,6 +175,16 @@ namespace lsp
             else if (seq == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
+            // Allocate memory
+            lsp_wchar_t *b  = static_cast<lsp_wchar_t *>(::malloc(IO_BUF_SIZE * sizeof(lsp_wchar_t)));
+            if (b == NULL)
+                return STATUS_NO_MEM;
+
+            // Initialize state
+            pBuffer         = b;
+            nBufOff         = 0;
+            nBufLen         = 0;
+            bSkipLF         = false;
             pIn             = seq;
 
             return STATUS_OK;
@@ -179,6 +193,16 @@ namespace lsp
         status_t PullParser::close()
         {
             status_t res = STATUS_OK;
+
+            // Reset internal state
+            if (pBuffer != NULL)
+            {
+                ::free(pBuffer);
+                pBuffer = NULL;
+            }
+            nBufOff         = 0;
+            nBufLen         = 0;
+            bSkipLF         = false;
 
             // Release input sequence
             if (pIn != NULL)
@@ -233,8 +257,30 @@ namespace lsp
 
         status_t PullParser::read_event()
         {
+            status_t res = STATUS_OK;
+
+            while (true)
+            {
+                // Clear current event
+                sEvent.type     = event_type_t(-1);
+                sEvent.name.clear();
+                sEvent.ivertex.clear();
+                sEvent.inormal.clear();
+                sEvent.itexcoord.clear();
+
+                // read line
+                if ((res = read_line()) != STATUS_OK)
+                    return res;
+            }
+
             // TODO
             return STATUS_OK;
+        }
+
+        status_t PullParser::read_line()
+        {
+            // TODO
+            return STATUS_NOT_IMPLEMENTED;
         }
 
         /*inline bool Parser::is_space(char ch)

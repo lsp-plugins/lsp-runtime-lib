@@ -33,10 +33,18 @@ namespace lsp
             protected:
                 io::IInSequence    *pIn;
                 size_t              nWFlags;
+
+                LSPString           sLine;          // Last read line
+                lsp_wchar_t        *pBuffer;        // Buffer for character data
+                size_t              nBufOff;        // Buffer offset
+                size_t              nBufLen;        // Buffer length
+                bool                bSkipLF;        // Skip line-feed character
+
                 event_t             sEvent;
 
             protected:
                 status_t            read_event();
+                status_t            read_line();
                 status_t            copy_event(event_t *ev);
 
             public:
