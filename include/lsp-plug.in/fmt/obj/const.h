@@ -22,8 +22,12 @@ namespace lsp
         {
             EV_OBJECT,      ///< Start of the new object
             EV_VERTEX,      ///< New vertex coordinates
+            EV_PVERTEX,     ///< New parametrized vertex coordinates
             EV_NORMAL,      ///< New normal coordinates
             EV_TEXCOORD,    ///< New textrue coordinates
+            EV_FACE,        ///< Face event
+            EV_LINE,        ///< Line event
+            EV_POINT,       ///< Point event
         };
 
         typedef struct event_t
@@ -32,15 +36,15 @@ namespace lsp
 
             union
             {
-                struct { float x, y, z;     } vertex;
-                struct { float dx, dy, dz;  } normal;
-                struct { float u, v;        } texcoord;
+                struct { float x, y, z, w;      } vertex;
+                struct { float dx, dy, dz, dw;  } normal;
+                struct { float u, v, w;         } texcoord;
             };
             LSPString name;
 
-            lltl::darray<size_t>    ivertex;
-            lltl::darray<size_t>    inormal;
-            lltl::darray<size_t>    itexcoord;
+            lltl::darray<ssize_t>   ivertex;        // Indexes of vertices
+            lltl::darray<ssize_t>   inormal;        // Indexes of normals
+            lltl::darray<ssize_t>   itexcoord;      // Indexes of texture coordinates
         } event_t;
     }
 }

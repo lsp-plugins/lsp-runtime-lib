@@ -35,22 +35,22 @@ namespace lsp
             return STATUS_OK;
         }
 
-        ssize_t IObjHandler::add_vertex(float x, float y, float z)
+        ssize_t IObjHandler::add_vertex(float x, float y, float z, float w)
         {
             return 0;
         }
 
-        ssize_t IObjHandler::add_param_vertex(float x, float y, float z)
+        ssize_t IObjHandler::add_param_vertex(float x, float y, float z, float w)
         {
             return 0;
         }
 
-        ssize_t IObjHandler::add_normal(float dx, float dy, float dz)
+        ssize_t IObjHandler::add_normal(float dx, float dy, float dz, float dn)
         {
             return 0;
         }
 
-        ssize_t IObjHandler::add_texture_vertex(float u, float v)
+        ssize_t IObjHandler::add_texture_vertex(float u, float v, float w)
         {
             return 0;
         }

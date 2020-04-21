@@ -62,9 +62,10 @@ namespace lsp
                  * @param x vertex X coordinate
                  * @param y vertex Y coordinate
                  * @param z vertex Z coordinate
+                 * @param w vertex W coordinate
                  * @return number of added vertex or negative error code
                  */
-                virtual ssize_t add_vertex(float x, float y, float z);
+                virtual ssize_t add_vertex(float x, float y, float z, float w);
 
                 /** Add parameter vertex
                  *
@@ -72,32 +73,35 @@ namespace lsp
                  * @param x vertex X coordinate
                  * @param y vertex Y coordinate
                  * @param z vertex Z coordinate
+                 * @param w vertex W coordinate
                  * @return number of added vertex or negative error code
                  */
-                virtual ssize_t add_param_vertex(float x, float y, float z);
+                virtual ssize_t add_param_vertex(float x, float y, float z, float w);
 
                 /** Add normal
                  *
                  * @param nx normal x
                  * @param ny normal y
                  * @param nz normal z
+                 * @param nw normal w
                  * @return number of added normal or negative error code
                  */
-                virtual ssize_t add_normal(float nx, float ny, float nz);
+                virtual ssize_t add_normal(float nx, float ny, float nz, float nw);
 
                 /** Add texture vertex
                  *
                  * @param u texture U coordinate
                  * @param v texture V coordinate
+                 * @param w texture W coordinate
                  * @return number of added texture vertex or negative error code
                  */
-                virtual ssize_t add_texture_vertex(float u, float w);
+                virtual ssize_t add_texture_vertex(float u, float v, float w);
 
                 /** Add face
                  *
-                 * @param vv array of vertex indexes starting with 1 (0 if not present)
-                 * @param vn array of normal indexes starting with 1 (0 if not present)
-                 * @param vt array of texture vertex indexes starting with 1 (0 if not present)
+                 * @param vv array of vertex indexes starting with 0 (negative value if not present)
+                 * @param vn array of normal indexes starting with 0 (negative value if not present)
+                 * @param vt array of texture vertex indexes starting with 0 (negative value if not present)
                  * @param n number of elements in vv, vn and vt
                  * @return status of operation
                  */
@@ -113,8 +117,8 @@ namespace lsp
 
                 /** Add line
                  *
-                 * @param vv array of vertex indexes starting with 1 (0 if not present)
-                 * @param vt array of texture vertex indexes starting with 1 (0 if not present)
+                 * @param vv array of vertex indexes starting with 0 (negative value if not present)
+                 * @param vt array of texture vertex indexes starting with 0 (negative value if not present)
                  * @param n number of elements in vv
                  * @return status of operation
                  */
