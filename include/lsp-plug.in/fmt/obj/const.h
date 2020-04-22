@@ -30,6 +30,8 @@ namespace lsp
             EV_POINT,       ///< Point event
         };
 
+        typedef ssize_t     index_t;
+
         typedef struct event_t
         {
             event_type_t type;
@@ -42,9 +44,9 @@ namespace lsp
             };
             LSPString name;
 
-            lltl::darray<ssize_t>   ivertex;        // Indexes of vertices
-            lltl::darray<ssize_t>   inormal;        // Indexes of normals
-            lltl::darray<ssize_t>   itexcoord;      // Indexes of texture coordinates
+            lltl::darray<index_t>   ivertex;        // Indexes of vertices
+            lltl::darray<index_t>   inormal;        // Indexes of normals
+            lltl::darray<index_t>   itexcoord;      // Indexes of texture coordinates
         } event_t;
     }
 }

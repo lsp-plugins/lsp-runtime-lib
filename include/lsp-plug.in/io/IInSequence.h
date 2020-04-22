@@ -64,7 +64,7 @@ namespace lsp
                 /**
                  * Skip amount of characters
                  * @param count number of characters to skip
-                 * @return number of skipped characters
+                 * @return number of skipped characters or negative error code
                  */
                 virtual ssize_t     skip(size_t count);
 

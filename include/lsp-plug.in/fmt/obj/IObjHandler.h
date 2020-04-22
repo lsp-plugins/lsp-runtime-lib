@@ -13,6 +13,8 @@
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
 
+#include <lsp-plug.in/fmt/obj/const.h>
+
 namespace lsp
 {
     namespace obj
@@ -105,7 +107,7 @@ namespace lsp
                  * @param n number of elements in vv, vn and vt
                  * @return status of operation
                  */
-                virtual status_t add_face(const size_t *vv, const size_t *vn, const size_t *vt, size_t n);
+                virtual status_t add_face(const index_t *vv, const index_t *vn, const index_t *vt, size_t n);
 
                 /** Add points
                  *
@@ -113,7 +115,7 @@ namespace lsp
                  * @param n number of elements in vv
                  * @return status of operation
                  */
-                virtual status_t add_points(const size_t *vv, size_t n);
+                virtual status_t add_points(const index_t *vv, size_t n);
 
                 /** Add line
                  *
@@ -122,7 +124,7 @@ namespace lsp
                  * @param n number of elements in vv
                  * @return status of operation
                  */
-                virtual status_t add_line(const size_t *vv, const size_t *vt, size_t n);
+                virtual status_t add_line(const index_t *vv, const index_t *vt, size_t n);
         };
     }
 

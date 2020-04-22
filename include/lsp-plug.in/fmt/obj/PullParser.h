@@ -50,7 +50,7 @@ namespace lsp
             protected:
                 status_t            read_event();
                 status_t            read_line();
-                status_t            copy_event(event_t *ev);
+                status_t            copy_event(event_t *ev) const;
                 status_t            eliminate_comments();
                 status_t            parse_line(const char *s);
 
@@ -141,6 +141,13 @@ namespace lsp
                  * @return NULL if there is no current event
                  */
                 const event_t      *current() const;
+
+                /**
+                 * Get current event
+                 * @param ev pointer to structure to store the event
+                 * @return NULL if there is no current event
+                 */
+                status_t           current(event_t *ev) const;
 
         };
     }

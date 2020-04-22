@@ -55,17 +55,17 @@ namespace lsp
             return 0;
         }
 
-        status_t IObjHandler::add_face(const size_t *vv, const size_t *vn, const size_t *vt, size_t n)
+        status_t IObjHandler::add_face(const index_t *vv, const index_t *vn, const index_t *vt, size_t n)
         {
             return STATUS_OK;
         }
 
-        status_t IObjHandler::add_points(const size_t *vv, size_t n)
+        status_t IObjHandler::add_points(const index_t *vv, size_t n)
         {
             return STATUS_OK;
         }
 
-        status_t IObjHandler::add_line(const size_t *vv, const size_t *vt, size_t n)
+        status_t IObjHandler::add_line(const index_t *vv, const index_t *vt, size_t n)
         {
             return STATUS_OK;
         }

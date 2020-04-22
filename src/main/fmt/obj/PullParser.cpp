@@ -18,17 +18,18 @@ namespace lsp
     {
         PullParser::PullParser()
         {
-            pIn         = NULL;
-            nWFlags     = 0;
-            pBuffer     = NULL;
-            nBufOff     = 0;
-            nBufLen     = 0;
-            nLines      = 0;
-            bSkipLF     = false;
-            nVx         = 0;
-            nParVx      = 0;
-            nTexVx      = 0;
-            nNormVx     = 0;
+            pIn             = NULL;
+            nWFlags         = 0;
+            pBuffer         = NULL;
+            nBufOff         = 0;
+            nBufLen         = 0;
+            nLines          = 0;
+            bSkipLF         = false;
+            nVx             = 0;
+            nParVx          = 0;
+            nTexVx          = 0;
+            nNormVx         = 0;
+            sEvent.type     = event_type_t(-1);
         }
 
         PullParser::~PullParser()
@@ -197,6 +198,7 @@ namespace lsp
             nParVx          = 0;
             nTexVx          = 0;
             nNormVx         = 0;
+            sEvent.type     = event_type_t(-1);
 
             return STATUS_OK;
         }
@@ -241,15 +243,26 @@ namespace lsp
             return (sEvent.type != event_type_t(-1)) ? &sEvent : NULL;
         };
 
+        status_t PullParser::current(event_t *ev) const
+        {
+            if (pIn == NULL)
+                return STATUS_CLOSED;
+            if (sEvent.type == event_type_t(-1))
+                return STATUS_NO_DATA;
+            return copy_event(ev);
+        }
+
         status_t PullParser::next(event_t *ev)
         {
+            if (pIn == NULL)
+                return STATUS_CLOSED;
             status_t res = read_event();
             if ((res == STATUS_OK) && (ev != NULL))
                 res = copy_event(ev);
             return res;
         }
 
-        status_t PullParser::copy_event(event_t *ev)
+        status_t PullParser::copy_event(event_t *ev) const
         {
             // Set values to target structure
             ev->type    = sEvent.type;
