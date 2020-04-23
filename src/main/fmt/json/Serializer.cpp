@@ -11,6 +11,7 @@
 #include <lsp-plug.in/io/OutSequence.h>
 #include <lsp-plug.in/fmt/json/Tokenizer.h>
 #include <lsp-plug.in/fmt/json/Serializer.h>
+#include <lsp-plug.in/stdlib/stdio.h>
 #include <lsp-plug.in/stdlib/math.h>
 
 namespace lsp
@@ -387,7 +388,7 @@ namespace lsp
                 return (value < 0.0) ? write_raw("-Infinity", 9) : write_raw("Infinity", 8);
 
             char *buf = NULL;
-            int len = ::asprintf(&buf, fmt, value);
+            int len = asprintf(&buf, fmt, value);
             if (buf == NULL)
                 return STATUS_NO_MEM;
 
