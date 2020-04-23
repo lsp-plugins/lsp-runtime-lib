@@ -16,7 +16,7 @@ LIBSNDFILE_NAME            := sndfile
 
 ifeq ($(PLATFORM),Windows)
   STDLIB_VERSION             := system
-  STDLIB_LDFLAGS             := -lpthread -lshlwapi
+  STDLIB_LDFLAGS             := -lpthread -lshlwapi -lwinmm -lmsacm32
 else
   STDLIB_VERSION             := system
   STDLIB_LDFLAGS             := -lpthread -ldl

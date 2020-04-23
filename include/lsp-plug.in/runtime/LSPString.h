@@ -49,6 +49,7 @@ namespace lsp
             static inline void xfree(lsp_wchar_t *ptr)                                      { ::free(ptr); }
             static inline void xmove(lsp_wchar_t *dst, const lsp_wchar_t *src, size_t n)    { ::memmove(dst, src, n * sizeof(lsp_wchar_t)); }
             static inline size_t xlen(const lsp_wchar_t *s);
+            static inline size_t u16len(const lsp_utf16_t *s);
 
 #ifdef ARCH_LE
             static inline int xcmp(const lsp_wchar_t *a, const lsp_wchar_t *b, size_t n) { return ::memcmp(a, b, n * sizeof(lsp_wchar_t)); }
@@ -190,12 +191,15 @@ namespace lsp
             bool append(lsp_swchar_t ch);
             bool append_ascii(const char *arr, size_t n);
             bool append_utf8(const char *arr, size_t n);
+            bool append_utf16(const lsp_utf16_t *arr, size_t n);
             bool append(const lsp_wchar_t *arr, size_t n);
+            bool append(const lsp_wchar_t *arr);
             bool append(const LSPString *src);
             bool append(const LSPString *src, ssize_t first);
             bool append(const LSPString *src, ssize_t first, ssize_t last);
             inline bool append_ascii(const char *arr) { return append_ascii(arr, ::strlen(arr)); };
             inline bool append_utf8(const char *arr) { return append_utf8(arr, ::strlen(arr)); };
+            bool append_utf16(const lsp_utf16_t *arr);
 
             bool prepend(lsp_wchar_t ch);
             bool prepend(const lsp_wchar_t *arr, size_t n);

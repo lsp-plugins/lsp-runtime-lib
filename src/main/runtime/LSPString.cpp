@@ -87,10 +87,18 @@ namespace lsp
 
     inline size_t LSPString::xlen(const lsp_wchar_t *s)
     {
-        const lsp_wchar_t *p = s;
-        while (*p != '\0')
-            ++p;
-        return p - s;
+        size_t i=0;
+        while (s[i] != 0)
+            ++i;
+        return i;
+    }
+
+    inline size_t LSPString::u16len(const lsp_utf16_t *s)
+    {
+        size_t i=0;
+        while (s[i] != 0)
+            ++i;
+        return i;
     }
 
     int LSPString::xcasecmp(const lsp_wchar_t *a, const lsp_wchar_t *b, size_t n)
@@ -589,6 +597,11 @@ namespace lsp
         return true;
     }
 
+    bool  LSPString::append(const lsp_wchar_t *arr)
+    {
+        return append(arr, xlen(arr));
+    }
+
     bool LSPString::append(const lsp_wchar_t *arr, size_t n)
     {
         if (!cap_grow(n))
@@ -616,6 +629,22 @@ namespace lsp
         if (!tmp.set_utf8(arr, n))
             return false;
         return append(&tmp);
+    }
+
+    bool LSPString::append_utf16(const lsp_utf16_t *arr, size_t n)
+    {
+        if (nLength <= 0)
+            return set_utf16(arr, n);
+
+        LSPString tmp;
+        if (!tmp.set_utf16(arr, n))
+            return false;
+        return append(&tmp);
+    }
+
+    bool LSPString::append_utf16(const lsp_utf16_t *arr)
+    {
+        return append_utf16(arr, u16len(arr));
     }
 
     bool LSPString::append(const LSPString *src)
@@ -1562,11 +1591,7 @@ namespace lsp
 
     bool LSPString::set_utf16(const lsp_utf16_t *s)
     {
-        size_t len = 0;
-        while (s[len] != 0)
-            ++len;
-
-        return set_utf16(s, len);
+        return set_utf16(s, u16len(s));
     }
 
     bool LSPString::set_utf16(const lsp_utf16_t *s, size_t n)

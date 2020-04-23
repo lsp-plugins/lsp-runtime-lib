@@ -219,10 +219,10 @@ namespace lsp
 
         status_t OutAudioFileStream::close_handle()
         {
+        #ifdef USE_LIBSNDFILE
             if (hHandle == NULL)
                 return STATUS_OK;
 
-        #ifdef USE_LIBSNDFILE
             int res     = sf_close(hHandle);
 
             hHandle     = NULL;

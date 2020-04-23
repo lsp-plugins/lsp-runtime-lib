@@ -15,6 +15,10 @@
 
 #ifdef USE_LIBSNDFILE
     #include <sndfile.h>
+#else
+    #include <mmsystem.h>
+    #include <mmreg.h>
+    #include <msacm.h>
 #endif
 
 namespace lsp
@@ -30,11 +34,21 @@ namespace lsp
             #ifdef USE_LIBSNDFILE
                 SNDFILE            *hHandle;
                 bool                bSeekable;
+            #else
+                HMMIO               hMMIO;
+                HACMSTREAM          hACM;
+                MMIOINFO           *pMmioInfo;
+                ACMSTREAMHEADER    *pAHead;
+                MMCKINFO           *pCkInRiff;
+                WAVEFORMATEX       *pWfexInfo;
             #endif
 
             protected:
             #ifdef USE_LIBSNDFILE
                 static status_t     decode_sf_error(SNDFILE *fd);
+            #else
+                status_t            open_riff_file(const LSPString *path);
+                status_t            open_acm_stream_read();
             #endif
 
                 virtual ssize_t     direct_read(void *dst, size_t nframes, size_t fmt);
