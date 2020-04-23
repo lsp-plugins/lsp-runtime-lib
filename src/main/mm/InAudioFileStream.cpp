@@ -288,11 +288,18 @@ namespace lsp
             return STATUS_OK;
         }
 
+        typedef struct acm_fmt_tag_t
+        {
+            LPACMFORMATTAGDETAILSW      sDetails;
+        } acm_fmt_tag_t;
+
         typedef struct acm_driver_t
         {
-            HACMDRIVERID        hDrvId;
-            DWORD               fdwSupport;
-            ACMDRIVERDETAILSW   sDetails;
+            HACMDRIVERID                        hDrvId;
+            DWORD                               fdwSupport;
+            ACMDRIVERDETAILSW                   sDetails;
+            lltl::parray<ACMFORMATDETAILSW>     sFormats;
+            lltl::parray<ACMFORMATTAGDETAILSW>  sTagFormats;
         } acm_driver_t;
 
         void append_fourcc(LSPString &s, FOURCC fcc)
@@ -306,6 +313,199 @@ namespace lsp
                 s.append(c);
             }
             s.fmt_append_ascii(" (0x%lx)", long(fcc));
+        }
+
+//        WINBOOL CALLBACK acm_format_tag_enum_callback(HACMDRIVERID hadid, LPACMFORMATTAGDETAILSW paftd, DWORD_PTR dwInstance, DWORD fdwSupport)
+//        {
+//            acm_fmt_tag_t *fmt = new acm_fmt_tag_t();
+//            fmt->sDetails   = paftd;
+//
+//            ACMFORMATTAGDETAILSW *d = paftd;
+//            LSPString info;
+//            info.fmt_append_ascii("  fmt: %d/%d/%d/%x/%d - ",
+//                    int(d->dwFormatTagIndex),
+//                    int(d->dwFormatTag),
+//                    int(d->cbFormatSize),
+//                    int(d->fdwSupport),
+//                    int(d->cStandardFormats)
+//                );
+//            info.append_utf16(d->szFormatTag);
+//            lsp_trace("%s\n", info.get_native());
+//
+//            return TRUE;
+//        }
+
+        WINBOOL CALLBACK acm_format_enum_callback(HACMDRIVERID hadid, LPACMFORMATDETAILSW pafd, DWORD_PTR dwInstance, DWORD fdwSupport)
+        {
+            size_t hdr          = align_size(sizeof(ACMFORMATDETAILSW), DEFAULT_ALIGN);
+            size_t cbwfx        = pafd->cbwfx;
+
+            // Make a copy of format
+            BYTE *buf           = static_cast<BYTE *>(::malloc(hdr + cbwfx));
+            if (buf == NULL)
+                return TRUE;
+            ACMFORMATDETAILSW *cfd = reinterpret_cast<ACMFORMATDETAILSW *>(buf);
+            *cfd            = *pafd;
+            cfd->pwfx       = reinterpret_cast<WAVEFORMATEX *>(&buf[hdr]);
+            cfd->cbwfx      = cbwfx;
+            ::memcpy(cfd->pwfx, pafd->pwfx, sizeof(WAVEFORMATEX) + pafd->pwfx->cbSize);
+
+            // Add copy to list
+            acm_driver_t *drv = reinterpret_cast<acm_driver_t *>(dwInstance);
+            if (!drv->sFormats.add(cfd))
+                ::free(cfd);
+
+            LSPString info;
+            info.fmt_append_ascii("  fmt: idx=%d, tag=%d, fdw=%d, name=",
+                    int(cfd->dwFormatIndex),
+                    int(cfd->dwFormatTag),
+                    int(cfd->fdwSupport)
+                );
+            info.append_utf16(cfd->szFormat);
+
+            WAVEFORMATEX *wf = cfd->pwfx;
+            info.fmt_append_ascii("\n  det: tag=%d, chan=%d, sr=%d, abps=%d, %algn=%d, bps=%d, cbsz=%d",
+                    int(wf->wFormatTag),
+                    int(wf->nChannels),
+                    int(wf->nSamplesPerSec),
+                    int(wf->nAvgBytesPerSec),
+                    int(wf->nBlockAlign),
+                    int(wf->wBitsPerSample),
+                    int(wf->cbSize)
+                );
+
+            lsp_trace("%s\n", info.get_native());
+
+            return true;
+        }
+
+        void acm_format_enum(HACMDRIVER had, acm_driver_t *drv)
+        {
+            ACMDRIVERDETAILSW *p = &drv->sDetails;
+
+            DWORD bytes         = 0;
+            size_t hdr          = align_size(sizeof(ACMFORMATDETAILSW), DEFAULT_ALIGN);
+            ::acmMetrics((HACMOBJ)had, ACM_METRIC_MAX_SIZE_FORMAT, &bytes);
+            bytes       = align_size(bytes, DEFAULT_ALIGN);
+
+            BYTE *buf           = static_cast<BYTE *>(::malloc(hdr + bytes));
+            ACMFORMATDETAILSW *fdw = reinterpret_cast<ACMFORMATDETAILSW *>(buf);
+            fdw->cbStruct       = sizeof(ACMFORMATDETAILSW);
+            fdw->pwfx           = reinterpret_cast<WAVEFORMATEX *>(&buf[hdr]);
+            fdw->dwFormatIndex  = 0;
+            fdw->cbwfx          = bytes;
+
+            for (size_t i=0; i<p->cFormatTags; ++i)
+            {
+                fdw->dwFormatTag          = 0;
+                ::acmFormatEnumW(had, fdw, acm_format_enum_callback, (DWORD_PTR)drv, 0);
+            }
+            ::free(buf);
+        }
+
+        void acm_query_formats(HACMDRIVER had, ACMFORMATTAGDETAILSW *tag, acm_driver_t *drv)
+        {
+            ACMDRIVERDETAILSW *p = &drv->sDetails;
+
+            DWORD bytes         = 0;
+            ::acmMetrics((HACMOBJ)had, ACM_METRIC_MAX_SIZE_FORMAT, &bytes);
+            bytes               = align_size(bytes, DEFAULT_ALIGN);
+            size_t hdr          = align_size(sizeof(ACMFORMATDETAILSW), DEFAULT_ALIGN);
+
+            BYTE *buf           = static_cast<BYTE *>(::malloc(hdr + bytes));
+            ACMFORMATDETAILSW *fdw = reinterpret_cast<ACMFORMATDETAILSW *>(buf);
+
+            for (size_t i=0, n=tag->cStandardFormats; i < n; ++i)
+            {
+                ::ZeroMemory(buf, hdr + bytes);
+
+                fdw->cbStruct       = sizeof(ACMFORMATDETAILSW);
+                fdw->dwFormatTag    = tag->dwFormatTag;
+                fdw->dwFormatIndex  = i;
+                fdw->pwfx           = reinterpret_cast<WAVEFORMATEX *>(&buf[hdr]);
+                fdw->cbwfx          = bytes;
+
+                MMRESULT res = ::acmFormatDetailsW(had, fdw, ACM_FORMATDETAILSF_INDEX);
+                if (res != 0)
+                {
+                    switch (res)
+                    {
+                        case ACMERR_NOTPOSSIBLE: lsp_trace("error = ACMERR_NOTPOSSIBLE"); break;
+                        case MMSYSERR_INVALFLAG: lsp_trace("error = MMSYSERR_INVALFLAG"); break;
+                        case MMSYSERR_INVALHANDLE: lsp_trace("error = MMSYSERR_INVALHANDLE"); break;
+                        case MMSYSERR_INVALPARAM: lsp_trace("error = MMSYSERR_INVALPARAM"); break;
+                        default: lsp_trace("error = %d", int (res)); break;
+                    }
+                    continue;
+                }
+
+                // Output info
+                WAVEFORMATEX *wf = fdw->pwfx;
+
+                LSPString info;
+                info.fmt_append_ascii("  fmt tag=%x, ch=%d, sps=%d, abps=%d, blka=%d bps=%d cbz=%d",
+                        int(wf->wFormatTag),
+                        int(wf->nChannels),
+                        int(wf->nSamplesPerSec),
+                        int(wf->nAvgBytesPerSec),
+                        int(wf->nBlockAlign),
+                        int(wf->wBitsPerSample),
+                        int(wf->cbSize)
+                    );
+
+                lsp_trace("%s\n", info.get_native());
+            }
+        }
+
+        void acm_query_format_tags(HACMDRIVER had, acm_driver_t *drv)
+        {
+            ACMDRIVERDETAILSW *p = &drv->sDetails;
+            ACMFORMATTAGDETAILSW ftd;
+
+            for (size_t i=0, n=p->cFormatTags; i < n; ++i)
+            {
+                // Prepare the structure
+                ::ZeroMemory(&ftd, sizeof(ACMFORMATTAGDETAILSW));
+                ftd.cbStruct = sizeof(ACMFORMATTAGDETAILSW);
+                ftd.dwFormatTagIndex = i;
+
+                // Get information
+                MMRESULT res = ::acmFormatTagDetailsW(had, &ftd, ACM_FORMATTAGDETAILSF_INDEX);
+                if (res != 0)
+                {
+                    switch (res)
+                    {
+                        case MMSYSERR_INVALFLAG: lsp_trace("error = MMSYSERR_INVALFLAG"); break;
+                        case MMSYSERR_INVALHANDLE: lsp_trace("error = MMSYSERR_INVALHANDLE"); break;
+                        case MMSYSERR_INVALPARAM: lsp_trace("error = MMSYSERR_INVALPARAM"); break;
+                        default: lsp_trace("error = %d", int (res)); break;
+                    }
+                    continue;
+                }
+
+                LSPString info;
+                info.fmt_append_ascii("  fmttag idx=%d, tag=%x, size=%d, fdw=%x, nfmt=%d, name=",
+                        int(ftd.dwFormatTagIndex),
+                        int(ftd.dwFormatTag),
+                        int(ftd.cbFormatSize),
+                        int(ftd.fdwSupport),
+                        int(ftd.cStandardFormats)
+                    );
+
+                info.append_utf16(ftd.szFormatTag);
+                lsp_trace("%s\n", info.get_native());
+
+                // Save a copy
+                ACMFORMATTAGDETAILSW *copy = static_cast<ACMFORMATTAGDETAILSW *>(memdup(&ftd, sizeof(ACMFORMATTAGDETAILSW)));
+                if (copy != NULL)
+                {
+                    if (!drv->sTagFormats.add(copy))
+                        ::free(copy);
+                }
+
+                // Query formats
+                acm_query_formats(had, copy, drv);
+            }
         }
 
         WINBOOL CALLBACK acm_driver_enum_callback(HACMDRIVERID hadid, DWORD_PTR dwInstance, DWORD fdwSupport)
@@ -335,6 +535,17 @@ namespace lsp
             info.append_ascii("  feat  = "); info.append_utf16(p->szFeatures); info.append('\n');
 
             lsp_trace("%s\n", info.get_native());
+
+            HACMDRIVER              had;
+            ::acmDriverOpen(&had, hadid, 0);
+
+            acm_query_format_tags(had, drv);
+
+//            acm_format_enum(had, drv);
+
+//            ACMFORMATTAGDETAILSW    ftd;
+//            ftd.cbStruct        = sizeof(ACMFORMATTAGDETAILSW);
+//            ::acmFormatTagEnumW(had, &ftd, acm_format_tag_enum_callback, (DWORD_PTR)drv, 0);
 
             if (!list->add(drv))
                 delete drv;
