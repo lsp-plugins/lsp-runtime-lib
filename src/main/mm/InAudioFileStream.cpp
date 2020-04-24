@@ -215,7 +215,7 @@ namespace lsp
                             sFormat.srate       = wfe->nSamplesPerSec;
                             sFormat.channels    = wfe->nChannels;
                             sFormat.frames      = -1;
-                            sFormat.format      = decode_sample_format(wfe);
+                            sFormat.format      = fmt;
                             nOffset             = 0;
                             bSeekable           = false;
 
@@ -236,11 +236,12 @@ namespace lsp
                     {
                         // All is OK, ust reading PCM samples
                         pMMIO               = mmio;
+                        pACM                = NULL;
                         pFormat             = wfe;
                         sFormat.srate       = wfe->nSamplesPerSec;
                         sFormat.channels    = wfe->nChannels;
                         sFormat.frames      = mmio->frames();
-                        sFormat.format      = decode_sample_format(wfe);
+                        sFormat.format      = fmt;
                         nOffset             = 0;
                         bSeekable           = mmio->seekable();
 
@@ -342,7 +343,7 @@ namespace lsp
             return -((res == STATUS_OK) ? STATUS_EOF : res);
         #else
             size_t fsize    = sformat_size_of(sFormat.format) * LE_TO_CPU(pFormat->nChannels);
-            size_t nread    = pMMIO->read(dst, fsize * nframes);
+            ssize_t nread   = pMMIO->read(dst, fsize * nframes);
             return (nread < 0) ? nread : nread / fsize;
         #endif /* USE_LIBSNDFILE */
         }

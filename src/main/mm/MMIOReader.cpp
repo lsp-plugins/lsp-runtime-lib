@@ -135,8 +135,13 @@ namespace lsp
                     nFrames     = factlen;
                 }
             }
+            else
+            {
+                // Reset position
+                if (::mmioSeek(hMMIO, ckRiff.dwDataOffset + sizeof(FOURCC), SEEK_SET) < 0)
+                    return close(STATUS_CORRUPTED_FILE);
+            }
 
-            // Perform seek to data chunk
             ckData.ckid     = mmioFOURCC('d', 'a', 't', 'a');
             if ((error = ::mmioDescend(hMMIO, &ckData, &ckRiff, MMIO_FINDCHUNK)) != 0)
                 return close(STATUS_CORRUPTED_FILE);
@@ -181,7 +186,7 @@ namespace lsp
         ssize_t MMIOReader::read(void *buf, size_t count)
         {
             // Compute how many bytes we can read
-            wssize_t can_read = ckData.dwDataOffset - nReadPos;
+            wssize_t can_read = ckData.cksize - nReadPos;
             if (can_read <= 0)
                 return -STATUS_EOF;
             if (count > size_t(can_read))
