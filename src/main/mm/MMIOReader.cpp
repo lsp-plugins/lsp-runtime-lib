@@ -75,6 +75,10 @@ namespace lsp
             if ((ckRiff.ckid != FOURCC_RIFF) || (ckRiff.fccType != mmioFOURCC('W', 'A', 'V', 'E')))
                 return close(STATUS_BAD_FORMAT);
 
+            // Reset position
+            if (::mmioSeek(hMMIO, ckRiff.dwDataOffset + sizeof(FOURCC), SEEK_SET) < 0)
+                return close(STATUS_CORRUPTED_FILE);
+
             // Lookup for format chunk
             ckIn.ckid           = mmioFOURCC('f', 'm', 't', ' ');
             if ((error = ::mmioDescend(hMMIO, &ckIn, &ckRiff, MMIO_FINDCHUNK)) != 0)
@@ -122,6 +126,10 @@ namespace lsp
                 bSeekable       = true;
             }
 
+            // Reset position
+            if (::mmioSeek(hMMIO, ckRiff.dwDataOffset + sizeof(FOURCC), SEEK_SET) < 0)
+                return close(STATUS_CORRUPTED_FILE);
+
             // Lookup for 'fact' chunk, read number of samples
             ckIn.ckid           = mmioFOURCC('f', 'a', 'c', 't');
             if ((error = ::mmioDescend(hMMIO, &ckIn, &ckRiff, MMIO_FINDCHUNK)) == 0)
@@ -135,12 +143,10 @@ namespace lsp
                     nFrames     = factlen;
                 }
             }
-            else
-            {
-                // Reset position
-                if (::mmioSeek(hMMIO, ckRiff.dwDataOffset + sizeof(FOURCC), SEEK_SET) < 0)
-                    return close(STATUS_CORRUPTED_FILE);
-            }
+
+            // Reset position
+            if (::mmioSeek(hMMIO, ckRiff.dwDataOffset + sizeof(FOURCC), SEEK_SET) < 0)
+                return close(STATUS_CORRUPTED_FILE);
 
             ckData.ckid     = mmioFOURCC('d', 'a', 't', 'a');
             if ((error = ::mmioDescend(hMMIO, &ckData, &ckRiff, MMIO_FINDCHUNK)) != 0)
