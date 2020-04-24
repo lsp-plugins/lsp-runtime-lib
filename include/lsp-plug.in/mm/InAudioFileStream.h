@@ -27,6 +27,7 @@ namespace lsp
     {
     #ifndef USE_LIBSNDFILE
         class ACMStream;
+        class MMIOReader;
     #endif /* USE_LIBSNDFILE */
 
         class InAudioFileStream: public IInAudioStream
@@ -35,23 +36,23 @@ namespace lsp
                 InAudioFileStream & operator = (const InAudioFileStream &);
 
             protected:
+                // Platform-specific parameters
             #ifdef USE_LIBSNDFILE
                 SNDFILE            *hHandle;
-                bool                bSeekable;
             #else
-                HMMIO               hMMIO;
+                MMIOReader         *pMMIO;
                 ACMStream          *pACM;
-                MMIOINFO           *pMmioInfo;
-                MMCKINFO           *pCkInRiff;
-                WAVEFORMATEX       *pWfexInfo;
+                WAVEFORMATEX       *pFormat;
             #endif
+
+                // Common parameters
+                bool                bSeekable;
 
             protected:
             #ifdef USE_LIBSNDFILE
                 static status_t     decode_sf_error(SNDFILE *fd);
             #else
-                status_t            open_riff_file(const LSPString *path);
-                status_t            open_acm_stream_read();
+                static ssize_t      decode_sample_format(WAVEFORMATEX *wfe);
             #endif
 
                 virtual ssize_t     direct_read(void *dst, size_t nframes, size_t fmt);

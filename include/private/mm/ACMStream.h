@@ -101,6 +101,18 @@ namespace lsp
 
             public:
                 /**
+                 * Get input stream format
+                 * @return input stream format
+                 */
+                inline WAVEFORMATEX *in_format()        { return pFmtIn; }
+
+                /**
+                 * Get output stream format
+                 * @return output stream format
+                 */
+                inline WAVEFORMATEX *out_format()       { return pFmtOut; }
+
+                /**
                  * Initialize ACM stream for reading PCM stream described
                  * by the specific format
                  * @param in the input stream format

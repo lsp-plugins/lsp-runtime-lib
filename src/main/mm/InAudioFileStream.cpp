@@ -11,6 +11,8 @@
 #include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/stdlib/stdio.h>
 #include <lsp-plug.in/lltl/parray.h>
+#include <private/mm/ACMStream.h>
+#include <private/mm/MMIOReader.h>
 
 #ifdef USE_LIBSNDFILE
     #if (__SIZEOF_INT__ == 4)
@@ -22,8 +24,6 @@
     #elif ((__SIZEOF_SHORT__ == 4) && (!defined(AFS_S32_CPU)))
         #define AFS_S32_CPU     mm::SFMT_S32_CPU
     #endif
-#else
-    #include <private/mm/ACMStream.h>
 #endif /* USE_LIBSNDFILE */
 
 namespace lsp
@@ -35,14 +35,12 @@ namespace lsp
         {
         #ifdef USE_LIBSNDFILE
             hHandle     = NULL;
-            bSeekable   = false;
         #else
-            hMMIO       = NULL;
+            pMMIO       = NULL;
             pACM        = NULL;
-            pMmioInfo   = NULL;
-            pCkInRiff   = NULL;
-            pWfexInfo   = NULL;
+            pFormat     = NULL;
         #endif /* USE_LIBSNDFILE */
+            bSeekable   = false;
         }
         
         InAudioFileStream::~InAudioFileStream()
@@ -72,28 +70,14 @@ namespace lsp
                 pACM        = NULL;
             }
 
-            if (hMMIO != NULL)
+            if (pMMIO != NULL)
             {
-                ::mmioClose(hMMIO, 0);
-                hMMIO       = NULL;
+                pMMIO->close();
+                delete pMMIO;
+                pMMIO       = NULL;
             }
 
-            if (pMmioInfo != NULL)
-            {
-                ::free(pMmioInfo);
-                pMmioInfo   = NULL;
-            }
-            if (pCkInRiff != NULL)
-            {
-                ::free(pCkInRiff);
-                pCkInRiff   = NULL;
-            }
-            if (pWfexInfo != NULL)
-            {
-                ::free(pWfexInfo);
-                pWfexInfo   = NULL;
-            }
-
+            pFormat     = NULL;     // Freed by owner
             nOffset     = -1;       // Mark as closed
 
             return set_error(STATUS_OK);
@@ -117,6 +101,27 @@ namespace lsp
                     return STATUS_UNKNOWN_ERR;
             }
         }
+    #else
+        ssize_t InAudioFileStream::decode_sample_format(WAVEFORMATEX *wfe)
+        {
+            if (wfe->wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
+                return SFMT_F32_LE;
+
+            if (wfe->wFormatTag == WAVE_FORMAT_PCM)
+            {
+                switch (wfe->wBitsPerSample)
+                {
+                    case 8: return SFMT_S8_CPU;
+                    case 16: return SFMT_S16_LE;
+                    case 24: return SFMT_S24_LE;
+                    case 32: return SFMT_S32_LE;
+                    default:
+                        break;
+                }
+            }
+
+            return -1;
+        }
     #endif /* USE_LIBSNDFILE */
 
         status_t InAudioFileStream::open(const char *path)
@@ -135,255 +140,6 @@ namespace lsp
                 return set_error(STATUS_BAD_ARGUMENTS);
             return open(path->as_string());
         }
-
-    #ifndef USE_LIBSNDFILE
-        status_t InAudioFileStream::open_riff_file(const LSPString *path)
-        {
-            HMMIO           hmmioIn;
-            MMCKINFO        ckIn;
-            MMCKINFO        ckInRiff;
-            WAVEFORMATEX    waveFormatEx;
-            int             error;
-
-            if ((hmmioIn = ::mmioOpenW(const_cast<WCHAR *>(path->get_utf16()), NULL, MMIO_ALLOCBUF | MMIO_READ)) == NULL)
-                return STATUS_PERMISSION_DENIED;
-
-            if ((error = int(::mmioDescend(hmmioIn, &ckInRiff, NULL, 0))) != 0)
-            {
-                ::mmioClose(hmmioIn, 0);
-                return STATUS_BAD_FORMAT;
-            }
-
-            if ((ckInRiff.ckid != FOURCC_RIFF) || (ckInRiff.fccType != mmioFOURCC('W', 'A', 'V', 'E')))
-            {
-                ::mmioClose(hmmioIn, 0);
-                return STATUS_BAD_FORMAT;
-            }
-
-            ckIn.ckid           = mmioFOURCC('f', 'm', 't', ' ');
-            if ((error = int(::mmioDescend(hmmioIn, &ckIn, &ckInRiff, MMIO_FINDCHUNK))) != 0)
-            {
-                ::mmioClose(hmmioIn, 0);
-                return STATUS_BAD_FORMAT;
-            }
-
-            // Expect the 'fmt' chunk to be at least as large as sizeof(PCMWAVEFORMAT)
-            if (ckIn.cksize < sizeof(PCMWAVEFORMAT))
-            {
-                ::mmioClose(hmmioIn, 0);
-                return STATUS_CORRUPTED_FILE;
-            }
-
-            // Read the 'fmt ' chunk
-            size_t bytes = ::mmioRead(hmmioIn, (HPSTR) &waveFormatEx, sizeof(PCMWAVEFORMAT));
-            if (bytes != sizeof(PCMWAVEFORMAT))
-            {
-                ::mmioClose(hmmioIn, 0);
-                return STATUS_BAD_FORMAT;
-            }
-
-            // Estimate number of bytes to allocate for the format descriptor
-            WAVEFORMATEX *wfex  = NULL;
-            if (LE_TO_CPU(waveFormatEx.wFormatTag) != WAVE_FORMAT_PCM)
-            {
-                // Read in length of extra bytes.
-                bytes = ::mmioRead(hmmioIn, reinterpret_cast<HPSTR>(&waveFormatEx.cbSize), sizeof(WORD));
-                if (bytes != sizeof(WORD))
-                {
-                    ::mmioClose(hmmioIn, 0);
-                    return STATUS_CORRUPTED_FILE;
-                }
-
-                size_t alloc        = sizeof(WAVEFORMATEX) + LE_TO_CPU(waveFormatEx.cbSize);
-
-                // Allocate memory
-                wfex = static_cast<WAVEFORMATEX *>(::malloc(align_size(alloc, DEFAULT_ALIGN)));
-                if (wfex == NULL)
-                {
-                    ::mmioClose(hmmioIn, 0);
-                    return STATUS_NO_MEM;
-                }
-
-                // Return back to 'fmt ' chunk
-                if ((error = int(::mmioDescend(hmmioIn, &ckIn, &ckInRiff, MMIO_FINDCHUNK))) != 0)
-                {
-                    ::free(wfex);
-                    ::mmioClose(hmmioIn, 0);
-                    return STATUS_CORRUPTED_FILE;
-                }
-
-                // Read the whole structure again
-                bytes = ::mmioRead(hmmioIn, reinterpret_cast<HPSTR>(wfex), alloc);
-                if (bytes != alloc)
-                {
-                    ::free(wfex);
-                    ::mmioClose(hmmioIn, 0);
-                    return STATUS_CORRUPTED_FILE;
-                }
-            }
-            else
-            {
-                // Set size and copy wave format
-                waveFormatEx.cbSize     = 0;
-                wfex        = static_cast<WAVEFORMATEX *>(memdup(&waveFormatEx, sizeof(WAVEFORMATEX)));
-                if (wfex == NULL)
-                {
-                    ::mmioClose(hmmioIn, 0);
-                    return STATUS_NO_MEM;
-                }
-            }
-
-            // Perform seek to data chunk
-            ckIn.ckid       = mmioFOURCC('d', 'a', 't', 'a');
-            if ((error = ::mmioDescend(hmmioIn, &ckIn, &ckInRiff, MMIO_FINDCHUNK)) != 0)
-            {
-                ::free(wfex);
-                return STATUS_BAD_FORMAT;
-            }
-
-            MMIOINFO *mmioInfo  = static_cast<MMIOINFO *>(::malloc(sizeof(MMIOINFO)));
-            if (mmioInfo == NULL)
-            {
-                ::free(wfex);
-                ::mmioClose(hmmioIn, 0);
-                return STATUS_NO_MEM;
-            }
-
-            if ((error = ::mmioGetInfo(hmmioIn, mmioInfo, 0)) != 0)
-            {
-                ::free(wfex);
-                ::free(mmioInfo);
-                ::mmioClose(hmmioIn, 0);
-                return STATUS_IO_ERROR;
-            }
-
-            // Deploy state
-            pCkInRiff   = static_cast<MMCKINFO *>(lsp::memdup(&ckInRiff, sizeof(MMCKINFO)));
-            if (pCkInRiff == NULL)
-            {
-                ::free(wfex);
-                ::free(mmioInfo);
-                ::mmioClose(hmmioIn, 0);
-                return STATUS_NO_MEM;
-            }
-
-            pMmioInfo   = mmioInfo;
-            hMMIO       = hmmioIn;
-            pWfexInfo   = wfex;
-
-            return STATUS_OK;
-        }
-
-        status_t InAudioFileStream::open_acm_stream_read()
-        {
-            // Create ACM stream
-            ACMStream *acm  = new ACMStream();
-            status_t res = acm->read_pcm(pWfexInfo);
-            if (res != STATUS_OK)
-            {
-                acm->close();
-                delete acm;
-                return res;
-            }
-
-            // Return ACM stream
-            pACM        = acm;
-
-/*            LONG            error;
-            WAVEFORMATEX    dstInfo;
-
-            lltl::parray<acm_driver_t> acmDrivers;
-            ::acmDriverEnum(acm_driver_enum_callback, (DWORD_PTR)&acmDrivers, ACM_DRIVERENUMF_DISABLED);
-            for (size_t i=0, n=acmDrivers.size(); i<n; ++i)
-            {
-                acm_driver_t *drv = acmDrivers.uget(i);
-                printf("ACM Driver=%p, support=0x%lx\n", drv->hDrvId, long(drv->fdwSupport));
-            }
-
-            // Update sample format
-            sFormat.srate           = LE_TO_CPU(pWfexInfo->nSamplesPerSec);
-            sFormat.channels        = LE_TO_CPU(pWfexInfo->nChannels);
-            sFormat.frames          = -1;
-            sFormat.format          = mm::SFMT_F32_CPU;
-
-            // We are ready to read but first initialize ACM stream
-            dstInfo.wFormatTag      = WAVE_FORMAT_IEEE_FLOAT;
-            dstInfo.nChannels       = sFormat.channels;
-            dstInfo.nSamplesPerSec  = sFormat.srate;
-            dstInfo.nAvgBytesPerSec = sFormat.srate * sFormat.channels * sizeof(float);
-            dstInfo.nBlockAlign     = sFormat.channels * sizeof(float);
-            dstInfo.wBitsPerSample  = sizeof(float) * 8;
-            dstInfo.cbSize          = 0;
-
-            dstInfo.wFormatTag      = CPU_TO_LE(dstInfo.wFormatTag);
-            dstInfo.nChannels       = CPU_TO_LE(dstInfo.nChannels);
-            dstInfo.nSamplesPerSec  = CPU_TO_LE(dstInfo.nSamplesPerSec);
-            dstInfo.nAvgBytesPerSec = CPU_TO_LE(dstInfo.nAvgBytesPerSec);
-            dstInfo.nBlockAlign     = CPU_TO_LE(dstInfo.nBlockAlign);
-            dstInfo.wBitsPerSample  = CPU_TO_LE(dstInfo.wBitsPerSample);
-            dstInfo.cbSize          = CPU_TO_LE(dstInfo.cbSize);
-
-            // Open and configure ACM stream
-            HACMSTREAM acmStream;
-            if ((error = ::acmStreamOpen(&acmStream, NULL, pWfexInfo, &dstInfo, NULL, 0, 0, ACM_STREAMOPENF_NONREALTIME)) != 0)
-            {
-                switch (error)
-                {
-                    case ACMERR_NOTPOSSIBLE: return STATUS_BAD_FORMAT;
-                    case STATUS_NO_MEM: return STATUS_NO_MEM;
-                    default: break;
-                }
-                return STATUS_UNKNOWN_ERR;
-            }
-
-            // Estimate size of conversion buffers
-            DWORD src_length = ACM_INPUT_BUFSIZE, dst_length = ACM_INPUT_BUFSIZE;
-
-            error = ::acmStreamSize(acmStream, ACM_INPUT_BUFSIZE, &dst_length, ACM_STREAMSIZEF_SOURCE);
-            if ((error != 0) || (dst_length <= 0))
-            {
-                ::acmStreamClose(acmStream, 0);
-                return STATUS_UNKNOWN_ERR;
-            }
-            error = ::acmStreamSize(acmStream, dst_length, &src_length, ACM_STREAMSIZEF_DESTINATION);
-            if ((error != 0) || (src_length <= 0))
-            {
-                ::acmStreamClose(acmStream, 0);
-                return STATUS_UNKNOWN_ERR;
-            }
-
-            // Allocate stream header
-            size_t hdr_alloc            = align_size(sizeof(ACMSTREAMHEADER), DEFAULT_ALIGN);
-            size_t src_alloc            = align_size(src_length, DEFAULT_ALIGN);
-            size_t dst_alloc            = align_size(dst_length, DEFAULT_ALIGN);
-            BYTE *buf                   = static_cast<BYTE *>(::malloc(hdr_alloc + src_alloc + dst_alloc));
-
-            ACMSTREAMHEADER *sh         = reinterpret_cast<ACMSTREAMHEADER *>(buf);
-            if (sh == NULL)
-            {
-                ::acmStreamClose(acmStream, 0);
-                return STATUS_NO_MEM;
-            }
-
-            ::bzero(sh, sizeof(ACMSTREAMHEADER));
-            sh->pbSrc                   = &buf[hdr_alloc];
-            sh->cbSrcLength             = src_length;
-            sh->pbDst                   = &buf[hdr_alloc + src_alloc];
-            sh->cbDstLength             = dst_length;
-
-            // Prepare stream header
-            if ((error = acmStreamPrepareHeader( acmStream, sh, 0 )) != 0)
-            {
-                ::free(buf);
-                ::acmStreamClose(acmStream, 0);
-                return STATUS_BAD_FORMAT;
-            }
-
-            */
-
-            return STATUS_OK;
-        }
-    #endif
 
         status_t InAudioFileStream::open(const LSPString *path)
         {
@@ -423,22 +179,83 @@ namespace lsp
 
             return set_error(STATUS_OK);
         #else
-            status_t res = open_riff_file(path);
-            if (res != STATUS_OK)
-                return set_error(res);
+            status_t res        = STATUS_OK;
 
-            // Do we need to open ACM Stream?
-            if (pWfexInfo->wFormatTag != WAVE_FORMAT_PCM)
+            // Try to load data using MMIO
+            MMIOReader *mmio    = new MMIOReader();
+            if (mmio == NULL)
+                return -set_error(STATUS_NO_MEM);
+
+            if ((res = mmio->open(path)) == STATUS_OK)
             {
-                res = open_acm_stream_read();
-                if (res != STATUS_OK)
+                // Analyze format
+                WAVEFORMATEX *wfe   = mmio->format();
+                if ((wfe->wFormatTag != WAVE_FORMAT_PCM) && (wfe->wFormatTag != WAVE_FORMAT_IEEE_FLOAT))
                 {
-                    close_handle();
-                    return set_error(res);
+                    // Create ACM stream
+                    ACMStream *acm      = new ACMStream();
+                    if (acm == NULL)
+                    {
+                        mmio->close();
+                        delete mmio;
+                        return -set_error(STATUS_NO_MEM);
+                    }
+
+                    // Initialize ACM stream
+                    if ((res = acm->read_pcm(wfe)) == STATUS_OK)
+                    {
+                        wfe                 = acm->out_format();
+                        ssize_t fmt         = decode_sample_format(wfe);
+                        if (fmt > 0)
+                        {
+                            // All is ok
+                            pMMIO               = mmio;
+                            pACM                = acm;
+                            pFormat             = acm->out_format();
+                            sFormat.srate       = wfe->nSamplesPerSec;
+                            sFormat.channels    = wfe->nChannels;
+                            sFormat.frames      = -1;
+                            sFormat.format      = decode_sample_format(wfe);
+                            nOffset             = 0;
+                            bSeekable           = false;
+
+                            return set_error(STATUS_OK);
+                        }
+                        else
+                            res  = STATUS_UNSUPPORTED_FORMAT;
+                    }
+
+                    // Close and delete ACM
+                    acm->close();
+                    delete acm;
+                }
+                else
+                {
+                    ssize_t fmt         = decode_sample_format(wfe);
+                    if (fmt > 0)
+                    {
+                        // All is OK, ust reading PCM samples
+                        pMMIO               = mmio;
+                        pFormat             = wfe;
+                        sFormat.srate       = wfe->nSamplesPerSec;
+                        sFormat.channels    = wfe->nChannels;
+                        sFormat.frames      = mmio->frames();
+                        sFormat.format      = decode_sample_format(wfe);
+                        nOffset             = 0;
+                        bSeekable           = mmio->seekable();
+
+                        return set_error(STATUS_OK);
+                    }
+                    else
+                        res  = STATUS_UNSUPPORTED_FORMAT;
                 }
             }
 
-            return set_error(STATUS_OK);
+            // Close and delete MMIO
+            mmio->close();
+            delete mmio;
+
+            return set_error(res);
         #endif /* USE_LIBSNDFILE */
         }
 
@@ -451,6 +268,8 @@ namespace lsp
         size_t InAudioFileStream::select_format(size_t fmt)
         {
         #ifdef USE_LIBSNDFILE
+            // libsndfile allows to do some sample conversions internally
+            // we trust it more than our own sample converison routines
             switch (sformat_format(fmt))
             {
             #ifdef AFS_S32_CPU
@@ -481,7 +300,8 @@ namespace lsp
 
             return SFMT_F32_CPU;
         #else
-            return SFMT_F32_CPU;
+            // We always do sample conversion for PCM stream
+            return sFormat.format;
         #endif
         }
 
@@ -521,7 +341,9 @@ namespace lsp
             res = decode_sf_error(hHandle);
             return -((res == STATUS_OK) ? STATUS_EOF : res);
         #else
-            return -STATUS_NOT_IMPLEMENTED;
+            size_t fsize    = sformat_size_of(sFormat.format) * LE_TO_CPU(pFormat->nChannels);
+            size_t nread    = pMMIO->read(dst, fsize * nframes);
+            return (nread < 0) ? nread : nread / fsize;
         #endif /* USE_LIBSNDFILE */
         }
 
@@ -529,11 +351,10 @@ namespace lsp
         {
             if (is_closed())
                 return -set_error(STATUS_CLOSED);
-
-        #ifdef USE_LIBSNDFILE
             if (!bSeekable)
                 return IInAudioStream::skip(nframes);
 
+        #ifdef USE_LIBSNDFILE
             sf_count_t res = sf_seek(hHandle, nframes, SF_SEEK_CUR);
             if (res >= 0)
             {
@@ -544,7 +365,20 @@ namespace lsp
 
             return -set_error(decode_sf_error(hHandle));
         #else
-            return IInAudioStream::skip(nframes);
+            if (pMMIO != NULL)
+            {
+                size_t fsize    = sformat_size_of(sFormat.format) * LE_TO_CPU(pFormat->nChannels);
+                wssize_t res    = pMMIO->seek((nOffset + nframes) * fsize);
+                if (res < 0)
+                {
+                    set_error(-res);
+                    return res;
+                }
+                nOffset         = res / fsize;
+                return set_error(STATUS_OK);
+            }
+
+            return -set_error(STATUS_NOT_SUPPORTED);
         #endif /* USE_LIBSNDFILE */
         }
 
@@ -552,11 +386,10 @@ namespace lsp
         {
             if (is_closed())
                 return -set_error(STATUS_CLOSED);
-
-        #ifdef USE_LIBSNDFILE
             if (!bSeekable)
                 return IInAudioStream::seek(nframes);
 
+        #ifdef USE_LIBSNDFILE
             sf_count_t res = sf_seek(hHandle, nframes, SF_SEEK_SET);
             if (res >= 0)
             {
@@ -567,6 +400,19 @@ namespace lsp
 
             return -set_error(decode_sf_error(hHandle));
         #else
+            if (pMMIO != NULL)
+            {
+                size_t fsize    = sformat_size_of(sFormat.format) * LE_TO_CPU(pFormat->nChannels);
+                wssize_t res    = pMMIO->seek(nframes * fsize);
+                if (res < 0)
+                {
+                    set_error(-res);
+                    return res;
+                }
+                nOffset         = res / fsize;
+                return set_error(STATUS_OK);
+            }
+
             return -set_error(STATUS_NOT_SUPPORTED);
         #endif /* USE_LIBSNDFILE */
         }

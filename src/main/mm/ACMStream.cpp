@@ -369,6 +369,99 @@ namespace lsp
 
             return STATUS_OK;
         }
+
+        /*
+            LONG            error;
+            WAVEFORMATEX    dstInfo;
+
+            lltl::parray<acm_driver_t> acmDrivers;
+            ::acmDriverEnum(acm_driver_enum_callback, (DWORD_PTR)&acmDrivers, ACM_DRIVERENUMF_DISABLED);
+            for (size_t i=0, n=acmDrivers.size(); i<n; ++i)
+            {
+                acm_driver_t *drv = acmDrivers.uget(i);
+                printf("ACM Driver=%p, support=0x%lx\n", drv->hDrvId, long(drv->fdwSupport));
+            }
+
+            // Update sample format
+            sFormat.srate           = LE_TO_CPU(pWfexInfo->nSamplesPerSec);
+            sFormat.channels        = LE_TO_CPU(pWfexInfo->nChannels);
+            sFormat.frames          = -1;
+            sFormat.format          = mm::SFMT_F32_CPU;
+
+            // We are ready to read but first initialize ACM stream
+            dstInfo.wFormatTag      = WAVE_FORMAT_IEEE_FLOAT;
+            dstInfo.nChannels       = sFormat.channels;
+            dstInfo.nSamplesPerSec  = sFormat.srate;
+            dstInfo.nAvgBytesPerSec = sFormat.srate * sFormat.channels * sizeof(float);
+            dstInfo.nBlockAlign     = sFormat.channels * sizeof(float);
+            dstInfo.wBitsPerSample  = sizeof(float) * 8;
+            dstInfo.cbSize          = 0;
+
+            dstInfo.wFormatTag      = CPU_TO_LE(dstInfo.wFormatTag);
+            dstInfo.nChannels       = CPU_TO_LE(dstInfo.nChannels);
+            dstInfo.nSamplesPerSec  = CPU_TO_LE(dstInfo.nSamplesPerSec);
+            dstInfo.nAvgBytesPerSec = CPU_TO_LE(dstInfo.nAvgBytesPerSec);
+            dstInfo.nBlockAlign     = CPU_TO_LE(dstInfo.nBlockAlign);
+            dstInfo.wBitsPerSample  = CPU_TO_LE(dstInfo.wBitsPerSample);
+            dstInfo.cbSize          = CPU_TO_LE(dstInfo.cbSize);
+
+            // Open and configure ACM stream
+            HACMSTREAM acmStream;
+            if ((error = ::acmStreamOpen(&acmStream, NULL, pWfexInfo, &dstInfo, NULL, 0, 0, ACM_STREAMOPENF_NONREALTIME)) != 0)
+            {
+                switch (error)
+                {
+                    case ACMERR_NOTPOSSIBLE: return STATUS_BAD_FORMAT;
+                    case STATUS_NO_MEM: return STATUS_NO_MEM;
+                    default: break;
+                }
+                return STATUS_UNKNOWN_ERR;
+            }
+
+            // Estimate size of conversion buffers
+            DWORD src_length = ACM_INPUT_BUFSIZE, dst_length = ACM_INPUT_BUFSIZE;
+
+            error = ::acmStreamSize(acmStream, ACM_INPUT_BUFSIZE, &dst_length, ACM_STREAMSIZEF_SOURCE);
+            if ((error != 0) || (dst_length <= 0))
+            {
+                ::acmStreamClose(acmStream, 0);
+                return STATUS_UNKNOWN_ERR;
+            }
+            error = ::acmStreamSize(acmStream, dst_length, &src_length, ACM_STREAMSIZEF_DESTINATION);
+            if ((error != 0) || (src_length <= 0))
+            {
+                ::acmStreamClose(acmStream, 0);
+                return STATUS_UNKNOWN_ERR;
+            }
+
+            // Allocate stream header
+            size_t hdr_alloc            = align_size(sizeof(ACMSTREAMHEADER), DEFAULT_ALIGN);
+            size_t src_alloc            = align_size(src_length, DEFAULT_ALIGN);
+            size_t dst_alloc            = align_size(dst_length, DEFAULT_ALIGN);
+            BYTE *buf                   = static_cast<BYTE *>(::malloc(hdr_alloc + src_alloc + dst_alloc));
+
+            ACMSTREAMHEADER *sh         = reinterpret_cast<ACMSTREAMHEADER *>(buf);
+            if (sh == NULL)
+            {
+                ::acmStreamClose(acmStream, 0);
+                return STATUS_NO_MEM;
+            }
+
+            ::bzero(sh, sizeof(ACMSTREAMHEADER));
+            sh->pbSrc                   = &buf[hdr_alloc];
+            sh->cbSrcLength             = src_length;
+            sh->pbDst                   = &buf[hdr_alloc + src_alloc];
+            sh->cbDstLength             = dst_length;
+
+            // Prepare stream header
+            if ((error = acmStreamPrepareHeader( acmStream, sh, 0 )) != 0)
+            {
+                ::free(buf);
+                ::acmStreamClose(acmStream, 0);
+                return STATUS_BAD_FORMAT;
+            }
+
+            */
     
     } /* namespace mm */
 } /* namespace lsp */
