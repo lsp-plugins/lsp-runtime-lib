@@ -25,6 +25,10 @@ namespace lsp
 {
     namespace mm
     {
+    #ifndef USE_LIBSNDFILE
+        class ACMStream;
+    #endif /* USE_LIBSNDFILE */
+
         class InAudioFileStream: public IInAudioStream
         {
             private:
@@ -36,9 +40,8 @@ namespace lsp
                 bool                bSeekable;
             #else
                 HMMIO               hMMIO;
-                HACMSTREAM          hACM;
+                ACMStream          *pACM;
                 MMIOINFO           *pMmioInfo;
-                ACMSTREAMHEADER    *pAHead;
                 MMCKINFO           *pCkInRiff;
                 WAVEFORMATEX       *pWfexInfo;
             #endif

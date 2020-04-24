@@ -214,6 +214,8 @@ namespace lsp
             bSeekable           = info.seekable;
 
             return set_error(STATUS_OK);
+        #else
+            return set_error(STATUS_NOT_IMPLEMENTED);
         #endif /* USE_LIBSNDFILE */
         }
 
@@ -231,6 +233,8 @@ namespace lsp
             nCodec      = 0;
 
             return set_error((res == 0) ? STATUS_OK : STATUS_IO_ERROR);
+        #else
+            return set_error(STATUS_OK);
         #endif /* USE_LIBSNDFILE */
         }
 
@@ -241,6 +245,8 @@ namespace lsp
 
         #ifdef USE_LIBSNDFILE
             sf_write_sync(hHandle);
+            return set_error(STATUS_OK);
+        #else
             return set_error(STATUS_OK);
         #endif /* USE_LIBSNDFILE */
         }
@@ -286,6 +292,8 @@ namespace lsp
 
             res = decode_sf_error(hHandle);
             return -((res == STATUS_OK) ? STATUS_EOF : res);
+        #else
+            return -STATUS_NOT_IMPLEMENTED;
         #endif /* USE_LIBSNDFILE */
         }
 
@@ -321,6 +329,8 @@ namespace lsp
             }
 
             return SFMT_F32_CPU;
+        #else
+            return SFMT_F32_CPU;
         #endif
         }
 
@@ -336,6 +346,8 @@ namespace lsp
 
             set_error(STATUS_OK);
             return nOffset = offset;
+        #else
+            return -set_error(STATUS_NOT_IMPLEMENTED);
         #endif /* USE_LIBSNDFILE */
         }
     } /* namespace mm */
