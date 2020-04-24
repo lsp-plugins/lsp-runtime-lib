@@ -64,7 +64,6 @@ namespace lsp
 
                 typedef struct drv_lookup_t
                 {
-                    HACMDRIVERID            drv_id;     // Driver identifier
                     ACMDRIVERDETAILSW       dd;         // Driver details
                     HACMDRIVER              hd;         // Driver handle
                     ACMFORMATTAGDETAILSW    ftd;        // Details for current format tag

@@ -32,18 +32,18 @@ namespace lsp
             close();
         }
 
-        static void append_fourcc(LSPString &s, FOURCC fcc)
-        {
-            FOURCC v = fcc;
-            for (size_t i=0; i<4; ++i, v >>= 8)
-            {
-                char c = v & 0xff;
-                if (c == '\0')
-                    c = '?';
-                s.append(c);
-            }
-            s.fmt_append_ascii(" (0x%lx)", long(fcc));
-        }
+//        static void append_fourcc(LSPString &s, FOURCC fcc)
+//        {
+//            FOURCC v = fcc;
+//            for (size_t i=0; i<4; ++i, v >>= 8)
+//            {
+//                char c = v & 0xff;
+//                if (c == '\0')
+//                    c = '?';
+//                s.append(c);
+//            }
+//            s.fmt_append_ascii(" (0x%lx)", long(fcc));
+//        }
 
         void ACMStream::acm_query_formats(drv_lookup_t *s)
         {
@@ -63,22 +63,6 @@ namespace lsp
 
                 if (::acmFormatDetailsW(s->hd, fdw, ACM_FORMATDETAILSF_INDEX) != 0)
                     continue;
-
-                // Output info
-                WAVEFORMATEX *wf = fdw->pwfx;
-
-                LSPString info;
-                info.fmt_append_ascii("  fmt tag=%x, ch=%d, sps=%d, abps=%d, blka=%d bps=%d cbz=%d",
-                        int(wf->wFormatTag),
-                        int(wf->nChannels),
-                        int(wf->nSamplesPerSec),
-                        int(wf->nAvgBytesPerSec),
-                        int(wf->nBlockAlign),
-                        int(wf->wBitsPerSample),
-                        int(wf->cbSize)
-                    );
-
-                lsp_trace("%s\n", info.get_native());
 
                 // Create copy and add to driver list
                 if ((s->pfmt = s->ptag->vfmt.add()) == NULL)
@@ -105,19 +89,6 @@ namespace lsp
                 if (::acmFormatTagDetailsW(s->hd, ftd, ACM_FORMATTAGDETAILSF_INDEX) != 0)
                     continue;
 
-                // Debug
-                LSPString info;
-                info.fmt_append_ascii("  fmttag idx=%d, tag=%x, size=%d, fdw=%x, nfmt=%d, name=",
-                        int(ftd->dwFormatTagIndex),
-                        int(ftd->dwFormatTag),
-                        int(ftd->cbFormatSize),
-                        int(ftd->fdwSupport),
-                        int(ftd->cStandardFormats)
-                    );
-
-                info.append_utf16(ftd->szFormatTag);
-                lsp_trace("%s\n", info.get_native());
-
                 // Create tag descriptor
                 if ((s->ptag = new fmt_tag_t()) == NULL)
                     continue;
@@ -138,7 +109,6 @@ namespace lsp
         WINBOOL CALLBACK ACMStream::acm_driver_enum_cb(HACMDRIVERID hadid, DWORD_PTR dwInstance, DWORD fdwSupport)
         {
             drv_lookup_t *s = reinterpret_cast<drv_lookup_t *>(dwInstance);
-            s->drv_id       = hadid;
 
             // Get driver information
             ACMDRIVERDETAILSW *dd = &s->dd;
@@ -146,19 +116,6 @@ namespace lsp
             dd->cbStruct    = sizeof(ACMDRIVERDETAILSW);
             if (::acmDriverDetailsW(hadid, dd, 0) != 0)
                 return TRUE;
-
-            LSPString info;
-            info.fmt_append_ascii("ACM Driver=%p, support=0x%lx\n", hadid, long(fdwSupport));
-            info.append_ascii("  fccType = "); append_fourcc(info, dd->fccType);
-            info.append_ascii(", fccComp = "); append_fourcc(info, dd->fccComp);
-            info.append('\n');
-            info.append_ascii("  short = "); info.append_utf16(dd->szShortName); info.append('\n');
-            info.append_ascii("  long  = "); info.append_utf16(dd->szLongName); info.append('\n');
-            info.append_ascii("  copy  = "); info.append_utf16(dd->szCopyright); info.append('\n');
-            info.append_ascii("  lic   = "); info.append_utf16(dd->szLicensing); info.append('\n');
-            info.append_ascii("  feat  = "); info.append_utf16(dd->szFeatures); info.append('\n');
-
-            lsp_trace("%s\n", info.get_native());
 
             // Open driver
             if (::acmDriverOpen(&s->hd, hadid, 0) != 0)
@@ -176,6 +133,7 @@ namespace lsp
                 ::acmDriverClose(s->hd, 0);
                 return TRUE;
             }
+            s->pdrv->drv_id = hadid;
             s->pdrv->short_name.set_utf16(dd->szShortName);
             s->pdrv->full_name.set_utf16(dd->szLongName);
             s->pdrv->copyright.set_utf16(dd->szCopyright);
@@ -276,9 +234,74 @@ namespace lsp
             if (res != STATUS_OK)
                 return res;
 
+            // Check format tag
+            if (in->wFormatTag == WAVE_FORMAT_PCM)
+            {
+                pFmtIn = copy_fmt(in);
+                pFmtOut = copy_fmt(in);
+
+                if ((pFmtIn == NULL) || (pFmtOut == NULL))
+                {
+                    close();
+                    return STATUS_NO_MEM;
+                }
+                return STATUS_OK;
+            }
+
             // Enumerate all drivers available in the system
+//            WAVEFORMATEX *dst = NULL;
             lltl::parray<drv_t> vdrv;
             acm_enum_drivers(&vdrv);
+
+            for (size_t i=0, n=vdrv.size(); i<n; ++i)
+            {
+            #ifdef LSP_TRACE
+                LSPString info, idx;
+                drv_t *drv = vdrv.uget(i);
+                info.fmt_utf8(
+                    "DRV #%-4d : %p\n"
+                    "Short Name: %s\n"
+                    "Long Name : %s\n"
+                    "Copyright : %s\n"
+                    "License   : %s\n"
+                    "Features  : %s\n"
+                    "Formats   :\n",
+                    int(i),
+                    drv->drv_id,
+                    drv->short_name.get_utf8(),
+                    drv->full_name.get_utf8(),
+                    drv->copyright.get_utf8(),
+                    drv->license.get_utf8(),
+                    drv->features.get_utf8()
+                );
+                for (size_t j=0, m=drv->vtag.size(); j<m; ++j)
+                {
+                    fmt_tag_t *tag = drv->vtag.uget(j);
+                    info.fmt_append_utf8("  %s [0x%x]: %d items\n",
+                            tag->name.get_utf8(),
+                            int(tag->id),
+                            int(tag->vfmt.size())
+                        );
+
+                    for (size_t k=0, l=tag->vfmt.size(); k<l; ++k)
+                    {
+                        fmt_t *fmt = tag->vfmt.uget(k);
+                        idx.fmt_ascii("%d/%d", int(k), int(j));
+                        info.fmt_append_utf8(
+                            "%10s: %s %d Hz/%d ch @%d bit [0x%x:%d]\n",
+                            idx.get_utf8(),
+                            tag->name.get_utf8(),
+                            int(fmt->wfex->nSamplesPerSec),
+                            int(fmt->wfex->nChannels),
+                            int(fmt->wfex->wBitsPerSample),
+                            int(fmt->wfex->wFormatTag),
+                            int(fmt->wfex->cbSize)
+                        );
+                    }
+                }
+                lsp_trace("\n%s\n", info.get_native());
+            #endif
+            }
 
             // TODO: Choose the corresponding driver
 
