@@ -7,6 +7,7 @@
 
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/common/debug.h>
+#include <lsp-plug.in/common/endian.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 #include <private/mm/ACMStream.h>
 #include <stdlib.h>
@@ -25,25 +26,14 @@ namespace lsp
         {
             pFmtIn      = NULL;
             pFmtOut     = NULL;
+            hStream     = NULL;
+            pHeader     = NULL;
         }
         
         ACMStream::~ACMStream()
         {
             close();
         }
-
-//        static void append_fourcc(LSPString &s, FOURCC fcc)
-//        {
-//            FOURCC v = fcc;
-//            for (size_t i=0; i<4; ++i, v >>= 8)
-//            {
-//                char c = v & 0xff;
-//                if (c == '\0')
-//                    c = '?';
-//                s.append(c);
-//            }
-//            s.fmt_append_ascii(" (0x%lx)", long(fcc));
-//        }
 
         void ACMStream::acm_query_formats(drv_lookup_t *s)
         {
@@ -171,7 +161,81 @@ namespace lsp
                 acm_destroy_drivers(&lk.vdrv);
             }
 
+            for (size_t i=0, n=res->size(); i<n; ++i)
+            {
+            #ifdef LSP_TRACE
+                LSPString info, idx;
+                drv_t *drv = res->uget(i);
+                info.fmt_utf8(
+                    "DRV #%-4d : %p\n"
+                    "Short Name: %s\n"
+                    "Long Name : %s\n"
+                    "Copyright : %s\n"
+                    "License   : %s\n"
+                    "Features  : %s\n"
+                    "Formats   :\n",
+                    int(i),
+                    drv->drv_id,
+                    drv->short_name.get_utf8(),
+                    drv->full_name.get_utf8(),
+                    drv->copyright.get_utf8(),
+                    drv->license.get_utf8(),
+                    drv->features.get_utf8()
+                );
+                for (size_t j=0, m=drv->vtag.size(); j<m; ++j)
+                {
+                    fmt_tag_t *tag = drv->vtag.uget(j);
+                    info.fmt_append_utf8("  %s [0x%x]: %d items\n",
+                            tag->name.get_utf8(),
+                            int(tag->id),
+                            int(tag->vfmt.size())
+                        );
+
+                    for (size_t k=0, l=tag->vfmt.size(); k<l; ++k)
+                    {
+                        fmt_t *fmt = tag->vfmt.uget(k);
+                        idx.fmt_ascii("%d/%d", int(k), int(j));
+                        info.fmt_append_utf8(
+                            "%10s: %s %d Hz/%d ch @%d bit [0x%x:%d]\n",
+                            idx.get_utf8(),
+                            tag->name.get_utf8(),
+                            int(fmt->wfex->nSamplesPerSec),
+                            int(fmt->wfex->nChannels),
+                            int(fmt->wfex->wBitsPerSample),
+                            int(fmt->wfex->wFormatTag),
+                            int(fmt->wfex->cbSize)
+                        );
+                    }
+                }
+                lsp_trace("\n%s\n", info.get_native());
+            #endif
+            }
+
             return (result == 0) ? STATUS_OK : STATUS_UNKNOWN_ERR;
+        }
+
+        ACMSTREAMHEADER *ACMStream::acm_create_header(size_t in, size_t out)
+        {
+            size_t hdr_alloc            = align_size(sizeof(ACMSTREAMHEADER), DEFAULT_ALIGN);
+            size_t src_alloc            = align_size(in, DEFAULT_ALIGN);
+            size_t dst_alloc            = align_size(out, DEFAULT_ALIGN);
+            BYTE *buf                   = static_cast<BYTE *>(::malloc(hdr_alloc + src_alloc + dst_alloc));
+
+            ACMSTREAMHEADER *sh         = reinterpret_cast<ACMSTREAMHEADER *>(buf);
+            if (sh != NULL)
+            {
+                ::ZeroMemory(sh, hdr_alloc + src_alloc + dst_alloc);
+
+                sh->cbStruct        = sizeof(ACMSTREAMHEADER);
+                sh->pbSrc                   = &buf[hdr_alloc];
+                sh->cbSrcLength             = in;
+                sh->cbSrcLengthUsed         = 0;
+                sh->pbDst                   = &buf[hdr_alloc + src_alloc];
+                sh->cbDstLength             = out;
+                sh->cbDstLengthUsed         = 0;
+            }
+
+            return sh;
         }
 
         void ACMStream::acm_destroy_drivers(lltl::parray<drv_t> *res)
@@ -237,10 +301,14 @@ namespace lsp
             // Check format tag
             if (in->wFormatTag == WAVE_FORMAT_PCM)
             {
-                pFmtIn = copy_fmt(in);
-                pFmtOut = copy_fmt(in);
+                size_t f_sz = LE_TO_CPU(in->wBitsPerSample) * LE_TO_CPU(in->nChannels) * 0x400;
+                pFmtIn      = copy_fmt(in);
+                pFmtOut     = copy_fmt(in);
 
-                if ((pFmtIn == NULL) || (pFmtOut == NULL))
+                pHeader     = acm_create_header(f_sz, f_sz);
+                if ((pFmtIn == NULL) ||
+                    (pFmtOut == NULL) ||
+                    (pHeader == NULL))
                 {
                     close();
                     return STATUS_NO_MEM;
@@ -249,59 +317,8 @@ namespace lsp
             }
 
             // Enumerate all drivers available in the system
-//            WAVEFORMATEX *dst = NULL;
             lltl::parray<drv_t> vdrv;
             acm_enum_drivers(&vdrv);
-
-            for (size_t i=0, n=vdrv.size(); i<n; ++i)
-            {
-            #ifdef LSP_TRACE
-                LSPString info, idx;
-                drv_t *drv = vdrv.uget(i);
-                info.fmt_utf8(
-                    "DRV #%-4d : %p\n"
-                    "Short Name: %s\n"
-                    "Long Name : %s\n"
-                    "Copyright : %s\n"
-                    "License   : %s\n"
-                    "Features  : %s\n"
-                    "Formats   :\n",
-                    int(i),
-                    drv->drv_id,
-                    drv->short_name.get_utf8(),
-                    drv->full_name.get_utf8(),
-                    drv->copyright.get_utf8(),
-                    drv->license.get_utf8(),
-                    drv->features.get_utf8()
-                );
-                for (size_t j=0, m=drv->vtag.size(); j<m; ++j)
-                {
-                    fmt_tag_t *tag = drv->vtag.uget(j);
-                    info.fmt_append_utf8("  %s [0x%x]: %d items\n",
-                            tag->name.get_utf8(),
-                            int(tag->id),
-                            int(tag->vfmt.size())
-                        );
-
-                    for (size_t k=0, l=tag->vfmt.size(); k<l; ++k)
-                    {
-                        fmt_t *fmt = tag->vfmt.uget(k);
-                        idx.fmt_ascii("%d/%d", int(k), int(j));
-                        info.fmt_append_utf8(
-                            "%10s: %s %d Hz/%d ch @%d bit [0x%x:%d]\n",
-                            idx.get_utf8(),
-                            tag->name.get_utf8(),
-                            int(fmt->wfex->nSamplesPerSec),
-                            int(fmt->wfex->nChannels),
-                            int(fmt->wfex->wBitsPerSample),
-                            int(fmt->wfex->wFormatTag),
-                            int(fmt->wfex->cbSize)
-                        );
-                    }
-                }
-                lsp_trace("\n%s\n", info.get_native());
-            #endif
-            }
 
             // TODO: Choose the corresponding driver
 
@@ -326,6 +343,12 @@ namespace lsp
 
         status_t ACMStream::close()
         {
+            if (hStream != NULL)
+            {
+                ::acmStreamClose(hStream, 0);
+                hStream = NULL;
+            }
+
             if (pFmtIn != NULL)
             {
                 ::free(pFmtIn);
@@ -336,6 +359,12 @@ namespace lsp
             {
                 ::free(pFmtOut);
                 pFmtOut = NULL;
+            }
+
+            if (pHeader != NULL)
+            {
+                ::free(pHeader);
+                pHeader = NULL;
             }
 
             return STATUS_OK;

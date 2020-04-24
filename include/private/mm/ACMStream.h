@@ -80,6 +80,8 @@ namespace lsp
             protected:
                 WAVEFORMATEX       *pFmtIn;
                 WAVEFORMATEX       *pFmtOut;
+                HACMSTREAM          hStream;
+                ACMSTREAMHEADER    *pHeader;
 
             protected:
                 static WAVEFORMATEX *copy_fmt(const WAVEFORMATEX *src);
@@ -91,6 +93,7 @@ namespace lsp
                 static void acm_query_formats(drv_lookup_t *s);
                 static status_t acm_enum_drivers(lltl::parray<drv_t> *res);
                 static void acm_destroy_drivers(lltl::parray<drv_t> *res);
+                static ACMSTREAMHEADER *acm_create_header(size_t in, size_t out);
 
             public:
                 explicit ACMStream();

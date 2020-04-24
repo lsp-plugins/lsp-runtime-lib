@@ -142,8 +142,7 @@ namespace lsp
             HMMIO           hmmioIn;
             MMCKINFO        ckIn;
             MMCKINFO        ckInRiff;
-            MMIOINFO        mmioInfo;
-            PCMWAVEFORMAT   pcmWaveFormat;
+            WAVEFORMATEX    waveFormatEx;
             int             error;
 
             if ((hmmioIn = ::mmioOpenW(const_cast<WCHAR *>(path->get_utf16()), NULL, MMIO_ALLOCBUF | MMIO_READ)) == NULL)
@@ -155,16 +154,13 @@ namespace lsp
                 return STATUS_BAD_FORMAT;
             }
 
-            FOURCC ckid         = LE_TO_CPU(ckInRiff.ckid);
-            size_t fccType      = LE_TO_CPU(ckInRiff.fccType);
-            if ((ckid != FOURCC_RIFF) || (fccType != mmioFOURCC('W', 'A', 'V', 'E')))
+            if ((ckInRiff.ckid != FOURCC_RIFF) || (ckInRiff.fccType != mmioFOURCC('W', 'A', 'V', 'E')))
             {
                 ::mmioClose(hmmioIn, 0);
                 return STATUS_BAD_FORMAT;
             }
 
-            ckid                = mmioFOURCC('f', 'm', 't', ' ');
-            ckIn.ckid           = CPU_TO_LE(ckid);
+            ckIn.ckid           = mmioFOURCC('f', 'm', 't', ' ');
             if ((error = int(::mmioDescend(hmmioIn, &ckIn, &ckInRiff, MMIO_FINDCHUNK))) != 0)
             {
                 ::mmioClose(hmmioIn, 0);
@@ -172,15 +168,14 @@ namespace lsp
             }
 
             // Expect the 'fmt' chunk to be at least as large as sizeof(PCMWAVEFORMAT)
-            size_t cksize   = LE_TO_CPU(ckIn.cksize);
-            if (cksize < sizeof(PCMWAVEFORMAT))
+            if (ckIn.cksize < sizeof(PCMWAVEFORMAT))
             {
                 ::mmioClose(hmmioIn, 0);
-                return STATUS_BAD_FORMAT;
+                return STATUS_CORRUPTED_FILE;
             }
 
             // Read the 'fmt ' chunk
-            size_t bytes = ::mmioRead(hmmioIn, (HPSTR) &pcmWaveFormat, sizeof(PCMWAVEFORMAT));
+            size_t bytes = ::mmioRead(hmmioIn, (HPSTR) &waveFormatEx, sizeof(PCMWAVEFORMAT));
             if (bytes != sizeof(PCMWAVEFORMAT))
             {
                 ::mmioClose(hmmioIn, 0);
@@ -189,24 +184,20 @@ namespace lsp
 
             // Estimate number of bytes to allocate for the format descriptor
             WAVEFORMATEX *wfex  = NULL;
-            size_t fmtTag       = LE_TO_CPU(pcmWaveFormat.wf.wFormatTag);
-
-            if (fmtTag != WAVE_FORMAT_PCM)
+            if (LE_TO_CPU(waveFormatEx.wFormatTag) != WAVE_FORMAT_PCM)
             {
-                WORD cbSize;
-                size_t alloc        = sizeof(WAVEFORMATEX);
-
                 // Read in length of extra bytes.
-                bytes = ::mmioRead(hmmioIn, reinterpret_cast<HPSTR>(&cbSize), sizeof(WORD));
+                bytes = ::mmioRead(hmmioIn, reinterpret_cast<HPSTR>(&waveFormatEx.cbSize), sizeof(WORD));
                 if (bytes != sizeof(WORD))
                 {
                     ::mmioClose(hmmioIn, 0);
-                    return STATUS_BAD_FORMAT;
+                    return STATUS_CORRUPTED_FILE;
                 }
-                alloc              += LE_TO_CPU(cbSize);
+
+                size_t alloc        = sizeof(WAVEFORMATEX) + LE_TO_CPU(waveFormatEx.cbSize);
 
                 // Allocate memory
-                wfex = static_cast<WAVEFORMATEX *>(::malloc(alloc));
+                wfex = static_cast<WAVEFORMATEX *>(::malloc(align_size(alloc, DEFAULT_ALIGN)));
                 if (wfex == NULL)
                 {
                     ::mmioClose(hmmioIn, 0);
@@ -216,67 +207,67 @@ namespace lsp
                 // Return back to 'fmt ' chunk
                 if ((error = int(::mmioDescend(hmmioIn, &ckIn, &ckInRiff, MMIO_FINDCHUNK))) != 0)
                 {
+                    ::free(wfex);
                     ::mmioClose(hmmioIn, 0);
-                    return STATUS_BAD_FORMAT;
+                    return STATUS_CORRUPTED_FILE;
                 }
 
                 // Read the whole structure again
                 bytes = ::mmioRead(hmmioIn, reinterpret_cast<HPSTR>(wfex), alloc);
                 if (bytes != alloc)
                 {
+                    ::free(wfex);
                     ::mmioClose(hmmioIn, 0);
-                    return STATUS_BAD_FORMAT;
+                    return STATUS_CORRUPTED_FILE;
                 }
             }
             else
             {
-                // Allocate memory
-                wfex = static_cast<WAVEFORMATEX *>(::malloc(sizeof(WAVEFORMATEX)));
+                // Set size and copy wave format
+                waveFormatEx.cbSize     = 0;
+                wfex        = static_cast<WAVEFORMATEX *>(memdup(&waveFormatEx, sizeof(WAVEFORMATEX)));
                 if (wfex == NULL)
                 {
                     ::mmioClose(hmmioIn, 0);
                     return STATUS_NO_MEM;
                 }
-                ::memcpy(wfex, &pcmWaveFormat, sizeof(PCMWAVEFORMAT));
-                wfex->cbSize = 0;
             }
 
-            /* Ascend the input file out of the 'fmt ' chunk. */
-//            if ((error = ::mmioAscend(hmmioIn, &ckIn, 0)) != 0)
-//            {
-//                ::mmioClose(hmmioIn, 0);
-//                return STATUS_BAD_FORMAT;
-//            }
-
-            // Perform a seek to data
-            if ((error = ::mmioSeek(hmmioIn, LE_TO_CPU(ckInRiff.dwDataOffset) + sizeof(FOURCC), SEEK_SET)) == -1)
-                return STATUS_BAD_FORMAT;
-
-            ckid            = mmioFOURCC('d', 'a', 't', 'a');
-            ckIn.ckid       = CPU_TO_LE(ckid);
+            // Perform seek to data chunk
+            ckIn.ckid       = mmioFOURCC('d', 'a', 't', 'a');
             if ((error = ::mmioDescend(hmmioIn, &ckIn, &ckInRiff, MMIO_FINDCHUNK)) != 0)
+            {
+                ::free(wfex);
                 return STATUS_BAD_FORMAT;
+            }
 
-            if ((error = ::mmioGetInfo(hmmioIn, &mmioInfo, 0)) != 0)
+            MMIOINFO *mmioInfo  = static_cast<MMIOINFO *>(::malloc(sizeof(MMIOINFO)));
+            if (mmioInfo == NULL)
+            {
+                ::free(wfex);
+                ::mmioClose(hmmioIn, 0);
+                return STATUS_NO_MEM;
+            }
+
+            if ((error = ::mmioGetInfo(hmmioIn, mmioInfo, 0)) != 0)
+            {
+                ::free(wfex);
+                ::free(mmioInfo);
+                ::mmioClose(hmmioIn, 0);
                 return STATUS_IO_ERROR;
+            }
 
             // Deploy state
             pCkInRiff   = static_cast<MMCKINFO *>(lsp::memdup(&ckInRiff, sizeof(MMCKINFO)));
             if (pCkInRiff == NULL)
             {
+                ::free(wfex);
+                ::free(mmioInfo);
                 ::mmioClose(hmmioIn, 0);
                 return STATUS_NO_MEM;
             }
 
-            pMmioInfo   = static_cast<MMIOINFO *>(lsp::memdup(&mmioInfo, sizeof(MMIOINFO)));
-            if (pMmioInfo == NULL)
-            {
-                ::free(pCkInRiff);
-                pCkInRiff       = NULL;
-                ::mmioClose(hmmioIn, 0);
-                return STATUS_NO_MEM;
-            }
-
+            pMmioInfo   = mmioInfo;
             hMMIO       = hmmioIn;
             pWfexInfo   = wfex;
 
@@ -285,6 +276,7 @@ namespace lsp
 
         status_t InAudioFileStream::open_acm_stream_read()
         {
+            // Create ACM stream
             ACMStream *acm  = new ACMStream();
             status_t res = acm->read_pcm(pWfexInfo);
             if (res != STATUS_OK)
@@ -293,6 +285,9 @@ namespace lsp
                 delete acm;
                 return res;
             }
+
+            // Return ACM stream
+            pACM        = acm;
 
 /*            LONG            error;
             WAVEFORMATEX    dstInfo;
@@ -350,7 +345,7 @@ namespace lsp
                 ::acmStreamClose(acmStream, 0);
                 return STATUS_UNKNOWN_ERR;
             }
-            error = ::acmStreamSize(acmStream,dst_length, &src_length, ACM_STREAMSIZEF_DESTINATION);
+            error = ::acmStreamSize(acmStream, dst_length, &src_length, ACM_STREAMSIZEF_DESTINATION);
             if ((error != 0) || (src_length <= 0))
             {
                 ::acmStreamClose(acmStream, 0);
@@ -431,11 +426,16 @@ namespace lsp
             status_t res = open_riff_file(path);
             if (res != STATUS_OK)
                 return set_error(res);
-            res = open_acm_stream_read();
-            if (res != STATUS_OK)
+
+            // Do we need to open ACM Stream?
+            if (pWfexInfo->wFormatTag != WAVE_FORMAT_PCM)
             {
-                close_handle();
-                return set_error(res);
+                res = open_acm_stream_read();
+                if (res != STATUS_OK)
+                {
+                    close_handle();
+                    return set_error(res);
+                }
             }
 
             return set_error(STATUS_OK);
