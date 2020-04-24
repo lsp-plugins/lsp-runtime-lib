@@ -111,7 +111,7 @@ namespace lsp
             {
                 switch (wfe->wBitsPerSample)
                 {
-                    case 8: return SFMT_S8_CPU;
+                    case 8: return SFMT_U8_CPU;
                     case 16: return SFMT_S16_LE;
                     case 24: return SFMT_S24_LE;
                     case 32: return SFMT_S32_LE;
