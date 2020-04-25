@@ -94,7 +94,8 @@ namespace lsp
                 return close(STATUS_BAD_FORMAT);
 
             // Estimate number of bytes to allocate for the format descriptor
-            if (LE_TO_CPU(wfe.wFormatTag) != WAVE_FORMAT_PCM)
+            size_t ftag = LE_TO_CPU(wfe.wFormatTag);
+            if ((ftag != WAVE_FORMAT_PCM) && (ftag != WAVE_FORMAT_IEEE_FLOAT))
             {
                 // Read in length of extra bytes.
                 bytes = ::mmioRead(hMMIO, reinterpret_cast<HPSTR>(&wfe.cbSize), sizeof(WORD));
