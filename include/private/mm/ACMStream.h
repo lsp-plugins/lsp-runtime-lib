@@ -32,6 +32,9 @@ namespace lsp
             private:
                 ACMStream & operator = (const ACMStream &);
 
+            public:
+                static const size_t     IO_BUF_SIZE     = 0x2000;
+
             protected:
                 // ACM Format descriptor
                 typedef struct fmt_t
@@ -80,8 +83,10 @@ namespace lsp
             protected:
                 WAVEFORMATEX       *pFmtIn;
                 WAVEFORMATEX       *pFmtOut;
+                HACMDRIVER          hDriver;
                 HACMSTREAM          hStream;
                 ACMSTREAMHEADER    *pHeader;
+                lltl::parray<drv_t> vDrv;
 
             protected:
                 static WAVEFORMATEX *copy_fmt(const WAVEFORMATEX *src);
@@ -94,6 +99,12 @@ namespace lsp
                 static status_t acm_enum_drivers(lltl::parray<drv_t> *res);
                 static void acm_destroy_drivers(lltl::parray<drv_t> *res);
                 static ACMSTREAMHEADER *acm_create_header(size_t in, size_t out);
+                static fmt_tag_t *acm_find_tag(drv_t *drv, size_t fmt_tag);
+
+                status_t acm_configure_stream(WAVEFORMATEX *dst, WAVEFORMATEX *src);
+                status_t acm_try_format(WAVEFORMATEX *test, WAVEFORMATEX *fmt);
+                status_t acm_find_nonstandard_dec(WAVEFORMATEX *fmt);
+                status_t acm_find_standard_dec(WAVEFORMATEX *fmt);
 
             public:
                 explicit ACMStream();
@@ -130,9 +141,10 @@ namespace lsp
 
                 /**
                  * Close ACM stream
+                 * @param res the result to return
                  * @return status of operation
                  */
-                status_t close();
+                status_t close(status_t res = STATUS_OK);
         };
 
     } /* namespace mm */

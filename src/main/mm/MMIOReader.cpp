@@ -107,15 +107,15 @@ namespace lsp
                 pFormat         = static_cast<WAVEFORMATEX *>(::malloc(align_size(alloc, DEFAULT_ALIGN)));
                 if (pFormat == NULL)
                     return close(STATUS_NO_MEM);
+                ::memcpy(pFormat, &wfe, sizeof(WAVEFORMATEX));
 
-                // Return back to 'fmt ' chunk
-                if ((error = ::mmioDescend(hMMIO, &ckIn, &ckRiff, MMIO_FINDCHUNK)) != 0)
-                    return close(STATUS_CORRUPTED_FILE);
-
-                // Read the whole structure again
-                bytes = ::mmioRead(hMMIO, reinterpret_cast<HPSTR>(pFormat), alloc);
-                if (bytes != alloc)
-                    return close(STATUS_CORRUPTED_FILE);
+                // Read the rest part of format descriptor
+                if (wfe.cbSize > 0)
+                {
+                    bytes += ::mmioRead(hMMIO, reinterpret_cast<HPSTR>(&pFormat[1]), wfe.cbSize);
+                    if (bytes != alloc)
+                        return close(STATUS_CORRUPTED_FILE);
+                }
             }
             else
             {

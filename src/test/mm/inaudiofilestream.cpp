@@ -247,9 +247,9 @@ UTEST_BEGIN("runtime.mm", inaudiofilestream)
 
     UTEST_MAIN
     {
-        test_read_f32("mm/pcm.wav");
-        test_read_s16("mm/pcm.wav");
-        test_read_u16("mm/pcm.wav");
+//        test_read_f32("mm/pcm.wav");
+//        test_read_s16("mm/pcm.wav");
+//        test_read_u16("mm/pcm.wav");
         test_read_alaw("mm/alaw.wav");
     }
 UTEST_END;
