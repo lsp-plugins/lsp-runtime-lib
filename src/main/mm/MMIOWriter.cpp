@@ -20,7 +20,6 @@ namespace lsp
             nWritePos       = 0;
             nDataSize       = 0;
             nFrames         = -1;
-            pFormat         = NULL;
             bSeekable       = false;
             
             ::ZeroMemory(&ckRiff, sizeof(ckRiff));
@@ -39,7 +38,6 @@ namespace lsp
             status_t res;
             MMCKINFO ckOut;
 
-            pFormat = fmt;
             nFrames = frames;
 
             // Open MMIO file
@@ -56,8 +54,9 @@ namespace lsp
 
             // Now create the 'fmt ' chunk. Since we know the size of this chunk,
             ckOut.ckid          = mmioFOURCC('f', 'm', 't', ' ');
-            ckOut.cksize        = (fmt->wFormatTag == WAVE_FORMAT_PCM) ? sizeof(PCMWAVEFORMAT) :
-                                  sizeof(WAVEFORMATEX) + fmt->cbSize;
+            ckOut.cksize        =
+                ((fmt->wFormatTag == WAVE_FORMAT_PCM) || (fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT)) ?
+                    sizeof(PCMWAVEFORMAT) : sizeof(WAVEFORMATEX) + fmt->cbSize;
             if ((error = ::mmioCreateChunk(hMMIO, &ckOut, 0)) != 0)
                 return close(STATUS_IO_ERROR);
 
@@ -71,16 +70,16 @@ namespace lsp
 
             // Now create the fact chunk, not required by PCM but nice to have.
             ckFact.ckid         = mmioFOURCC('f', 'a', 'c', 't');
-            ckFact.cksize       = sizeof(DWORD);
-            if ((error = ::mmioCreateChunk(hMMIO, &ckOut, 0)) != 0)
+            ckFact.cksize       = 0;
+            if ((error = ::mmioCreateChunk(hMMIO, &ckFact, 0)) != 0)
                 return close(STATUS_IO_ERROR);
 
             DWORD factSize      = 0;
-            if ((res = write_padded(&factSize, ckOut.cksize)) != STATUS_OK)
+            if ((res = write_padded(&factSize, sizeof(DWORD))) != STATUS_OK)
                 return close(res);
 
             // Ascend out of the 'fact' chunk, back into the 'RIFF' chunk.
-            if ((error = ::mmioAscend(hMMIO, &ckOut, 0)) != 0)
+            if ((error = ::mmioAscend(hMMIO, &ckFact, 0)) != 0)
                 return close(STATUS_IO_ERROR);
 
             // Create the 'data' chunk that holds the waveform samples.
@@ -99,16 +98,13 @@ namespace lsp
         {
             MMRESULT error;
 
+            // Seek to the end of chunk if position is wrong
+            if (::mmioSeek(hMMIO, ckData.dwDataOffset + nDataSize, SEEK_SET) < 0)
+                return STATUS_IO_ERROR;
+
             // Pad the ckData chunk
             if (nDataSize & 1)
             {
-                // Seek to the end of chunk if position is wrong
-                if (nWritePos != nDataSize)
-                {
-                    if (::mmioSeek(hMMIO, ckData.dwDataOffset + nDataSize, SEEK_SET) < 0)
-                        return STATUS_IO_ERROR;
-                }
-
                 // Write padding data
                 BYTE data           = 0;
                 ssize_t written     = ::mmioWrite(hMMIO, reinterpret_cast<HPSTR>(&data), sizeof(BYTE));
@@ -119,30 +115,21 @@ namespace lsp
 
             // Ascend the output file out of the 'data' chunk
             // this will cause the chunk size of the 'data' chunk to be written.
-            ckData.cksize       = nDataSize;
             if ((error = ::mmioAscend(hMMIO, &ckData, 0)) != 0)
                 return STATUS_IO_ERROR;
 
-            // Seek to the begin of RIFF chunk
-            if (::mmioSeek(hMMIO, ckRiff.dwDataOffset + sizeof(FOURCC), SEEK_SET) < 0)
+            // Ascend the RIFF chunk
+            if ((error = ::mmioAscend(hMMIO, &ckRiff, 0)) != 0)
                 return STATUS_IO_ERROR;
 
-            // Return back to 'fact' chunk
-            if ((error = ::mmioDescend(hMMIO, &ckFact, &ckRiff, MMIO_FINDCHUNK)) != 0)
+            // Seek to the begin of 'fact' chunk
+            if (::mmioSeek(hMMIO, ckFact.dwDataOffset, SEEK_SET) < 0)
                 return STATUS_IO_ERROR;
 
             // Write actual size of the 'data' chunk in samples
             DWORD factSize      = nFrames;
             factSize            = CPU_TO_LE(factSize);
-            if ((error = ::mmioWrite(hMMIO, reinterpret_cast<HPSTR>(&factSize), sizeof(factSize))) != STATUS_OK)
-                return STATUS_IO_ERROR;
-
-            // Ascend outside 'fact' chunk back to RIFF
-            if ((error = ::mmioAscend(hMMIO, &ckFact, 0)) != 0)
-                return STATUS_IO_ERROR;
-
-            // Ascend outside the RIFF chunk
-            if ((error = ::mmioAscend(hMMIO, &ckRiff, 0)) != 0)
+            if ((mmioWrite(hMMIO, reinterpret_cast<HPSTR>(&factSize), sizeof(DWORD))) != sizeof(DWORD))
                 return STATUS_IO_ERROR;
 
             return STATUS_OK;
@@ -192,6 +179,11 @@ namespace lsp
             return STATUS_OK;
         }
 
+        status_t MMIOWriter::flush()
+        {
+            return (::mmioFlush(hMMIO, MMIO_EMPTYBUF) == 0) ? STATUS_OK : STATUS_IO_ERROR;
+        }
+
         status_t MMIOWriter::close(status_t code)
         {
             if (hMMIO != NULL)
@@ -207,7 +199,6 @@ namespace lsp
             nWritePos       = 0;
             nDataSize       = 0;
             nFrames         = -1;
-            pFormat         = NULL;
             bSeekable       = false;
 
             ::ZeroMemory(&ckRiff, sizeof(ckRiff));

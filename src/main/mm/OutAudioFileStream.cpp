@@ -6,6 +6,7 @@
  */
 
 #include <lsp-plug.in/mm/OutAudioFileStream.h>
+#include <private/mm/MMIOWriter.h>
 
 #ifdef USE_LIBSNDFILE
     #if (__SIZEOF_INT__ == 4)
@@ -27,10 +28,14 @@ namespace lsp
         OutAudioFileStream::OutAudioFileStream()
         {
         #ifdef USE_LIBSNDFILE
-            nCodec      = 0;
-            hHandle     = NULL;
-            bSeekable   = false;
+            hHandle         = NULL;
+        #else
+            pMMIO           = NULL;
+            nTotalFrames    = 0;
         #endif /* USE_LIBSNDFILE */
+
+            nCodec          = 0;
+            bSeekable       = false;
         }
         
         OutAudioFileStream::~OutAudioFileStream()
@@ -215,7 +220,69 @@ namespace lsp
 
             return set_error(STATUS_OK);
         #else
-            return set_error(STATUS_NOT_IMPLEMENTED);
+            if ((codec & AFMT_MASK) != AFMT_WAV)
+                return set_error(STATUS_UNSUPPORTED_FORMAT);
+
+            WAVEFORMATEX rfmt;
+
+            ::ZeroMemory(&rfmt, sizeof(WAVEFORMATEX));
+            rfmt.cbSize             = 0;
+            rfmt.nChannels          = fmt->channels;
+            rfmt.nSamplesPerSec     = fmt->srate;
+            rfmt.wBitsPerSample     = sformat_size_of(fmt->format) * 8;
+            rfmt.nBlockAlign        = fmt->channels * sformat_size_of(fmt->format);
+            rfmt.nAvgBytesPerSec    = fmt->srate * rfmt.nBlockAlign;
+
+            switch (codec & CFMT_MASK)
+            {
+                case CFMT_PCM:
+                    rfmt.wFormatTag  = (sformat_format(fmt->format) == SFMT_F32) ?
+                            WAVE_FORMAT_IEEE_FLOAT : WAVE_FORMAT_PCM;
+                    break;
+
+                /* TODO: add support of ACM
+                case CFMT_ULAW:         rfmt.wFormatTag = WAVE_FORMAT_MULAW; break;
+                case CFMT_ALAW:         rfmt.wFormatTag = WAVE_FORMAT_ALAW; break;
+                case CFMT_MS_ADPCM:     rfmt.wFormatTag = WAVE_FORMAT_ADPCM; break;
+                case CFMT_IMA_ADPCM:    rfmt.wFormatTag = WAVE_FORMAT_IMA_ADPCM; break;
+
+                case CFMT_GSM610:       rfmt.wFormatTag = WAVE_FORMAT_GSM610; break;
+
+                case CFMT_G721_32:      rfmt.wFormatTag = WAVE_FORMAT_G721_ADPCM; break;
+                case CFMT_G723_24:      rfmt.wFormatTag = WAVE_FORMAT_G723_ADPCM; break;
+                case CFMT_G723_40:      rfmt.wFormatTag = WAVE_FORMAT_G723_ADPCM; break;
+                */
+
+                default:
+                    return set_error(STATUS_UNSUPPORTED_FORMAT);
+            }
+
+            // Create MMIO
+            MMIOWriter *mmio = new MMIOWriter();
+            if (mmio == NULL)
+                return set_error(STATUS_NO_MEM);
+
+            // Open file
+            status_t res = mmio->open(path, &rfmt, fmt->frames);
+            if (res != STATUS_OK)
+            {
+                mmio->close();
+                delete mmio;
+                return set_error(res);
+            }
+
+            // TODO: add ACM support
+
+            // Update state
+            sFormat         = *fmt;
+            sPcmFmt         = rfmt;
+            pMMIO           = mmio;
+            nCodec          = codec;
+            nOffset         = 0;
+            nTotalFrames    = 0;
+            bSeekable       = pMMIO->seekable();
+
+            return set_error(STATUS_OK);
         #endif /* USE_LIBSNDFILE */
         }
 
@@ -234,7 +301,17 @@ namespace lsp
 
             return set_error((res == 0) ? STATUS_OK : STATUS_IO_ERROR);
         #else
-            return set_error(STATUS_OK);
+            status_t res = STATUS_OK;
+
+            if (pMMIO != NULL)
+            {
+                pMMIO->set_frames(nTotalFrames);
+                res     = pMMIO->close();
+                delete pMMIO;
+                pMMIO   = NULL;
+            }
+
+            return set_error(res);
         #endif /* USE_LIBSNDFILE */
         }
 
@@ -247,7 +324,7 @@ namespace lsp
             sf_write_sync(hHandle);
             return set_error(STATUS_OK);
         #else
-            return set_error(STATUS_OK);
+            return set_error(pMMIO->flush());
         #endif /* USE_LIBSNDFILE */
         }
 
@@ -293,8 +370,24 @@ namespace lsp
             res = decode_sf_error(hHandle);
             return -((res == STATUS_OK) ? STATUS_EOF : res);
         #else
-            return -STATUS_NOT_IMPLEMENTED;
+            size_t fsize    = sPcmFmt.nBlockAlign;;
+            if (pMMIO != NULL)
+            {
+                // TODO: implement ACM-related stuff
+                ssize_t nwritten    = pMMIO->write(src, fsize * nframes);
+                return (nwritten < 0) ? nwritten : nwritten / fsize;
+            }
+
+            return -STATUS_NOT_SUPPORTED;
         #endif /* USE_LIBSNDFILE */
+        }
+
+        ssize_t OutAudioFileStream::conv_write(const void *src, size_t nframes, size_t fmt)
+        {
+            ssize_t res = IOutAudioStream::conv_write(src, nframes, fmt);
+            if (size_t(nOffset) > nTotalFrames)
+                nTotalFrames    = nOffset;
+            return res;
         }
 
         size_t OutAudioFileStream::select_format(size_t rfmt)
@@ -330,7 +423,23 @@ namespace lsp
 
             return SFMT_F32_CPU;
         #else
-            return SFMT_F32_CPU;
+            if (sPcmFmt.wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
+                return SFMT_F32_LE;
+
+            if (sPcmFmt.wFormatTag == WAVE_FORMAT_PCM)
+            {
+                switch (sPcmFmt.wBitsPerSample)
+                {
+                    case 8: return SFMT_U8_CPU;
+                    case 16: return SFMT_S16_LE;
+                    case 24: return SFMT_S24_LE;
+                    case 32: return SFMT_S32_LE;
+                    default:
+                        break;
+                }
+            }
+
+            return -1;
         #endif
         }
 
@@ -347,6 +456,20 @@ namespace lsp
             set_error(STATUS_OK);
             return nOffset = offset;
         #else
+            size_t fsize    = sPcmFmt.nBlockAlign;
+            if ((pMMIO != NULL) && (bSeekable))
+            {
+                wssize_t res = pMMIO->seek(nframes * fsize);
+                if (res < 0)
+                {
+                    set_error(-res);
+                    return res;
+                }
+
+                set_error(STATUS_OK);
+                return res / fsize;
+            }
+
             return -set_error(STATUS_NOT_IMPLEMENTED);
         #endif /* USE_LIBSNDFILE */
         }

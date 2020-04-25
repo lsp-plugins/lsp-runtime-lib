@@ -342,7 +342,7 @@ namespace lsp
             res = decode_sf_error(hHandle);
             return -((res == STATUS_OK) ? STATUS_EOF : res);
         #else
-            size_t fsize    = sformat_size_of(sFormat.format) * LE_TO_CPU(pFormat->nChannels);
+            size_t fsize    = sformat_size_of(sFormat.format) * sFormat.channels;
             if (pMMIO != NULL)
             {
                 if (pACM == NULL)
@@ -353,7 +353,7 @@ namespace lsp
                 // TODO: implement ACM-related stuff
             }
 
-            return -set_error(STATUS_NOT_SUPPORTED);
+            return -STATUS_NOT_SUPPORTED;
         #endif /* USE_LIBSNDFILE */
         }
 

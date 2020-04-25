@@ -35,7 +35,6 @@ namespace lsp
                 wsize_t             nWritePos;
                 wsize_t             nDataSize;
                 wssize_t            nFrames;
-                WAVEFORMATEX       *pFormat;
                 bool                bSeekable;
                 MMCKINFO            ckRiff;
                 MMCKINFO            ckData;
@@ -91,6 +90,12 @@ namespace lsp
                  * @return status of operation
                  */
                 status_t    close(status_t code = STATUS_OK);
+
+                /**
+                 * Flush pending write operations
+                 * @return status of operation
+                 */
+                status_t    flush();
         };
     
     } /* namespace mm */

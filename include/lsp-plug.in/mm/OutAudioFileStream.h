@@ -21,23 +21,34 @@ namespace lsp
 {
     namespace mm
     {
+    #ifndef USE_LIBSNDFILE
+        class MMIOWriter;
+    #endif /* USE_LIBSNDFILE */
+
         class OutAudioFileStream: public IOutAudioStream
         {
             private:
                 OutAudioFileStream & operator = (const OutAudioFileStream &);
 
             protected:
-                size_t              nCodec;
-
+                // Platform-specific fields
             #ifdef USE_LIBSNDFILE
                 SNDFILE            *hHandle;
-                bool                bSeekable;
+            #else
+                MMIOWriter         *pMMIO;          // MMIO writer
+                WAVEFORMATEX        sPcmFmt;        // PCM format descriptor
+                wsize_t             nTotalFrames;   // Total frames written
             #endif
+                // Common fields
+                size_t              nCodec;
+                bool                bSeekable;
 
             protected:
             #ifdef USE_LIBSNDFILE
                 static status_t     decode_sf_error(SNDFILE *fd);
                 static bool         select_sndfile_format(SF_INFO *info, audio_stream_t *fmt, size_t codec);
+            #else
+                virtual ssize_t     conv_write(const void *src, size_t nframes, size_t fmt);
             #endif
 
                 virtual ssize_t     direct_write(const void *src, size_t nframes, size_t fmt);
