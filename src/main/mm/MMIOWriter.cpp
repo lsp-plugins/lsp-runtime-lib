@@ -25,6 +25,7 @@ namespace lsp
             
             ::ZeroMemory(&ckRiff, sizeof(ckRiff));
             ::ZeroMemory(&ckData, sizeof(ckData));
+            ::ZeroMemory(&ckFact, sizeof(ckFact));
         }
         
         MMIOWriter::~MMIOWriter()
@@ -69,22 +70,18 @@ namespace lsp
                 return close(STATUS_IO_ERROR);
 
             // Now create the fact chunk, not required by PCM but nice to have.
-            if (nFrames >= 0)
-            {
-                ckOut.ckid          = mmioFOURCC('f', 'a', 'c', 't');
-                ckOut.cksize        = sizeof(DWORD);
-                if ((error = ::mmioCreateChunk(hMMIO, &ckOut, 0)) != 0)
-                    return close(STATUS_IO_ERROR);
+            ckFact.ckid         = mmioFOURCC('f', 'a', 'c', 't');
+            ckFact.cksize       = sizeof(DWORD);
+            if ((error = ::mmioCreateChunk(hMMIO, &ckOut, 0)) != 0)
+                return close(STATUS_IO_ERROR);
 
-                DWORD factSize      = nFrames;
-                factSize            = CPU_TO_LE(factSize);
-                if ((res = write_padded(&factSize, ckOut.cksize)) != STATUS_OK)
-                    return close(res);
+            DWORD factSize      = 0;
+            if ((res = write_padded(&factSize, ckOut.cksize)) != STATUS_OK)
+                return close(res);
 
-                // Ascend out of the 'fact' chunk, back into the 'RIFF' chunk.
-                if ((error = ::mmioAscend(hMMIO, &ckOut, 0)) != 0)
-                    return close(STATUS_IO_ERROR);
-            }
+            // Ascend out of the 'fact' chunk, back into the 'RIFF' chunk.
+            if ((error = ::mmioAscend(hMMIO, &ckOut, 0)) != 0)
+                return close(STATUS_IO_ERROR);
 
             // Create the 'data' chunk that holds the waveform samples.
             ckData.ckid         = mmioFOURCC('d', 'a', 't', 'a');
@@ -124,6 +121,24 @@ namespace lsp
             // this will cause the chunk size of the 'data' chunk to be written.
             ckData.cksize       = nDataSize;
             if ((error = ::mmioAscend(hMMIO, &ckData, 0)) != 0)
+                return STATUS_IO_ERROR;
+
+            // Seek to the begin of RIFF chunk
+            if (::mmioSeek(hMMIO, ckRiff.dwDataOffset + sizeof(FOURCC), SEEK_SET) < 0)
+                return STATUS_IO_ERROR;
+
+            // Return back to 'fact' chunk
+            if ((error = ::mmioDescend(hMMIO, &ckFact, &ckRiff, MMIO_FINDCHUNK)) != 0)
+                return STATUS_IO_ERROR;
+
+            // Write actual size of the 'data' chunk in samples
+            DWORD factSize      = nFrames;
+            factSize            = CPU_TO_LE(factSize);
+            if ((error = ::mmioWrite(hMMIO, reinterpret_cast<HPSTR>(&factSize), sizeof(factSize))) != STATUS_OK)
+                return STATUS_IO_ERROR;
+
+            // Ascend outside 'fact' chunk back to RIFF
+            if ((error = ::mmioAscend(hMMIO, &ckFact, 0)) != 0)
                 return STATUS_IO_ERROR;
 
             // Ascend outside the RIFF chunk
@@ -197,6 +212,7 @@ namespace lsp
 
             ::ZeroMemory(&ckRiff, sizeof(ckRiff));
             ::ZeroMemory(&ckData, sizeof(ckData));
+            ::ZeroMemory(&ckFact, sizeof(ckFact));
 
             return code;
         }

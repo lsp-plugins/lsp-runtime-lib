@@ -39,6 +39,7 @@ namespace lsp
                 bool                bSeekable;
                 MMCKINFO            ckRiff;
                 MMCKINFO            ckData;
+                MMCKINFO            ckFact;
 
             protected:
                 status_t        finalize_riff_file();
@@ -54,6 +55,12 @@ namespace lsp
                  * @return true if reader is seekable
                  */
                 inline bool seekable() const                { return bSeekable; }
+
+                /**
+                 * Set number of frames
+                 * @param frames number of frames written
+                 */
+                inline void set_frames(wssize_t frames)     { nFrames = frames; }
 
                 /**
                  * Open audio file for writing
