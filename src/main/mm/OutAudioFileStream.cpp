@@ -382,6 +382,7 @@ namespace lsp
         #endif /* USE_LIBSNDFILE */
         }
 
+    #ifndef USE_LIBSNDFILE
         ssize_t OutAudioFileStream::conv_write(const void *src, size_t nframes, size_t fmt)
         {
             ssize_t res = IOutAudioStream::conv_write(src, nframes, fmt);
@@ -389,6 +390,7 @@ namespace lsp
                 nTotalFrames    = nOffset;
             return res;
         }
+    #endif /* USE_LIBSNDFILE */
 
         size_t OutAudioFileStream::select_format(size_t rfmt)
         {

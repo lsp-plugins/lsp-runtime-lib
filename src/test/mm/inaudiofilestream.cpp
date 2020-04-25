@@ -197,11 +197,60 @@ UTEST_BEGIN("runtime.mm", inaudiofilestream)
         UTEST_ASSERT(is.close() == STATUS_OK);
     }
 
+    void test_read_alaw(const char *file)
+    {
+        io::Path path;
+
+        UTEST_ASSERT(path.fmt("%s/%s", resources(), file));
+        printf("Reading ALAW audio file %s as f32 samples\n", path.as_native());
+
+        mm::InAudioFileStream is;
+        mm::audio_stream_t info;
+
+        UTEST_ASSERT(is.open(&path) == STATUS_OK);
+        UTEST_ASSERT(is.info(&info) == STATUS_OK);
+        UTEST_ASSERT(info.srate == 8000);
+        UTEST_ASSERT(info.channels == 2);
+        UTEST_ASSERT(info.frames == FRAMES);
+
+        ByteBuffer buf(BUF_SAMPLES * sizeof(float) * 2);
+        float delta = (8 * M_PI) / FRAMES;
+        ssize_t off = 0;
+
+        while (true)
+        {
+            // Check position
+            UTEST_ASSERT(is.position() == off);
+
+            // Read frames
+            ssize_t read = is.read(buf.data<float>(), BUF_SAMPLES);
+            if (read < 0)
+            {
+                UTEST_ASSERT(read == -STATUS_EOF);
+                break;
+            }
+            UTEST_ASSERT(buf.valid());
+
+            // Check contents
+            float *ptr = buf.data<float>();
+            for (ssize_t i=0; i<read; ++i, ++off, ptr += 2)
+            {
+                float s = sinf(delta * off);
+                float c = cosf(delta * off);
+                UTEST_ASSERT_MSG(float_equals_absolute(s, ptr[0], 3e-2), "Samples for channel 0[%d] differ: exp=%e, act=%e", int(off), s, ptr[0]);
+                UTEST_ASSERT_MSG(float_equals_absolute(c, ptr[1], 3e-2), "Samples for channel 1[%d] differ: exp=%e, act=%e", int(off), c, ptr[1]);
+            }
+        }
+
+        UTEST_ASSERT(is.close() == STATUS_OK);
+    }
+
     UTEST_MAIN
     {
         test_read_f32("mm/pcm.wav");
         test_read_s16("mm/pcm.wav");
         test_read_u16("mm/pcm.wav");
+        test_read_alaw("mm/alaw.wav");
     }
 UTEST_END;
 
