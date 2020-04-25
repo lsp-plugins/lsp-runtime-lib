@@ -343,8 +343,17 @@ namespace lsp
             return -((res == STATUS_OK) ? STATUS_EOF : res);
         #else
             size_t fsize    = sformat_size_of(sFormat.format) * LE_TO_CPU(pFormat->nChannels);
-            ssize_t nread   = pMMIO->read(dst, fsize * nframes);
-            return (nread < 0) ? nread : nread / fsize;
+            if (pMMIO != NULL)
+            {
+                if (pACM == NULL)
+                {
+                    ssize_t nread   = pMMIO->read(dst, fsize * nframes);
+                    return (nread < 0) ? nread : nread / fsize;
+                }
+                // TODO: implement ACM-related stuff
+            }
+
+            return -set_error(STATUS_NOT_SUPPORTED);
         #endif /* USE_LIBSNDFILE */
         }
 
