@@ -124,6 +124,28 @@ namespace lsp
                 inline WAVEFORMATEX *out_format()       { return pFmtOut; }
 
                 /**
+                 * Reserve space for writing data
+                 * @param buf pointer to return pointer to the buffer (may be NULL)
+                 * @return number of bytes available for write or negative error code
+                 */
+                ssize_t push(void **buf);
+
+                /**
+                 * Perform conversion and fetch data into buffer
+                 * @param buf pointer to buffer to store data
+                 * @param size number of bytes available in the buffer
+                 * @param force retrieve last (final) portion of data
+                 * @return number of bytes stored into buffer or negative error code
+                 */
+                ssize_t pull(void *buf, size_t size, bool force);
+
+                /**
+                 * Get number of bytes available for pulling
+                 * @return number of bytes available for pulling
+                 */
+                size_t avail();
+
+                /**
                  * Initialize ACM stream for reading PCM stream described
                  * by the specific format
                  * @param in the input stream format

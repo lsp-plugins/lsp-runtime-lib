@@ -497,6 +497,10 @@ namespace lsp
             // Close stream
             if (hStream != NULL)
             {
+                // Unprepare ACM header first
+                if ((pHeader != NULL) && (pHeader->fdwStatus != 0))
+                    ::acmStreamUnprepareHeader(hStream, pHeader, 0);
+
                 ::acmStreamClose(hStream, 0);
                 hStream     = NULL;
             }
@@ -528,6 +532,50 @@ namespace lsp
             }
 
             return res;
+        }
+
+        ssize_t ACMStream::push(void **buf)
+        {
+            if (pHeader == NULL)
+                return -STATUS_CLOSED;
+            size_t avail = pHeader->cbSrcLength - pHeader->cbSrcLengthUsed;
+            if (buf != NULL)
+                *buf = &pHeader->pbSrc[pHeader->cbSrcLengthUsed];
+            return avail;
+        }
+
+        ssize_t ACMStream::pull(void *buf, size_t size, bool force)
+        {
+            if (hStream == NULL)
+                return -STATUS_CLOSED;
+
+            size_t avail = (pHeader->cbDstLength - pHeader->cbDstLengthUsed);
+
+            // There should be at least 3/4 free in the buffer to call acmStreamConvert
+            if (avail < ((pHeader->cbDstLength * 3) >> 2))
+            {
+                size_t flags = (force) ? ACM_STREAMCONVERTF_BLOCKALIGN : 0;
+                if (::acmStreamConvert(hStream, pHeader, flags) != 0)
+                    return -STATUS_IO_ERROR;
+            }
+
+            // Just pull the data to buffer
+            if (size > avail)
+                size    = avail;
+            avail -= size;
+            ::memcpy(buf, pHeader->pbDst, size);
+            if (avail > 0)
+                ::memmove(pHeader->pbDst, &pHeader->pbDst[size], avail);
+            pHeader->cbDstLengthUsed = avail;
+
+            return size;
+        }
+
+        size_t ACMStream::avail()
+        {
+            if (pHeader == NULL)
+                return 0;
+            return pHeader->cbDstLengthUsed;
         }
 
         /*
