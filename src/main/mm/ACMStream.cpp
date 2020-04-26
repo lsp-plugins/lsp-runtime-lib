@@ -216,30 +216,6 @@ namespace lsp
             return (result == 0) ? STATUS_OK : STATUS_UNKNOWN_ERR;
         }
 
-        ACMSTREAMHEADER *ACMStream::acm_create_header(size_t in, size_t out)
-        {
-            size_t hdr_alloc            = align_size(sizeof(ACMSTREAMHEADER), DEFAULT_ALIGN);
-            size_t src_alloc            = align_size(in, DEFAULT_ALIGN);
-            size_t dst_alloc            = align_size(out, DEFAULT_ALIGN);
-            BYTE *buf                   = static_cast<BYTE *>(::malloc(hdr_alloc + src_alloc + dst_alloc));
-
-            ACMSTREAMHEADER *sh         = reinterpret_cast<ACMSTREAMHEADER *>(buf);
-            if (sh != NULL)
-            {
-                ::ZeroMemory(sh, hdr_alloc + src_alloc + dst_alloc);
-
-                sh->cbStruct        = sizeof(ACMSTREAMHEADER);
-                sh->pbSrc                   = &buf[hdr_alloc];
-                sh->cbSrcLength             = in;
-                sh->cbSrcLengthUsed         = 0;
-                sh->pbDst                   = &buf[hdr_alloc + src_alloc];
-                sh->cbDstLength             = out;
-                sh->cbDstLengthUsed         = 0;
-            }
-
-            return sh;
-        }
-
         void ACMStream::acm_destroy_drivers(lltl::parray<drv_t> *res)
         {
             // Drop drivers
@@ -339,21 +315,33 @@ namespace lsp
             size_t hdr_alloc            = align_size(sizeof(ACMSTREAMHEADER), DEFAULT_ALIGN);
             size_t src_alloc            = align_size(src_length, DEFAULT_ALIGN);
             size_t dst_alloc            = align_size(dst_length, DEFAULT_ALIGN);
-            BYTE *buf                   = static_cast<BYTE *>(::malloc(hdr_alloc + src_alloc + dst_alloc));
+            size_t to_alloc             = hdr_alloc + src_alloc + dst_alloc;
+            BYTE *buf                   = static_cast<BYTE *>(::malloc(to_alloc));
             if (buf == NULL)
                 return STATUS_NO_MEM;
 
+            ::ZeroMemory(buf, to_alloc);
             pHeader                     = reinterpret_cast<ACMSTREAMHEADER *>(buf);
-            ::ZeroMemory(pHeader, sizeof(ACMSTREAMHEADER));
+            buf                        += hdr_alloc;
+            pHeader->pbSrc              = buf;
+            buf                        += src_alloc;
+            pHeader->pbDst              = buf;
+            buf                        += dst_alloc;
+
             pHeader->cbStruct           = sizeof(ACMSTREAMHEADER);
-            pHeader->pbSrc              = &buf[hdr_alloc];
-            pHeader->cbSrcLength        = src_length;
-            pHeader->pbDst              = &pHeader->pbSrc[src_alloc];
+            pHeader->dwSrcUser          = src_length;   // maximum size
+            pHeader->cbSrcLength        = src_length;   // This is required for initialization
+            pHeader->cbSrcLengthUsed    = 0;
+            pHeader->dwDstUser          = 0;            // read offset
             pHeader->cbDstLength        = dst_length;
+            pHeader->cbDstLengthUsed    = 0;
 
             // Prepare stream header
             if ((res = ::acmStreamPrepareHeader(hStream, pHeader, 0)) != 0)
                 return STATUS_UNKNOWN_ERR;
+
+            // Reset size of input buffer
+            pHeader->cbSrcLength        = 0;
 
             return STATUS_OK;
         }
@@ -538,10 +526,15 @@ namespace lsp
         {
             if (pHeader == NULL)
                 return -STATUS_CLOSED;
-            size_t avail = pHeader->cbSrcLength - pHeader->cbSrcLengthUsed;
+            size_t avail    = pHeader->dwSrcUser - pHeader->cbSrcLength;
             if (buf != NULL)
-                *buf = &pHeader->pbSrc[pHeader->cbSrcLengthUsed];
+                *buf            = &pHeader->pbSrc[pHeader->cbSrcLength];
             return avail;
+        }
+
+        void ACMStream::commit(size_t bytes)
+        {
+            pHeader->cbSrcLength   += bytes;
         }
 
         ssize_t ACMStream::pull(void *buf, size_t size, bool force)
@@ -549,25 +542,39 @@ namespace lsp
             if (hStream == NULL)
                 return -STATUS_CLOSED;
 
-            size_t avail = (pHeader->cbDstLength - pHeader->cbDstLengthUsed);
-
-            // There should be at least 3/4 free in the buffer to call acmStreamConvert
-            if (avail < ((pHeader->cbDstLength * 3) >> 2))
+            // Check if there is enough data in data buffer
+            size_t avail = pHeader->cbDstLengthUsed - pHeader->dwDstUser;
+            if (avail <= 0)
             {
+                // Check buffer size
+                if (pHeader->cbSrcLength <= 0)
+                    return (force) ? -STATUS_EOF : 0;
+                pHeader->cbSrcLengthUsed    = 0;
+                pHeader->cbDstLengthUsed    = 0;
+                // We consider that output buffer is block-aligned and can perform conversion now
+                // Perform conversion
                 size_t flags = (force) ? ACM_STREAMCONVERTF_BLOCKALIGN : 0;
                 if (::acmStreamConvert(hStream, pHeader, flags) != 0)
                     return -STATUS_IO_ERROR;
+
+                // Move the source buffer
+                size_t tail                 = pHeader->cbSrcLength - pHeader->cbSrcLengthUsed;
+                pHeader->cbSrcLength        = tail;
+                if (tail > 0)
+                    ::memmove(pHeader->pbSrc, &pHeader->pbSrc[pHeader->cbSrcLengthUsed], tail);
+
+                // Update buffer information and check again
+                pHeader->dwDstUser          = 0;
+                avail                       = pHeader->cbDstLengthUsed;
+                if (avail <= 0)
+                    return (force) ? -STATUS_EOF : 0;
             }
 
-            // Just pull the data to buffer
+            // Copy data to the output buffer
             if (size > avail)
-                size    = avail;
-            avail -= size;
-            ::memcpy(buf, pHeader->pbDst, size);
-            if (avail > 0)
-                ::memmove(pHeader->pbDst, &pHeader->pbDst[size], avail);
-            pHeader->cbDstLengthUsed = avail;
-
+                size = avail;
+            ::memcpy(buf, &pHeader->pbDst[pHeader->dwDstUser], size);
+            pHeader->dwDstUser         += size;
             return size;
         }
 
@@ -577,99 +584,6 @@ namespace lsp
                 return 0;
             return pHeader->cbDstLengthUsed;
         }
-
-        /*
-            LONG            error;
-            WAVEFORMATEX    dstInfo;
-
-            lltl::parray<acm_driver_t> acmDrivers;
-            ::acmDriverEnum(acm_driver_enum_callback, (DWORD_PTR)&acmDrivers, ACM_DRIVERENUMF_DISABLED);
-            for (size_t i=0, n=acmDrivers.size(); i<n; ++i)
-            {
-                acm_driver_t *drv = acmDrivers.uget(i);
-                printf("ACM Driver=%p, support=0x%lx\n", drv->hDrvId, long(drv->fdwSupport));
-            }
-
-            // Update sample format
-            sFormat.srate           = LE_TO_CPU(pWfexInfo->nSamplesPerSec);
-            sFormat.channels        = LE_TO_CPU(pWfexInfo->nChannels);
-            sFormat.frames          = -1;
-            sFormat.format          = mm::SFMT_F32_CPU;
-
-            // We are ready to read but first initialize ACM stream
-            dstInfo.wFormatTag      = WAVE_FORMAT_IEEE_FLOAT;
-            dstInfo.nChannels       = sFormat.channels;
-            dstInfo.nSamplesPerSec  = sFormat.srate;
-            dstInfo.nAvgBytesPerSec = sFormat.srate * sFormat.channels * sizeof(float);
-            dstInfo.nBlockAlign     = sFormat.channels * sizeof(float);
-            dstInfo.wBitsPerSample  = sizeof(float) * 8;
-            dstInfo.cbSize          = 0;
-
-            dstInfo.wFormatTag      = CPU_TO_LE(dstInfo.wFormatTag);
-            dstInfo.nChannels       = CPU_TO_LE(dstInfo.nChannels);
-            dstInfo.nSamplesPerSec  = CPU_TO_LE(dstInfo.nSamplesPerSec);
-            dstInfo.nAvgBytesPerSec = CPU_TO_LE(dstInfo.nAvgBytesPerSec);
-            dstInfo.nBlockAlign     = CPU_TO_LE(dstInfo.nBlockAlign);
-            dstInfo.wBitsPerSample  = CPU_TO_LE(dstInfo.wBitsPerSample);
-            dstInfo.cbSize          = CPU_TO_LE(dstInfo.cbSize);
-
-            // Open and configure ACM stream
-            HACMSTREAM acmStream;
-            if ((error = ::acmStreamOpen(&acmStream, NULL, pWfexInfo, &dstInfo, NULL, 0, 0, ACM_STREAMOPENF_NONREALTIME)) != 0)
-            {
-                switch (error)
-                {
-                    case ACMERR_NOTPOSSIBLE: return STATUS_BAD_FORMAT;
-                    case STATUS_NO_MEM: return STATUS_NO_MEM;
-                    default: break;
-                }
-                return STATUS_UNKNOWN_ERR;
-            }
-
-            // Estimate size of conversion buffers
-            DWORD src_length = ACM_INPUT_BUFSIZE, dst_length = ACM_INPUT_BUFSIZE;
-
-            error = ::acmStreamSize(acmStream, ACM_INPUT_BUFSIZE, &dst_length, ACM_STREAMSIZEF_SOURCE);
-            if ((error != 0) || (dst_length <= 0))
-            {
-                ::acmStreamClose(acmStream, 0);
-                return STATUS_UNKNOWN_ERR;
-            }
-            error = ::acmStreamSize(acmStream, dst_length, &src_length, ACM_STREAMSIZEF_DESTINATION);
-            if ((error != 0) || (src_length <= 0))
-            {
-                ::acmStreamClose(acmStream, 0);
-                return STATUS_UNKNOWN_ERR;
-            }
-
-            // Allocate stream header
-            size_t hdr_alloc            = align_size(sizeof(ACMSTREAMHEADER), DEFAULT_ALIGN);
-            size_t src_alloc            = align_size(src_length, DEFAULT_ALIGN);
-            size_t dst_alloc            = align_size(dst_length, DEFAULT_ALIGN);
-            BYTE *buf                   = static_cast<BYTE *>(::malloc(hdr_alloc + src_alloc + dst_alloc));
-
-            ACMSTREAMHEADER *sh         = reinterpret_cast<ACMSTREAMHEADER *>(buf);
-            if (sh == NULL)
-            {
-                ::acmStreamClose(acmStream, 0);
-                return STATUS_NO_MEM;
-            }
-
-            ::bzero(sh, sizeof(ACMSTREAMHEADER));
-            sh->pbSrc                   = &buf[hdr_alloc];
-            sh->cbSrcLength             = src_length;
-            sh->pbDst                   = &buf[hdr_alloc + src_alloc];
-            sh->cbDstLength             = dst_length;
-
-            // Prepare stream header
-            if ((error = acmStreamPrepareHeader( acmStream, sh, 0 )) != 0)
-            {
-                ::free(buf);
-                ::acmStreamClose(acmStream, 0);
-                return STATUS_BAD_FORMAT;
-            }
-
-            */
     
     } /* namespace mm */
 } /* namespace lsp */

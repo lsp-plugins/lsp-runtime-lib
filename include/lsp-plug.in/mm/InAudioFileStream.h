@@ -53,6 +53,7 @@ namespace lsp
                 static status_t     decode_sf_error(SNDFILE *fd);
             #else
                 static ssize_t      decode_sample_format(WAVEFORMATEX *wfe);
+                ssize_t             read_acm_convert(void *dst, size_t nframes, size_t fmt);
             #endif
 
                 virtual ssize_t     direct_read(void *dst, size_t nframes, size_t fmt);

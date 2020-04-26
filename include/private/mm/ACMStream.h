@@ -98,7 +98,6 @@ namespace lsp
                 static void acm_query_formats(drv_lookup_t *s);
                 static status_t acm_enum_drivers(lltl::parray<drv_t> *res);
                 static void acm_destroy_drivers(lltl::parray<drv_t> *res);
-                static ACMSTREAMHEADER *acm_create_header(size_t in, size_t out);
                 static fmt_tag_t *acm_find_tag(drv_t *drv, size_t fmt_tag);
 
                 status_t acm_configure_stream(WAVEFORMATEX *dst, WAVEFORMATEX *src);
@@ -129,6 +128,12 @@ namespace lsp
                  * @return number of bytes available for write or negative error code
                  */
                 ssize_t push(void **buf);
+
+                /**
+                 * Commit the push
+                 * @param bytes number of bytes read into push buffer returned by push()
+                 */
+                void commit(size_t bytes);
 
                 /**
                  * Perform conversion and fetch data into buffer

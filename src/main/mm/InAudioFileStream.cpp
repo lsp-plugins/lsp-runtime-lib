@@ -122,6 +122,57 @@ namespace lsp
 
             return -1;
         }
+
+        ssize_t InAudioFileStream::read_acm_convert(void *dst, size_t nframes, size_t fmt)
+        {
+            size_t nread    = 0;
+            uint8_t *dptr   = static_cast<uint8_t *>(dst);
+            size_t fsize    = sformat_size_of(sFormat.format) * sFormat.channels;
+            nframes        *= fsize;
+            bool eof        = false;
+
+            while (nread < nframes)
+            {
+                // Perform pull
+                size_t can_pull     = nframes - nread;
+                ssize_t pulled      = pACM->pull(dptr, can_pull, eof);
+                if (pulled > 0)
+                {
+                    // Update pointers and repeat pull
+                    dptr               += pulled;
+                    nread              += pulled;
+                    continue;
+                }
+                else if (pulled < 0)
+                {
+                    if (nread > 0)
+                        break;// Analyze result
+                    return pulled;
+                }
+
+                // Perform push if possible
+                void *sptr;
+                size_t can_push     = pACM->push(&sptr);
+                if (can_push > 0)
+                {
+                    ssize_t pushed      = pMMIO->read(sptr, can_push);
+                    if (pushed >= 0)
+                        pACM->commit(pushed);
+                    else if (pushed == -STATUS_EOF)
+                        eof = true;
+                    else if (nread > 0)
+                        break;
+                    else
+                        return pushed;
+                }
+                else if (nread > 0)
+                    break;
+                else
+                    return -STATUS_UNKNOWN_ERR;
+            }
+
+            return nread / fsize;
+        }
     #endif /* USE_LIBSNDFILE */
 
         status_t InAudioFileStream::open(const char *path)
@@ -214,7 +265,7 @@ namespace lsp
                             pFormat             = acm->out_format();
                             sFormat.srate       = wfe->nSamplesPerSec;
                             sFormat.channels    = wfe->nChannels;
-                            sFormat.frames      = -1;
+                            sFormat.frames      = mmio->frames();
                             sFormat.format      = fmt;
                             nOffset             = 0;
                             bSeekable           = false;
@@ -342,15 +393,14 @@ namespace lsp
             res = decode_sf_error(hHandle);
             return -((res == STATUS_OK) ? STATUS_EOF : res);
         #else
-            size_t fsize    = sformat_size_of(sFormat.format) * sFormat.channels;
             if (pMMIO != NULL)
             {
-                if (pACM == NULL)
-                {
-                    ssize_t nread   = pMMIO->read(dst, fsize * nframes);
-                    return (nread < 0) ? nread : nread / fsize;
-                }
-                // TODO: implement ACM-related stuff
+                if (pACM != NULL)
+                    return read_acm_convert(dst, nframes, fmt);
+
+                size_t fsize    = sformat_size_of(sFormat.format) * sFormat.channels;
+                ssize_t nread   = pMMIO->read(dst, fsize * nframes);
+                return (nread < 0) ? nread : nread / fsize;
             }
 
             return -STATUS_NOT_SUPPORTED;
