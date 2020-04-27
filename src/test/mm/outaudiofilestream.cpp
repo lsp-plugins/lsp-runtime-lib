@@ -59,7 +59,7 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
         UTEST_ASSERT(is.close() == STATUS_OK);
     }
 
-    void test_write_f32(const char *file, const float *src)
+    void test_write_f32(const char *file, const float *src, size_t codec, float tol)
     {
         io::Path path;
         UTEST_ASSERT(path.fmt("%s/%s-%s", tempdir(), full_name(), file));
@@ -72,7 +72,7 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
         info.frames     = FRAMES;
         info.format     = mm::SFMT_F32;
 
-        UTEST_ASSERT(os.open(&path, &info, mm::AFMT_WAV | mm::CFMT_PCM) == STATUS_OK);
+        UTEST_ASSERT(os.open(&path, &info, codec) == STATUS_OK);
 
         for (ssize_t off=0; off<FRAMES; off += BUF_SAMPLES)
         {
@@ -89,10 +89,10 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
 
         UTEST_ASSERT(os.close() == STATUS_OK);
 
-        validate_file(&path, src, 1e-5f);
+        validate_file(&path, src, tol);
     }
 
-    void test_write_s16(const char *file, const float *src)
+    void test_write_s16(const char *file, const float *src, size_t codec, float tol)
     {
         io::Path path;
         UTEST_ASSERT(path.fmt("%s/%s-%s", tempdir(), full_name(), file));
@@ -105,7 +105,7 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
         info.frames     = FRAMES;
         info.format     = mm::SFMT_S16;
 
-        UTEST_ASSERT(os.open(&path, &info, mm::AFMT_WAV | mm::CFMT_PCM) == STATUS_OK);
+        UTEST_ASSERT(os.open(&path, &info, codec) == STATUS_OK);
 
         for (ssize_t off=0; off<FRAMES; off += BUF_SAMPLES)
         {
@@ -129,10 +129,10 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
 
         UTEST_ASSERT(os.close() == STATUS_OK);
 
-        validate_file(&path, src, 5e-5);
+        validate_file(&path, src, tol);
     }
 
-    void test_write_u16(const char *file, const float *src)
+    void test_write_u16(const char *file, const float *src, size_t codec, float tol)
     {
         io::Path path;
         UTEST_ASSERT(path.fmt("%s/%s-%s", tempdir(), full_name(), file));
@@ -145,7 +145,7 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
         info.frames     = FRAMES;
         info.format     = mm::SFMT_S16;
 
-        UTEST_ASSERT(os.open(&path, &info, mm::AFMT_WAV | mm::CFMT_PCM) == STATUS_OK);
+        UTEST_ASSERT(os.open(&path, &info, codec) == STATUS_OK);
 
         for (ssize_t off=0; off<FRAMES; off += BUF_SAMPLES)
         {
@@ -169,7 +169,7 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
 
         UTEST_ASSERT(os.close() == STATUS_OK);
 
-        validate_file(&path, src, 5e-5);
+        validate_file(&path, src, tol);
     }
 
     UTEST_MAIN
@@ -185,8 +185,13 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
         }
 
         // Call tests
-        test_write_f32("pcm-f32.wav", buf);
-        test_write_s16("pcm-s16.wav", buf);
-        test_write_u16("pcm-u16.wav", buf);
+        test_write_f32("pcm-f32.wav", buf, mm::AFMT_WAV | mm::CFMT_PCM, 1e-5f);
+        test_write_s16("pcm-s16.wav", buf, mm::AFMT_WAV | mm::CFMT_PCM, 5e-5);
+        test_write_u16("pcm-u16.wav", buf, mm::AFMT_WAV | mm::CFMT_PCM, 5e-5);
+
+        // Call tests
+        test_write_f32("alaw-f32.wav", buf, mm::AFMT_WAV | mm::CFMT_ALAW, 3e-2);
+        test_write_s16("alaw-s16.wav", buf, mm::AFMT_WAV | mm::CFMT_ALAW, 3e-2);
+        test_write_u16("alaw-u16.wav", buf, mm::AFMT_WAV | mm::CFMT_ALAW, 3e-2);
     }
 UTEST_END;
