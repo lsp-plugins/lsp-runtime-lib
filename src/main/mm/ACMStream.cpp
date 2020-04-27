@@ -346,9 +346,11 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t ACMStream::acm_try_format(WAVEFORMATEX *test, WAVEFORMATEX *fmt)
+        status_t ACMStream::acm_try_format(WAVEFORMATEX *to, WAVEFORMATEX *from)
         {
             status_t res;
+            size_t ftag = ((to->wFormatTag == WAVE_FORMAT_PCM) || (to->wFormatTag == WAVE_FORMAT_IEEE_FLOAT)) ?
+                            from->wFormatTag : to->wFormatTag;
 
             for (size_t i=0, n=vDrv.size(); i<n; ++i)
             {
@@ -356,7 +358,7 @@ namespace lsp
                 drv_t *drv = vDrv.uget(i);
                 if (drv == NULL)
                     continue;
-                fmt_tag_t *tag = acm_find_tag(drv, fmt->wFormatTag);
+                fmt_tag_t *tag = acm_find_tag(drv, ftag);
                 if (tag == NULL)
                     continue;
 
@@ -365,15 +367,15 @@ namespace lsp
                     continue;
 
                 // Try to open stream
-                if (::acmStreamOpen(&hStream, hDriver, fmt, test, NULL, 0, 0, ACM_STREAMOPENF_NONREALTIME) == 0)
+                if (::acmStreamOpen(&hStream, hDriver, from, to, NULL, 0, 0, ACM_STREAMOPENF_NONREALTIME) == 0)
                 {
-                    res = acm_configure_stream(test, fmt);
+                    res = acm_configure_stream(to, from);
                     if (res == STATUS_OK)
                     {
                         // Copy format descriptors
-                        if ((pFmtIn = copy_fmt(fmt)) == NULL)
+                        if ((pFmtIn = copy_fmt(from)) == NULL)
                             return STATUS_NO_MEM;
-                        if ((pFmtOut = copy_fmt(test)) == NULL)
+                        if ((pFmtOut = copy_fmt(to)) == NULL)
                             return STATUS_NO_MEM;
 
                         return STATUS_OK;

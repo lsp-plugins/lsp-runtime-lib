@@ -101,7 +101,7 @@ namespace lsp
                 static fmt_tag_t *acm_find_tag(drv_t *drv, size_t fmt_tag);
 
                 status_t acm_configure_stream(WAVEFORMATEX *dst, WAVEFORMATEX *src);
-                status_t acm_try_format(WAVEFORMATEX *test, WAVEFORMATEX *fmt);
+                status_t acm_try_format(WAVEFORMATEX *to, WAVEFORMATEX *from);
                 status_t acm_find_nonstandard_dec(WAVEFORMATEX *fmt);
                 status_t acm_find_standard_dec(WAVEFORMATEX *fmt);
 
