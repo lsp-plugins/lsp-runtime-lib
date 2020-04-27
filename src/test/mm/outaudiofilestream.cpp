@@ -17,7 +17,7 @@
 
 UTEST_BEGIN("runtime.mm", outaudiofilestream)
 
-    void validate_file(const io::Path *path, const float *src, float tol)
+    void validate_file(const io::Path *path, const float *src, size_t srate, float tol)
     {
         mm::InAudioFileStream is;
         mm::audio_stream_t info;
@@ -26,7 +26,7 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
 
         UTEST_ASSERT(is.open(path) == STATUS_OK);
         UTEST_ASSERT(is.info(&info) == STATUS_OK);
-        UTEST_ASSERT(info.srate == 48000);
+        UTEST_ASSERT(info.srate == srate);
         UTEST_ASSERT(info.channels == 2);
         UTEST_ASSERT(info.frames == FRAMES);
 
@@ -59,7 +59,7 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
         UTEST_ASSERT(is.close() == STATUS_OK);
     }
 
-    void test_write_f32(const char *file, const float *src, size_t codec, float tol)
+    void test_write_f32(const char *file, const float *src, size_t codec, size_t srate, float tol)
     {
         io::Path path;
         UTEST_ASSERT(path.fmt("%s/%s-%s", tempdir(), full_name(), file));
@@ -67,7 +67,7 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
 
         mm::OutAudioFileStream os;
         mm::audio_stream_t info;
-        info.srate      = 48000;
+        info.srate      = srate;
         info.channels   = 2;
         info.frames     = FRAMES;
         info.format     = mm::SFMT_F32;
@@ -89,10 +89,10 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
 
         UTEST_ASSERT(os.close() == STATUS_OK);
 
-        validate_file(&path, src, tol);
+        validate_file(&path, src, srate, tol);
     }
 
-    void test_write_s16(const char *file, const float *src, size_t codec, float tol)
+    void test_write_s16(const char *file, const float *src, size_t codec, size_t srate, float tol)
     {
         io::Path path;
         UTEST_ASSERT(path.fmt("%s/%s-%s", tempdir(), full_name(), file));
@@ -100,7 +100,7 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
 
         mm::OutAudioFileStream os;
         mm::audio_stream_t info;
-        info.srate      = 48000;
+        info.srate      = srate;
         info.channels   = 2;
         info.frames     = FRAMES;
         info.format     = mm::SFMT_S16;
@@ -129,10 +129,10 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
 
         UTEST_ASSERT(os.close() == STATUS_OK);
 
-        validate_file(&path, src, tol);
+        validate_file(&path, src, srate, tol);
     }
 
-    void test_write_u16(const char *file, const float *src, size_t codec, float tol)
+    void test_write_u16(const char *file, const float *src, size_t codec, size_t srate, float tol)
     {
         io::Path path;
         UTEST_ASSERT(path.fmt("%s/%s-%s", tempdir(), full_name(), file));
@@ -140,7 +140,7 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
 
         mm::OutAudioFileStream os;
         mm::audio_stream_t info;
-        info.srate      = 48000;
+        info.srate      = srate;
         info.channels   = 2;
         info.frames     = FRAMES;
         info.format     = mm::SFMT_S16;
@@ -169,7 +169,7 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
 
         UTEST_ASSERT(os.close() == STATUS_OK);
 
-        validate_file(&path, src, tol);
+        validate_file(&path, src, srate, tol);
     }
 
     UTEST_MAIN
@@ -185,13 +185,13 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
         }
 
         // Call tests
-//        test_write_f32("pcm-f32.wav", buf, mm::AFMT_WAV | mm::CFMT_PCM, 1e-5f);
-//        test_write_s16("pcm-s16.wav", buf, mm::AFMT_WAV | mm::CFMT_PCM, 5e-5);
-//        test_write_u16("pcm-u16.wav", buf, mm::AFMT_WAV | mm::CFMT_PCM, 5e-5);
+//        test_write_f32("pcm-f32.wav", buf, mm::AFMT_WAV | mm::CFMT_PCM, 48000, 1e-5f);
+//        test_write_s16("pcm-s16.wav", buf, mm::AFMT_WAV | mm::CFMT_PCM, 48000, 5e-5);
+//        test_write_u16("pcm-u16.wav", buf, mm::AFMT_WAV | mm::CFMT_PCM, 48000, 5e-5);
 
         // Call tests
-        test_write_f32("alaw-f32.wav", buf, mm::AFMT_WAV | mm::CFMT_ALAW, 3e-2);
-        test_write_s16("alaw-s16.wav", buf, mm::AFMT_WAV | mm::CFMT_ALAW, 3e-2);
-        test_write_u16("alaw-u16.wav", buf, mm::AFMT_WAV | mm::CFMT_ALAW, 3e-2);
+        test_write_f32("alaw-f32.wav", buf, mm::AFMT_WAV | mm::CFMT_ALAW, 8000, 3e-2);
+        test_write_s16("alaw-s16.wav", buf, mm::AFMT_WAV | mm::CFMT_ALAW, 8000, 3e-2);
+        test_write_u16("alaw-u16.wav", buf, mm::AFMT_WAV | mm::CFMT_ALAW, 8000, 3e-2);
     }
 UTEST_END;

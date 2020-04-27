@@ -99,11 +99,12 @@ namespace lsp
                 static status_t acm_enum_drivers(lltl::parray<drv_t> *res);
                 static void acm_destroy_drivers(lltl::parray<drv_t> *res);
                 static fmt_tag_t *acm_find_tag(drv_t *drv, size_t fmt_tag);
+                static fmt_t *acm_select_format(fmt_t *best, fmt_t *curr, WAVEFORMATEX *req);
 
                 status_t acm_configure_stream(WAVEFORMATEX *dst, WAVEFORMATEX *src);
                 status_t acm_try_format(WAVEFORMATEX *to, WAVEFORMATEX *from);
-                status_t acm_find_nonstandard_dec(WAVEFORMATEX *fmt);
-                status_t acm_find_standard_dec(WAVEFORMATEX *fmt);
+                status_t acm_find_nonstandard(WAVEFORMATEX *fmt, bool dec);
+                status_t acm_find_standard(WAVEFORMATEX *fmt, bool dec);
 
             public:
                 explicit ACMStream();
