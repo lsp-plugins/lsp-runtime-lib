@@ -190,8 +190,8 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
 //        test_write_u16("pcm-u16.wav", buf, mm::AFMT_WAV | mm::CFMT_PCM, 48000, 5e-5);
 
         // Call tests
-        test_write_f32("alaw-f32.wav", buf, mm::AFMT_WAV | mm::CFMT_ALAW, 8000, 3e-2);
-        test_write_s16("alaw-s16.wav", buf, mm::AFMT_WAV | mm::CFMT_ALAW, 8000, 3e-2);
-        test_write_u16("alaw-u16.wav", buf, mm::AFMT_WAV | mm::CFMT_ALAW, 8000, 3e-2);
+        test_write_f32("alaw-f32.wav", buf, mm::AFMT_WAV | mm::CFMT_ALAW, 48000, 3e-2);
+        test_write_s16("alaw-s16.wav", buf, mm::AFMT_WAV | mm::CFMT_ALAW, 48000, 3e-2);
+        test_write_u16("alaw-u16.wav", buf, mm::AFMT_WAV | mm::CFMT_ALAW, 48000, 3e-2);
     }
 UTEST_END;

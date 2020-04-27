@@ -57,6 +57,7 @@ namespace lsp
                 typedef struct drv_t
                 {
                     HACMDRIVERID                drv_id;     // ACM Driver identifier
+                    size_t                      pwfx_sz;    // Maximum size fo WAVEFORMATEX struct
                     LSPString                   short_name;
                     LSPString                   full_name;
                     LSPString                   copyright;
@@ -102,9 +103,11 @@ namespace lsp
                 static fmt_t *acm_select_format(fmt_t *best, fmt_t *curr, WAVEFORMATEX *req);
 
                 status_t acm_configure_stream(WAVEFORMATEX *dst, WAVEFORMATEX *src);
-                status_t acm_try_format(WAVEFORMATEX *to, WAVEFORMATEX *from);
-                status_t acm_find_nonstandard(WAVEFORMATEX *fmt, bool dec);
-                status_t acm_find_standard(WAVEFORMATEX *fmt, bool dec);
+                status_t acm_try_format_dec(WAVEFORMATEX *to, WAVEFORMATEX *from);
+                status_t acm_try_format_enc(HACMDRIVER drv, WAVEFORMATEX *to, WAVEFORMATEX *from, size_t szof);
+                status_t acm_find_nonstandard_dec(WAVEFORMATEX *fmt);
+                status_t acm_find_standard_dec(WAVEFORMATEX *fmt);
+                status_t acm_suggest_format_enc(WAVEFORMATEX *fmt);
 
             public:
                 explicit ACMStream();

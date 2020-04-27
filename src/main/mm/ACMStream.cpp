@@ -133,10 +133,11 @@ namespace lsp
             s->pdrv->features.set_utf16(dd->szFeatures);
 
             // Query format metrics
-            s->req_sz       = 0;
+            s->req_sz           = 0;
             ::acmMetrics((HACMOBJ)s->hd, ACM_METRIC_MAX_SIZE_FORMAT, &s->req_sz);
-            s->req_sz       = align_size(s->req_sz, DEFAULT_ALIGN);
-            s->req          = reinterpret_cast<WAVEFORMATEX *>(::malloc(s->req_sz));
+            s->req_sz           = align_size(s->req_sz, DEFAULT_ALIGN);
+            s->pdrv->pwfx_sz    = s->req_sz;
+            s->req              = reinterpret_cast<WAVEFORMATEX *>(::malloc(s->req_sz));
             if (s->req != NULL)
             {
                 // Query format tags
@@ -346,7 +347,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t ACMStream::acm_try_format(WAVEFORMATEX *to, WAVEFORMATEX *from)
+        status_t ACMStream::acm_try_format_dec(WAVEFORMATEX *to, WAVEFORMATEX *from)
         {
             status_t res;
             size_t ftag = ((to->wFormatTag == WAVE_FORMAT_PCM) || (to->wFormatTag == WAVE_FORMAT_IEEE_FLOAT)) ?
@@ -370,18 +371,16 @@ namespace lsp
                 if (::acmStreamOpen(&hStream, hDriver, from, to, NULL, 0, 0, ACM_STREAMOPENF_NONREALTIME) == 0)
                 {
                     res = acm_configure_stream(to, from);
-                    if (res == STATUS_OK)
-                    {
-                        // Copy format descriptors
-                        if ((pFmtIn = copy_fmt(from)) == NULL)
-                            return STATUS_NO_MEM;
-                        if ((pFmtOut = copy_fmt(to)) == NULL)
-                            return STATUS_NO_MEM;
-
-                        return STATUS_OK;
-                    }
-                    else if (res != STATUS_SKIP)
+                    if (res != STATUS_OK)
                         return res;
+
+                    // Copy format descriptors
+                    if ((pFmtIn = copy_fmt(from)) == NULL)
+                        return STATUS_NO_MEM;
+                    if ((pFmtOut = copy_fmt(to)) == NULL)
+                        return STATUS_NO_MEM;
+
+                    return STATUS_OK;
                 }
 
                 // Close ACM driver
@@ -423,7 +422,7 @@ namespace lsp
             return best;
         }
 
-        status_t ACMStream::acm_find_standard(WAVEFORMATEX *fmt, bool dec)
+        status_t ACMStream::acm_find_standard_dec(WAVEFORMATEX *fmt)
         {
             status_t res;
             lltl::parray<fmt_t> blist; // List of all best-matching solutions
@@ -476,7 +475,6 @@ namespace lsp
             {
                 fmt_t *curr = blist.uget(i);
                 WAVEFORMATEX *pcm = (curr != NULL) ? curr->wfex : NULL;
-                WAVEFORMATEX *dst, *src;
                 if (pcm == NULL)
                     continue;
 
@@ -490,18 +488,14 @@ namespace lsp
                     tmp.nAvgBytesPerSec = tmp.nBlockAlign * tmp.nSamplesPerSec;
 
                     // Try modified mode
-                    src                 = (dec) ? fmt : &tmp;
-                    dst                 = (dec) ? &tmp : fmt;
-                    if ((res = acm_try_format(dst, src)) != STATUS_OK)
+                    if ((res = acm_try_format_dec(pcm, fmt)) != STATUS_OK)
                         return res;
                     if (hStream != NULL)
                         return STATUS_OK;
                 }
 
                 // Try non-modified mode
-                src                 = (dec) ? fmt : pcm;
-                dst                 = (dec) ? pcm : fmt;
-                if ((res = acm_try_format(dst, src)) != STATUS_OK)
+                if ((res = acm_try_format_dec(pcm, fmt)) != STATUS_OK)
                     return res;
                 if (hStream != NULL)
                     return STATUS_OK;
@@ -510,13 +504,10 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t ACMStream::acm_find_nonstandard(WAVEFORMATEX *fmt, bool dec)
+        status_t ACMStream::acm_find_nonstandard_dec(WAVEFORMATEX *fmt)
         {
             status_t res;
-            WAVEFORMATEX pcm, *src, *dst;
-
-            src                 = (dec) ? fmt : &pcm;
-            dst                 = (dec) ? &pcm : fmt;
+            WAVEFORMATEX pcm;
 
             pcm.wFormatTag      = WAVE_FORMAT_IEEE_FLOAT;
             pcm.nChannels       = fmt->nChannels;
@@ -527,7 +518,7 @@ namespace lsp
             pcm.cbSize          = 0;
 
             // Try IEEE Float first as the best output format
-            if ((res = acm_try_format(dst, src)) != STATUS_OK)
+            if ((res = acm_try_format_dec(&pcm, fmt)) != STATUS_OK)
                 return res;
             else if (hStream != NULL)
                 return STATUS_OK;
@@ -544,7 +535,7 @@ namespace lsp
                 pcm.cbSize          = 0;
 
                 // Try non-standard modes
-                if ((res = acm_try_format(dst, src)) != STATUS_OK)
+                if ((res = acm_try_format_dec(&pcm, fmt)) != STATUS_OK)
                     return res;
                 if (hStream != NULL)
                     return STATUS_OK;
@@ -566,17 +557,122 @@ namespace lsp
             // Enumerate all drivers available in the system
             acm_enum_drivers(&vDrv);
 
-            if ((res = acm_find_nonstandard(in, true)) != STATUS_OK)
+            if ((res = acm_find_nonstandard_dec(in)) != STATUS_OK)
                 return close(res);
             if (hStream == NULL)
             {
-                if ((res = acm_find_standard(in, true)) != STATUS_OK)
+                if ((res = acm_find_standard_dec(in)) != STATUS_OK)
                     return close(res);
             }
 
             acm_destroy_drivers(&vDrv);
 
             return (hStream != NULL) ? STATUS_OK : close(STATUS_UNSUPPORTED_FORMAT);
+        }
+
+        status_t ACMStream::acm_try_format_enc(HACMDRIVER drv, WAVEFORMATEX *to, WAVEFORMATEX *from, size_t szof)
+        {
+            size_t flags        = ACM_FORMATSUGGESTF_NCHANNELS |
+                                  ACM_FORMATSUGGESTF_NSAMPLESPERSEC |
+                                  ACM_FORMATSUGGESTF_WFORMATTAG;
+
+            // Suggest format
+            if ((::acmFormatSuggest(drv, from, to, szof, flags)) != 0)
+                return STATUS_OK;
+
+            // Try to open stream
+            if (::acmStreamOpen(&hStream, hDriver, from, to, NULL, 0, 0, ACM_STREAMOPENF_NONREALTIME) != 0)
+                return STATUS_OK;
+
+            // Configure ACM stream
+            status_t res = acm_configure_stream(to, from);
+            if (res != STATUS_OK)
+                return res;
+
+            // Copy format descriptors
+            if ((pFmtIn = copy_fmt(from)) == NULL)
+                return STATUS_NO_MEM;
+            pFmtOut = to;   // reuse 'to' pointer;
+
+            return STATUS_OK;
+        }
+
+        status_t ACMStream::acm_suggest_format_enc(WAVEFORMATEX *fmt)
+        {
+            status_t res;
+
+            for (size_t i=0, n=vDrv.size(); i<n; ++i)
+            {
+                // Work with drivers that ONLY support the requested tag
+                drv_t *drv = vDrv.uget(i);
+                if (drv == NULL)
+                    continue;
+                fmt_tag_t *tag = acm_find_tag(drv, fmt->wFormatTag);
+                if (tag == NULL)
+                    continue;
+
+                WAVEFORMATEX pcm, *dst;
+                dst     = reinterpret_cast<WAVEFORMATEX *>(::malloc(drv->pwfx_sz));
+                if (dst == NULL)
+                    return STATUS_NO_MEM;
+                ::ZeroMemory(dst, drv->pwfx_sz);
+                dst->wFormatTag     = fmt->wFormatTag;
+                dst->nChannels      = fmt->nChannels;
+                dst->nSamplesPerSec = fmt->nSamplesPerSec;
+                dst->cbSize         = 0;
+
+                // Open the specific ACM driver
+                if (::acmDriverOpen(&hDriver, drv->drv_id, 0) != 0)
+                {
+                    ::free(dst);
+                    continue;
+                }
+
+                // Try PCM IIIE Float first
+                pcm.wFormatTag      = WAVE_FORMAT_IEEE_FLOAT;
+                pcm.nChannels       = fmt->nChannels;
+                pcm.nSamplesPerSec  = fmt->nSamplesPerSec;
+                pcm.nAvgBytesPerSec = sizeof(f32_t) * fmt->nChannels * fmt->nSamplesPerSec;
+                pcm.nBlockAlign     = sizeof(f32_t) * fmt->nChannels;
+                pcm.wBitsPerSample  = sizeof(f32_t) * 8;
+                pcm.cbSize          = 0;
+
+                if ((res = acm_try_format_enc(hDriver, dst, &pcm, drv->pwfx_sz)) != STATUS_OK)
+                {
+                    ::free(dst);
+                    return res;
+                }
+                else if (hStream != NULL)
+                    return STATUS_OK; // dst will be saved as format descriptor
+
+                // Try other PCM formats: 32, 24, 16, 8 bits per sample
+                for (size_t bps=4; bps > 0; --bps)
+                {
+                    pcm.wFormatTag      = WAVE_FORMAT_PCM;
+                    pcm.nChannels       = fmt->nChannels;
+                    pcm.nSamplesPerSec  = fmt->nSamplesPerSec;
+                    pcm.nAvgBytesPerSec = bps * fmt->nChannels * fmt->nSamplesPerSec;
+                    pcm.nBlockAlign     = bps * fmt->nChannels;
+                    pcm.wBitsPerSample  = bps * 8;
+                    pcm.cbSize          = 0;
+
+                    // Try non-standard modes
+                    if ((res = acm_try_format_enc(hDriver, dst, &pcm, drv->pwfx_sz)) != STATUS_OK)
+                    {
+                        ::free(dst);
+                        return res;
+                    }
+                    if (hStream != NULL)
+                        return STATUS_OK; // dst will be saved as format descriptor
+                }
+
+                // Close ACM driver
+                ::free(dst);
+                ::acmDriverClose(hDriver, 0);
+                hDriver     = NULL;
+            }
+
+            return STATUS_OK;
         }
 
         status_t ACMStream::write_pcm(WAVEFORMATEX *out)
@@ -588,13 +684,8 @@ namespace lsp
             // Enumerate all drivers available in the system
             acm_enum_drivers(&vDrv);
 
-            if ((res = acm_find_nonstandard(out, false)) != STATUS_OK)
+            if ((res = acm_suggest_format_enc(out)) != STATUS_OK)
                 return close(res);
-            if (hStream == NULL)
-            {
-                if ((res = acm_find_standard(out, false)) != STATUS_OK)
-                    return close(res);
-            }
 
             return (hStream != NULL) ? STATUS_OK : close(STATUS_UNSUPPORTED_FORMAT);
         }
