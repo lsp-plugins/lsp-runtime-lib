@@ -245,35 +245,31 @@ namespace lsp
                 {
                     // Create ACM stream
                     ACMStream *acm      = new ACMStream();
-                    if (acm == NULL)
+                    if (acm != NULL)
                     {
-                        mmio->close();
-                        delete mmio;
-                        return -set_error(STATUS_NO_MEM);
-                    }
-
-                    // Initialize ACM stream
-                    if ((res = acm->read_pcm(wfe)) == STATUS_OK)
-                    {
-                        wfe                 = acm->out_format();
-                        ssize_t fmt         = decode_sample_format(wfe);
-                        if (fmt > 0)
+                        // Initialize ACM stream
+                        if ((res = acm->read_pcm(wfe)) == STATUS_OK)
                         {
-                            // All is ok
-                            pMMIO               = mmio;
-                            pACM                = acm;
-                            pFormat             = acm->out_format();
-                            sFormat.srate       = wfe->nSamplesPerSec;
-                            sFormat.channels    = wfe->nChannels;
-                            sFormat.frames      = mmio->frames();
-                            sFormat.format      = fmt;
-                            nOffset             = 0;
-                            bSeekable           = false;
+                            wfe                 = acm->out_format();
+                            ssize_t fmt         = decode_sample_format(wfe);
+                            if (fmt > 0)
+                            {
+                                // All is ok
+                                pMMIO               = mmio;
+                                pACM                = acm;
+                                pFormat             = acm->out_format();
+                                sFormat.srate       = wfe->nSamplesPerSec;
+                                sFormat.channels    = wfe->nChannels;
+                                sFormat.frames      = mmio->frames();
+                                sFormat.format      = fmt;
+                                nOffset             = 0;
+                                bSeekable           = false;
 
-                            return set_error(STATUS_OK);
+                                return set_error(STATUS_OK);
+                            }
+                            else
+                                res  = STATUS_UNSUPPORTED_FORMAT;
                         }
-                        else
-                            res  = STATUS_UNSUPPORTED_FORMAT;
                     }
 
                     // Close and delete ACM

@@ -23,6 +23,7 @@ namespace lsp
     {
     #ifndef USE_LIBSNDFILE
         class MMIOWriter;
+        class ACMStream;
     #endif /* USE_LIBSNDFILE */
 
         class OutAudioFileStream: public IOutAudioStream
@@ -36,7 +37,9 @@ namespace lsp
                 SNDFILE            *hHandle;
             #else
                 MMIOWriter         *pMMIO;          // MMIO writer
+                ACMStream          *pACM;           // ACM stream
                 WAVEFORMATEX        sPcmFmt;        // PCM format descriptor
+                WAVEFORMATEX       *pFormat;        // Actual PCM stream format
                 wsize_t             nTotalFrames;   // Total frames written
             #endif
                 // Common fields
@@ -49,6 +52,8 @@ namespace lsp
                 static bool         select_sndfile_format(SF_INFO *info, audio_stream_t *fmt, size_t codec);
             #else
                 virtual ssize_t     conv_write(const void *src, size_t nframes, size_t fmt);
+                ssize_t             decode_sample_format(WAVEFORMATEX *wfe);
+                ssize_t             write_acm_convert(const void *src, size_t nframes, size_t fmt);
             #endif
 
                 virtual ssize_t     direct_write(const void *src, size_t nframes, size_t fmt);

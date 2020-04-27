@@ -7,6 +7,7 @@
 
 #include <lsp-plug.in/mm/OutAudioFileStream.h>
 #include <private/mm/MMIOWriter.h>
+#include <private/mm/ACMStream.h>
 
 #ifdef USE_LIBSNDFILE
     #if (__SIZEOF_INT__ == 4)
@@ -31,7 +32,9 @@ namespace lsp
             hHandle         = NULL;
         #else
             pMMIO           = NULL;
+            pACM            = NULL;
             nTotalFrames    = 0;
+            pFormat         = NULL;
         #endif /* USE_LIBSNDFILE */
 
             nCodec          = 0;
@@ -240,7 +243,6 @@ namespace lsp
                             WAVE_FORMAT_IEEE_FLOAT : WAVE_FORMAT_PCM;
                     break;
 
-                /* TODO: add support of ACM
                 case CFMT_ULAW:         rfmt.wFormatTag = WAVE_FORMAT_MULAW; break;
                 case CFMT_ALAW:         rfmt.wFormatTag = WAVE_FORMAT_ALAW; break;
                 case CFMT_MS_ADPCM:     rfmt.wFormatTag = WAVE_FORMAT_ADPCM; break;
@@ -251,38 +253,77 @@ namespace lsp
                 case CFMT_G721_32:      rfmt.wFormatTag = WAVE_FORMAT_G721_ADPCM; break;
                 case CFMT_G723_24:      rfmt.wFormatTag = WAVE_FORMAT_G723_ADPCM; break;
                 case CFMT_G723_40:      rfmt.wFormatTag = WAVE_FORMAT_G723_ADPCM; break;
-                */
 
                 default:
                     return set_error(STATUS_UNSUPPORTED_FORMAT);
             }
 
             // Create MMIO
+            status_t res;
             MMIOWriter *mmio = new MMIOWriter();
             if (mmio == NULL)
                 return set_error(STATUS_NO_MEM);
 
             // Open file
-            status_t res = mmio->open(path, &rfmt, fmt->frames);
-            if (res != STATUS_OK)
+            if ((res = mmio->open(path, &rfmt, fmt->frames)) == STATUS_OK)
             {
-                mmio->close();
-                delete mmio;
-                return set_error(res);
+                if ((rfmt.wFormatTag == WAVE_FORMAT_IEEE_FLOAT) ||
+                    (rfmt.wFormatTag == WAVE_FORMAT_PCM))
+                {
+                    // Update state
+                    sFormat         = *fmt;
+                    sPcmFmt         = rfmt;
+                    pFormat         = &sPcmFmt;
+                    pMMIO           = mmio;
+                    pACM            = NULL;
+                    nCodec          = codec;
+                    nOffset         = 0;
+                    nTotalFrames    = 0;
+                    bSeekable       = pMMIO->seekable();
+
+                    return set_error(STATUS_OK);
+                }
+                else
+                {
+                    // Create ACM stream
+                    ACMStream *acm      = new ACMStream();
+                    if (acm != NULL)
+                    {
+                        // Initialize ACM stream
+                        if ((res = acm->write_pcm(&rfmt)) == STATUS_OK)
+                        {
+                            pFormat             = acm->in_format();
+                            ssize_t sfmt        = decode_sample_format(pFormat);
+                            if (fmt > 0)
+                            {
+                                // All is ok
+                                pMMIO               = mmio;
+                                pACM                = acm;
+                                nCodec              = codec;
+                                sFormat.srate       = pFormat->nSamplesPerSec;
+                                sFormat.channels    = pFormat->nChannels;
+                                sFormat.frames      = fmt->frames;
+                                sFormat.format      = sfmt;
+                                nOffset             = 0;
+                                nTotalFrames        = 0;
+                                bSeekable           = false;
+
+                                return set_error(STATUS_OK);
+                            }
+                            else
+                                res  = STATUS_UNSUPPORTED_FORMAT;
+                        }
+                    }
+
+                    // Close and delete ACM
+                    acm->close();
+                    delete acm;
+                }
             }
 
-            // TODO: add ACM support
-
-            // Update state
-            sFormat         = *fmt;
-            sPcmFmt         = rfmt;
-            pMMIO           = mmio;
-            nCodec          = codec;
-            nOffset         = 0;
-            nTotalFrames    = 0;
-            bSeekable       = pMMIO->seekable();
-
-            return set_error(STATUS_OK);
+            mmio->close();
+            delete mmio;
+            return set_error(res);
         #endif /* USE_LIBSNDFILE */
         }
 
@@ -303,6 +344,13 @@ namespace lsp
         #else
             status_t res = STATUS_OK;
 
+            if (pACM != NULL)
+            {
+                pACM->close();
+                delete pACM;
+                pACM    = NULL;
+            }
+
             if (pMMIO != NULL)
             {
                 pMMIO->set_frames(nTotalFrames);
@@ -310,6 +358,8 @@ namespace lsp
                 delete pMMIO;
                 pMMIO   = NULL;
             }
+
+            pFormat = NULL;
 
             return set_error(res);
         #endif /* USE_LIBSNDFILE */
@@ -370,10 +420,12 @@ namespace lsp
             res = decode_sf_error(hHandle);
             return -((res == STATUS_OK) ? STATUS_EOF : res);
         #else
-            size_t fsize    = sPcmFmt.nBlockAlign;;
+            size_t fsize    = pFormat->nBlockAlign;
             if (pMMIO != NULL)
             {
-                // TODO: implement ACM-related stuff
+                if (pACM != NULL)
+                    return write_acm_convert(src, nframes, fmt);
+
                 ssize_t nwritten    = pMMIO->write(src, fsize * nframes);
                 return (nwritten < 0) ? nwritten : nwritten / fsize;
             }
@@ -389,6 +441,32 @@ namespace lsp
             if (size_t(nOffset) > nTotalFrames)
                 nTotalFrames    = nOffset;
             return res;
+        }
+
+        ssize_t OutAudioFileStream::decode_sample_format(WAVEFORMATEX *wfe)
+        {
+            if (wfe->wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
+                return SFMT_F32_LE;
+
+            if (wfe->wFormatTag == WAVE_FORMAT_PCM)
+            {
+                switch (wfe->wBitsPerSample)
+                {
+                    case 8: return SFMT_U8_CPU;
+                    case 16: return SFMT_S16_LE;
+                    case 24: return SFMT_S24_LE;
+                    case 32: return SFMT_S32_LE;
+                    default:
+                        break;
+                }
+            }
+
+            return -1;
+        }
+
+        ssize_t OutAudioFileStream::write_acm_convert(const void *src, size_t nframes, size_t fmt)
+        {
+            return -set_error(STATUS_NOT_IMPLEMENTED);
         }
     #endif /* USE_LIBSNDFILE */
 
@@ -425,12 +503,12 @@ namespace lsp
 
             return SFMT_F32_CPU;
         #else
-            if (sPcmFmt.wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
+            if (pFormat->wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
                 return SFMT_F32_LE;
 
-            if (sPcmFmt.wFormatTag == WAVE_FORMAT_PCM)
+            if (pFormat->wFormatTag == WAVE_FORMAT_PCM)
             {
-                switch (sPcmFmt.wBitsPerSample)
+                switch (pFormat->wBitsPerSample)
                 {
                     case 8: return SFMT_U8_CPU;
                     case 16: return SFMT_S16_LE;
@@ -458,7 +536,7 @@ namespace lsp
             set_error(STATUS_OK);
             return nOffset = offset;
         #else
-            size_t fsize    = sPcmFmt.nBlockAlign;
+            size_t fsize    = pFormat->nBlockAlign;
             if ((pMMIO != NULL) && (bSeekable))
             {
                 wssize_t res = pMMIO->seek(nframes * fsize);
