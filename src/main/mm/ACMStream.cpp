@@ -164,6 +164,7 @@ namespace lsp
                 acm_destroy_drivers(&lk.vdrv);
             }
 
+        #if 0
             for (size_t i=0, n=res->size(); i<n; ++i)
             {
             #ifdef LSP_TRACE
@@ -213,6 +214,7 @@ namespace lsp
                 lsp_trace("\n%s\n", info.get_native());
             #endif
             }
+        #endif
 
             return (result == 0) ? STATUS_OK : STATUS_UNKNOWN_ERR;
         }
