@@ -264,11 +264,11 @@ namespace lsp
             if (mmio == NULL)
                 return set_error(STATUS_NO_MEM);
 
-            // Open file
-            if ((res = mmio->open(path, &rfmt, fmt->frames)) == STATUS_OK)
+            if ((rfmt.wFormatTag == WAVE_FORMAT_IEEE_FLOAT) ||
+                (rfmt.wFormatTag == WAVE_FORMAT_PCM))
             {
-                if ((rfmt.wFormatTag == WAVE_FORMAT_IEEE_FLOAT) ||
-                    (rfmt.wFormatTag == WAVE_FORMAT_PCM))
+                // Just open MMIO stream with specified format
+                if ((res = mmio->open(path, &rfmt, fmt->frames)) == STATUS_OK)
                 {
                     // Update state
                     sFormat         = *fmt;
@@ -283,42 +283,42 @@ namespace lsp
 
                     return set_error(STATUS_OK);
                 }
-                else
+            }
+            else
+            {
+                // Create ACM stream first and initialize it
+                ACMStream *acm      = new ACMStream();
+                if ((acm != NULL) && ((res = acm->write_pcm(&rfmt)) == STATUS_OK))
                 {
-                    // Create ACM stream
-                    ACMStream *acm      = new ACMStream();
-                    if (acm != NULL)
+                    pFormat             = acm->in_format();
+                    ssize_t sfmt        = decode_sample_format(pFormat);
+                    if (fmt > 0)
                     {
-                        // Initialize ACM stream
-                        if ((res = acm->write_pcm(&rfmt)) == STATUS_OK)
+                        // Now open MMIO with specified output format
+                        if ((res = mmio->open(path, acm->out_format(), fmt->frames)) == STATUS_OK)
                         {
-                            pFormat             = acm->in_format();
-                            ssize_t sfmt        = decode_sample_format(pFormat);
-                            if (fmt > 0)
-                            {
-                                // All is ok
-                                pMMIO               = mmio;
-                                pACM                = acm;
-                                nCodec              = codec;
-                                sFormat.srate       = pFormat->nSamplesPerSec;
-                                sFormat.channels    = pFormat->nChannels;
-                                sFormat.frames      = fmt->frames;
-                                sFormat.format      = sfmt;
-                                nOffset             = 0;
-                                nTotalFrames        = 0;
-                                bSeekable           = false;
+                            // All is OK, update state
+                            pMMIO               = mmio;
+                            pACM                = acm;
+                            nCodec              = codec;
+                            sFormat.srate       = pFormat->nSamplesPerSec;
+                            sFormat.channels    = pFormat->nChannels;
+                            sFormat.frames      = fmt->frames;
+                            sFormat.format      = sfmt;
+                            nOffset             = 0;
+                            nTotalFrames        = 0;
+                            bSeekable           = false;
 
-                                return set_error(STATUS_OK);
-                            }
-                            else
-                                res  = STATUS_UNSUPPORTED_FORMAT;
+                            return set_error(STATUS_OK);
                         }
                     }
-
-                    // Close and delete ACM
-                    acm->close();
-                    delete acm;
+                    else
+                        res  = STATUS_UNSUPPORTED_FORMAT;
                 }
+
+                // Close and delete ACM
+                acm->close();
+                delete acm;
             }
 
             mmio->close();
@@ -344,13 +344,16 @@ namespace lsp
         #else
             status_t res = STATUS_OK;
 
+            // Flush all previously encoded data and close ACM
             if (pACM != NULL)
             {
+                flush_internal(true);
                 pACM->close();
                 delete pACM;
                 pACM    = NULL;
             }
 
+            // Close MMIO
             if (pMMIO != NULL)
             {
                 pMMIO->set_frames(nTotalFrames);
@@ -374,6 +377,11 @@ namespace lsp
             sf_write_sync(hHandle);
             return set_error(STATUS_OK);
         #else
+
+            status_t res = flush_internal(false);
+            if (res != STATUS_OK)
+                return set_error(res);
+
             return set_error(pMMIO->flush());
         #endif /* USE_LIBSNDFILE */
         }
@@ -424,7 +432,7 @@ namespace lsp
             if (pMMIO != NULL)
             {
                 if (pACM != NULL)
-                    return write_acm_convert(src, nframes, fmt);
+                    return write_acm_convert(src, nframes);
 
                 ssize_t nwritten    = pMMIO->write(src, fsize * nframes);
                 return (nwritten < 0) ? nwritten : nwritten / fsize;
@@ -464,9 +472,72 @@ namespace lsp
             return -1;
         }
 
-        ssize_t OutAudioFileStream::write_acm_convert(const void *src, size_t nframes, size_t fmt)
+        ssize_t OutAudioFileStream::write_acm_convert(const void *src, size_t nframes)
         {
-            return -set_error(STATUS_NOT_IMPLEMENTED);
+            size_t nwritten     = 0;
+            void *dptr;
+            const uint8_t *sptr = static_cast<const uint8_t *>(src);
+            size_t fsize        = sformat_size_of(sFormat.format) * sFormat.channels;
+            nframes            *= fsize;
+
+            while (nwritten < nframes)
+            {
+                // Perform push if possible
+                ssize_t count       = pACM->push(&dptr);
+                if (count > 0) // We're still able to push data
+                {
+                    // Copy data to buffer
+                    ssize_t can_push    = nframes - nwritten;
+                    if (count > can_push)
+                        count   = can_push;
+                    ::memcpy(dptr, sptr, count);
+
+                    // Update pointers
+                    sptr       += count;
+                    nwritten   += count;
+                    pACM->commit(count);
+                    continue;
+                }
+                else if (count < 0) // Error occurred?
+                {
+                    if (nwritten > 0)
+                        break;
+                    return -set_error(STATUS_UNKNOWN_ERR);
+                }
+
+                // Need to perform flush
+                status_t res    = flush_internal(false);
+                if (res != STATUS_OK)
+                {
+                    if (nwritten > 0)
+                        break;
+                    return -set_error(res);
+                }
+            }
+
+            return nwritten / fsize;
+        }
+
+        status_t OutAudioFileStream::flush_internal(bool eof)
+        {
+            void *dptr;
+
+            while (true)
+            {
+                // Perform pull of portion of buffer
+                ssize_t count       = pACM->pull(&dptr, IO_BUF_SIZE, eof);
+                if (count < 0)
+                    return -count;
+                else if (count == 0)
+                    break;
+
+                // Write pulled data to underlying storage
+                count               = pMMIO->write(dptr, count);
+                if (count < 0)
+                    return count;
+            }
+
+            return STATUS_OK;
         }
     #endif /* USE_LIBSNDFILE */
 

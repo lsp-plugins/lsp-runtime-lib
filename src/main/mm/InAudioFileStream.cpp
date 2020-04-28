@@ -126,6 +126,7 @@ namespace lsp
         ssize_t InAudioFileStream::read_acm_convert(void *dst, size_t nframes, size_t fmt)
         {
             size_t nread    = 0;
+            void *sptr;
             uint8_t *dptr   = static_cast<uint8_t *>(dst);
             size_t fsize    = sformat_size_of(sFormat.format) * sFormat.channels;
             nframes        *= fsize;
@@ -135,40 +136,47 @@ namespace lsp
             {
                 // Perform pull
                 size_t can_pull     = nframes - nread;
-                ssize_t pulled      = pACM->pull(dptr, can_pull, eof);
-                if (pulled > 0)
+                ssize_t count       = pACM->pull(&sptr, can_pull, eof);
+                if (count > 0)
                 {
+                    // Copy data to dptr
+                    ::memcpy(dptr, sptr, count);
+
                     // Update pointers and repeat pull
-                    dptr               += pulled;
-                    nread              += pulled;
+                    dptr               += count;
+                    nread              += count;
                     continue;
                 }
-                else if (pulled < 0)
+                else if (count < 0)
                 {
                     if (nread > 0)
                         break;// Analyze result
-                    return pulled;
+                    set_error(-count);
+                    return count;
                 }
 
                 // Perform push if possible
-                void *sptr;
-                size_t can_push     = pACM->push(&sptr);
-                if (can_push > 0)
+                count               = pACM->push(&sptr);
+                if (count < 0)
                 {
-                    ssize_t pushed      = pMMIO->read(sptr, can_push);
-                    if (pushed >= 0)
-                        pACM->commit(pushed);
-                    else if (pushed == -STATUS_EOF)
+                    if (nread > 0)
+                        break;
+                    return -set_error(STATUS_UNKNOWN_ERR);
+                }
+
+                // Read data into buffer block and commit new position
+                count               = pMMIO->read(sptr, count);
+                if (count < 0)
+                {
+                    if (count == -STATUS_EOF)
                         eof = true;
                     else if (nread > 0)
                         break;
-                    else
-                        return pushed;
+                    set_error(-count);
+                    return count;
                 }
-                else if (nread > 0)
-                    break;
-                else
-                    return -STATUS_UNKNOWN_ERR;
+
+                pACM->commit(count);
             }
 
             return nread / fsize;

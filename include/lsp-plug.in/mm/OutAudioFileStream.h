@@ -53,7 +53,8 @@ namespace lsp
             #else
                 virtual ssize_t     conv_write(const void *src, size_t nframes, size_t fmt);
                 ssize_t             decode_sample_format(WAVEFORMATEX *wfe);
-                ssize_t             write_acm_convert(const void *src, size_t nframes, size_t fmt);
+                ssize_t             write_acm_convert(const void *src, size_t nframes);
+                status_t            flush_internal(bool eof);
             #endif
 
                 virtual ssize_t     direct_write(const void *src, size_t nframes, size_t fmt);

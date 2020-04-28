@@ -745,12 +745,7 @@ namespace lsp
             return avail;
         }
 
-        void ACMStream::commit(size_t bytes)
-        {
-            pHeader->cbSrcLength   += bytes;
-        }
-
-        ssize_t ACMStream::pull(void *buf, size_t size, bool force)
+        ssize_t ACMStream::pull(void **buf, size_t size, bool force)
         {
             if (hStream == NULL)
                 return -STATUS_CLOSED;
@@ -786,7 +781,8 @@ namespace lsp
             // Copy data to the output buffer
             if (size > avail)
                 size = avail;
-            ::memcpy(buf, &pHeader->pbDst[pHeader->dwDstUser], size);
+            if (buf != NULL)
+                *buf    = &pHeader->pbDst[pHeader->dwDstUser];
             pHeader->dwDstUser         += size;
             return size;
         }

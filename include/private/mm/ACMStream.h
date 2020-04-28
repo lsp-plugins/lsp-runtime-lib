@@ -137,16 +137,16 @@ namespace lsp
                  * Commit the push
                  * @param bytes number of bytes read into push buffer returned by push()
                  */
-                void commit(size_t bytes);
+                inline void commit(size_t bytes)    {   pHeader->cbSrcLength   += bytes;    };
 
                 /**
                  * Perform conversion and fetch data into buffer
-                 * @param buf pointer to buffer to store data
-                 * @param size number of bytes available in the buffer
+                 * @param buf pointer to buffer to perform read
+                 * @param size maximum number of bytes to pull
                  * @param force retrieve last (final) portion of data
                  * @return number of bytes stored into buffer or negative error code
                  */
-                ssize_t pull(void *buf, size_t size, bool force);
+                ssize_t pull(void **buf, size_t size, bool force);
 
                 /**
                  * Get number of bytes available for pulling
