@@ -45,7 +45,7 @@ namespace lsp
                     tmp.str         = NULL;
                     if (src->str != NULL)
                     {
-                        if ((tmp.str == ::strdup(src->str)) == NULL)
+                        if ((tmp.str = ::strdup(src->str)) == NULL)
                             return false;
                     }
                     break;
@@ -56,12 +56,12 @@ namespace lsp
 
                     if (src->blob.ctype != NULL)
                     {
-                        if ((tmp.blob.ctype == ::strdup(src->blob.ctype)) == NULL)
+                        if ((tmp.blob.ctype = ::strdup(src->blob.ctype)) == NULL)
                             return false;
                     }
                     if (src->blob.data != NULL)
                     {
-                        if ((tmp.blob.data == ::strdup(src->blob.data)) == NULL)
+                        if ((tmp.blob.data = ::strdup(src->blob.data)) == NULL)
                             return false;
                     }
                     break;
@@ -79,27 +79,71 @@ namespace lsp
         {
             name.swap(&dst->name);
             comment.swap(&dst->comment);
-            lsp::swap(flags, dst->flags);
 
-            switch (flags & SF_TYPE_MASK)
+            param_t tmp;
+
+            // Backup dst value to tmp
+            switch (dst->flags & SF_TYPE_MASK)
             {
                 case SF_TYPE_NONE: break;
-                case SF_TYPE_I32: lsp::swap(i32, dst->i32); break;
-                case SF_TYPE_U32: lsp::swap(u32, dst->u32); break;
-                case SF_TYPE_I64: lsp::swap(i64, dst->i64); break;
-                case SF_TYPE_U64: lsp::swap(u64, dst->u64); break;
-                case SF_TYPE_F32: lsp::swap(f32, dst->f32); break;
-                case SF_TYPE_F64: lsp::swap(f64, dst->f64); break;
-                case SF_TYPE_STR: lsp::swap(str, dst->str); break;
+                case SF_TYPE_I32: tmp.i32 = dst->i32; break;
+                case SF_TYPE_U32: tmp.u32 = dst->u32; break;
+                case SF_TYPE_I64: tmp.i64 = dst->i64; break;
+                case SF_TYPE_U64: tmp.u64 = dst->u64; break;
+                case SF_TYPE_F32: tmp.f32 = dst->f32; break;
+                case SF_TYPE_F64: tmp.f64 = dst->f64; break;
+                case SF_TYPE_STR: tmp.str = dst->str; break;
                 case SF_TYPE_BLOB:
-                    lsp::swap(blob.length, dst->blob.length);
-                    lsp::swap(blob.ctype, dst->blob.ctype);
-                    lsp::swap(blob.data, dst->blob.data);
-                    break;
+                    tmp.blob.length = dst->blob.length;
+                    tmp.blob.ctype  = dst->blob.ctype;
+                    tmp.blob.data   = dst->blob.data;
                     break;
                 default:
                     break;
             }
+
+            // Copy self value to dst
+            switch (flags & SF_TYPE_MASK)
+            {
+                case SF_TYPE_NONE: break;
+                case SF_TYPE_I32: dst->i32 = i32; break;
+                case SF_TYPE_U32: dst->u32 = u32; break;
+                case SF_TYPE_I64: dst->i64 = i64; break;
+                case SF_TYPE_U64: dst->u64 = u64; break;
+                case SF_TYPE_F32: dst->f32 = f32; break;
+                case SF_TYPE_F64: dst->f64 = f64; break;
+                case SF_TYPE_STR: dst->str = str; break;
+                case SF_TYPE_BLOB:
+                    dst->blob.length= blob.length;
+                    dst->blob.ctype = blob.ctype;
+                    dst->blob.data  = blob.data;
+                    break;
+                default:
+                    break;
+            }
+
+            // Copy temp value to self
+            switch (dst->flags & SF_TYPE_MASK)
+            {
+                case SF_TYPE_NONE: break;
+                case SF_TYPE_I32: i32 = tmp.i32; break;
+                case SF_TYPE_U32: u32 = tmp.u32; break;
+                case SF_TYPE_I64: i64 = tmp.i64; break;
+                case SF_TYPE_U64: u64 = tmp.u64; break;
+                case SF_TYPE_F32: f32 = tmp.f32; break;
+                case SF_TYPE_F64: f64 = tmp.f64; break;
+                case SF_TYPE_STR: str = tmp.str; break;
+                case SF_TYPE_BLOB:
+                    blob.length     = tmp.blob.length;
+                    blob.ctype      = tmp.blob.ctype;
+                    blob.data       = tmp.blob.data;
+                    break;
+                default:
+                    break;
+            }
+
+            // Swap flags last
+            lsp::swap(flags, dst->flags);
         }
 
         void param_t::clear()

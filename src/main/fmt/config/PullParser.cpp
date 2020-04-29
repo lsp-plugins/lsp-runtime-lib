@@ -225,6 +225,9 @@ namespace lsp
 
         status_t PullParser::next(param_t *param)
         {
+            if (pIn == NULL)
+                return STATUS_CLOSED;
+
             status_t result = STATUS_OK;
 
             while (true)
@@ -237,17 +240,15 @@ namespace lsp
                 // Read line from file
                 result      = pIn->read_line(&sLine, true);
                 if (result != STATUS_OK)
-                {
-                    if (result == STATUS_EOF)
-                        result = STATUS_OK;
                     break;
-                }
 
                 // Parse the line
                 result = parse_line();
                 if (result == STATUS_OK)
                 {
                     result  = commit_param();
+                    if ((result == STATUS_OK) && (param != NULL))
+                        result = (param->copy(&sParam)) ? STATUS_OK : STATUS_NO_MEM;
                     break;
                 }
                 else if (result != STATUS_SKIP)
@@ -334,8 +335,7 @@ namespace lsp
 
         status_t PullParser::read_type(size_t &off)
         {
-            size_t len      = sLine.length();
-            // Skip spaces
+            // Check type prefix
             for (const type_t *p = all_types; p->prefix != NULL; ++p)
             {
                 if (sLine.contains_at_ascii(off, p->prefix))
@@ -355,7 +355,7 @@ namespace lsp
             ssize_t trim    = -1;
 
             // Check that value is quoted
-            if (sLine.first() == '"')
+            if (sLine.char_at(off) == '"')
             {
                 nFlags         |= SF_QUOTED;
                 ++off;
@@ -384,26 +384,38 @@ namespace lsp
                             case 't': escape = '\t'; break;
                             case '\\': escape = '\\'; break;
                             case '\"': escape = '\"'; break;
+                            case '#': escape = '#'; break;
                             default:
                                 escape      = '\\';
                                 --off;
                                 break;
                         }
-                        if (!sLine.append(escape))
+                        if (!sValue.append(escape))
                             return STATUS_NO_MEM;
                         break;
                     }
 
-                    // Spaces
-                    case ' ':
-                    case '\t':
+                    // Comment
+                    case '#':
                         if (nFlags & SF_QUOTED)
                         {
                             if (!sValue.append(ch))
                                 return STATUS_NO_MEM;
+                            trim    = -1;
                         }
-                        else if (trim < 0)
+                        else
+                            off = len;  // Move to end of line
+
+                        break;
+
+                    // Spaces
+                    case ' ':
+                    case '\t':
+                        if ((!(nFlags & SF_QUOTED)) && (trim < 0))
                             trim    = sValue.length();
+
+                        if (!sValue.append(ch))
+                            return STATUS_NO_MEM;
                         break;
 
                     // Quotes
@@ -442,7 +454,7 @@ namespace lsp
             nFlags          = 0;
 
             // Empty line?
-            size_t off=0, len = sLine.length();
+            size_t off=0;
             if (skip_spaces(off))
                 return STATUS_SKIP;
 
@@ -451,10 +463,10 @@ namespace lsp
             if (res != STATUS_OK) // Error while parsing line
                 return res;
             if (skip_spaces(off))
-                return (sKey.is_empty()) ? STATUS_SKIP : STATUS_OK;
+                return STATUS_BAD_FORMAT;
 
             // Analyze character
-            lsp_wchar_t ch = sLine.at(off);
+            lsp_wchar_t ch = sLine.at(off++);
             if ((sKey.is_empty()) || (ch != '='))
                 return STATUS_BAD_FORMAT;
 
@@ -480,6 +492,11 @@ namespace lsp
         {
             param_t tmp;
             status_t res    = STATUS_OK;
+
+            // Copy parameter name
+            if (!tmp.name.set(&sKey))
+                return STATUS_NO_MEM;
+            tmp.comment.clear();
 
             // If type is explicitly set
             if (nFlags & SF_TYPE_SET)
@@ -511,28 +528,32 @@ namespace lsp
             }
 
             // Type is not explicitly set
-            if (sValue.index_of('.') < 0)
+            if (!(nFlags & SF_QUOTED))
             {
-                // Try to parse as integer
-                if ((res = parse_int32(&sValue, &tmp.i32)) == STATUS_OK)
+                if (sValue.index_of('.') < 0)
                 {
-                    tmp.flags     = nFlags | SF_TYPE_I32;
+                    // Try to parse as integer
+                    if ((res = parse_int32(&sValue, &tmp.i32)) == STATUS_OK)
+                    {
+                        tmp.flags     = nFlags | SF_TYPE_I32;
+                        sParam.swap(&tmp);
+                        return STATUS_OK;
+                    }
+                }
+
+                // Try to parse as float
+                if ((res = parse_float(&sValue, &tmp.f32, &nFlags)) == STATUS_OK)
+                {
+                    tmp.flags     = nFlags | SF_TYPE_F32;
                     sParam.swap(&tmp);
                     return STATUS_OK;
                 }
             }
 
-            // Try to parse as float
-            if ((res = parse_float(&sValue, &tmp.f32, &nFlags)) == STATUS_OK)
-            {
-                tmp.flags     = nFlags | SF_TYPE_F32;
-                sParam.swap(&tmp);
-                return STATUS_OK;
-            }
-
             // Return as a string
-            if ((sParam.str = sValue.clone_utf8()) == NULL)
+            if ((tmp.str = sValue.clone_utf8()) == NULL)
                 res     = STATUS_NO_MEM;
+            tmp.flags   = nFlags | SF_TYPE_STR;
 
             sParam.swap(&tmp);
             return STATUS_OK;

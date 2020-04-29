@@ -164,9 +164,13 @@ namespace lsp
             if (!s->set(pString, nOffset, idx))
                 return set_error(STATUS_NO_MEM);
 
-            // Trim all '\r' symbols
+            // Trim '\r' symbol at the end
             if (s->last() == '\r')
                 s->remove_last();
+
+            // Trim '\r' symbol if present
+            if (pString->char_at(new_pos) == '\r')
+                ++new_pos;
 
             nOffset     = new_pos;
 
