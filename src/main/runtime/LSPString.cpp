@@ -1423,6 +1423,12 @@ namespace lsp
         return (tmp.set_utf8(src)) ? compare_to(&tmp) : 0;
     }
 
+    int LSPString::compare_to_utf16(const lsp_utf16_t *src) const
+    {
+        LSPString tmp;
+        return (tmp.set_utf16(src)) ? compare_to(&tmp) : 0;
+    }
+
     int LSPString::compare_to_ascii_nocase(const char *src) const
     {
         size_t i=0;
@@ -1466,6 +1472,12 @@ namespace lsp
     {
         LSPString tmp;
         return (tmp.set_utf8(src)) ? compare_to_nocase(&tmp) : 0;
+    }
+
+    int LSPString::compare_to_utf16_nocase(const lsp_utf16_t *src) const
+    {
+        LSPString tmp;
+        return (tmp.set_utf16(src)) ? compare_to_nocase(&tmp) : 0;
     }
 
     size_t LSPString::tolower()
@@ -1569,6 +1581,59 @@ namespace lsp
     bool LSPString::equals_nocase(const lsp_wchar_t *src) const
     {
         return equals_nocase(src, xlen(src));
+    }
+
+    bool LSPString::contains_at(ssize_t index, const lsp_wchar_t *src) const
+    {
+        const lsp_wchar_t *p = &pData[index];
+        while (*src != '\0')
+        {
+            if ((++index) > nLength)
+                return false;
+            if (*(p++) != *(src++))
+                return false;
+        }
+
+        return true;
+    }
+
+    bool LSPString::contains_at(ssize_t index, const lsp_wchar_t *src, size_t len) const
+    {
+        if (nLength < (index + len))
+            return false;
+
+        const lsp_wchar_t *p = &pData[index];
+        for (size_t i=0; i<len; ++i)
+            if (p[i] != src[i])
+                return false;
+
+        return true;
+    }
+
+    bool LSPString::contains_at_ascii(ssize_t index, const char *src) const
+    {
+        const lsp_wchar_t *p = &pData[index];
+        while (*src != '\0')
+        {
+            if ((++index) > nLength)
+                return false;
+            if (lsp_wchar_t(*(p++)) != *(src++))
+                return false;
+        }
+
+        return true;
+    }
+
+    bool LSPString::contains_at_utf8(ssize_t index, const char *src) const
+    {
+        LSPString tmp;
+        return (tmp.set_utf8(src)) ? contains_at(index, &tmp) : false;
+    }
+
+    bool LSPString::contains_at_utf16(ssize_t index, const lsp_utf16_t *src) const
+    {
+        LSPString tmp;
+        return (tmp.set_utf16(src)) ? contains_at(index, &tmp) : false;
     }
 
     bool LSPString::set_utf8(const char *s, size_t n)

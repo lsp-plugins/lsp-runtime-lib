@@ -436,12 +436,14 @@ namespace lsp
             inline int compare_to(const LSPString *src) const { return compare_to(src->pData, src->nLength); };
             int compare_to_ascii(const char *src) const;
             int compare_to_utf8(const char *src) const;
+            int compare_to_utf16(const lsp_utf16_t *src) const;
 
             int compare_to_nocase(const lsp_wchar_t *src) const;
             int compare_to_nocase(const lsp_wchar_t *src, size_t n) const;
             inline int compare_to_nocase(const LSPString *src) const { return compare_to_nocase(src->pData, src->nLength); };
             int compare_to_ascii_nocase(const char *src) const;
             int compare_to_utf8_nocase(const char *src) const;
+            int compare_to_utf16_nocase(const lsp_utf16_t *src) const;
 
             size_t tolower();
             size_t tolower(ssize_t first);
@@ -469,6 +471,17 @@ namespace lsp
 
             inline bool equals_utf8(const char *src) const { return compare_to_utf8(src) == 0; };
             inline bool equals_utf8_nocase(const char *src) const { return compare_to_utf8_nocase(src) == 0; };
+
+            inline bool equals_utf16(const lsp_utf16_t *src) const { return compare_to_utf16(src) == 0; };
+            inline bool equals_utf16_nocase(const lsp_utf16_t *src) const { return compare_to_utf16_nocase(src) == 0; };
+
+
+            bool contains_at(ssize_t index, const lsp_wchar_t *src) const;
+            bool contains_at(ssize_t index, const lsp_wchar_t *src, size_t len) const;
+            inline bool contains_at(ssize_t index, const LSPString *src) const  { return contains_at(index, src->pData, src->nLength); };
+            bool contains_at_ascii(ssize_t index, const char *src) const;
+            bool contains_at_utf8(ssize_t index, const char *src) const;
+            bool contains_at_utf16(ssize_t index, const lsp_utf16_t *src) const;
 
             /** Calculate number of character occurences
              *

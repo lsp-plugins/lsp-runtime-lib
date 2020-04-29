@@ -19,7 +19,7 @@ namespace lsp
         {
             SF_NONE         = 0,        //!< SF_NONE no flags
 
-            SF_TYPE_NATIVE  = 0x00,     //!< SF_TYPE_NATIVE Parameter has no special type specifier
+            SF_TYPE_NONE    = 0,
             SF_TYPE_I32     = 0x01,     //!< SF_TYPE_I32 Parameter is of int32 type
             SF_TYPE_U32     = 0x02,     //!< SF_TYPE_U32 Parameter is of uint32 type
             SF_TYPE_I64     = 0x03,     //!< SF_TYPE_I64 Parameter is of int64 type
@@ -37,9 +37,10 @@ namespace lsp
             SF_PREC_SCI     = 0x30,     //!< SF_PREC_SCI Scientific presentation
             SF_PREC_MASK    = 0x30,     //!< SF_PREC_MASK Precision mask for floating-point values
 
-            SF_QUOTED       = 1 << 8,   //!< Parameter is quoted
-            SF_COMMENT      = 1 << 9,   //!< Parameter has comment
-            SF_TYPE         = 1 << 10   //!< Explicitly specify type
+            SF_QUOTED       = 1 << 8,   //!< SF_QUOTED Parameter is quoted
+            SF_COMMENT      = 1 << 9,   //!< SF_COMMENT Parameter has comment
+            SF_TYPE_SET     = 1 << 10,  //!< SF_TYPE_SET Explicitly specify type
+            SF_DECIBELS     = 1 << 11,  //!< SF_DECIBELS Serialize value as decibels
         };
 
         /**
@@ -57,25 +58,40 @@ namespace lsp
          */
         typedef struct param_t
         {
-            LSPString   name;           // Name of parameter
-            LSPString   comment;        // Comment
-            size_t      flags;          // Serialization flags
+            private:
+                param_t &operator = (const param_t &);
 
-            union
-            {
-                int32_t         i32;
-                uint32_t        u32;
-                int64_t         i64;
-                uint64_t        u64;
-                float           f32;
-                double          f64;
-                char           *str;    // UTF-8 string value (for string)
-                blob_t          blob;   // BLOB data
-            };
+            public:
+                LSPString   name;           // Name of parameter
+                LSPString   comment;        // Comment
+                size_t      flags;          // Serialization flags
+
+                union
+                {
+                    int32_t         i32;
+                    uint32_t        u32;
+                    int64_t         i64;
+                    uint64_t        u64;
+                    float           f32;
+                    double          f64;
+                    char           *str;    // UTF-8 string value (for string)
+                    blob_t          blob;   // BLOB data
+                };
+
+            public:
+                explicit param_t();
+                ~param_t();
+
+            public:
+                bool            copy(const param_t *src);
+                inline bool     copy(const param_t &src)    { return copy(&src); };
+
+                void            swap(param_t *dst);
+                inline void     swap(param_t &dst)          { swap(&dst); };
+
+                void            clear();
         } param_t;
     }
 }
-
-
 
 #endif /* LSP_PLUG_IN_FMT_CONFIG_TYPES_H_ */
