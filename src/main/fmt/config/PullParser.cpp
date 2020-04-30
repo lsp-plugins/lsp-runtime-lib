@@ -300,34 +300,29 @@ namespace lsp
             {
                 lsp_wchar_t ch = sLine.at(off++);
 
-                if ((ch == ' ') || (ch == '\t'))
-                    return (sKey.is_empty()) ? STATUS_BAD_FORMAT : STATUS_OK;
-                else if (ch == '=') // Assignment occurred?
-                {
-                    if (sKey.is_empty())
-                        return STATUS_BAD_FORMAT;
-                    --off;
-                    break;
-                }
-                else if (ch == '#')
-                {
-                    --off;
-                    break;
-                }
-                else if (((ch >= 'a') && (ch <= 'z')) ||
-                        ((ch >= 'A') && (ch <= 'Z')) ||
-                        ((ch >= '0') && (ch <= '9')) ||
-                        (ch == '_') || (ch == '/'))
+                if (((ch >= 'a') && (ch <= 'z')) ||
+                    ((ch >= 'A') && (ch <= 'Z')) ||
+                    (ch == '_') || (ch == '/'))
                 {
                     if (!sKey.append(ch))
                         return STATUS_NO_MEM;
                 }
+                else if ((ch >= '0') && (ch <= '9'))
+                {
+                    if (sKey.is_empty())
+                        return STATUS_BAD_FORMAT;
+                    if (!sKey.append(ch))
+                        return STATUS_NO_MEM;
+                }
                 else
-                    return STATUS_BAD_FORMAT;
+                {
+                    --off;
+                    break;
+                }
             }
 
             // Validate that key should start with '/' or not contain any '/' character
-            if (sKey.index_of('/') > 0)
+            if ((sKey.is_empty()) || (sKey.index_of('/') > 0))
                 return STATUS_BAD_FORMAT;
 
             return STATUS_OK;
@@ -472,14 +467,14 @@ namespace lsp
 
             // Fetch the value type
             if (skip_spaces(off))
-                return STATUS_BAD_FORMAT;
+                return STATUS_OK;
             res             = read_type(off);
             if (res != STATUS_OK)
                 return res;
 
             // Fetch the value's value
             if (skip_spaces(off))
-                return STATUS_BAD_FORMAT;
+                return STATUS_OK;
             res             = read_value(off);
             if (res != STATUS_OK)
                 return res;
@@ -564,6 +559,8 @@ namespace lsp
             const char *s = str->get_utf8();
             if (s == NULL)
                 return STATUS_NO_MEM;
+            else if (*s == '\0')
+                return STATUS_BAD_FORMAT;
 
             errno = 0;
             char *end = NULL;
@@ -581,6 +578,8 @@ namespace lsp
             const char *s = str->get_utf8();
             if (s == NULL)
                 return STATUS_NO_MEM;
+            else if (*s == '\0')
+                return STATUS_BAD_FORMAT;
 
             errno = 0;
             char *end = NULL;
@@ -598,6 +597,8 @@ namespace lsp
             const char *s = str->get_utf8();
             if (s == NULL)
                 return STATUS_NO_MEM;
+            else if (*s == '\0')
+                return STATUS_BAD_FORMAT;
 
             errno = 0;
             char *end = NULL;
@@ -619,6 +620,8 @@ namespace lsp
             const char *s = str->get_utf8();
             if (s == NULL)
                 return STATUS_NO_MEM;
+            else if (*s == '\0')
+                return STATUS_BAD_FORMAT;
 
             errno = 0;
             char *end = NULL;
@@ -640,6 +643,8 @@ namespace lsp
             const char *s = str->get_utf8();
             if (s == NULL)
                 return STATUS_NO_MEM;
+            else if (*s == '\0')
+                return STATUS_BAD_FORMAT;
 
             // Save and update locale
             char *saved = ::setlocale(LC_NUMERIC, NULL);
@@ -696,6 +701,8 @@ namespace lsp
             const char *s = str->get_utf8();
             if (s == NULL)
                 return STATUS_NO_MEM;
+            else if (*s == '\0')
+                return STATUS_BAD_FORMAT;
 
             // Save and update locale
             char *saved = ::setlocale(LC_NUMERIC, NULL);

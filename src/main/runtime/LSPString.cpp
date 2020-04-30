@@ -42,8 +42,6 @@
 
 namespace lsp
 {
-    static lsp_utf16_t UTF16_NULL = 0;
-
     static bool is_space(lsp_wchar_t c)
     {
         switch (c)
@@ -1588,7 +1586,7 @@ namespace lsp
         const lsp_wchar_t *p = &pData[index];
         while (*src != '\0')
         {
-            if ((++index) > nLength)
+            if (size_t(++index) > nLength)
                 return false;
             if (*(p++) != *(src++))
                 return false;
@@ -1615,9 +1613,9 @@ namespace lsp
         const lsp_wchar_t *p = &pData[index];
         while (*src != '\0')
         {
-            if ((++index) > nLength)
+            if (size_t(++index) > nLength)
                 return false;
-            if (lsp_wchar_t(*(p++)) != *(src++))
+            if (lsp_wchar_t(*(p++)) != uint8_t(*(src++)))
                 return false;
         }
 
@@ -1810,8 +1808,8 @@ namespace lsp
     {
         XSAFE_TRANS(first, nLength, NULL);
         XSAFE_TRANS(last, nLength, NULL);
-        if (first >= last)
-            return (last == first) ? "" : NULL;
+        if (first > last)
+            return NULL;
 
         if (pTemp != NULL)
             pTemp->nOffset      = 0;
@@ -1843,8 +1841,8 @@ namespace lsp
     {
         XSAFE_TRANS(first, nLength, NULL);
         XSAFE_TRANS(last, nLength, NULL);
-        if (first >= last)
-            return (last == first) ? &UTF16_NULL : NULL;
+        if (first > last)
+            return NULL;
 
         if (pTemp != NULL)
             pTemp->nOffset      = 0;
@@ -1876,8 +1874,8 @@ namespace lsp
     {
         XSAFE_TRANS(first, nLength, NULL);
         XSAFE_TRANS(last, nLength, NULL);
-        if (first >= last)
-            return (last == first) ? "" : NULL;
+        if (first > last)
+            return NULL;
 
         if (!resize_temp(last - first + 1))
             return NULL;
@@ -1903,8 +1901,8 @@ namespace lsp
         XSAFE_TRANS(first, nLength, NULL);
         XSAFE_TRANS(last, nLength, NULL);
         ssize_t length = last - first;
-        if (length <= 0)
-            return (length == 0) ? "" : NULL;
+        if (length < 0)
+            return NULL;
 
         // Get codepage
         ssize_t cp = codepage_from_name(charset);
@@ -1952,8 +1950,8 @@ namespace lsp
     {
         XSAFE_TRANS(first, nLength, NULL);
         XSAFE_TRANS(last, nLength, NULL);
-        if (first >= last)
-            return (last == first) ? "" : NULL;
+        if (first > last)
+            return NULL;
 
         // Open conversion
         iconv_t cd = init_iconv_from_wchar_t(charset);
@@ -2024,6 +2022,9 @@ namespace lsp
     char *LSPString::clone_utf8(size_t *bytes, ssize_t first, ssize_t last) const
     {
         const char *utf8 = get_utf8(first, last);
+        if (utf8 == NULL)
+            return NULL;
+
         size_t offset = (pTemp != NULL) ? pTemp->nOffset : 0;
         char *ptr = (utf8 != NULL) ? reinterpret_cast<char *>(lsp::memdup(utf8, offset)) : NULL;
         if (bytes != NULL)
@@ -2034,6 +2035,9 @@ namespace lsp
     lsp_utf16_t *LSPString::clone_utf16(size_t *bytes, ssize_t first, ssize_t last) const
     {
         const lsp_utf16_t *utf16 = get_utf16(first, last);
+        if (utf16 == NULL)
+            return NULL;
+
         size_t offset = (pTemp != NULL) ? pTemp->nOffset : 0;
         lsp_utf16_t *ptr = (utf16 != NULL) ? reinterpret_cast<lsp_utf16_t *>(lsp::memdup(utf16, offset)) : NULL;
         if (bytes != NULL)
@@ -2044,6 +2048,9 @@ namespace lsp
     char *LSPString::clone_ascii(size_t *bytes, ssize_t first, ssize_t last) const
     {
         const char *ascii = get_ascii(first, last);
+        if (ascii == NULL)
+            return NULL;
+
         size_t offset = (pTemp != NULL) ? pTemp->nOffset : 0;
         char *ptr = (ascii != NULL) ? reinterpret_cast<char *>(lsp::memdup(ascii, offset)) : NULL;
         if (bytes != NULL)
@@ -2054,6 +2061,9 @@ namespace lsp
     char *LSPString::clone_native(size_t *bytes, ssize_t first, ssize_t last, const char *charset) const
     {
         const char *native = get_native(first, last, charset);
+        if (native == NULL)
+            return NULL;
+
         size_t offset = (pTemp != NULL) ? pTemp->nOffset : 0;
         char *ptr = (native != NULL) ? reinterpret_cast<char *>(lsp::memdup(native, offset)) : NULL;
         if (bytes != NULL)

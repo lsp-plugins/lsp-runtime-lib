@@ -29,8 +29,8 @@ UTEST_BEGIN("runtime.fmt.config", pullparser)
             "key3 = 123.456\n"
             "key4 = 12.5db \n"
             "#comment\n"
-            "key5=i32:123\n"
-            "key6=f32:\"+12.5 dB\"\n"
+            "   key5=i32:123\n"
+            "\tkey6=f32:\"+12.5 dB\"\n"
             "key7=-inf\n"
             "key8=  \"+inf\"\n"
             "\n"
@@ -40,6 +40,7 @@ UTEST_BEGIN("runtime.fmt.config", pullparser)
             "key12 = \"string \\\"with\\\" escapes\" \n"
             "key13 = string \\\"with other\\\" escapes \n"
             "key14 = string \\# not comment \n"
+            "key15 = \n"
             "/tree/arg1 = str:\"value\" \n";
 
         PullParser p;
@@ -144,12 +145,19 @@ UTEST_BEGIN("runtime.fmt.config", pullparser)
         UTEST_ASSERT(pp->flags == SF_TYPE_STR);
         UTEST_ASSERT(::strcmp(pp->str, "string \"with other\" escapes") == 0);
 
-        // key13
+        // key14
         UTEST_ASSERT(p.next() == STATUS_OK);
         UTEST_ASSERT((pp = p.current()) != NULL);
         UTEST_ASSERT(pp->name.equals_ascii("key14"));
         UTEST_ASSERT(pp->flags == SF_TYPE_STR);
         UTEST_ASSERT(::strcmp(pp->str, "string # not comment") == 0);
+
+        // key15
+        UTEST_ASSERT(p.next() == STATUS_OK);
+        UTEST_ASSERT((pp = p.current()) != NULL);
+        UTEST_ASSERT(pp->name.equals_ascii("key15"));
+        UTEST_ASSERT(pp->flags == SF_TYPE_STR);
+        UTEST_ASSERT(::strcmp(pp->str, "") == 0);
 
         // /tree/arg1
         UTEST_ASSERT(p.next() == STATUS_OK);
@@ -164,10 +172,59 @@ UTEST_BEGIN("runtime.fmt.config", pullparser)
         UTEST_ASSERT(p.close() == STATUS_OK);
     }
 
+    void test_invalid_cases()
+    {
+        static const char *lines[] =
+        {
+            "abcdef",
+            "123=",
+            "1abc=def",
+            "abc=\"def",
+            "abc=f32:",
+            "abc=i32:",
+            "abc=i32:12 db",
+            "abc=f32:12 .34",
+            "abc=f32:\"12\" db",
+            "abc=\"invalid\" escape\"",
+            "tree/node=10.11",
+            NULL
+        };
+
+        for (const char **xp=lines; *xp != NULL; ++xp)
+        {
+            PullParser p;
+            printf("  testing bad line: %s\n", *xp);
+            UTEST_ASSERT(p.wrap(*xp) == STATUS_OK);
+            UTEST_ASSERT(p.next() == STATUS_BAD_FORMAT);
+            UTEST_ASSERT(p.close() == STATUS_OK);
+        }
+    }
+
+    void test_file_load()
+    {
+        io::Path path;
+        UTEST_ASSERT(path.fmt("%s/%s", resources(), "config/rbm.cfg"));
+
+        PullParser p;
+        status_t res;
+
+        printf("Reading file %s...\n", path.as_native());
+        UTEST_ASSERT(p.open(&path) == STATUS_OK);
+        while ((res = p.next()) != STATUS_EOF)
+            printf("  got parameter: %s\n", p.current()->name.get_native());
+
+        UTEST_ASSERT(res == STATUS_EOF);
+        UTEST_ASSERT(p.close() == STATUS_OK);
+    }
+
     UTEST_MAIN
     {
         printf("Testing valid cases...\n");
         test_valid_cases();
+        printf("Testing invalid cases...\n");
+        test_invalid_cases();
+        printf("Testing file load...\n");
+        test_file_load();
     }
 
 UTEST_END
