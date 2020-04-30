@@ -756,23 +756,38 @@ namespace lsp
 
         status_t PullParser::parse_blob(const LSPString *str, blob_t *dst)
         {
-            ssize_t idx = str->index_of(':');
-            if (idx <= 0)
-            {
-                dst->ctype  = NULL;
-                dst->data   = str->clone_utf8();
-                if (dst->data == NULL)
-                    return STATUS_NO_MEM;
-            }
-            else
+            ssize_t pos, idx = str->index_of(':');
+            if (idx < 0)
+                return STATUS_BAD_FORMAT;
+
+            // Content type is present
+            if (idx > 0)
             {
                 dst->ctype  = str->clone_utf8(ssize_t(0), idx);
-                dst->data   = str->clone_utf8(idx + 1);
-                if ((dst->ctype == NULL) || (dst->data == NULL))
+                if (dst->ctype == NULL)
                     return STATUS_NO_MEM;
             }
+            pos         = idx + 1;
 
-            dst->length     = ::strlen(dst->data);
+            // Require length field and parse
+            idx = str->index_of(pos, ':');
+            if (idx <= pos)
+                return STATUS_BAD_FORMAT;
+
+            LSPString length;
+            if (!length.set(str, pos, idx))
+                return STATUS_NO_MEM;
+            uint64_t size;
+            status_t res = parse_uint64(&length, &size);
+            if (res != STATUS_OK)
+                return res;
+            dst->length     = size_t(size);
+
+            // Copy data
+            dst->data   = str->clone_utf8(idx + 1);
+            if (dst->data == NULL)
+                return STATUS_NO_MEM;
+
             return STATUS_OK;
         }
     

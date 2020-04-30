@@ -50,7 +50,7 @@ namespace lsp
         {
             size_t      length;         // Length of the BLOB
             char       *ctype;          // Content-type UTF-8 encoded
-            char       *data;           // BLOB data present as UTF-8 string
+            char       *data;           // BLOB data present as UTF-8 string by default
         } blob_t;
 
         typedef union

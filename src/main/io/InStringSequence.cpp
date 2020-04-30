@@ -168,10 +168,6 @@ namespace lsp
             if (s->last() == '\r')
                 s->remove_last();
 
-            // Trim '\r' symbol if present
-            if (pString->char_at(new_pos) == '\r')
-                ++new_pos;
-
             nOffset     = new_pos;
 
             return set_error(STATUS_OK);
