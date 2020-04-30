@@ -53,6 +53,18 @@ namespace lsp
             char       *data;           // BLOB data present as UTF-8 string
         } blob_t;
 
+        typedef union
+        {
+            int32_t         i32;
+            uint32_t        u32;
+            int64_t         i64;
+            uint64_t        u64;
+            float           f32;
+            double          f64;
+            char           *str;    // UTF-8 string value (for string)
+            blob_t          blob;   // BLOB data
+        } value_t;
+
         /**
          * Parameters stored in the configuration file
          */
@@ -65,18 +77,7 @@ namespace lsp
                 LSPString   name;           // Name of parameter
                 LSPString   comment;        // Comment
                 size_t      flags;          // Serialization flags
-
-                union
-                {
-                    int32_t         i32;
-                    uint32_t        u32;
-                    int64_t         i64;
-                    uint64_t        u64;
-                    float           f32;
-                    double          f64;
-                    char           *str;    // UTF-8 string value (for string)
-                    blob_t          blob;   // BLOB data
-                };
+                value_t     v;              // Value
 
             public:
                 explicit param_t();

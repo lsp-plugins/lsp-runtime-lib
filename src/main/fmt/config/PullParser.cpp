@@ -498,20 +498,20 @@ namespace lsp
             {
                 switch (nFlags & SF_TYPE_MASK)
                 {
-                    case SF_TYPE_I32: res = parse_int32(&sValue, &tmp.i32); break;
-                    case SF_TYPE_U32: res = parse_uint32(&sValue, &tmp.u32); break;
-                    case SF_TYPE_F32: res = parse_float(&sValue, &tmp.f32, &nFlags); break;
-                    case SF_TYPE_I64: res = parse_int64(&sValue, &tmp.i64); break;
-                    case SF_TYPE_U64: res = parse_uint64(&sValue, &tmp.u64); break;
-                    case SF_TYPE_F64: res = parse_double(&sValue, &tmp.f64, &nFlags); break;
+                    case SF_TYPE_I32: res = parse_int32(&sValue, &tmp.v.i32); break;
+                    case SF_TYPE_U32: res = parse_uint32(&sValue, &tmp.v.u32); break;
+                    case SF_TYPE_F32: res = parse_float(&sValue, &tmp.v.f32, &nFlags); break;
+                    case SF_TYPE_I64: res = parse_int64(&sValue, &tmp.v.i64); break;
+                    case SF_TYPE_U64: res = parse_uint64(&sValue, &tmp.v.u64); break;
+                    case SF_TYPE_F64: res = parse_double(&sValue, &tmp.v.f64, &nFlags); break;
                     case SF_TYPE_STR:
-                        if ((tmp.str = sValue.clone_utf8()) == NULL)
+                        if ((tmp.v.str = sValue.clone_utf8()) == NULL)
                             res     = STATUS_NO_MEM;
                         break;
                     case SF_TYPE_BLOB:
-                        tmp.blob.ctype  = NULL;
-                        tmp.blob.data   = NULL;
-                        res = parse_blob(&sValue, &tmp.blob);
+                        tmp.v.blob.ctype  = NULL;
+                        tmp.v.blob.data   = NULL;
+                        res = parse_blob(&sValue, &tmp.v.blob);
                         break;
                     default:
                         return STATUS_UNKNOWN_ERR;
@@ -528,7 +528,7 @@ namespace lsp
                 if (sValue.index_of('.') < 0)
                 {
                     // Try to parse as integer
-                    if ((res = parse_int32(&sValue, &tmp.i32)) == STATUS_OK)
+                    if ((res = parse_int32(&sValue, &tmp.v.i32)) == STATUS_OK)
                     {
                         tmp.flags     = nFlags | SF_TYPE_I32;
                         sParam.swap(&tmp);
@@ -537,7 +537,7 @@ namespace lsp
                 }
 
                 // Try to parse as float
-                if ((res = parse_float(&sValue, &tmp.f32, &nFlags)) == STATUS_OK)
+                if ((res = parse_float(&sValue, &tmp.v.f32, &nFlags)) == STATUS_OK)
                 {
                     tmp.flags     = nFlags | SF_TYPE_F32;
                     sParam.swap(&tmp);
@@ -546,7 +546,7 @@ namespace lsp
             }
 
             // Return as a string
-            if ((tmp.str = sValue.clone_utf8()) == NULL)
+            if ((tmp.v.str = sValue.clone_utf8()) == NULL)
                 res     = STATUS_NO_MEM;
             tmp.flags   = nFlags | SF_TYPE_STR;
 

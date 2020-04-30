@@ -55,7 +55,7 @@ namespace lsp
 
             public:
                 explicit PullParser();
-                ~PullParser();
+                virtual ~PullParser();
 
             public:
                 /**
