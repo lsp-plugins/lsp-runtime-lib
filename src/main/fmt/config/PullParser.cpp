@@ -12,6 +12,8 @@
 #include <lsp-plug.in/stdlib/math.h>
 #include <locale.h>
 #include <errno.h>
+#include <stdlib.h>
+#include <limits.h>
 
 namespace lsp
 {
