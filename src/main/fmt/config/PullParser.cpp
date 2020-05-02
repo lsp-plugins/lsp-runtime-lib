@@ -370,22 +370,22 @@ namespace lsp
                             return (sLine.append(ch)) ? STATUS_OK : STATUS_NO_MEM;
 
                         ch = sLine.at(off++);
-                        lsp_swchar_t escape = -1;
 
                         switch (ch)
                         {
-                            case 'n': escape = '\n'; break;
-                            case 'r': escape = '\r'; break;
-                            case 't': escape = '\t'; break;
-                            case '\\': escape = '\\'; break;
-                            case '\"': escape = '\"'; break;
-                            case '#': escape = '#'; break;
+                            case 'n':   ch = '\n';  break;
+                            case 'r':   ch = '\r';  break;
+                            case 't':   ch = '\t';  break;
+                            case '\\':  ch = '\\';  break;
+                            case ' ':   ch = ' ';   break;
+                            case '\"':  ch = '\"';  break;
+                            case '#':   ch = '#';   break;
                             default:
-                                escape      = '\\';
-                                --off;
+                                if (!sValue.append('\\'))
+                                    return STATUS_NO_MEM;
                                 break;
                         }
-                        if (!sValue.append(escape))
+                        if (!sValue.append(ch))
                             return STATUS_NO_MEM;
                         break;
                     }

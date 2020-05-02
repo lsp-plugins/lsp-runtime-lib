@@ -68,7 +68,7 @@ namespace lsp
             status_t res;
             char tmp[64];
 
-            ::snprintf(tmp, sizeof(tmp), "%llud", (unsigned long long)v);
+            ::snprintf(tmp, sizeof(tmp), "%llu", (unsigned long long)v);
             tmp[sizeof(tmp)-1] = '\0';
 
             if (flags & SF_QUOTED)
@@ -386,10 +386,16 @@ namespace lsp
                     case '\r':  ch = 'r'; break;
                     case '\t':  ch = 't'; break;
 
-                    case '#':
                     case '\"':
                     case '\\':
                         break;
+
+                    case '#':
+                    case ' ':
+                        if (!(flags & SF_QUOTED))
+                            break;
+                        ++last;
+                        continue;
 
                     default:
                         ++last;
@@ -485,7 +491,7 @@ namespace lsp
                     return res;
             }
 
-            return write_uint(value, flags);
+            return write_int(value, flags);
         }
 
         status_t Serializer::write_u32(const char *key, uint32_t value, size_t flags)
@@ -510,7 +516,7 @@ namespace lsp
                     return res;
             }
 
-            return write_u64(key, value, flags);
+            return write_uint(value, flags);
         }
 
         status_t Serializer::write_f32(const char *key, float value, size_t flags)
@@ -560,7 +566,7 @@ namespace lsp
                     return res;
             }
 
-            return write_uint(value, flags);
+            return write_int(value, flags);
         }
 
         status_t Serializer::write_u64(const char *key, uint64_t value, size_t flags)
@@ -568,7 +574,7 @@ namespace lsp
             LSPString tmp;
             if (!tmp.set_utf8(key))
                 return STATUS_NO_MEM;
-            return write_i64(&tmp, value, flags);
+            return write_u64(&tmp, value, flags);
         }
 
         status_t Serializer::write_u64(const LSPString *key, uint64_t value, size_t flags)
@@ -628,7 +634,10 @@ namespace lsp
                     return res;
             }
 
-            return write_escaped(v, flags);
+            if ((res = write_escaped(v, flags)) != STATUS_OK)
+                return res;
+
+            return pOut->write('\n');
         }
 
         status_t Serializer::write_string(const LSPString *key, const char *v, size_t flags)
@@ -677,7 +686,7 @@ namespace lsp
             }
             if (!tmp.append(':'))
                 return STATUS_NO_MEM;
-            if (!tmp.fmt_append_ascii("%llud:", (unsigned long long)v->length))
+            if (!tmp.fmt_append_ascii("%llu:", (unsigned long long)v->length))
                 return STATUS_NO_MEM;
             if ((res = write_escaped(&tmp, 0)) != STATUS_OK)
                 return res;
