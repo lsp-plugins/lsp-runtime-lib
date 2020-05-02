@@ -250,33 +250,33 @@ namespace lsp
                 write24bit(dptr, read24bit(sptr) - 0x800000);
 
         // Float conversions
-        #define CVT_F32_TO_UI(DTYPE) \
+        #define CVT_F32_TO_UI(STYPE, DTYPE) \
             for (f32_t *sptr = static_cast<f32_t *>(src); samples > 0; --samples, ++sptr, ++dptr) \
-                *dptr   = (DTYPE)(*sptr * f32_t(CVT_RANGE(DTYPE))) + (DTYPE)CVT_SHIFT(DTYPE);
+                *dptr   = (STYPE)(*sptr * f32_t(CVT_RANGE(DTYPE))) + (DTYPE)CVT_SHIFT(DTYPE);
         #define CVT_F32_TO_SI(DTYPE) \
             for (f32_t *sptr = static_cast<f32_t *>(src); samples > 0; --samples, ++sptr, ++dptr) \
                 *dptr   = (DTYPE)(*sptr * f32_t(CVT_RANGE(DTYPE)));
 
-        #define CVT_F32_TO_XI(DTYPE) \
+        #define CVT_F32_TO_XI(STYPE, DTYPE) \
             if (sign) \
-                CVT_F32_TO_SI(DTYPE) \
+                CVT_F32_TO_SI(STYPE) \
             else \
-                CVT_F32_TO_UI(DTYPE)
+                CVT_F32_TO_UI(STYPE, DTYPE)
 
 
         // Double conversions
-        #define CVT_F64_TO_UI(DTYPE) \
+        #define CVT_F64_TO_UI(STYPE, DTYPE) \
             for (f64_t *sptr = static_cast<f64_t *>(src); samples > 0; --samples, ++sptr, ++dptr) \
-                *dptr   = (DTYPE)(*sptr * f64_t(CVT_RANGE(DTYPE))) + (DTYPE)CVT_SHIFT(DTYPE);
+                *dptr   = (STYPE)(*sptr * f64_t(CVT_RANGE(DTYPE))) + (DTYPE)CVT_SHIFT(DTYPE);
         #define CVT_F64_TO_SI(DTYPE) \
             for (f64_t *sptr = static_cast<f64_t *>(src); samples > 0; --samples, ++sptr, ++dptr) \
                 *dptr   = (DTYPE)(*sptr * f64_t(CVT_RANGE(DTYPE)));
 
-        #define CVT_F64_TO_XI(DTYPE) \
+        #define CVT_F64_TO_XI(STYPE, DTYPE) \
             if (sign) \
-                CVT_F64_TO_SI(DTYPE) \
+                CVT_F64_TO_SI(STYPE) \
             else \
-                CVT_F64_TO_UI(DTYPE)
+                CVT_F64_TO_UI(STYPE, DTYPE)
 
         // Floating-point conversions
         #define CVT_FX_TO_SI24(STYPE) \
@@ -293,10 +293,10 @@ namespace lsp
 
         #define CVT_FX_TO_UI32(STYPE) \
             for (STYPE *sptr = static_cast<STYPE *>(src); samples > 0; --samples, ++sptr, ++dptr) \
-                *dptr   = (uint32_t)(*sptr * f64_t(CVT_RANGE(uint32_t))) + (uint32_t)CVT_SHIFT(uint32_t);
+                *dptr   = (int32_t)(*sptr * f64_t(CVT_RANGE(uint32_t))) + (uint32_t)CVT_SHIFT(uint32_t);
         #define CVT_FX_TO_SI32(STYPE) \
             for (STYPE *sptr = static_cast<STYPE *>(src); samples > 0; --samples, ++sptr, ++dptr) \
-                *dptr   = (uint32_t)(*sptr * f64_t(CVT_RANGE(uint32_t)));
+                *dptr   = (int32_t)(*sptr * f64_t(CVT_RANGE(uint32_t)));
 
         #define CVT_FX_TO_XI32(STYPE) \
             if (sign) \
@@ -333,8 +333,8 @@ namespace lsp
                 case SFMT_S24: CVT_S24_TO_XI(uint8_t, >> 16)            return true;
                 case SFMT_U32: CVT_UI_TO_XI(uint8_t, uint32_t, >> 24)   return true;
                 case SFMT_S32: CVT_SI_TO_XI(uint8_t, uint32_t, >> 24)   return true;
-                case SFMT_F32: CVT_F32_TO_XI(uint8_t)                   return true;
-                case SFMT_F64: CVT_F64_TO_XI(uint8_t)                   return true;
+                case SFMT_F32: CVT_F32_TO_XI(int8_t, uint8_t)           return true;
+                case SFMT_F64: CVT_F64_TO_XI(int8_t, uint8_t)           return true;
 
                 default:
                     break;
@@ -368,8 +368,8 @@ namespace lsp
                 case SFMT_S24: CVT_S24_TO_XI(uint16_t, >> 8)            return true;
                 case SFMT_U32: CVT_UI_TO_XI(uint16_t, uint32_t, >> 16)  return true;
                 case SFMT_S32: CVT_SI_TO_XI(uint16_t, uint32_t, >> 16)  return true;
-                case SFMT_F32: CVT_F32_TO_XI(uint16_t)                  return true;
-                case SFMT_F64: CVT_F64_TO_XI(uint16_t)                  return true;
+                case SFMT_F32: CVT_F32_TO_XI(int16_t, uint16_t)         return true;
+                case SFMT_F64: CVT_F64_TO_XI(int16_t, uint16_t)         return true;
 
                 default:
                     break;
