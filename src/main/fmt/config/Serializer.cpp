@@ -11,6 +11,7 @@
 #include <lsp-plug.in/io/OutStringSequence.h>
 
 #include <math.h>
+#include <locale.h>
 
 namespace lsp
 {

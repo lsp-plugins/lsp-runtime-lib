@@ -187,7 +187,7 @@ UTEST_BEGIN("runtime.fmt.config", pushparser)
         LSPString out;
         Handler h(this, &out);
 
-        UTEST_ASSERT(p.parse_data(&h, input) == STATUS_OK);
+        UTEST_ASSERT(p.parse_data(&h, input, "UTF-8") == STATUS_OK);
         UTEST_ASSERT(out.equals_utf8(output),
                 printf("Got output:\n%s\n", out.get_utf8());
                 printf("Expected output:\n%s\n", output);

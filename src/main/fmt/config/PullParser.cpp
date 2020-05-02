@@ -284,7 +284,7 @@ namespace lsp
             while (off < len)
             {
                 lsp_wchar_t ch = sLine.at(off);
-                if ((ch != ' ') && (ch != '\t'))
+                if ((ch != ' ') && (ch != '\t') && (ch != '\r'))
                     break;
                 off ++;
             }

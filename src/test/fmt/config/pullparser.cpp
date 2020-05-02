@@ -49,7 +49,7 @@ UTEST_BEGIN("runtime.fmt.config", pullparser)
 
         // Wrap the string
         UTEST_ASSERT((pp = p.current()) == NULL);
-        UTEST_ASSERT(p.wrap(text) == STATUS_OK);
+        UTEST_ASSERT(p.wrap(text, "UTF-8") == STATUS_OK);
         UTEST_ASSERT((pp = p.current()) == NULL);
 
         // key1

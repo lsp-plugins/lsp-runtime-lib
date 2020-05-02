@@ -49,7 +49,7 @@ UTEST_BEGIN("runtime.fmt", bookmarks)
         UTEST_ASSERT(path.append_child("fmt/bookmarks/qt5-bookmarks.xml") == STATUS_OK);
 
         printf("Reading QT5 bookmarks from file %s\n", path.as_native());
-        UTEST_ASSERT(read_bookmarks_qt5(&bm, &path) == STATUS_OK);
+        UTEST_ASSERT(read_bookmarks_qt5(&bm, &path, "UTF-8") == STATUS_OK);
 
         for (size_t i=0; i<bm.size(); ++i)
             printf("  Read QT5 bookmark: %s -> %s\n", bm.get(i)->path.get_utf8(), bm.get(i)->name.get_utf8());
@@ -78,7 +78,7 @@ UTEST_BEGIN("runtime.fmt", bookmarks)
         UTEST_ASSERT(path.append_child("fmt/bookmarks/lsp-bookmarks.json") == STATUS_OK);
 
         printf("Reading LSP bookmarks from file %s\n", path.as_native());
-        UTEST_ASSERT(read_bookmarks(&bm, &path) == STATUS_OK);
+        UTEST_ASSERT(read_bookmarks(&bm, &path, "UTF-8") == STATUS_OK);
 
         for (size_t i=0; i<bm.size(); ++i)
         {

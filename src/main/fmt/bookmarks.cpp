@@ -13,6 +13,14 @@
 #include <lsp-plug.in/io/InFileStream.h>
 #include <lsp-plug.in/io/InSequence.h>
 
+#ifdef PLATFORM_WINDOWS
+    #define FS_CHAR_MAIN    '\\'
+    #define FS_CHAR_ALT     '/'
+#else
+    #define FS_CHAR_MAIN    '/'
+    #define FS_CHAR_ALT     '\\'
+#endif /* PLATFORM_WINDOWS */
+
 namespace lsp
 {
     namespace bookmarks
@@ -82,7 +90,7 @@ namespace lsp
                             }
 
                             // Initialize bookmark
-                            ssize_t idx = href.rindex_of(FILE_SEPARATOR_C);
+                            ssize_t idx = lsp_max(href.rindex_of(FS_CHAR_MAIN), href.rindex_of(FS_CHAR_ALT));
                             if (!bm->name.set(&href, (idx >= 0) ? idx : 0))
                             {
                                 delete bm;
@@ -296,7 +304,7 @@ namespace lsp
                 // Obtain the last name in path
                 if (split < 0)
                 {
-                    split = bm->path.rindex_of(FILE_SEPARATOR_C);
+                    split = lsp_max(bm->path.rindex_of(FS_CHAR_MAIN), split = bm->path.rindex_of(FS_CHAR_ALT));
                     if (split < 0)
                         split = -1;
                     if (!bm->name.set(&bm->path, split + 1))
