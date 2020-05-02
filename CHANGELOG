@@ -4,3 +4,11 @@
 
 === 0.5.0 ===
 * Initial release.
+* Core runtime modules.
+* Support of simple built-in expression language interpreter.
+* Support of different file formats.
+* Basic OS-independent I/O abstraction layer support.
+* OS-independend character set conversion layer support.
+* OS-independend Inter-process communication (IPC) primitives.
+* Basic multimedia (MM) streaming primitives.
+* Different musical protocol support.
