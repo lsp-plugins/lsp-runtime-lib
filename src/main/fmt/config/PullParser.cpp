@@ -604,7 +604,7 @@ namespace lsp
 
             errno = 0;
             char *end = NULL;
-            #ifdef PLAFTORM_BSD
+            #ifdef PLATFORM_BSD
                 long value = ::strtol(s, &end, 10);
             #else
                 long long value = ::strtoll(s, &end, 10);
@@ -627,7 +627,7 @@ namespace lsp
 
             errno = 0;
             char *end = NULL;
-            #ifdef PLAFTORM_BSD
+            #ifdef PLATFORM_BSD
                 unsigned long value = ::strtoul(s, &end, 10);
             #else
                 unsigned long long value = ::strtoull(s, &end, 10);
