@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 0.5.1 ===
+* Added Color class.
+
 === 0.5.0 ===
 * Initial release.
 * Core runtime modules.
