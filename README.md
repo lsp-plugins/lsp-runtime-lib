@@ -8,6 +8,7 @@ These modules provide currently:
 * Core runtime modules:
   * Functions for obtaining system information like home directory, temporary directory, etc.
   * LSPString class for working with strings.
+  * Color class for working with color schemes.
 * Support of simple built-in expression language interpreter.
 * Support of different file formats:
   * LSP configuration file format parsing and serialization.
