@@ -3,7 +3,7 @@ ARTIFACT_NAME               = lsp-runtime-lib
 ARTIFACT_VARS               = LSP_RUNTIME_LIB
 ARTIFACT_HEADERS            = lsp-plug.in
 ARTIFACT_EXPORT_ALL         = 1
-VERSION                     = 0.5.1-devel
+VERSION                     = 0.5.1
 
 # List of dependencies
 TEST_DEPENDENCIES = \

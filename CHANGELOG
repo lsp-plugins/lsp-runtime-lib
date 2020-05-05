@@ -4,6 +4,8 @@
 
 === 0.5.1 ===
 * Added Color class.
+* Added 'valid_library_name' routines to ipc::Library class for library
+  name validation.
 
 === 0.5.0 ===
 * Initial release.
