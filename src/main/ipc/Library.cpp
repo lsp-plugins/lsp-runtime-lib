@@ -195,5 +195,44 @@ namespace lsp
             return path->set(&tmp);
         }
 
+        bool Library::valid_library_name(const char *path)
+        {
+            if (path == NULL)
+                return false;
+            LSPString tmp;
+            if (!tmp.set_utf8(path))
+                return false;
+            return valid_library_name(&tmp);
+        }
+
+        bool Library::valid_library_name(const LSPString *path)
+        {
+            if (path == NULL)
+                return false;
+
+            #if (FILE_SYSTEM_CASE_SENSE == 0)
+                LSPString tmp;
+                if (!tmp.set(path))
+                    return false;
+                tmp.tolower();
+                path = &tmp;
+            #endif
+
+            LSPString ext;
+            if (!ext.set_utf8(FILE_LIBRARY_EXT_S))
+                return false;
+            return path->ends_with(&ext);
+        }
+
+        bool Library::valid_library_name(const io::Path *path)
+        {
+            if (path == NULL)
+                return false;
+            LSPString tmp;
+            if (path->get_last(&tmp) != STATUS_OK)
+                return false;
+            return valid_library_name(&tmp);
+        }
+
     } /* namespace io */
 } /* namespace lsp */

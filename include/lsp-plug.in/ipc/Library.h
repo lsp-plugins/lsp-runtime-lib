@@ -132,6 +132,27 @@ namespace lsp
                  * @return status of operation
                  */
                 static inline status_t get_self_file(io::Path *path) { return get_module_file(path, &hTag); };
+
+                /**
+                 * Check that library file name is valid
+                 * @param path UTF-8 path
+                 * @return true if library file name is valid
+                 */
+                static bool valid_library_name(const char *path);
+
+                /**
+                 * Check that library file name is valid
+                 * @param path UTF-8 path
+                 * @return true if library file name is valid
+                 */
+                static bool valid_library_name(const LSPString *path);
+
+                /**
+                 * Check that library file name is valid
+                 * @param path UTF-8 path
+                 * @return true if library file name is valid
+                 */
+                static bool valid_library_name(const io::Path *path);
         };
     
     } /* namespace io */
