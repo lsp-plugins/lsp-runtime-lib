@@ -58,7 +58,11 @@ namespace lsp
             status_t res;
             io::Path path;
 
-            if ((res = path.fmt("%s/%s.json", sPath, id)) != STATUS_OK)
+            if ((res = path.set(&sPath)) != STATUS_OK)
+                return res;
+            if ((res = path.append_child(id)) != STATUS_OK)
+                return res;
+            if ((res = path.append(".json")) != STATUS_OK)
                 return res;
 
             // Prefer builtin over external

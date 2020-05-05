@@ -9,6 +9,10 @@ These modules provide currently:
   * Functions for obtaining system information like home directory, temporary directory, etc.
   * LSPString class for working with strings.
   * Color class for working with color schemes.
+* Internationalization support:
+  * i18n::IDictionary interface.
+  * i18n::Dictionary for root dictionary.
+  * i18n::JsonDictionary for parsing JSON dictionaries. 
 * Support of simple built-in expression language interpreter.
 * Support of different file formats:
   * LSP configuration file format parsing and serialization.
