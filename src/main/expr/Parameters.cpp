@@ -40,6 +40,9 @@ namespace lsp
 
         void Parameters::swap(Parameters *src)
         {
+            if (src == this)
+                return;
+
             vParams.swap(&src->vParams);
             src->modified();
             this->modified();

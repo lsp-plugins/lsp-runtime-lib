@@ -4,6 +4,7 @@
 
 === 0.5.2 ===
 * Added i18n support.
+* Updated swap functions for expr::Parameters and LSPString.
 
 === 0.5.1 ===
 * Added Color class.

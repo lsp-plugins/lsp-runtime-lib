@@ -254,6 +254,9 @@ namespace lsp
 
     void LSPString::swap(LSPString *src)
     {
+        if (src == this)
+            return;
+
         size_t len      = src->nLength;
         size_t cap      = src->nCapacity;
         lsp_wchar_t *c  = src->pData;
