@@ -6,7 +6,8 @@
  */
 
 #include <lsp-plug.in/runtime/Color.h>
-#include <stdio.h>
+#include <lsp-plug.in/stdlib/string.h>
+#include <lsp-plug.in/stdlib/stdio.h>
 
 namespace lsp
 {
@@ -14,6 +15,50 @@ namespace lsp
     static const float HSL_RGB_1_3          = 1.0f / 3.0f;
     static const float HSL_RGB_1_6          = 1.0f / 6.0f;
     static const float HSL_RGB_2_3          = 2.0f / 3.0f;
+
+    static size_t skip_space(const char *ptr, size_t off, size_t len)
+    {
+        for (; off < len; ++off)
+        {
+            char c = ptr[off];
+            if (c == '\0')
+                return len;
+
+            switch (c)
+            {
+                case ' ':
+                case '\n':
+                case '\t':
+                case '\r':
+                    break;
+                default:
+                    return off;
+            }
+        }
+        return off;
+    }
+
+    static size_t hex_char(char c)
+    {
+        if ((c >= '0') && (c <= '9'))
+            return c - '0';
+        if ((c >= 'a') && (c <= 'f'))
+            return c - 'a' + 10;
+        if ((c >= 'A') && (c <= 'F'))
+            return c - 'A' + 10;
+        return 0xff;
+    }
+
+    static size_t skip_hex(const char *ptr, size_t off, size_t len)
+    {
+        for (; off < len; ++off)
+        {
+            char c = ptr[off];
+            if (hex_char(c) >= 16)
+                return off;
+        }
+        return off;
+    }
 
     void Color::calc_rgb() const
     {
@@ -108,6 +153,24 @@ namespace lsp
 
         nMask |= M_HSL;
     }
+
+    void Color::check_rgb() const
+    {
+        if (nMask & M_RGB)
+            return;
+
+        calc_rgb();
+        nMask |= M_RGB;
+    };
+
+    void Color::check_hsl() const
+    {
+        if (nMask & M_HSL)
+            return;
+
+        calc_hsl();
+        nMask |= M_HSL;
+    };
 
     void Color::blend(const Color &c, float alpha)
     {
@@ -209,13 +272,13 @@ namespace lsp
         nMask   = c->nMask & (M_RGB | M_HSL);
     }
 
-    int Color::format(char *dst, size_t len, size_t tolerance, const float *v, char prefix, bool alpha)
+    ssize_t Color::format(char *dst, size_t len, size_t tolerance, const float *v, char prefix, bool alpha)
     {
-        if ((tolerance <= 0) || (tolerance > 4))
-            return 0;
+        if ((dst == NULL) || (tolerance <= 0) || (tolerance > 4))
+            return -STATUS_BAD_ARGUMENTS;
         size_t required = (tolerance * (alpha ? 4 : 3)) + 2; // Number of hex characters x number of colors + 2 symbols
         if (len < required)
-            return 0;
+            return -STATUS_OVERFLOW;
 
         // Calculate maximum value
         const char *fmt;
@@ -282,32 +345,162 @@ namespace lsp
         }
     }
 
-    int Color::format_rgb(char *dst, size_t len, size_t tolerance) const
+    ssize_t Color::format_rgb(char *dst, size_t len, size_t tolerance) const
     {
         float v[3];
         get_rgb(v[0], v[1], v[2]);
         return format(dst, len, tolerance, v, '#', false);
     }
 
-    int Color::format_hsl(char *dst, size_t len, size_t tolerance) const
+    ssize_t Color::format_hsl(char *dst, size_t len, size_t tolerance) const
     {
         float v[3];
         get_hsl(v[0], v[1], v[2]);
         return format(dst, len, tolerance, v, '@', false);
     }
 
-    int Color::format_rgba(char *dst, size_t len, size_t tolerance) const
+    ssize_t Color::format_rgba(char *dst, size_t len, size_t tolerance) const
     {
         float v[4];
         get_rgba(v[0], v[1], v[2], v[3]);
         return format(dst, len, tolerance, v, '#', true);
     }
 
-    int Color::format_hsla(char *dst, size_t len, size_t tolerance) const
+    ssize_t Color::format_hsla(char *dst, size_t len, size_t tolerance) const
     {
         float v[4];
         get_hsla(v[0], v[1], v[2], v[3]);
         return format(dst, len, tolerance, v, '@', true);
+    }
+
+    status_t Color::parse(float *dst, size_t n, char prefix, const char *src, size_t len)
+    {
+        if (src == NULL)
+            return STATUS_BAD_ARGUMENTS;
+
+        size_t off = skip_space(src, 0, len);
+        if (off >= len)
+            return STATUS_NO_DATA;
+        if (src[off] != prefix)
+            return STATUS_BAD_FORMAT;
+        if ((++off) >= len)
+            return STATUS_BAD_FORMAT;
+
+        size_t off2 = skip_hex(src, off, len);
+        size_t off3 = skip_space(src, off2, len);
+        if (off3 < len)
+            return STATUS_BAD_FORMAT;
+        len     = off2 - off;
+
+        // Determine the length of each component
+        if (len % n)
+            return STATUS_BAD_FORMAT;
+        len /= n;
+        if ((len <= 0) || (len > 4))
+            return STATUS_BAD_FORMAT;
+        float norm = 1.0f / ((0x1 << (len << 2)) - 1);
+
+        // Read components
+        while (n--)
+        {
+            int v       = 0;
+            for (size_t i=0; i<len; ++i, ++off)
+                v   = (v << 4) | hex_char(src[off]);
+
+            *(dst++)    = v * norm;
+        }
+
+        return STATUS_OK;
+    }
+
+    status_t Color::parse4(const char *src, size_t len)
+    {
+        if (src == NULL)
+            return STATUS_BAD_ARGUMENTS;
+
+        size_t off = skip_space(src, 0, len);
+        if (off >= len)
+            return STATUS_NO_DATA;
+
+        return (src[off] == '@') ? parse_hsla(&src[off], len - off) : parse_rgba(&src[off], len - off);
+    }
+
+    status_t Color::parse3(const char *src, size_t len)
+    {
+        if (src == NULL)
+            return STATUS_BAD_ARGUMENTS;
+
+        size_t off = skip_space(src, 0, len);
+        if (off >= len)
+            return STATUS_NO_DATA;
+
+        return (src[off] == '@') ? parse_hsl(&src[off], len - off) : parse_rgb(&src[off], len - off);
+    }
+
+    status_t Color::parse_rgba(const char *src, size_t len)
+    {
+        float v[4];
+        status_t res = parse(v, 4, '#', src, len);
+        if (res == STATUS_OK)
+            set_rgba(v[1], v[2], v[3], v[0]);
+        return res;
+    }
+
+    status_t Color::parse_hsla(const char *src, size_t len)
+    {
+        float v[4];
+        status_t res = parse(v, 4, '@', src, len);
+        if (res == STATUS_OK)
+            set_hsla(v[1], v[2], v[3], v[0]);
+        return res;
+    }
+
+    status_t Color::parse_rgb(const char *src, size_t len)
+    {
+        float v[3];
+        status_t res = parse(v, 3, '#', src, len);
+        if (res == STATUS_OK)
+            set_rgba(v[0], v[1], v[2], 0.0f);
+        return res;
+    }
+
+    status_t Color::parse_hsl(const char *src, size_t len)
+    {
+        float v[3];
+        status_t res = parse(v, 3, '@', src, len);
+        if (res == STATUS_OK)
+            set_hsla(v[0], v[1], v[2], 0.0f);
+        return res;
+    }
+
+    status_t Color::parse_rgba(const char *src)
+    {
+        return (src != NULL) ? parse_rgba(src, ::strlen(src)) : STATUS_BAD_ARGUMENTS;
+    }
+
+    status_t Color::parse_hsla(const char *src)
+    {
+        return (src != NULL) ? parse_hsla(src, ::strlen(src)) : STATUS_BAD_ARGUMENTS;
+    }
+
+    status_t Color::parse_rgb(const char *src)
+    {
+        return (src != NULL) ? parse_rgb(src, ::strlen(src)) : STATUS_BAD_ARGUMENTS;
+    }
+
+    status_t Color::parse_hsl(const char *src)
+    {
+        return (src != NULL) ? parse_hsl(src, ::strlen(src)) : STATUS_BAD_ARGUMENTS;
+    }
+
+    status_t Color::parse4(const char *src)
+    {
+        return (src != NULL) ? parse4(src, ::strlen(src)) : STATUS_BAD_ARGUMENTS;
+    }
+
+    status_t Color::parse3(const char *src)
+    {
+        return (src != NULL) ? parse3(src, ::strlen(src)) : STATUS_BAD_ARGUMENTS;
     }
 
     uint32_t Color::rgb24() const
@@ -318,5 +511,35 @@ namespace lsp
             (uint32_t(G * 0xff) << 8) |
             (uint32_t(B * 0xff) << 0);
     }
+
+    uint32_t Color::rgba32() const
+    {
+        check_rgb();
+        return
+            (uint32_t(A * 0xff) << 24) |
+            (uint32_t(R * 0xff) << 16) |
+            (uint32_t(G * 0xff) << 8) |
+            (uint32_t(B * 0xff) << 0);
+    }
+
+    uint32_t Color::hsl24() const
+    {
+        check_hsl();
+        return
+            (uint32_t(H * 0xff) << 16) |
+            (uint32_t(S * 0xff) << 8) |
+            (uint32_t(L * 0xff) << 0);
+    }
+
+    uint32_t Color::hsla32() const
+    {
+        check_rgb();
+        return
+            (uint32_t(A * 0xff) << 24) |
+            (uint32_t(H * 0xff) << 16) |
+            (uint32_t(S * 0xff) << 8) |
+            (uint32_t(L * 0xff) << 0);
+    }
+
 
 } /* namespace lsp */
