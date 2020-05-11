@@ -7,6 +7,7 @@
 
 #include <lsp-plug.in/test-fw/utest.h>
 #include <lsp-plug.in/runtime/LSPString.h>
+#include <lsp-plug.in/lltl/pphash.h>
 
 namespace lsp
 {
@@ -36,9 +37,12 @@ namespace lsp
 }
 
 UTEST_BEGIN("runtime.runtime", string)
-    UTEST_MAIN
+
+    void test_basic()
     {
         LSPString s1, s2, s3, s4, s5, s6, s7;
+
+        printf("Performing basic test...\n");
 
         // Settings
         UTEST_ASSERT(s1.set_ascii("This is some text"));
@@ -217,6 +221,79 @@ UTEST_BEGIN("runtime.runtime", string)
 
         UTEST_ASSERT(s1.starts_with(&s4));
         UTEST_ASSERT(s1.ends_with(&s5));
+    }
+
+    void test_base_hashing()
+    {
+        printf("Performing hashing test...\n");
+
+        size_t h;
+        LSPString s;
+        h = s.hash();
+        UTEST_ASSERT(h == 0);
+
+        UTEST_ASSERT(s.set_ascii("test"));
+        h = s.hash();
+        UTEST_ASSERT(h != 0);
+
+        UTEST_ASSERT(s.append('1'));
+        UTEST_ASSERT(h != s.hash());
+        h = s.hash();
+
+        UTEST_ASSERT(s.prepend('A'));
+        UTEST_ASSERT(h != s.hash());
+        h = s.hash();
+
+        UTEST_ASSERT(s.prepend_ascii("__"));
+        UTEST_ASSERT(h != s.hash());
+        h = s.hash();
+
+        UTEST_ASSERT(s.append_ascii("__"));
+        UTEST_ASSERT(h != s.hash());
+        h = s.hash();
+
+        UTEST_ASSERT(s.set_length(0) == 0);
+        UTEST_ASSERT(h != s.hash());
+        h = s.hash();
+        UTEST_ASSERT(h == 0);
+    }
+
+    void test_hash_key()
+    {
+        lltl::pphash<LSPString, LSPString> h;
+
+        printf("Testing lltl::pphash support...\n");
+
+        // Put values
+        for (size_t i=0; i<10; ++i)
+        {
+            LSPString *v = new LSPString();
+            UTEST_ASSERT(v != NULL);
+            UTEST_ASSERT(v->fmt_ascii("String %d", int(i)) >= 0);
+            UTEST_ASSERT(h.put(v, v, NULL));
+        }
+        UTEST_ASSERT(h.size() == 10);
+
+        // Fetch values
+        for (size_t i=0; i<10; ++i)
+        {
+            LSPString tmp;
+            UTEST_ASSERT(tmp.fmt_ascii("String %d", int(i)) >= 0);
+            LSPString **s = h.wbget(&tmp);
+            UTEST_ASSERT(s != NULL);
+            UTEST_ASSERT(*s != NULL);
+            UTEST_ASSERT((*s)->equals(&tmp));
+            delete *s;
+            *s = NULL;
+        }
+        UTEST_ASSERT(h.size() == 10);
+    }
+
+    UTEST_MAIN
+    {
+        test_basic();
+        test_base_hashing();
+        test_hash_key();
     }
 UTEST_END;
 
