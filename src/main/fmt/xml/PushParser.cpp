@@ -147,7 +147,7 @@ namespace lsp
                     // Analyze state
                     LSPString **atts        = ctag.array();
                     size_t n                = ctag.size();
-                    if (n & 1) // Nubmber of elements should be even
+                    if (n & 1) // Number of elements should be even
                     {
                         res     = STATUS_CORRUPTED;
                         break;
