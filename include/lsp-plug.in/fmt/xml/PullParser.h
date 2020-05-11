@@ -202,7 +202,7 @@ namespace lsp
                  * @param charset character set encoding
                  * @return status of operation
                  */
-                status_t            resolve_entity(const char *value, const char *charset = NULL);
+                status_t            set_value(const char *value, const char *charset = NULL);
 
             public:
                 /**
