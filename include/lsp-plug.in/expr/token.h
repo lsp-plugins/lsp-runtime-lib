@@ -117,10 +117,11 @@ namespace lsp
 
         enum token_flags_t
         {
-            TF_NONE     = 0,
-            TF_GET      = 1 << 0,
-            TF_XSIGN    = 1 << 1,
-            TF_BAREWORD = 1 << 2
+            TF_NONE             = 0,
+            TF_GET              = 1 << 0,   // Get new token, don't return current
+            TF_XSIGN            = 1 << 1,   // Interpret sign as operator, not sign of numeric value
+            TF_BAREWORD         = 1 << 2,   // Treat barewords as identifiers
+            TF_XKEYWORDS        = 1 << 3    // Exclude keywords, treat all keywords as TT_BAREWORD
         };
     }
 }

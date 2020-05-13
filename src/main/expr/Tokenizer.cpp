@@ -632,7 +632,8 @@ namespace lsp
                     if (lookup_identifier(TT_BAREWORD) != TT_BAREWORD)
                         return enToken;
 
-                    return decode_bareword();
+                    // Do not decode barewords if flags require keyword to exclude
+                    return (flags & TF_XKEYWORDS) ? enToken : decode_bareword();
                 }
             }
 
