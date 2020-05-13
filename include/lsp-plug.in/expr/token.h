@@ -107,6 +107,7 @@ namespace lsp
             TT_QUESTION,    // ?
             TT_COLON,       // :
             TT_SEMICOLON,   // ;
+            TT_COMMA,       // ,
 
             // Control tokens
             TT_UNKNOWN,     // Unknown token

@@ -602,6 +602,9 @@ namespace lsp
                 case ';': // TT_SEMICOLON
                     return commit(TT_SEMICOLON);
 
+                case ',': // TT_COMMA
+                    return commit(TT_COMMA);
+
                 case ':': // TT_COLON, TT_IDENTIFIER
                 {
                     c = commit(TT_COLON);

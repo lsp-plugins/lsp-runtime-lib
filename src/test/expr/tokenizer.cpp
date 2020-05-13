@@ -57,7 +57,7 @@ UTEST_BEGIN("runtime.expr", tokenizer)
     void test_sign_tokens()
     {
         static const char *tokens =
-                "( ) [ ] { } & && | || ! ^ ^^ ~ + - * ** / % < > <= >= != <> = == <=> ? : ;";
+                "( ) [ ] { } & && | || ! ^ ^^ ~ + - * ** / % < > <= >= != <> = == <=> ? : ; ,";
 
         io::InStringSequence sq;
         UTEST_ASSERT(sq.wrap(tokens, "UTF-8") == STATUS_OK);
@@ -96,6 +96,7 @@ UTEST_BEGIN("runtime.expr", tokenizer)
         ck_token(t, "?", TT_QUESTION);
         ck_token(t, ":", TT_COLON);
         ck_token(t, ";", TT_SEMICOLON);
+        ck_token(t, ",", TT_COMMA);
 
         UTEST_ASSERT(t.get_token(TF_GET) == TT_EOF);
     }
