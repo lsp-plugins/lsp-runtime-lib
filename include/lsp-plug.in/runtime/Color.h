@@ -10,6 +10,7 @@
 
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
+#include <lsp-plug.in/runtime/LSPString.h>
 
 namespace lsp
 {
@@ -118,11 +119,21 @@ namespace lsp
             void            copy(const Color &c, float a);
             void            copy(const Color *c, float a);
 
+            uint32_t        rgb24() const;
+            uint32_t        hsl24() const;
+            uint32_t        rgba32() const;
+            uint32_t        hsla32() const;
+
+            inline bool     is_rgb() const      { return nMask & M_RGB; }
+            inline bool     is_hsl() const      { return nMask & M_HSL; }
+
+            // Formatting
             ssize_t         format_rgb(char *dst, size_t len, size_t tolerance = 2) const;
             ssize_t         format_hsl(char *dst, size_t len, size_t tolerance = 2) const;
             ssize_t         format_rgba(char *dst, size_t len, size_t tolerance = 2) const;
             ssize_t         format_hsla(char *dst, size_t len, size_t tolerance = 2) const;
 
+            // Parsing raw data
             status_t        parse3(const char *src, size_t len);
             status_t        parse3(const char *src);
             status_t        parse_rgb(const char *src, size_t len);
@@ -137,13 +148,20 @@ namespace lsp
             status_t        parse_rgba(const char *src);
             status_t        parse_hsla(const char *src);
 
-            uint32_t        rgb24() const;
-            uint32_t        hsl24() const;
-            uint32_t        rgba32() const;
-            uint32_t        hsla32() const;
+            // Parsing LSPString
+            inline status_t parse3(const LSPString *src, size_t len)        { return parse3(src->get_utf8(0, len));         }
+            inline status_t parse3(const LSPString *src)                    { return parse3(src->get_utf8());               }
+            status_t        parse_rgb(const LSPString *src, size_t len)     { return parse_rgb(src->get_utf8(0, len));      }
+            status_t        parse_hsl(const LSPString *src, size_t len)     { return parse_hsl(src->get_utf8(0, len));      }
+            status_t        parse_rgb(const LSPString *src)                 { return parse_rgb(src->get_utf8());            }
+            status_t        parse_hsl(const LSPString *src)                 { return parse_hsl(src->get_utf8());            }
 
-            inline bool     is_rgb() const      { return nMask & M_RGB; }
-            inline bool     is_hsl() const      { return nMask & M_HSL; }
+            inline status_t parse4(const LSPString *src, size_t len)        { return parse4(src->get_utf8(0, len));         }
+            inline status_t parse4(const LSPString *src)                    { return parse4(src->get_utf8());               }
+            status_t        parse_rgba(const LSPString *src, size_t len)    { return parse_rgba(src->get_utf8(0, len));     }
+            status_t        parse_hsla(const LSPString *src, size_t len)    { return parse_hsla(src->get_utf8(0, len));     }
+            status_t        parse_rgba(const LSPString *src)                { return parse_rgba(src->get_utf8());           }
+            status_t        parse_hsla(const LSPString *src)                { return parse_hsla(src->get_utf8());           }
 
         public:
             void scale_lightness(float amount);
