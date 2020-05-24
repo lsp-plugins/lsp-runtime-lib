@@ -60,6 +60,59 @@ namespace lsp
         return off;
     }
 
+    Color::Color(uint32_t rgb)
+    {
+        H       = 0.0f;
+        S       = 0.0f;
+        L       = 0.0f;
+        set_rgb24(rgb);
+    }
+
+    Color::Color(uint32_t rgb, float a)
+    {
+        H       = 0.0f;
+        S       = 0.0f;
+        L       = 0.0f;
+        set_rgb24(rgb);
+        A       = a;
+    }
+
+    void Color::set_rgb24(uint32_t v)
+    {
+        R       = ((v >> 16) & 0xff) / 255.0f;
+        G       = ((v >> 8) & 0xff) / 255.0f;
+        B       = (v & 0xff) / 255.0f;
+        A       = 0.0f;
+        nMask   = M_RGB;
+    }
+
+    void Color::set_rgba32(uint32_t v)
+    {
+        R       = ((v >> 16) & 0xff) / 255.0f;
+        G       = ((v >> 8) & 0xff) / 255.0f;
+        B       = (v & 0xff) / 255.0f;
+        A       = ((v >> 24) & 0xff) / 255.0f;
+        nMask   = M_RGB;
+    }
+
+    void Color::set_hsl24(uint32_t v)
+    {
+        H       = ((v >> 16) & 0xff) / 255.0f;
+        S       = ((v >> 8) & 0xff) / 255.0f;
+        L       = (v & 0xff) / 255.0f;
+        A       = 0.0f;
+        nMask   = M_HSL;
+    }
+
+    void Color::set_hsla32(uint32_t v)
+    {
+        H       = ((v >> 16) & 0xff) / 255.0f;
+        S       = ((v >> 8) & 0xff) / 255.0f;
+        L       = (v & 0xff) / 255.0f;
+        A       = ((v >> 24) & 0xff) / 255.0f;
+        nMask   = M_HSL;
+    }
+
     void Color::calc_rgb() const
     {
         if (nMask & M_RGB)

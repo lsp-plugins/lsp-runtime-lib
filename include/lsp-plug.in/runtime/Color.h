@@ -28,8 +28,8 @@ namespace lsp
             mutable size_t  nMask;
             mutable float   A;
 
-            void calc_rgb() const;
-            void calc_hsl() const;
+            void            calc_rgb() const;
+            void            calc_hsl() const;
 
         protected:
             inline Color(float r, float g, float b, size_t mask): R(r), G(g), B(b), H(0), S(0), L(0), nMask(mask), A(0) {};
@@ -43,22 +43,23 @@ namespace lsp
         public:
             inline Color(): R(0), G(0), B(0), H(0), S(0), L(0), nMask(M_RGB), A(0) {};
             inline Color(float r, float g, float b): R(r), G(g), B(b), H(0), S(0), L(0), nMask(M_RGB), A(0) {};
+            inline Color(float r, float g, float b, float a): R(r), G(g), B(b), H(0), S(0), L(0), nMask(M_RGB), A(a) {};
             inline Color(const Color &src): R(src.R), G(src.G), B(src.B), H(src.H), S(src.S), L(src.L), nMask(src.nMask), A(src.A) {};
             inline Color(const Color &src, float a): R(src.R), G(src.G), B(src.B), H(src.H), S(src.S), L(src.L), nMask(src.nMask), A(a) {};
             inline Color(const Color *src): R(src->R), G(src->G), B(src->B), H(src->H), S(src->S), L(src->L), nMask(src->nMask), A(src->A) {};
             inline Color(const Color *src, float a): R(src->R), G(src->G), B(src->B), H(src->H), S(src->S), L(src->L), nMask(src->nMask), A(a) {};
-            inline Color(uint32_t rgb): R(float((rgb >> 16) & 0xff)/255.0f), G(float((rgb >> 8) & 0xff)/255.0f), B(float(rgb & 0xff)/255.0f), H(0.0f), S(0.0f), L(0.0f), nMask(M_RGB), A(0) {};
-            inline Color(uint32_t rgb, float a): R(float((rgb >> 16) & 0xff)/255.0f), G(float((rgb >> 8) & 0xff)/255.0f), B(float(rgb & 0xff)/255.0f), H(0.0f), S(0.0f), L(0.0f), nMask(M_RGB), A(a) {};
+            explicit Color(uint32_t rgb);
+            explicit Color(uint32_t rgb, float a);
 
             inline float    red() const        { check_rgb(); return R; }
             inline float    green() const      { check_rgb(); return G; }
             inline float    blue() const       { check_rgb(); return B; }
             inline float    alpha() const      { return A;              }
 
-            inline void     red(float r)    { check_rgb(); R = r; nMask = M_RGB; };
-            inline void     green(float g)  { check_rgb(); G = g; nMask = M_RGB; };
-            inline void     blue(float b)   { check_rgb(); B = b; nMask = M_RGB; };
-            inline void     alpha(float a)  { A = a; };
+            inline void     red(float r)        { check_rgb(); R = r; nMask = M_RGB; };
+            inline void     green(float g)      { check_rgb(); G = g; nMask = M_RGB; };
+            inline void     blue(float b)       { check_rgb(); B = b; nMask = M_RGB; };
+            inline void     alpha(float a)      { A = a; };
 
             inline void     get_rgb(float &r, float &g, float &b) const { check_rgb(); r = R; g = G; b = B; }
             inline void     get_rgba(float &r, float &g, float &b, float &a) const { check_rgb(); r = R; g = G; b = B; a = A; }
@@ -126,6 +127,12 @@ namespace lsp
 
             inline bool     is_rgb() const      { return nMask & M_RGB; }
             inline bool     is_hsl() const      { return nMask & M_HSL; }
+
+            // Setting
+            void            set_rgb24(uint32_t v);
+            void            set_rgba32(uint32_t v);
+            void            set_hsl24(uint32_t v);
+            void            set_hsla32(uint32_t v);
 
             // Formatting
             ssize_t         format_rgb(char *dst, size_t len, size_t tolerance = 2) const;
