@@ -5,7 +5,7 @@
 === 0.5.2 ===
 * Added i18n support.
 * Updated swap functions for expr::Parameters and LSPString.
-* Implemented additional parsing methods to the Color class.
+* Implemented additional parsing methods to the lsp::Color class.
 * Added unit tests for LSPString and Color classes.
 * Renamed invalid resolve_entity() method to set_value() method for xml::PullParser.
 * Added TT_COMMA token to expr:Tokenizer.
