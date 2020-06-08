@@ -528,20 +528,39 @@ namespace lsp
             size_t  hash() const;
     };
     
+    // LLTL specialization for String class
     namespace lltl
     {
         template <>
-            struct hash_impl<LSPString>: public hash_iface
+            struct hash_spec<LSPString>: public hash_iface
             {
                 static size_t hash_func(const void *ptr, size_t size);
+
+                explicit hash_spec()
+                {
+                    hash        = hash_func;
+                }
+            };
+
+        template <>
+            struct compare_spec<LSPString>: public compare_iface
+            {
                 static ssize_t cmp_func(const void *a, const void *b, size_t size);
+
+                explicit compare_spec()
+                {
+                    compare     = cmp_func;
+                }
+            };
+
+        template <>
+            struct allocator_spec<LSPString>: public allocator_iface
+            {
                 static void *copy_func(const void *src, size_t size);
                 static void free_func(void *ptr);
 
-                explicit hash_impl()
+                explicit allocator_spec()
                 {
-                    hash        = hash_func;
-                    compare     = cmp_func;
                     copy        = copy_func;
                     free        = free_func;
                 }

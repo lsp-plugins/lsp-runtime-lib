@@ -2461,24 +2461,24 @@ namespace lsp
 
     namespace lltl
     {
-        size_t hash_impl<LSPString>::hash_func(const void *ptr, size_t size)
+        size_t hash_spec<LSPString>::hash_func(const void *ptr, size_t size)
         {
             return (static_cast<const LSPString *>(ptr))->hash();
         }
 
-        ssize_t hash_impl<LSPString>::cmp_func(const void *a, const void *b, size_t size)
+        ssize_t compare_spec<LSPString>::cmp_func(const void *a, const void *b, size_t size)
         {
             const LSPString *sa = static_cast<const LSPString *>(a);
             const LSPString *sb = static_cast<const LSPString *>(b);
             return sa->compare_to(sb);
         }
 
-        void *hash_impl<LSPString>::copy_func(const void *src, size_t size)
+        void *allocator_spec<LSPString>::copy_func(const void *src, size_t size)
         {
             return (static_cast<const LSPString *>(src))->clone();
         }
 
-        void hash_impl<LSPString>::free_func(void *ptr)
+        void allocator_spec<LSPString>::free_func(void *ptr)
         {
             delete (static_cast<LSPString *>(ptr));
         }
