@@ -32,6 +32,7 @@ UTEST_BEGIN("runtime.fmt.json", serializer)
                     "true,"
                     "null,"
                     "\"multiline\\n\\rstring\","
+                    "\"_\\uD834\\uDD1E_\","
                     "{},"
                     "[]"
                 "],"
@@ -41,6 +42,7 @@ UTEST_BEGIN("runtime.fmt.json", serializer)
                     "\"bool\":false,"
                     "\"null\":null,"
                     "\"string\":\"test\\n\","
+                    "\"special\":\"_\\uD834\\uDD1E_\","
                     "\"object\":{},"
                     "\"array\":[]"
                 "}"
@@ -70,6 +72,7 @@ UTEST_BEGIN("runtime.fmt.json", serializer)
                 UTEST_ASSERT(s.write_null() == STATUS_OK);
                 UTEST_ASSERT(s.write_string("multiline\n\rstring") == STATUS_OK);
                 UTEST_ASSERT(s.write_comment("comment") == STATUS_INVALID_VALUE);
+                UTEST_ASSERT(s.write_string("_\xf0\x9d\x84\x9e_") == STATUS_OK);
 
                 UTEST_ASSERT(s.start_object() == STATUS_OK);
                 UTEST_ASSERT(s.end_object() == STATUS_OK);
@@ -99,6 +102,9 @@ UTEST_BEGIN("runtime.fmt.json", serializer)
 
                 UTEST_ASSERT(s.write_comment("comment") == STATUS_INVALID_VALUE);
 
+                UTEST_ASSERT(s.write_property("special") == STATUS_OK);
+                UTEST_ASSERT(s.write_string("_\xf0\x9d\x84\x9e_") == STATUS_OK);
+
                 UTEST_ASSERT(s.write_property("object") == STATUS_OK);
                 UTEST_ASSERT(s.start_object() == STATUS_OK);
                 UTEST_ASSERT(s.end_object() == STATUS_OK);
@@ -127,8 +133,8 @@ UTEST_BEGIN("runtime.fmt.json", serializer)
         Serializer s;
 
         const char *data =
-            "/*c1\\U000A*/{"
-                "/*/\\U002Ac2*\\U002F*/"
+            "/*c1\\u000A*/{"
+                "/*/\\u002Ac2*\\u002F*/"
                 "array:["
                     "123,/*q0*/"
                     "-0x123,"
@@ -136,6 +142,7 @@ UTEST_BEGIN("runtime.fmt.json", serializer)
                     "true,"
                     "null,"
                     "\"multiline\\n\\rstring\"/*c3*/,/*q1*/"
+                    "\"_\\uD834\\uDD1E_\","
                     "{}/*q2*/,"
                     "[]/*q3*/"
                 "],"
@@ -146,6 +153,7 @@ UTEST_BEGIN("runtime.fmt.json", serializer)
                     "bool:false,"
                     "\"null\":null,"
                     "string:\"test\\n\"/*comment*/,"
+                    "special:\"_\\uD834\\uDD1E_\","
                     "object:{/*q10*/},/*q9*/"
                     "array:[/*q12*/]/*q11*/,"
                 "}/*c6*/"
@@ -190,6 +198,9 @@ UTEST_BEGIN("runtime.fmt.json", serializer)
                 UTEST_ASSERT(s.write_comma() == STATUS_OK);
                 UTEST_ASSERT(s.write_comment("q1") == STATUS_OK);
 
+                UTEST_ASSERT(s.write_string("_\xf0\x9d\x84\x9e_") == STATUS_OK);
+                UTEST_ASSERT(s.write_comma() == STATUS_OK);
+
                 UTEST_ASSERT(s.start_object() == STATUS_OK);
                 UTEST_ASSERT(s.end_object() == STATUS_OK);
                 UTEST_ASSERT(s.write_comment("q2") == STATUS_OK);
@@ -225,8 +236,10 @@ UTEST_BEGIN("runtime.fmt.json", serializer)
 
                 UTEST_ASSERT(s.write_property("string") == STATUS_OK);
                 UTEST_ASSERT(s.write_string("test\n") == STATUS_OK);
-
                 UTEST_ASSERT(s.write_comment("comment") == STATUS_OK);
+
+                UTEST_ASSERT(s.write_property("special") == STATUS_OK);
+                UTEST_ASSERT(s.write_string("_\xf0\x9d\x84\x9e_") == STATUS_OK);
 
                 UTEST_ASSERT(s.write_property("object") == STATUS_OK);
                 UTEST_ASSERT(s.start_object() == STATUS_OK);
@@ -268,7 +281,7 @@ UTEST_BEGIN("runtime.fmt.json", serializer)
             " * c1\n"
             " */\n"
             "{\n"
-            "    /*/\\U002A array *\\U002F*/\n"
+            "    /*/\\u002A array *\\u002F*/\n"
             "    array: [\n"
             "        123, /* integer */\n"
             "        -0x123, /* hex */\n"
@@ -276,6 +289,7 @@ UTEST_BEGIN("runtime.fmt.json", serializer)
             "        true, /* boolean */\n"
             "        null, /* null string */\n"
             "        \"multiline\\n\\rstring\", /* multiline string */\n"
+            "        \"_\\uD834\\uDD1E_\",\n"
             "        {}, /* empty object */\n"
             "        [], /* empty array */\n"
             "    ], /* end of array */\n"
@@ -286,6 +300,7 @@ UTEST_BEGIN("runtime.fmt.json", serializer)
             "        \"double\": -Infinity,\n"
             "        bool: false,\n"
             "        \"null\": null,\n"
+            "        special: \"_\\uD834\\uDD1E_\",\n"
             "        string: /* key */ \"test\\n\" /* value */ /*comment*/,\n"
             "        object: /* key */ {} /* value */,\n"
             "        array: /* key */ [] /* value */\n"
@@ -344,6 +359,9 @@ UTEST_BEGIN("runtime.fmt.json", serializer)
                 UTEST_ASSERT(s.write_comma() == STATUS_OK);
                 UTEST_ASSERT(s.write_comment(" multiline string ") == STATUS_OK);
 
+                UTEST_ASSERT(s.write_string("_\xf0\x9d\x84\x9e_") == STATUS_OK);
+                UTEST_ASSERT(s.write_comma() == STATUS_OK);
+
                 UTEST_ASSERT(s.start_object() == STATUS_OK);
                 UTEST_ASSERT(s.end_object() == STATUS_OK);
                 UTEST_ASSERT(s.write_comma() == STATUS_OK);
@@ -378,6 +396,9 @@ UTEST_BEGIN("runtime.fmt.json", serializer)
 
                 UTEST_ASSERT(s.write_property("null") == STATUS_OK);
                 UTEST_ASSERT(s.write_null() == STATUS_OK);
+
+                UTEST_ASSERT(s.write_property("special") == STATUS_OK);
+                UTEST_ASSERT(s.write_string("_\xf0\x9d\x84\x9e_") == STATUS_OK);
 
                 UTEST_ASSERT(s.write_property("string") == STATUS_OK);
                 UTEST_ASSERT(s.write_comment(" key ") == STATUS_OK);
