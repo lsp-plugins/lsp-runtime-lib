@@ -11,6 +11,7 @@
 * Added TT_COMMA token to expr:Tokenizer.
 * Added support of TF_XKEYWORDS flag by expr:Tokenizer which allows to interpret
   keywords as barewords.
+* Changed bug in UTF-16 decoding of surrogate pairs.
 
 === 0.5.1 ===
 * Added Color class.

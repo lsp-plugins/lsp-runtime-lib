@@ -598,7 +598,7 @@ namespace lsp
             if ((sc & 0xfc00) == 0xdc00)
             {
                 ++s;
-                cp  = 0x10000 | ((cp & 0x3ff) << 10) | (sc & 0x3ff);
+                cp  = 0x10000 + (((cp & 0x3ff) << 10) | (sc & 0x3ff));
             }
             else
                 cp  = 0xfffd;
@@ -609,7 +609,7 @@ namespace lsp
             if ((sc & 0xfc00) == 0xd800)
             {
                 ++s;
-                cp  = 0x10000 | ((sc & 0x3ff) << 10) | (cp & 0x3ff);
+                cp  = 0x10000 + (((sc & 0x3ff) << 10) | (cp & 0x3ff));
             }
             else
                 cp  = 0xfffd;
@@ -635,7 +635,7 @@ namespace lsp
             if ((sc & 0xfc00) == 0xdc00)
             {
                 ++s;
-                cp  = 0x10000 | ((cp & 0x3ff) << 10) | (sc & 0x3ff);
+                cp  = 0x10000 + (((cp & 0x3ff) << 10) | (sc & 0x3ff));
             }
             else
                 cp  = 0xfffd;
@@ -646,7 +646,7 @@ namespace lsp
             if ((sc & 0xfc00) == 0xd800)
             {
                 ++s;
-                cp  = 0x10000 | ((sc & 0x3ff) << 10) | (cp & 0x3ff);
+                cp  = 0x10000 + (((sc & 0x3ff) << 10) | (cp & 0x3ff));
             }
             else
                 cp  = 0xfffd;
@@ -678,7 +678,7 @@ namespace lsp
             if ((sc & 0xfc00) == 0xdc00)
             {
                 ++s;
-                cp  = 0x10000 | ((cp & 0x3ff) << 10) | (sc & 0x3ff);
+                cp  = 0x10000 + (((cp & 0x3ff) << 10) | (sc & 0x3ff));
             }
             else
                 cp  = 0xfffd;
@@ -695,7 +695,7 @@ namespace lsp
             if ((sc & 0xfc00) == 0xd800)
             {
                 ++s;
-                cp  = 0x10000 | ((sc & 0x3ff) << 10) | (cp & 0x3ff);
+                cp  = 0x10000 + (((sc & 0x3ff) << 10) | (cp & 0x3ff));
             }
             else
                 cp  = 0xfffd;
@@ -728,7 +728,7 @@ namespace lsp
             if ((sc & 0xfc00) == 0xdc00)
             {
                 ++s;
-                cp  = 0x10000 | ((cp & 0x3ff) << 10) | (sc & 0x3ff);
+                cp  = 0x10000 + (((cp & 0x3ff) << 10) | (sc & 0x3ff));
             }
             else
                 cp  = 0xfffd;
@@ -745,7 +745,7 @@ namespace lsp
             if ((sc & 0xfc00) == 0xd800)
             {
                 ++s;
-                cp  = 0x10000 | ((sc & 0x3ff) << 10) | (cp & 0x3ff);
+                cp  = 0x10000 + (((sc & 0x3ff) << 10) | (cp & 0x3ff));
             }
             else
                 cp  = 0xfffd;
