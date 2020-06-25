@@ -1280,12 +1280,12 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t PullParser::resolve_entity(const char *value, const char *charset)
+        status_t PullParser::set_value(const char *value, const char *charset)
         {
             LSPString tmp;
             if (!tmp.set_native(value, charset))
                 return STATUS_NO_MEM;
-            return resolve_entity(value);
+            return set_value(value);
         }
 
         status_t PullParser::read_next()

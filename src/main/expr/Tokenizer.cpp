@@ -602,6 +602,9 @@ namespace lsp
                 case ';': // TT_SEMICOLON
                     return commit(TT_SEMICOLON);
 
+                case ',': // TT_COMMA
+                    return commit(TT_COMMA);
+
                 case ':': // TT_COLON, TT_IDENTIFIER
                 {
                     c = commit(TT_COLON);
@@ -629,7 +632,8 @@ namespace lsp
                     if (lookup_identifier(TT_BAREWORD) != TT_BAREWORD)
                         return enToken;
 
-                    return decode_bareword();
+                    // Do not decode barewords if flags require keyword to exclude
+                    return (flags & TF_XKEYWORDS) ? enToken : decode_bareword();
                 }
             }
 

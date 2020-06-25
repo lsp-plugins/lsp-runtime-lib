@@ -11,6 +11,7 @@
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/stdlib/string.h>
+#include <lsp-plug.in/lltl/types.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
@@ -33,6 +34,7 @@ namespace lsp
             size_t              nLength;
             size_t              nCapacity;
             lsp_wchar_t        *pData;
+            mutable size_t      nHash;
             mutable buffer_t   *pTemp;
 
         protected:
@@ -518,8 +520,53 @@ namespace lsp
             ssize_t vfmt_append_utf8(const char *fmt, va_list args);
             ssize_t vfmt_prepend_utf8(const char *fmt, va_list args);
             ssize_t vfmt_utf8(const char *fmt, va_list args);
+
+            /**
+             * Compute the hash code
+             * @return hash code
+             */
+            size_t  hash() const;
     };
     
+    // LLTL specialization for String class
+    namespace lltl
+    {
+        template <>
+            struct hash_spec<LSPString>: public hash_iface
+            {
+                static size_t hash_func(const void *ptr, size_t size);
+
+                explicit hash_spec()
+                {
+                    hash        = hash_func;
+                }
+            };
+
+        template <>
+            struct compare_spec<LSPString>: public compare_iface
+            {
+                static ssize_t cmp_func(const void *a, const void *b, size_t size);
+
+                explicit compare_spec()
+                {
+                    compare     = cmp_func;
+                }
+            };
+
+        template <>
+            struct allocator_spec<LSPString>: public allocator_iface
+            {
+                static void *copy_func(const void *src, size_t size);
+                static void free_func(void *ptr);
+
+                explicit allocator_spec()
+                {
+                    copy        = copy_func;
+                    free        = free_func;
+                }
+            };
+    }
+
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_RUNTIME_LSPSTRING_H_ */

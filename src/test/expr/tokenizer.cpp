@@ -26,6 +26,14 @@ UTEST_BEGIN("runtime.expr", tokenizer)
         UTEST_ASSERT_MSG(t.text_value()->equals_ascii(s), "Error testing token: %s", s);
     }
 
+    void ck_bareword(Tokenizer &t, const char *s)
+    {
+        printf("  checking token: %s\n", s);
+        token_t tok = t.get_token(TF_GET | TF_XKEYWORDS);
+        UTEST_ASSERT_MSG(tok == TT_BAREWORD, "Error testing token: %s", s);
+        UTEST_ASSERT_MSG(t.text_value()->equals_ascii(s), "Error testing token: %s", s);
+    }
+
     void ck_int(Tokenizer &t, ssize_t value)
     {
         printf("  checking integer: %d\n", int(value));
@@ -57,7 +65,7 @@ UTEST_BEGIN("runtime.expr", tokenizer)
     void test_sign_tokens()
     {
         static const char *tokens =
-                "( ) [ ] { } & && | || ! ^ ^^ ~ + - * ** / % < > <= >= != <> = == <=> ? : ;";
+                "( ) [ ] { } & && | || ! ^ ^^ ~ + - * ** / % < > <= >= != <> = == <=> ? : ; ,";
 
         io::InStringSequence sq;
         UTEST_ASSERT(sq.wrap(tokens, "UTF-8") == STATUS_OK);
@@ -96,6 +104,7 @@ UTEST_BEGIN("runtime.expr", tokenizer)
         ck_token(t, "?", TT_QUESTION);
         ck_token(t, ":", TT_COLON);
         ck_token(t, ";", TT_SEMICOLON);
+        ck_token(t, ",", TT_COMMA);
 
         UTEST_ASSERT(t.get_token(TF_GET) == TT_EOF);
     }
@@ -114,6 +123,7 @@ UTEST_BEGIN("runtime.expr", tokenizer)
                 "int float fp bool str "
                 "ex db "
                 "bareword "
+                "true false null " // Parse this as barewords
             ;
 
         io::InStringSequence sq;
@@ -196,6 +206,10 @@ UTEST_BEGIN("runtime.expr", tokenizer)
         ck_token(t, "ex", TT_EX);
         ck_token(t, "db", TT_DB);
         ck_token(t, "bareword", TT_BAREWORD);
+
+        ck_bareword(t, "true");
+        ck_bareword(t, "false");
+        ck_bareword(t, "null");
 
         UTEST_ASSERT(t.get_token(TF_GET) == TT_EOF);
     }

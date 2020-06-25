@@ -526,6 +526,33 @@ namespace lsp
             return (success) ? STATUS_OK : STATUS_NO_MEM;
         }
 
+        status_t Path::append(const char *path)
+        {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+            LSPString tmp;
+            if (!tmp.set_utf8(path))
+                return STATUS_NO_MEM;
+            return append(&tmp);
+        }
+
+        status_t Path::append(const LSPString *path)
+        {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+            if (!sPath.append(path))
+                return STATUS_NO_MEM;
+            fixup_path();
+            return STATUS_OK;
+        }
+
+        status_t Path::append(const Path *path)
+        {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+            return append(&path->sPath);
+        }
+
         status_t Path::remove_last()
         {
             if (is_root())
