@@ -8,10 +8,6 @@
 #include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/fmt/xml/PullParser.h>
 #include <lsp-plug.in/fmt/Hydrogen.h>
-#include <lsp-plug.in/io/InFileStream.h>
-#include <lsp-plug.in/io/OutMemoryStream.h>
-#include <lsp-plug.in/io/InMemoryStream.h>
-#include <lsp-plug.in/io/InSequence.h>
 #include <lsp-plug.in/io/InStringSequence.h>
 #include <lsp-plug.in/expr/Tokenizer.h>
 
