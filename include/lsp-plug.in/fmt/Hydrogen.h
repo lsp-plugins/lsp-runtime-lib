@@ -48,6 +48,7 @@ namespace lsp
                 LSPString   name;
                 float       volume;
                 bool        muted;
+                bool        locked;
                 float       pan_left;
                 float       pan_right;
                 float       random_pitch_factor;

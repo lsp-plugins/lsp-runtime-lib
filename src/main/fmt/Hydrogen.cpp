@@ -38,6 +38,7 @@ namespace lsp
             id                  = -1;
             volume              = 1.0f;
             muted               = false;
+            locked              = false;
             pan_left            = 1.0f;
             pan_right           = 1.0f;
             random_pitch_factor = 0.0f;
@@ -141,12 +142,12 @@ namespace lsp
 
             io::InStringSequence sq(&tmp);
             expr::Tokenizer tok(&sq);
-            expr::token_t t = tok.get_token();
+            expr::token_t t = tok.get_token(expr::TF_GET);
             if (t != expr::TT_IVALUE)
                 return STATUS_BAD_FORMAT;
 
             *value = tok.int_value();
-            t = tok.get_token();
+            t = tok.get_token(expr::TF_GET);
             return (t == expr::TT_EOF) ? STATUS_OK : STATUS_BAD_FORMAT;
         }
 
@@ -159,12 +160,12 @@ namespace lsp
 
             io::InStringSequence sq(&tmp);
             expr::Tokenizer tok(&sq);
-            expr::token_t t = tok.get_token();
-            if ((t != expr::TT_IVALUE) || (t != expr::TT_FVALUE))
+            expr::token_t t = tok.get_token(expr::TF_GET);
+            if ((t != expr::TT_IVALUE) && (t != expr::TT_FVALUE))
                 return STATUS_BAD_FORMAT;
 
             *value = (t == expr::TT_IVALUE) ? tok.int_value() : tok.float_value();
-            t = tok.get_token();
+            t = tok.get_token(expr::TF_GET);
             return (t == expr::TT_EOF) ? STATUS_OK : STATUS_BAD_FORMAT;
         }
 
@@ -177,13 +178,48 @@ namespace lsp
 
             io::InStringSequence sq(&tmp);
             expr::Tokenizer tok(&sq);
-            expr::token_t t = tok.get_token();
-            if ((t != expr::TT_TRUE) || (t != expr::TT_FALSE))
+            expr::token_t t = tok.get_token(expr::TF_GET);
+            if ((t != expr::TT_TRUE) && (t != expr::TT_FALSE))
                 return STATUS_BAD_FORMAT;
 
             *value = (t == expr::TT_TRUE);
-            t = tok.get_token();
+            t = tok.get_token(expr::TF_GET);
             return (t == expr::TT_EOF) ? STATUS_OK : STATUS_BAD_FORMAT;
+        }
+
+        status_t skip_tags(xml::PullParser *p)
+        {
+            size_t counter = 1;
+            status_t item, res = STATUS_OK;
+
+            do
+            {
+                if ((item = p->read_next()) < 0)
+                    return -item;
+
+                switch (item)
+                {
+                    case xml::XT_CHARACTERS:
+                    case xml::XT_CDATA:
+                    case xml::XT_COMMENT:
+                    case xml::XT_ATTRIBUTE:
+                        break;
+
+                    case xml::XT_START_ELEMENT:
+                        ++counter;
+                        break;
+
+                    case xml::XT_END_ELEMENT:
+                        if ((--counter) <= 0)
+                            return res;
+                        break;
+
+                    default:
+                        return STATUS_CORRUPTED;
+                }
+            } while (res == STATUS_OK);
+
+            return res;
         }
 
         status_t read_layer(xml::PullParser *p, layer_t *layer)
@@ -198,6 +234,7 @@ namespace lsp
                 switch (item)
                 {
                     case xml::XT_CHARACTERS:
+                    case xml::XT_CDATA:
                     case xml::XT_COMMENT:
                         break;
 
@@ -217,11 +254,17 @@ namespace lsp
                             res = read_float(p, &layer->pitch);
                         else
                         {
-                            lsp_trace("Invalid tag: %s", name->get_native());
-                            res = STATUS_BAD_FORMAT;
+                            lsp_warn("Unexpected tag: %s", name->get_native());
+                            res = skip_tags(p);
                         }
                         break;
                     }
+
+                    case xml::XT_END_ELEMENT:
+                        return res;
+
+                    default:
+                        return STATUS_CORRUPTED;
                 }
             } while (res == STATUS_OK);
 
@@ -240,6 +283,7 @@ namespace lsp
                 switch (item)
                 {
                     case xml::XT_CHARACTERS:
+                    case xml::XT_CDATA:
                     case xml::XT_COMMENT:
                         break;
 
@@ -257,6 +301,8 @@ namespace lsp
                             res = read_float(p, &inst->volume);
                         else if (name->equals_ascii("isMuted"))
                             res = read_bool(p, &inst->muted);
+                        else if (name->equals_ascii("isLocked"))
+                            res = read_bool(p, &inst->locked);
                         else if (name->equals_ascii("pan_L"))
                             res = read_float(p, &inst->pan_left);
                         else if (name->equals_ascii("pan_R"))
@@ -318,14 +364,14 @@ namespace lsp
                         }
                         else
                         {
-                            lsp_trace("Invalid tag: %s", name->get_native());
-                            res = STATUS_BAD_FORMAT;
+                            lsp_warn("Unexpected tag: %s", name->get_native());
+                            res = skip_tags(p);
                         }
                         break;
                     }
 
                     case xml::XT_END_ELEMENT:
-                        return STATUS_OK;
+                        return res;
 
                     default:
                         return STATUS_CORRUPTED;
@@ -369,14 +415,14 @@ namespace lsp
                         }
                         else
                         {
-                            lsp_trace("Invalid tag: %s", name->get_native());
-                            res = STATUS_BAD_FORMAT;
+                            lsp_warn("Unexpected tag: %s", name->get_native());
+                            res = skip_tags(p);
                         }
                         break;
                     }
 
                     case xml::XT_END_ELEMENT:
-                        return STATUS_OK;
+                        return res;
 
                     default:
                         return STATUS_CORRUPTED;
@@ -400,6 +446,7 @@ namespace lsp
                     case xml::XT_CHARACTERS:
                     case xml::XT_CDATA:
                     case xml::XT_COMMENT:
+                    case xml::XT_ATTRIBUTE:
                         break;
 
                     case xml::XT_START_ELEMENT:
@@ -417,14 +464,14 @@ namespace lsp
                             res = read_instruments(p, &dst->instruments);
                         else
                         {
-                            lsp_trace("Invalid tag: %s", name->get_native());
-                            res = STATUS_BAD_FORMAT;
+                            lsp_warn("Unexpected tag: %s", name->get_native());
+                            res = skip_tags(p);
                         }
                         break;
                     }
 
                     case xml::XT_END_ELEMENT:
-                        return STATUS_OK;
+                        return res;
 
                     default:
                         return STATUS_CORRUPTED;
