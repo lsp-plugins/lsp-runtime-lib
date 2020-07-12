@@ -99,7 +99,7 @@ namespace lsp
 
 
         /**
-         * Load configuration file
+         * Load drumkit file
          * @param path UTF-8 encoded location of the file
          * @param dst pointer to store drumkit data
          * @return status of operation
@@ -107,7 +107,7 @@ namespace lsp
         status_t load(const char *path, drumkit_t *dst);
 
         /**
-         * Load configuration file
+         * Load drumkit file
          * @param path location of the file
          * @param dst pointer to store drumkit data
          * @return status of operation
@@ -115,7 +115,7 @@ namespace lsp
         status_t load(const LSPString *path, drumkit_t *dst);
 
         /**
-         * Load configuration file
+         * Load drumkit file
          * @param path location of the file
          * @param dst pointer to store drumkit data
          * @return status of operation
@@ -123,7 +123,7 @@ namespace lsp
         status_t load(const io::Path *path, drumkit_t *dst);
 
         /**
-         * Load configuration from character input stream
+         * Load drumkit from character input stream
          * @param input stream pointer
          * @param dst pointer to store drumkit data
          * @return status of operation
@@ -131,7 +131,7 @@ namespace lsp
         status_t load(io::IInStream *is, drumkit_t *dst);
 
         /**
-         * Load configuration from character input stream
+         * Load drumkit from character input stream
          * @param input sequence pointer
          * @param dst pointer to store drumkit data
          * @return status of operation

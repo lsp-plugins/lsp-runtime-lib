@@ -540,6 +540,7 @@ namespace lsp
             return res;
         }
 
+        //---------------------------------------------------------------------
         status_t load(const char *path, drumkit_t *dst)
         {
             if ((path == NULL) || (dst == NULL))
