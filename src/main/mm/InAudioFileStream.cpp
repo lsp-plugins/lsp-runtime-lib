@@ -419,7 +419,7 @@ namespace lsp
                 return IInAudioStream::skip(nframes);
 
         #ifdef USE_LIBSNDFILE
-            sf_count_t res = sf_seek(hHandle, nframes, SF_SEEK_CUR);
+            sf_count_t res = sf_seek(hHandle, nframes, SEEK_CUR);
             if (res >= 0)
             {
                 nOffset    += nframes;
@@ -454,7 +454,7 @@ namespace lsp
                 return IInAudioStream::seek(nframes);
 
         #ifdef USE_LIBSNDFILE
-            sf_count_t res = sf_seek(hHandle, nframes, SF_SEEK_SET);
+            sf_count_t res = sf_seek(hHandle, nframes, SEEK_SET);
             if (res >= 0)
             {
                 nOffset     = nframes;
