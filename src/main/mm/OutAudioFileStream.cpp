@@ -148,10 +148,12 @@ namespace lsp
                 case CFMT_DPCM_8:       res |= SF_FORMAT_DPCM_8; break;
                 case CFMT_DPCM_16:      res |= SF_FORMAT_DPCM_16; break;
                 case CFMT_VORBIS:       res |= SF_FORMAT_VORBIS; break;
+            #ifdef LIBSNDFILE_HAS_ALAC
                 case CFMT_ALAC_16:      res |= SF_FORMAT_ALAC_16; break;
                 case CFMT_ALAC_20:      res |= SF_FORMAT_ALAC_20; break;
                 case CFMT_ALAC_24:      res |= SF_FORMAT_ALAC_24; break;
                 case CFMT_ALAC_32:      res |= SF_FORMAT_ALAC_32; break;
+            #endif /* LIBSNDFILE_HAS_ALAC */
 
                 default:
                     return false;
@@ -600,7 +602,7 @@ namespace lsp
                 return -set_error(STATUS_CLOSED);
 
         #ifdef USE_LIBSNDFILE
-            sf_count_t offset = sf_seek(hHandle, nframes, SF_SEEK_SET);
+            sf_count_t offset = sf_seek(hHandle, nframes, SEEK_SET);
             if (offset < 0)
                 return -set_error(decode_sf_error(hHandle));
 
