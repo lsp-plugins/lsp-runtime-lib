@@ -98,7 +98,7 @@ UTEST_BEGIN("runtime.fmt.config", pullparser)
         UTEST_ASSERT(p.next(&xp) == STATUS_OK);
         UTEST_ASSERT(xp.name.equals_ascii("key7"));
         UTEST_ASSERT(xp.flags == SF_TYPE_F32);
-        UTEST_ASSERT(::isinf(xp.v.f32) && (xp.v.f32 < 0)); // -inf
+        UTEST_ASSERT(isinf(xp.v.f32) && (xp.v.f32 < 0)); // -inf
 
         // key8
         UTEST_ASSERT(p.next(&xp) == STATUS_OK);

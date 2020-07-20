@@ -2,6 +2,12 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 0.5.3 ===
+* Added system::get_temporary_dir() functions.
+* Added support of Hydrogen drumkit XML file format.
+* Better compatibility with old gcc, glibc and libsndfile.
+* Replaced pthread_yield() with sched_yield() calls in mutexes.
+
 === 0.5.2 ===
 * Added i18n support.
 * Updated swap functions for expr::Parameters and LSPString.

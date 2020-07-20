@@ -1161,6 +1161,29 @@ $(LSP_RUNTIME_LIB_BIN)/main/fmt/java/const.o: main/fmt/java/const.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h
+$(LSP_RUNTIME_LIB_BIN)/main/fmt/Hydrogen.o: main/fmt/Hydrogen.cpp \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/xml/PullParser.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/xml/const.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/Hydrogen.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/File.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InStringSequence.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/expr/Tokenizer.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/expr/token.h
 $(LSP_RUNTIME_LIB_BIN)/main/fmt/config/types.o: main/fmt/config/types.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/config/types.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
@@ -2159,6 +2182,32 @@ $(LSP_RUNTIME_LIB_BIN)/test/fmt/java.o: test/fmt/java.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/java/ObjectStreamField.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/java/Enum.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/java/ObjectStreamClass.h
+$(LSP_RUNTIME_LIB_BIN)/test/fmt/hydrogen.o: test/fmt/hydrogen.cpp \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/utest.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/test.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/env.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/main/config.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/types.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/main/dynarray.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/helpers.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Dir.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/File.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/Hydrogen.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h
 $(LSP_RUNTIME_LIB_BIN)/test/fmt/config/serializer.o: \
  test/fmt/config/serializer.cpp \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/utest.h \

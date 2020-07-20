@@ -15,7 +15,7 @@
 
 #ifdef USE_LIBSNDFILE
     #include <sndfile.h>
-#endif
+#endif /* USE_LIBSNDFILE */
 
 namespace lsp
 {
