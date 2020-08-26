@@ -556,12 +556,12 @@ namespace lsp
         template <>
             struct allocator_spec<LSPString>: public allocator_iface
             {
-                static void *copy_func(const void *src, size_t size);
+                static void *clone_func(const void *src, size_t size);
                 static void free_func(void *ptr);
 
                 explicit allocator_spec()
                 {
-                    copy        = copy_func;
+                    clone       = clone_func;
                     free        = free_func;
                 }
             };

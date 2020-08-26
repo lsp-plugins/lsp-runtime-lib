@@ -2473,7 +2473,7 @@ namespace lsp
             return sa->compare_to(sb);
         }
 
-        void *allocator_spec<LSPString>::copy_func(const void *src, size_t size)
+        void *allocator_spec<LSPString>::clone_func(const void *src, size_t size)
         {
             return (static_cast<const LSPString *>(src))->clone();
         }

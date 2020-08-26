@@ -3,6 +3,9 @@
 *******************************************************************************
 
 === 0.5.4 ===
+* Updated LSPString lltl specifier to match lltl-lib 0.5.3.
+* Updated build files to support static library builds.
+* Updated license files to better conform LGPL3+ license.
 
 === 0.5.3 ===
 * Added system::get_temporary_dir() functions.
