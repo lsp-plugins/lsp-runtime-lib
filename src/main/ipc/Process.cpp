@@ -1188,6 +1188,8 @@ namespace lsp
             // Launch the process
             ::execve(cmd, argv, envp);
 
+            // printf("execve failed\n");
+
             // Return error only if ::execvpe failed
             ::exit(STATUS_UNKNOWN_ERR);
         }

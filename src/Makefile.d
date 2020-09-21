@@ -1651,6 +1651,31 @@ $(LSP_RUNTIME_LIB_BIN)/test/ipc/process.o: test/ipc/process.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/ipc/IRunnable.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/system.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h
+$(LSP_RUNTIME_LIB_BIN)/test/ipc/process2.o: test/ipc/process2.cpp \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/utest.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/test.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/env.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/main/config.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/types.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/main/dynarray.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/ipc/Process.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutStream.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/ipc/Thread.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/ipc/IRunnable.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/system.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h
 $(LSP_RUNTIME_LIB_BIN)/test/ipc/mutex.o: test/ipc/mutex.cpp \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/utest.h \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/version.h \
