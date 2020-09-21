@@ -608,5 +608,16 @@ namespace lsp
             (uint32_t(L * 0xff) << 0);
     }
 
+    void Color::swap(Color *c)
+    {
+        lsp::swap(R, c->R);
+        lsp::swap(G, c->G);
+        lsp::swap(B, c->B);
+        lsp::swap(H, c->H);
+        lsp::swap(S, c->S);
+        lsp::swap(L, c->L);
+        lsp::swap(A, c->A);
+        lsp::swap(nMask, c->nMask);
+    }
 
 } /* namespace lsp */
