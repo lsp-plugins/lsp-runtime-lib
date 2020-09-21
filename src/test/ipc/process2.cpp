@@ -41,6 +41,13 @@ namespace {
     };
 
     static StaticTest static_test;
+
+    #ifdef PLATFORM_POSIX
+        void handle_atexit(void)
+        {
+            printf("atexit called for pid=%d\n", int(getpid()));
+        }
+    #endif /* PLATFORM_POSIX */
 };
 
 UTEST_BEGIN("runtime.ipc", process2)
@@ -51,6 +58,11 @@ UTEST_BEGIN("runtime.ipc", process2)
 
         // Test static data for being not destructed
         UTEST_ASSERT(static_test.status() == STATUS_OK);
+
+        #ifdef PLATFORM_POSIX
+            printf("Parent pid=%d\n", int(getpid()));
+            atexit(handle_atexit);
+        #endif /* PLATFORM_POSIX */
 
         ipc::Process p;
         p.set_command("some-long-unexisting-command-which-will-fail");
