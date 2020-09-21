@@ -36,6 +36,7 @@ namespace lsp
             TT_IVALUE,      // Integer value
             TT_FVALUE,      // Floating-point value
             TT_STRING,      // String literal
+            TT_COLOR,       // Color code: one of @HHSSLL, #RRGGBB
 
             TT_LBRACE,      // (
             TT_RBRACE,      // )
@@ -43,6 +44,8 @@ namespace lsp
             TT_RQBRACE,     // ]
             TT_LCBRACE,     // {
             TT_RCBRACE,     // }
+            TT_SHARP,       // #
+            TT_AT,          // @
 
             // Constants
             TT_TRUE,        // true
@@ -135,7 +138,8 @@ namespace lsp
             TF_GET              = 1 << 0,   // Get new token, don't return current
             TF_XSIGN            = 1 << 1,   // Interpret sign as operator, not sign of numeric value
             TF_BAREWORD         = 1 << 2,   // Treat barewords as identifiers
-            TF_XKEYWORDS        = 1 << 3    // Exclude keywords, treat all keywords as TT_BAREWORD
+            TF_XKEYWORDS        = 1 << 3,   // Exclude keywords, treat all keywords as TT_BAREWORD
+            TF_COLOR            = 1 << 4    // Lookup for colors (@HSL and #RGB)
         };
     }
 }

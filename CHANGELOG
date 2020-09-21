@@ -3,6 +3,8 @@
 *******************************************************************************
 
 === 0.5.5 ===
+* Added support of color parsing by expr::Tokenizer when using expr::TF_COLOR flag.
+* Added new token types: expr::TF_SHARP and expr::TF_AT.
 
 === 0.5.4 ===
 * Updated LSPString lltl specifier to match lltl-lib 0.5.3.
