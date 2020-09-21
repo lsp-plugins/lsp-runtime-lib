@@ -26,11 +26,31 @@
 
 using namespace lsp;
 
+namespace {
+    class StaticTest
+    {
+        private:
+            status_t    nStatus;
+
+        public:
+            StaticTest()    { nStatus = STATUS_OK;          }
+            ~StaticTest()   { nStatus = STATUS_REMOVED;     }
+
+        public:
+            inline status_t status() const { return nStatus; }
+    };
+
+    static StaticTest static_test;
+};
+
 UTEST_BEGIN("runtime.ipc", process2)
 
     UTEST_MAIN
     {
         printf("Testing launch of non-existing process\n");
+
+        // Test static data for being not destructed
+        UTEST_ASSERT(static_test.status() == STATUS_OK);
 
         ipc::Process p;
         p.set_command("some-long-unexisting-command-which-will-fail");
@@ -49,6 +69,9 @@ UTEST_BEGIN("runtime.ipc", process2)
         UTEST_ASSERT(p.exit_code(&code) == STATUS_OK);
 
         printf("Exit code = %d\n", code);
+
+        // Test static data for being not destructed
+        UTEST_ASSERT(static_test.status() == STATUS_OK);
     }
 UTEST_END;
 
