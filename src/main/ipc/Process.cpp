@@ -1161,7 +1161,7 @@ namespace lsp
             return res;
         }
 
-        void Process::execve_process(const char *cmd, char * const *argv, char * const *envp)
+        void Process::execve_process(const char *cmd, char * const *argv, char * const *envp, bool soft_exit)
         {
             // Override STDIN, STDOUT, STDERR
             if (hStdIn >= 0)
@@ -1188,10 +1188,13 @@ namespace lsp
             // Launch the process
             ::execve(cmd, argv, envp);
 
-            // printf("execve failed\n");
+            lsp_trace("execve failed for pid=%d\n", int(getpid()));
 
             // Return error only if ::execvpe failed
-            ::exit(STATUS_UNKNOWN_ERR);
+            if (soft_exit)
+                ::_exit(STATUS_UNKNOWN_ERR);
+            else
+                ::exit(STATUS_UNKNOWN_ERR);
         }
 
         status_t Process::vfork_process(const char *cmd, char * const *argv, char * const *envp)
@@ -1214,7 +1217,7 @@ namespace lsp
 
             // The child process stuff
             if (pid == 0)
-                execve_process(cmd, argv, envp);
+                execve_process(cmd, argv, envp, true);
 
             // The parent process stuff
             nPID        = pid;
@@ -1243,7 +1246,7 @@ namespace lsp
 
             // The child process stuff
             if (pid == 0)
-                execve_process(cmd, argv, envp);
+                execve_process(cmd, argv, envp, false);
 
             // The parent process stuff
             nPID        = pid;

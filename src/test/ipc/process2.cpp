@@ -43,8 +43,11 @@ namespace {
     static StaticTest static_test;
 
     #ifdef PLATFORM_POSIX
+        static int atexit_calls = 0;
+
         void handle_atexit(void)
         {
+            ++atexit_calls;
             printf("atexit called for pid=%d\n", int(getpid()));
         }
     #endif /* PLATFORM_POSIX */
@@ -82,8 +85,9 @@ UTEST_BEGIN("runtime.ipc", process2)
 
         printf("Exit code = %d\n", code);
 
-        // Test static data for being not destructed
+        // Test static data for being not destructed and atexit() has not been called
         UTEST_ASSERT(static_test.status() == STATUS_OK);
+        UTEST_ASSERT(atexit_calls == 0);
     }
 UTEST_END;
 
