@@ -103,6 +103,7 @@ namespace lsp
 
         void PathPattern::swap(PathPattern *dst)
         {
+            sBuffer.swap(dst->sBuffer);
             sMask.swap(dst->sMask);
             vMasks.swap(dst->vMasks);
             lsp::swap(nFlags, dst->nFlags);

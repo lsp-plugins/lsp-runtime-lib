@@ -63,6 +63,7 @@ namespace lsp
                 } biter_t;
 
             protected:
+                LSPString                   sBuffer;
                 LSPString                   sMask;
                 lltl::darray<smask_t>       vMasks;
                 size_t                      nFlags;
