@@ -7,6 +7,7 @@
 * Added new token types: expr::TT_SHARP and expr::TT_AT.
 * Added Color::swap method.
 * Better work with vfork() system call.
+* Added io::PathPattern class for file name matching.
 
 === 0.5.4 ===
 * Updated LSPString lltl specifier to match lltl-lib 0.5.3.

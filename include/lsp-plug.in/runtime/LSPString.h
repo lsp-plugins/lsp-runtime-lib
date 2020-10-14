@@ -146,6 +146,7 @@ namespace lsp
              * @param src string to perform the swap
              */
             void swap(LSPString *src);
+            inline void swap(LSPString &src)            { swap(&src);       }
 
             /** Swap two characters
              *
