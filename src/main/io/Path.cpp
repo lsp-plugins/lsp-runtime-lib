@@ -699,6 +699,14 @@ namespace lsp
             return remove_base(&path->sPath);
         }
 
+        status_t Path::remove_base()
+        {
+            ssize_t idx = sPath.rindex_of(FILE_SEPARATOR_C);
+            if (idx < 0)
+                return STATUS_OK;
+            return (sPath.remove(0, idx + 1)) ? STATUS_OK : STATUS_NO_MEM;
+        }
+
         bool Path::is_absolute() const
         {
             if (sPath.length() <= 0)

@@ -125,6 +125,7 @@ namespace lsp
                 status_t    remove_base(const char *path);
                 status_t    remove_base(const LSPString *path);
                 status_t    remove_base(const Path *path);
+                status_t    remove_base();
 
                 ssize_t     fmt(const char *fmt...);
                 ssize_t     fmt(const LSPString *fmt...);

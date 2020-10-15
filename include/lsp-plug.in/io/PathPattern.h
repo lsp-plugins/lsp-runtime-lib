@@ -32,9 +32,23 @@ namespace lsp
 {
     namespace io
     {
-        /**
-         * The simple pattern for the file name
-         */
+        //
+        // The pattern for the file name.
+        //
+        // Syntax:
+        //   *             - Any character sequence
+        //   ?             - Any character
+        //   / or \        - Path separator
+        //   $/            - Escaped character '/' (Available for escaping: '*', '?', '$', '/', '\', '&', '|', '(', ')' )
+        //   name.ext      - Strict match of characters to 'name.ext'
+        //   ... & ...     - Conjunction of two conditions
+        //   ... | ...     - Disjunction of two conditions
+        //   **/ or **\     - Any path
+        //   ( ... )       - Pattern group
+        //   (! ... )      - Pattern group with inverse condition
+        //
+        // Example:
+        //   **/((*.c|*.h)&(test-*)) - matches any source/header C files for any subdirectory starting with 'test-' prefix
         class PathPattern
         {
             public:
@@ -48,6 +62,18 @@ namespace lsp
                 };
 
             protected:
+                enum command_t
+                {
+                    CMD_SEQUENCE,       // cmd1 cmd2 ...
+                    CMD_AND,            // ... & ...
+                    CMD_OR,             // ... | ...
+                    CMD_MATCH,          // ... text ...
+                    CMD_ANYCHAR,        // ... ? ...
+                    CMD_ANYCHARS,       // ... * ...
+                    CMD_ANYPATH,        // ... **/ ...
+                    CMD_SPLIT           // ... / ...
+                };
+
                 typedef struct smask_t
                 {
                     const lsp_wchar_t      *pHead;
@@ -61,6 +87,15 @@ namespace lsp
                     lsp_wchar_t            *pTail;
                     bool                    bInvert;
                 } biter_t;
+
+                typedef struct cmd_t
+                {
+                    size_t                  nStart;     // Start of character sequence
+                    size_t                  nLength;    // Length of character sequence
+                    bool                    bInverse;   // Inverse condition flag
+                    cmd_t                  *pChildren;  // List of children
+                    size_t                  nChildren;  // Number of children
+                } cmd_t;
 
             protected:
                 LSPString                   sBuffer;
@@ -87,7 +122,7 @@ namespace lsp
             public:
                 status_t                    set(const PathPattern *src)                                 { return parse(&src->sMask, src->nFlags);   }
                 status_t                    set(const Path *pattern, size_t flags = NONE)               { return parse(pattern->as_string(), flags);}
-                status_t                    set(const LSPString *pattern, size_t flags = NONE);
+                status_t                    set(const LSPString *pattern, size_t flags = NONE)          { return parse(pattern, flags);             }
                 status_t                    set(const char *pattern, size_t flags = NONE);
 
                 inline const char          *pattern() const                                             { return sMask.get_utf8();                  }
@@ -101,9 +136,9 @@ namespace lsp
                 inline status_t             set_pattern(const LSPString *pattern)                       { return set(pattern, nFlags);              }
                 inline status_t             set_pattern(const char *pattern)                            { return set(pattern, nFlags);              }
 
-                bool                        test(const char *text);
-                bool                        test(const LSPString *text);
-                inline bool                 test(const Path *path)                                      { return check_match(path->as_string());    }
+                bool                        test(const char *path);
+                bool                        test(const LSPString *path);
+                inline bool                 test(const Path *path);
 
                 void                        swap(PathPattern *dst);
                 inline void                 swap(PathPattern &dst)                                      { swap(&dst);                               }

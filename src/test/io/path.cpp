@@ -389,6 +389,14 @@ UTEST_BEGIN("runtime.io", path)
         UTEST_ASSERT(p.set(TEST_PATH3) == STATUS_OK);
         UTEST_ASSERT(p.remove_base(&xp) == STATUS_OK);
         UTEST_ASSERT(p.is_empty());
+
+        UTEST_ASSERT(p.set(TEST_PATH3) == STATUS_OK);
+        UTEST_ASSERT(p.remove_base() == STATUS_OK);
+        UTEST_ASSERT(p.equals("bin"));
+
+        UTEST_ASSERT(p.set(TEST_PATH3) == STATUS_OK);
+        UTEST_ASSERT(p.remove_base() == STATUS_OK);
+        UTEST_ASSERT(p.equals("local"));
     }
 
 //    void        clear()

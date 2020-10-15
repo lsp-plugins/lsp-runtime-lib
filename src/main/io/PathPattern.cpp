@@ -66,20 +66,8 @@ namespace lsp
 
         status_t PathPattern::set(const char *pattern, size_t flags)
         {
-            Path tmp;
-            status_t res = tmp.set(pattern);
-            if (res == STATUS_OK)
-                res     = parse(tmp.as_string(), flags);
-            return res;
-        }
-
-        status_t PathPattern::set(const LSPString *pattern, size_t flags)
-        {
-            Path tmp;
-            status_t res = tmp.set(pattern);
-            if (res == STATUS_OK)
-                res     = parse(tmp.as_string(), flags);
-            return res;
+            LSPString tmp;
+            return (tmp.set_utf8(pattern)) ? parse(&tmp, flags) : STATUS_NO_MEM;
         }
 
         size_t PathPattern::set_flags(size_t flags)
@@ -89,16 +77,46 @@ namespace lsp
             return old;
         }
 
-        bool PathPattern::test(const char *text)
+        bool PathPattern::test(const char *path)
         {
             Path tmp;
-            return (tmp.set(text)) ? check_match(tmp.as_string()) : false;
+            if (tmp.set(path) != STATUS_OK)
+                return false;
+
+            if (!(nFlags & FULL_PATH))
+            {
+                if (tmp.remove_base() != STATUS_OK)
+                    return false;
+            }
+
+            return (nFlags & FULL_PATH) ? check_match(tmp.as_string()) : false;
         }
 
-        bool PathPattern::test(const LSPString *text)
+        bool PathPattern::test(const LSPString *path)
         {
             Path tmp;
-            return (tmp.set(text)) ? check_match(tmp.as_string()) : false;
+            if (tmp.set(path) != STATUS_OK)
+                return false;
+
+            if (!(nFlags & FULL_PATH))
+            {
+                if (tmp.remove_base() != STATUS_OK)
+                    return false;
+            }
+
+            return (nFlags & FULL_PATH) ? check_match(tmp.as_string()) : false;
+        }
+
+        bool PathPattern::test(const Path *path)
+        {
+            if (!(nFlags & FULL_PATH))
+                return check_match(path->as_string());
+
+            Path tmp;
+            if (tmp.get_last(&tmp) != STATUS_OK)
+                return false;
+
+            return check_match(tmp.as_string());
         }
 
         void PathPattern::swap(PathPattern *dst)
