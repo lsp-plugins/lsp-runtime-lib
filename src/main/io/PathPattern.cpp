@@ -34,6 +34,121 @@ namespace lsp
         {
         }
 
+        ssize_t PathPattern::get_token(tokenizer_t *it)
+        {
+            // There is unget token?
+            if (it->nToken >= 0)
+                return it->nToken;
+
+            // End of input?
+            if (it->nPosition >= sMask.length())
+                return -STATUS_EOF;
+
+            // Analyze first character
+            bool escape     = false;
+            lsp_wchar_t c   = sMask.char_at(it->nPosition++);
+
+            switch (c)
+            {
+                case '?': // T_WILDCARD
+                    return it->nToken = T_WILDCARD;
+                case '&': // T_AND
+                    return it->nToken = T_AND;
+                case '|': // T_OR
+                    return it->nToken = T_OR;
+                case ')': // T_GROUP_END
+                    return it->nToken = T_GROUP_END;
+
+
+                case '\\':
+                case '/': // T_SPLIT
+                    return it->nToken = T_SPLIT;
+                case '(': // T_GROUP_START, T_IGROUP_START
+                    if (it->nPosition >= sMask.length())
+                        return it->nToken = T_GROUP_START;
+                    c = sMask.char_at(it->nPosition);
+                    if (c != '!')
+                        return it->nToken = T_GROUP_START;
+                    ++it->nPosition;
+                    return it->nToken = T_IGROUP_START;
+
+                case '*': // T_ANY, T_ANYPATH
+                    if ((it->nPosition + 2) > sMask.length())
+                        return it->nToken = T_ANY;
+                    if (sMask.char_at(it->nPosition) != '*')
+                        return it->nToken = T_ANY;
+                    c = sMask.char_at(it->nPosition+1);
+                    if ((c != '\\') && (c != '/'))
+                        return it->nToken = T_ANY;
+
+                    it->nPosition += 2;
+                    return it->nToken = T_ANYPATH;
+
+                case '`': // T_TEXT starting from escape
+                    escape          = true;
+                    it->nToken      = T_TEXT;
+                    it->nStart      = sBuffer.length();
+                    break;
+
+                default: // T_TEXT
+                    it->nToken      = T_TEXT;
+                    it->nStart      = sBuffer.length();
+                    break;
+            }
+
+            // Parse T_TEXT
+            for ( ; it->nPosition < sMask.length(); ++it->nPosition)
+            {
+                // Lookup next character
+                lsp_wchar_t c   = sMask.char_at(it->nPosition);
+
+                switch (c)
+                {
+                    // Special symbols
+                    case '*': case '/': case '\\': case '(':
+                    case ')': case '|': case '&':
+                        if (!escape)
+                        {
+                            it->nLength     = sBuffer.length() - it->nStart;
+                            return it->nToken;
+                        }
+
+                        if (!sBuffer.append(c))
+                            return -STATUS_NO_MEM;
+                        escape =  false;
+                        break;
+
+                    case '`':
+                        if (escape)
+                        {
+                            if (!sBuffer.append(c))
+                                return -STATUS_NO_MEM;
+                        }
+                        escape = !escape;
+                        break;
+
+                    default:
+                        if (escape)
+                        {
+                            if (!sBuffer.append('`'))
+                                return -STATUS_NO_MEM;
+                            escape = false;
+                        }
+                        if (!sBuffer.append(c))
+                            return -STATUS_NO_MEM;
+                        break;
+                }
+            }
+
+            // Escape character pending?
+            if (escape)
+            {
+                if (!sBuffer.append('`'))
+                    return -STATUS_NO_MEM;
+            }
+            return it->nToken;
+        }
+
         status_t PathPattern::parse(const LSPString *pattern, size_t flags)
         {
             return STATUS_NOT_IMPLEMENTED;

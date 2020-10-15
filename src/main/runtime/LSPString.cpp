@@ -931,7 +931,7 @@ namespace lsp
         if (nLength < (src->nLength + offset))
             return false;
 
-        return xcasecmp(&pData[offset], src->pData, src->nLength) == 0;
+        return xcmp(&pData[offset], src->pData, src->nLength) == 0;
     }
 
     bool LSPString::starts_with_ascii(const char *str, size_t offset) const

@@ -39,7 +39,7 @@ namespace lsp
         //   *             - Any character sequence
         //   ?             - Any character
         //   / or \        - Path separator
-        //   $/            - Escaped character '/' (Available for escaping: '*', '?', '$', '/', '\', '&', '|', '(', ')' )
+        //   `/            - Escaped character '/' (Available for escaping: '*', '?', '`', '/', '\', '&', '|', '(', ')' )
         //   name.ext      - Strict match of characters to 'name.ext'
         //   ... & ...     - Conjunction of two conditions
         //   ... | ...     - Disjunction of two conditions
@@ -68,10 +68,24 @@ namespace lsp
                     CMD_AND,            // ... & ...
                     CMD_OR,             // ... | ...
                     CMD_MATCH,          // ... text ...
-                    CMD_ANYCHAR,        // ... ? ...
+                    CMD_WILDCARD,       // ... ? ...
                     CMD_ANYCHARS,       // ... * ...
                     CMD_ANYPATH,        // ... **/ ...
                     CMD_SPLIT           // ... / ...
+                };
+
+                enum token_type_t
+                {
+                    T_GROUP_START,      // (
+                    T_IGROUP_START,     // (!
+                    T_GROUP_END,        // )
+                    T_OR,               // |
+                    T_AND,              // &
+                    T_TEXT,             // text
+                    T_WILDCARD,         // ?
+                    T_ANY,              // *
+                    T_ANYPATH,          // **/
+                    T_SPLIT             // /
                 };
 
                 typedef struct cmd_t
@@ -82,6 +96,14 @@ namespace lsp
                     cmd_t                  *pChildren;  // List of children
                     size_t                  nChildren;  // Number of children
                 } cmd_t;
+
+                typedef struct tokenizer_t
+                {
+                    ssize_t                 nToken;
+                    size_t                  nStart;
+                    size_t                  nPosition;
+                    size_t                  nLength;
+                } token_t;
 
             protected:
                 LSPString                   sBuffer;
@@ -95,6 +117,7 @@ namespace lsp
             protected:
                 status_t                    parse(const LSPString *pattern, size_t flags = NONE);
                 bool                        check_match(const LSPString *path);
+                ssize_t                     get_token(tokenizer_t *it);
 
             public:
                 explicit PathPattern();
