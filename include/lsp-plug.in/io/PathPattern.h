@@ -74,20 +74,6 @@ namespace lsp
                     CMD_SPLIT           // ... / ...
                 };
 
-                typedef struct smask_t
-                {
-                    const lsp_wchar_t      *pHead;
-                    const lsp_wchar_t      *pTail;
-                    bool                    bInvert;
-                } smask_t;
-
-                typedef struct biter_t
-                {
-                    lsp_wchar_t            *pHead;
-                    lsp_wchar_t            *pTail;
-                    bool                    bInvert;
-                } biter_t;
-
                 typedef struct cmd_t
                 {
                     size_t                  nStart;     // Start of character sequence
@@ -100,7 +86,7 @@ namespace lsp
             protected:
                 LSPString                   sBuffer;
                 LSPString                   sMask;
-                lltl::darray<smask_t>       vMasks;
+                cmd_t                       sRoot;
                 size_t                      nFlags;
 
             private:
@@ -108,11 +94,6 @@ namespace lsp
 
             protected:
                 status_t                    parse(const LSPString *pattern, size_t flags = NONE);
-                static smask_t             *parse_simple(lltl::darray<smask_t> *dst, biter_t *bi);
-                static bool                 check_simple_case(const lsp_wchar_t *head, const lsp_wchar_t *tail, const lsp_wchar_t *shead, const lsp_wchar_t *stail);
-                static bool                 check_simple_nocase(const lsp_wchar_t *head, const lsp_wchar_t *tail, const lsp_wchar_t *shead, const lsp_wchar_t *stail);
-                bool                        check_mask(smask_t *mask, const lsp_wchar_t *s, size_t len);
-
                 bool                        check_match(const LSPString *path);
 
             public:

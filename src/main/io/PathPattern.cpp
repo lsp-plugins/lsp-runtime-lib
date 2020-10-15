@@ -39,26 +39,6 @@ namespace lsp
             return STATUS_NOT_IMPLEMENTED;
         }
 
-        PathPattern::smask_t *PathPattern::parse_simple(lltl::darray<smask_t> *dst, biter_t *bi)
-        {
-            return NULL;
-        }
-
-        bool PathPattern::check_simple_case(const lsp_wchar_t *head, const lsp_wchar_t *tail, const lsp_wchar_t *shead, const lsp_wchar_t *stail)
-        {
-            return false;
-        }
-
-        bool PathPattern::check_simple_nocase(const lsp_wchar_t *head, const lsp_wchar_t *tail, const lsp_wchar_t *shead, const lsp_wchar_t *stail)
-        {
-            return false;
-        }
-
-        bool PathPattern::check_mask(smask_t *mask, const lsp_wchar_t *s, size_t len)
-        {
-            return false;
-        }
-
         bool PathPattern::check_match(const LSPString *path)
         {
             return false;
@@ -123,7 +103,7 @@ namespace lsp
         {
             sBuffer.swap(dst->sBuffer);
             sMask.swap(dst->sMask);
-            vMasks.swap(dst->vMasks);
+            lsp::swap(sRoot, dst->sRoot);
             lsp::swap(nFlags, dst->nFlags);
         }
     }
