@@ -26,7 +26,7 @@
 #include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/common/status.h>
-#include <lsp-plug.in/lltl/darray.h>
+#include <lsp-plug.in/lltl/parray.h>
 
 namespace lsp
 {
@@ -85,21 +85,25 @@ namespace lsp
                     T_WILDCARD,         // ?
                     T_ANY,              // *
                     T_ANYPATH,          // **/
-                    T_SPLIT             // /
+                    T_SPLIT,            // /
+                    T_EOF               // <eof>
                 };
 
                 typedef struct cmd_t
                 {
+                    ssize_t                 nCommand;   // Command
                     size_t                  nStart;     // Start of character sequence
                     size_t                  nLength;    // Length of character sequence
                     bool                    bInverse;   // Inverse condition flag
-                    cmd_t                  *pChildren;  // List of children
-                    size_t                  nChildren;  // Number of children
+                    lltl::parray<cmd_t>     sChildren;
                 } cmd_t;
 
                 typedef struct tokenizer_t
                 {
                     ssize_t                 nToken;
+
+                    const LSPString        *pMask;
+                    LSPString              *pBuffer;
                     size_t                  nStart;
                     size_t                  nPosition;
                     size_t                  nLength;
@@ -108,7 +112,7 @@ namespace lsp
             protected:
                 LSPString                   sBuffer;
                 LSPString                   sMask;
-                cmd_t                       sRoot;
+                cmd_t                      *pRoot;
                 size_t                      nFlags;
 
             private:
@@ -117,7 +121,16 @@ namespace lsp
             protected:
                 status_t                    parse(const LSPString *pattern, size_t flags = NONE);
                 bool                        check_match(const LSPString *path);
-                ssize_t                     get_token(tokenizer_t *it);
+
+                static ssize_t              get_token(tokenizer_t *it);
+                static inline void          next_token(tokenizer_t *it);
+                static status_t             parse_group(cmd_t **dst, tokenizer_t *it);
+                static status_t             parse_and(cmd_t **dst, tokenizer_t *it);
+                static status_t             parse_or(cmd_t **dst, tokenizer_t *it, bool inverse);
+                static status_t             parse_sequence(cmd_t **dst, tokenizer_t *it);
+                static void                 destroy_data(cmd_t *cmd);
+                static status_t             merge_step(cmd_t **out, cmd_t *next, ssize_t type);
+                static status_t             merge_last(cmd_t **dst, cmd_t *out, cmd_t *next, ssize_t tok, bool inverse);
 
             public:
                 explicit PathPattern();
