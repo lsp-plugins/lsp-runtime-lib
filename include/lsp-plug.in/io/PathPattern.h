@@ -43,9 +43,9 @@ namespace lsp
         //   name.ext      - Strict match of characters to 'name.ext'
         //   ... & ...     - Conjunction of two conditions
         //   ... | ...     - Disjunction of two conditions
+        //   ! ...         - Negotation of match
         //   **/ or **\     - Any path
         //   ( ... )       - Pattern group
-        //   (! ... )      - Pattern group with inverse condition
         //
         // Example:
         //   **/((*.c|*.h)&(test-*)) - matches any source/header C files for any subdirectory starting with 'test-' prefix
@@ -67,9 +67,9 @@ namespace lsp
                     CMD_SEQUENCE,       // cmd1 cmd2 ...
                     CMD_AND,            // ... & ...
                     CMD_OR,             // ... | ...
-                    CMD_MATCH,          // ... text ...
+                    CMD_TEXT,           // ... text ...
                     CMD_WILDCARD,       // ... ? ...
-                    CMD_ANYCHARS,       // ... * ...
+                    CMD_ANY,            // ... * ...
                     CMD_ANYPATH,        // ... **/ ...
                     CMD_SPLIT           // ... / ...
                 };
@@ -77,10 +77,11 @@ namespace lsp
                 enum token_type_t
                 {
                     T_GROUP_START,      // (
-                    T_IGROUP_START,     // (!
+                    T_IGROUP_START,     // !(
                     T_GROUP_END,        // )
                     T_OR,               // |
                     T_AND,              // &
+                    T_NOT,              // !
                     T_TEXT,             // text
                     T_WILDCARD,         // ?
                     T_ANY,              // *
@@ -91,9 +92,9 @@ namespace lsp
 
                 typedef struct cmd_t
                 {
-                    ssize_t                 nCommand;   // Command
+                    command_t               nCommand;   // Command
                     size_t                  nStart;     // Start of character sequence
-                    size_t                  nLength;    // Length of character sequence
+                    size_t                  nEnd;       // Length of character sequence
                     bool                    bInverse;   // Inverse condition flag
                     lltl::parray<cmd_t>     sChildren;
                 } cmd_t;
@@ -104,9 +105,9 @@ namespace lsp
 
                     const LSPString        *pMask;
                     LSPString              *pBuffer;
-                    size_t                  nStart;
                     size_t                  nPosition;
-                    size_t                  nLength;
+                    size_t                  nStart;
+                    size_t                  nEnd;
                 } token_t;
 
             protected:
@@ -124,13 +125,14 @@ namespace lsp
 
                 static ssize_t              get_token(tokenizer_t *it);
                 static inline void          next_token(tokenizer_t *it);
-                static status_t             parse_group(cmd_t **dst, tokenizer_t *it);
+                static status_t             parse_not(cmd_t **dst, tokenizer_t *it);
                 static status_t             parse_and(cmd_t **dst, tokenizer_t *it);
-                static status_t             parse_or(cmd_t **dst, tokenizer_t *it, bool inverse);
+                static status_t             parse_or(cmd_t **dst, tokenizer_t *it);
                 static status_t             parse_sequence(cmd_t **dst, tokenizer_t *it);
                 static void                 destroy_data(cmd_t *cmd);
-                static status_t             merge_step(cmd_t **out, cmd_t *next, ssize_t type);
-                static status_t             merge_last(cmd_t **dst, cmd_t *out, cmd_t *next, ssize_t tok, bool inverse);
+                static status_t             merge_simple(cmd_t **out, command_t type, command_t cmd, size_t start, size_t end);
+                static status_t             merge_step(cmd_t **out, cmd_t *next, command_t type);
+                static status_t             merge_last(cmd_t **dst, cmd_t *out, cmd_t *next, ssize_t tok);
 
             public:
                 explicit PathPattern();

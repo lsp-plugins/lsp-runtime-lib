@@ -41,6 +41,15 @@ namespace lsp
         {
             if (cmd == NULL)
                 return;
+
+            // Recursively delete all sub-nodes
+            for (size_t i=0, n=cmd->sChildren.size(); i<n; ++i)
+            {
+                cmd_t *child = cmd->sChildren.uget(i);
+                destroy_data(child);
+            }
+
+            delete cmd;
         }
 
         void PathPattern::next_token(tokenizer_t *it)
@@ -73,21 +82,23 @@ namespace lsp
                     return it->nToken = T_AND;
                 case '|': // T_OR
                     return it->nToken = T_OR;
+                case '!': // T_NOT, TT_IGROUP_START
+                    if (it->nPosition >= mask->length())
+                        return it->nToken = T_NOT;
+                    if (mask->char_at(it->nPosition) != '(')
+                        return it->nToken = T_NOT;
+
+                    ++it->nPosition;
+                    return it->nToken = T_IGROUP_START;
                 case ')': // T_GROUP_END
                     return it->nToken = T_GROUP_END;
-
 
                 case '\\':
                 case '/': // T_SPLIT
                     return it->nToken = T_SPLIT;
+
                 case '(': // T_GROUP_START, T_IGROUP_START
-                    if (it->nPosition >= mask->length())
-                        return it->nToken = T_GROUP_START;
-                    c = mask->char_at(it->nPosition);
-                    if (c != '!')
-                        return it->nToken = T_GROUP_START;
-                    ++it->nPosition;
-                    return it->nToken = T_IGROUP_START;
+                    return it->nToken = T_GROUP_START;
 
                 case '*': // T_ANY, T_ANYPATH
                     if ((it->nPosition + 2) > mask->length())
@@ -110,6 +121,8 @@ namespace lsp
                 default: // T_TEXT
                     it->nToken      = T_TEXT;
                     it->nStart      = buf->length();
+                    if (!buf->append(c))
+                        return -STATUS_NO_MEM;
                     break;
             }
 
@@ -117,16 +130,17 @@ namespace lsp
             for ( ; it->nPosition < mask->length(); ++it->nPosition)
             {
                 // Lookup next character
-                lsp_wchar_t c   = mask->char_at(it->nPosition);
+                c   = mask->char_at(it->nPosition);
 
                 switch (c)
                 {
                     // Special symbols
-                    case '*': case '/': case '\\': case '(':
-                    case ')': case '|': case '&':
+                    case '*': case '?': case '/': case '\\':
+                    case '(': case ')': case '|': case '&':
+                    case '!':
                         if (!escape)
                         {
-                            it->nLength     = buf->length() - it->nStart;
+                            it->nEnd    = buf->length();
                             return it->nToken;
                         }
 
@@ -163,25 +177,43 @@ namespace lsp
                 if (!buf->append('`'))
                     return -STATUS_NO_MEM;
             }
+            it->nEnd    = buf->length();
+
             return it->nToken;
         }
 
-        status_t PathPattern::merge_step(cmd_t **out, cmd_t *next, ssize_t type)
+        status_t PathPattern::merge_step(cmd_t **out, cmd_t *next, command_t type)
         {
             if (*out == NULL)
             {
                 cmd_t *tmp      = new cmd_t();
                 tmp->nCommand   = type;
                 tmp->nStart     = 0;
-                tmp->nLength    = 0;
+                tmp->nEnd       = 0;
                 tmp->bInverse   = false;
                 *out            = tmp;
             }
+            if (next == NULL)
+                return STATUS_OK;
 
             return (*out)->sChildren.add(next) ? STATUS_OK : STATUS_NO_MEM;
         }
 
-        status_t PathPattern::merge_last(cmd_t **dst, cmd_t *out, cmd_t *next, ssize_t tok, bool inverse)
+        status_t PathPattern::merge_simple(cmd_t **out, command_t type, command_t cmd, size_t start, size_t end)
+        {
+            cmd_t *tmp      = new cmd_t();
+            tmp->nCommand   = cmd;
+            tmp->nStart     = start;
+            tmp->nEnd       = end;
+            tmp->bInverse   = false;
+
+            status_t res = merge_step(out, tmp, type);
+            if (res != STATUS_OK)
+                destroy_data(tmp);
+            return res;
+        }
+
+        status_t PathPattern::merge_last(cmd_t **dst, cmd_t *out, cmd_t *next, ssize_t tok)
         {
             // Analyze last token
             if (tok < 0)
@@ -192,7 +224,6 @@ namespace lsp
             }
             else if (out == NULL)
             {
-                next->bInverse      = inverse;
                 *dst                = next;
                 return STATUS_OK;
             }
@@ -204,7 +235,6 @@ namespace lsp
             }
 
             // Return the output expression
-            out->bInverse       = inverse;
             *dst                = out;
 
             return STATUS_OK;
@@ -212,19 +242,167 @@ namespace lsp
 
         status_t PathPattern::parse_sequence(cmd_t **dst, tokenizer_t *it)
         {
+            cmd_t *out = NULL, *next = NULL;
+            status_t res;
+
+            while (true)
+            {
+                ssize_t tok     = get_token(it);
+
+                switch (tok)
+                {
+                    case T_GROUP_START:
+                    case T_IGROUP_START:
+                        next_token(it);
+                        if ((res = parse_or(&next, it)) != STATUS_OK)
+                            break;
+                        next->bInverse  = (tok == T_IGROUP_START);
+                        if ((res = merge_step(&out, next, CMD_SEQUENCE)) != STATUS_OK)
+                        {
+                            destroy_data(next);
+                            break;
+                        }
+
+                        tok = get_token(it);
+                        if (tok == T_EOF)
+                            return -STATUS_EOF;
+                        else if (tok != T_GROUP_END)
+                            return -STATUS_BAD_FORMAT;
+                        next_token(it);
+                        break;
+
+                    case T_TEXT:
+                        next_token(it);
+                        res = merge_simple(&out, CMD_SEQUENCE, CMD_TEXT, it->nStart, it->nEnd);
+                        break;
+
+                    case T_WILDCARD:
+                        next_token(it);
+                        // Premature optimization: Group wildcard characters into single one
+                        next = (out != NULL) ? out->sChildren.last() : NULL;
+                        if ((next != NULL) && (next->nCommand == CMD_WILDCARD))
+                        {
+                            ++next->nEnd;
+                            break;
+                        }
+                        res = merge_simple(&out, CMD_SEQUENCE, CMD_WILDCARD, 0, 1);
+                        break;
+
+                    case T_ANY:
+                        next_token(it);
+                        // Premature optimization: Reduce sequence of * to one element
+                        next = (out != NULL) ? out->sChildren.last() : NULL;
+                        if ((next != NULL) && (next->nCommand == CMD_ANY))
+                            break;
+                        res = merge_simple(&out, CMD_SEQUENCE, CMD_ANY, 0, 0);
+                        break;
+
+                    case T_ANYPATH:
+                        next_token(it);
+                        next = (out != NULL) ? out->sChildren.last() : NULL;
+                        // Premature optimization: Reduce sequence of **/ to one element
+                        if ((next != NULL) && (next->nCommand == CMD_ANYPATH))
+                            break;
+                        res = merge_simple(&out, CMD_SEQUENCE, CMD_ANYPATH, 0, 0);
+                        break;
+
+                    case T_SPLIT:
+                        next_token(it);
+                        res = merge_simple(&out, CMD_SEQUENCE, CMD_SPLIT, it->nStart, it->nEnd);
+                        break;
+
+                    default:
+                        res = merge_step(&out, NULL, CMD_SEQUENCE);
+                        if (res != STATUS_OK)
+                            break;
+
+                        if (out->sChildren.size() == 1)
+                        {
+                            // Premature optimization: treat sequence of one element as this element
+                            *dst = out->sChildren.uget(0);
+                            out->sChildren.clear();
+                            destroy_data(out);
+                        }
+                        else
+                        {
+                            if (out->sChildren.is_empty())
+                            {
+                                // Premature optimization: Treat empty sequence as empty text
+                                out->nCommand   = CMD_TEXT;
+                                out->nStart     = 0;
+                                out->nEnd       = 0;
+                            }
+
+                            *dst = out;
+                        }
+
+                        return res;
+                }
+
+                if (res != STATUS_OK)
+                {
+                    destroy_data(out);
+                    return res;
+                }
+            }
+        }
+
+        status_t PathPattern::parse_not(cmd_t **dst, tokenizer_t *it)
+        {
+            bool inverse    = false;
+
+            // Premature optimization: treat multiple ! as valid inverse
+            ssize_t tok     = get_token(it);
+            while (tok == T_NOT)
+            {
+                next_token(it);
+                inverse         = !inverse;
+                tok             = get_token(it);
+            }
+
+            status_t res = parse_sequence(dst, it);
+            if (res == STATUS_OK)
+                (*dst)->bInverse    = inverse;
+
+            return res;
         }
 
         status_t PathPattern::parse_and(cmd_t **dst, tokenizer_t *it)
         {
+            cmd_t *out = NULL, *next = NULL;
+
+            // Parse sub-expression
+            status_t res    = parse_not(&next, it);
+            if (res != STATUS_OK)
+                return res;
+
+            // Get token (and move to next)
+            ssize_t tok     = get_token(it);
+            while (tok == T_AND)
+            {
+                // Commit token
+                next_token(it);
+
+                // Merge command and parse next sub-expression
+                if ((res = merge_step(&out, next, CMD_AND)) == STATUS_OK)
+                    res = parse_not(&next, it);
+
+                // Parse command
+                if (res != STATUS_OK)
+                {
+                    destroy_data(out);
+                    destroy_data(next);
+                    return res;
+                }
+
+                // Get next token
+                tok                 = get_token(it);
+            }
+
+            return merge_last(dst, out, next, tok);
         }
 
-        status_t PathPattern::parse_group(cmd_t **dst, tokenizer_t *it)
-        {
-            ssize_t t = get_token(it);
-//            if (t
-        }
-
-        status_t PathPattern::parse_or(cmd_t **dst, tokenizer_t *it, bool inverse)
+        status_t PathPattern::parse_or(cmd_t **dst, tokenizer_t *it)
         {
             cmd_t *out = NULL, *next = NULL;
 
@@ -256,8 +434,7 @@ namespace lsp
                 tok                 = get_token(it);
             }
 
-            return merge_last(dst, out, next, tok, inverse);
-
+            return merge_last(dst, out, next, tok);
         }
 
         status_t PathPattern::parse(const LSPString *pattern, size_t flags)
@@ -270,22 +447,26 @@ namespace lsp
                 return STATUS_NO_MEM;
             tmp.nFlags = flags;
 
-            tmp.pRoot->nStart    = 0;
-            tmp.pRoot->nLength   = 0;
-            tmp.pRoot->bInverse  = false;
-
             // Initialize tokenizer
             it.nToken       = -1;
             it.pMask        = &tmp.sMask;
             it.pBuffer      = &tmp.sBuffer;
-            it.nStart       = 0;
             it.nPosition    = 0;
-            it.nLength      = 0;
+            it.nStart       = 0;
+            it.nEnd         = 0;
 
             // Parse expression
-            status_t res = parse_or(&tmp.pRoot, &it, false);
+            status_t res = parse_or(&tmp.pRoot, &it);
             if (res == STATUS_OK)
+            {
+                ssize_t tok = get_token(&it);
+                if (tok < 0)
+                    return -tok;
+                else if (tok != T_EOF)
+                    return STATUS_BAD_FORMAT;
+
                 tmp.swap(this); // Apply new value on success
+            }
 
             return res;
         }
