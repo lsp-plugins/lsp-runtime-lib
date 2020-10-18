@@ -72,8 +72,8 @@ UTEST_BEGIN("runtime.io", pathpattern)
                     case CMD_PATTERN:
                     {
                         LSPString tmp;
-                        tmp.set(&sMask, cmd->nStart, cmd->nEnd);
-                        pTest->printf("PATTERN (\"%s\")\n", tmp.get_utf8());
+                        tmp.set(&sMask, cmd->nStart, cmd->nStart + cmd->nLength);
+                        pTest->printf("PATTERN (\"%s\") chars=%d\n", tmp.get_utf8(), int(cmd->nChars));
                         break;
                     }
 
@@ -115,6 +115,7 @@ UTEST_BEGIN("runtime.io", pathpattern)
             "!?file.ext",
             "?file.ext",
             "``quoted`?``.file",
+            "``quoted`?``.file`",
             "file.ext?",
             "file*.ext",
             "file.???",

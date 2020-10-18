@@ -72,7 +72,8 @@ namespace lsp
 
             // Analyze first character
             it->nStart              = it->nPosition;
-            it->nEnd                = it->nPosition;
+            it->nLength             = 0;
+            it->nChars              = 0;
             lsp_wchar_t c           = mask->char_at(it->nPosition++);
             bool escape;
 
@@ -111,6 +112,8 @@ namespace lsp
                 default: // T_TEXT
                     it->nToken      = T_TEXT;
                     escape          = c == '`';
+                    if (!escape)
+                        ++it->nChars;
                     break;
             }
 
@@ -127,24 +130,30 @@ namespace lsp
                     case '&': case '!':
                         if (!escape)
                         {
-                            it->nEnd    = it->nPosition;
+                            it->nLength = it->nPosition - it->nStart;
                             return it->nToken;
                         }
+                        ++it->nChars;
                         escape = false;
                         break;
 
                     case '`':
+                        if (escape)
+                            ++it->nChars;
                         escape  = !escape;
                         break;
 
                     default:
+                        ++it->nChars;
                         escape  = false;
                         break;
                 }
             }
 
             // Escape character pending?
-            it->nEnd    = it->nPosition;
+            if (escape)
+                ++it->nChars;
+            it->nLength     = it->nPosition - it->nStart;
 
             return it->nToken;
         }
@@ -156,7 +165,8 @@ namespace lsp
                 cmd_t *tmp      = new cmd_t();
                 tmp->nCommand   = type;
                 tmp->nStart     = 0;
-                tmp->nEnd       = 0;
+                tmp->nLength    = 0;
+                tmp->nChars     = 0;
                 tmp->bInverse   = false;
                 *out            = tmp;
             }
@@ -166,12 +176,13 @@ namespace lsp
             return (*out)->sChildren.add(next) ? STATUS_OK : STATUS_NO_MEM;
         }
 
-        status_t PathPattern::merge_simple(cmd_t **out, command_t type, command_t cmd, size_t start, size_t end)
+        status_t PathPattern::merge_simple(cmd_t **out, command_t type, command_t cmd, tokenizer_t *it)
         {
             cmd_t *tmp      = new cmd_t();
             tmp->nCommand   = cmd;
-            tmp->nStart     = start;
-            tmp->nEnd       = end;
+            tmp->nStart     = it->nStart;
+            tmp->nLength    = it->nLength;
+            tmp->nChars     = it->nChars;
             tmp->bInverse   = false;
 
             status_t res = merge_step(out, tmp, type);
@@ -240,7 +251,7 @@ namespace lsp
 
                     case T_TEXT:
                         next_token(it);
-                        res = merge_simple(&out, CMD_SEQUENCE, CMD_PATTERN, it->nStart, it->nEnd);
+                        res = merge_simple(&out, CMD_SEQUENCE, CMD_PATTERN, it);
                         break;
 
                     case T_ANY:
@@ -249,7 +260,7 @@ namespace lsp
                         next = (out != NULL) ? out->sChildren.last() : NULL;
                         if ((next != NULL) && (next->nCommand == CMD_ANY))
                             break;
-                        res = merge_simple(&out, CMD_SEQUENCE, CMD_ANY, 0, 0);
+                        res = merge_simple(&out, CMD_SEQUENCE, CMD_ANY, it);
                         break;
 
                     case T_ANYPATH:
@@ -258,7 +269,7 @@ namespace lsp
                         // Premature optimization: Reduce sequence of **/ to one element
                         if ((next != NULL) && (next->nCommand == CMD_ANYPATH))
                             break;
-                        res = merge_simple(&out, CMD_SEQUENCE, CMD_ANYPATH, 0, 0);
+                        res = merge_simple(&out, CMD_SEQUENCE, CMD_ANYPATH, it);
                         break;
 
                     default:
@@ -280,7 +291,8 @@ namespace lsp
                                 // Premature optimization: Treat empty sequence as empty text
                                 out->nCommand   = CMD_PATTERN;
                                 out->nStart     = 0;
-                                out->nEnd       = 0;
+                                out->nLength    = 0;
+                                out->nChars     = 0;
                             }
 
                             *dst = out;
@@ -402,7 +414,8 @@ namespace lsp
             it.pMask        = &tmp.sMask;
             it.nPosition    = 0;
             it.nStart       = 0;
-            it.nEnd         = 0;
+            it.nLength      = 0;
+            it.nChars       = 0;
 
             // Parse expression
             status_t res = parse_or(&tmp.pRoot, &it);
@@ -423,9 +436,14 @@ namespace lsp
         bool PathPattern::pattern_matcher_seek(matcher_t *m, const pos_t *pos)
         {
             text_matcher_t *sm = static_cast<text_matcher_t *>(m);
+            const cmd_t *cmd = sm->cmd;
+
+            // Seek success for inverse statement
+            if (!cmd->bInverse)
+                return true;
 
             sm->pos.start   = pos->start;
-            sm->pos.end     = pos->end;
+            sm->pos.count   = pos->count;
             sm->calls       = 0;
             return true;
         }
@@ -440,7 +458,7 @@ namespace lsp
                 return false;
             ++sm->calls;
 
-            size_t len = cmd->nEnd - cmd->nStart;
+
             bool match;
 
 
@@ -479,8 +497,8 @@ namespace lsp
             // Analyze match
             if (cmd->bInverse == match)
                 return false;
-            pos->start      = (match) ? sm->pos.start + len : sm->pos.start;
-            pos->end        = sm->pos.end;
+            pos->start      = (match) ? sm->pos.start + sm->pos.count : sm->pos.start;
+            pos->count      = sm->pos.count;
 
             return true;
         }

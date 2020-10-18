@@ -90,7 +90,8 @@ namespace lsp
                 {
                     command_t               nCommand;   // Command
                     size_t                  nStart;     // Start of character sequence
-                    size_t                  nEnd;       // Length of character sequence
+                    size_t                  nLength;    // Length of character sequence
+                    size_t                  nChars;     // Actual length in characters (without escaping)
                     bool                    bInverse;   // Inverse condition flag
                     lltl::parray<cmd_t>     sChildren;
                 } cmd_t;
@@ -101,8 +102,9 @@ namespace lsp
 
                     const LSPString        *pMask;
                     size_t                  nPosition;
-                    size_t                  nStart;
-                    size_t                  nEnd;
+                    size_t                  nStart;     // Start position of token data
+                    size_t                  nLength;    // Length of character sequence
+                    size_t                  nChars;     // Actual length in characters (without escaping)
                 } token_t;
 
             protected:
@@ -111,7 +113,7 @@ namespace lsp
                 typedef struct pos_t
                 {
                     size_t                  start;
-                    size_t                  end;
+                    size_t                  count;
                 } pos_t;
 
                 typedef bool (*match_seek_t) (matcher_t *m, const pos_t *it);
@@ -153,7 +155,7 @@ namespace lsp
                 static status_t             parse_or(cmd_t **dst, tokenizer_t *it);
                 static status_t             parse_sequence(cmd_t **dst, tokenizer_t *it);
                 static void                 destroy_data(cmd_t *cmd);
-                static status_t             merge_simple(cmd_t **out, command_t type, command_t cmd, size_t start, size_t end);
+                static status_t             merge_simple(cmd_t **out, command_t type, command_t cmd, tokenizer_t *it);
                 static status_t             merge_step(cmd_t **out, cmd_t *next, command_t type);
                 static status_t             merge_last(cmd_t **dst, cmd_t *out, cmd_t *next, ssize_t tok);
 
