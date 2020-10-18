@@ -68,7 +68,7 @@ namespace lsp
             static inline size_t u16len(const lsp_utf16_t *s);
 
 #ifdef ARCH_LE
-            static inline int xcmp(const lsp_wchar_t *a, const lsp_wchar_t *b, size_t n) { return ::memcmp(a, b, n * sizeof(lsp_wchar_t)); }
+            static inline int xcmp(const lsp_wchar_t *a, const lsp_wchar_t *b, size_t n)    { return ::memcmp(a, b, n * sizeof(lsp_wchar_t)); }
 #else
             static int xcmp(const lsp_wchar_t *a, const lsp_wchar_t *b, size_t n);
 #endif /* ARCH_LE */
@@ -478,6 +478,7 @@ namespace lsp
             bool equals(const lsp_wchar_t *src) const;
             bool equals(const lsp_wchar_t *src, size_t len) const;
             inline bool equals(const LSPString *src) const { return equals(src->pData, src->nLength); };
+            bool equals(const LSPString *src, ssize_t first, ssize_t last) const;
 
             bool equals_nocase(const lsp_wchar_t *src) const;
             bool equals_nocase(const lsp_wchar_t *src, size_t len) const;

@@ -36,8 +36,8 @@ namespace lsp
         // The pattern for the file name.
         //
         // Syntax:
-        //   *             - Any character sequence
-        //   ?             - Any character
+        //   *             - Any character sequence except '/' or '\'
+        //   ?             - Any character except '/' or '\'
         //   / or \        - Path separator
         //   `/            - Escaped character '/' (Available for escaping: '*', '?', '`', '/', '\', '&', '|', '(', ')' )
         //   name.ext      - Strict match of characters to 'name.ext'
@@ -67,11 +67,9 @@ namespace lsp
                     CMD_SEQUENCE,       // cmd1 cmd2 ...
                     CMD_AND,            // ... & ...
                     CMD_OR,             // ... | ...
-                    CMD_TEXT,           // ... text ...
-                    CMD_WILDCARD,       // ... ? ...
+                    CMD_PATTERN,           // ... text ...
                     CMD_ANY,            // ... * ...
                     CMD_ANYPATH,        // ... **/ ...
-                    CMD_SPLIT           // ... / ...
                 };
 
                 enum token_type_t
@@ -83,10 +81,8 @@ namespace lsp
                     T_AND,              // &
                     T_NOT,              // !
                     T_TEXT,             // text
-                    T_WILDCARD,         // ?
                     T_ANY,              // *
                     T_ANYPATH,          // **/
-                    T_SPLIT,            // /
                     T_EOF               // <eof>
                 };
 
@@ -104,14 +100,41 @@ namespace lsp
                     ssize_t                 nToken;
 
                     const LSPString        *pMask;
-                    LSPString              *pBuffer;
                     size_t                  nPosition;
                     size_t                  nStart;
                     size_t                  nEnd;
                 } token_t;
 
             protected:
-                LSPString                   sBuffer;
+                struct matcher_t;
+
+                typedef struct pos_t
+                {
+                    size_t                  start;
+                    size_t                  end;
+                } pos_t;
+
+                typedef bool (*match_seek_t) (matcher_t *m, const pos_t *it);
+                typedef bool (*match_match_t)(matcher_t *m, pos_t *it);
+
+                typedef struct matcher_t
+                {
+                    match_seek_t            seek;
+                    match_match_t           match;
+
+                    const cmd_t            *cmd;        // Command
+                    const LSPString        *mask;       // Source data
+                    const LSPString        *str;        // Destination string to match
+                    pos_t                   pos;        // Position in destination string
+                    size_t                  flags;      // Flags
+                } matcher_t;
+
+                typedef struct text_matcher_t: public matcher_t
+                {
+                    size_t                  calls;      // Number of calls
+                } text_matcher_t;
+
+            protected:
                 LSPString                   sMask;
                 cmd_t                      *pRoot;
                 size_t                      nFlags;
@@ -121,7 +144,7 @@ namespace lsp
 
             protected:
                 status_t                    parse(const LSPString *pattern, size_t flags = NONE);
-                bool                        check_match(const LSPString *path);
+                bool                        match_full(const LSPString *path) const;
 
                 static ssize_t              get_token(tokenizer_t *it);
                 static inline void          next_token(tokenizer_t *it);
@@ -133,6 +156,13 @@ namespace lsp
                 static status_t             merge_simple(cmd_t **out, command_t type, command_t cmd, size_t start, size_t end);
                 static status_t             merge_step(cmd_t **out, cmd_t *next, command_t type);
                 static status_t             merge_last(cmd_t **dst, cmd_t *out, cmd_t *next, ssize_t tok);
+
+                static matcher_t           *create_matcher(const cmd_t *cmd, const matcher_t *src, const pos_t *pos);
+                static void                 destroy_matcher(matcher_t *match);
+                matcher_t                  *create_root_matcher();
+
+                static bool                 pattern_matcher_seek(matcher_t *m, const pos_t *it);
+                static bool                 pattern_matcher_match(matcher_t *m, pos_t *it);
 
             public:
                 explicit PathPattern();
@@ -155,9 +185,9 @@ namespace lsp
                 inline status_t             set_pattern(const LSPString *pattern)                       { return set(pattern, nFlags);              }
                 inline status_t             set_pattern(const char *pattern)                            { return set(pattern, nFlags);              }
 
-                bool                        test(const char *path);
-                bool                        test(const LSPString *path);
-                inline bool                 test(const Path *path);
+                bool                        test(const char *path) const;
+                bool                        test(const LSPString *path) const;
+                inline bool                 test(const Path *path) const;
 
                 void                        swap(PathPattern *dst);
                 inline void                 swap(PathPattern &dst)                                      { swap(&dst);                               }

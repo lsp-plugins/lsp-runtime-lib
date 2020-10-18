@@ -69,29 +69,17 @@ UTEST_BEGIN("runtime.io", pathpattern)
                             do_dump(offset+2, cmd->sChildren.uget(j));
                         break;
 
-                    case CMD_TEXT:
+                    case CMD_PATTERN:
                     {
                         LSPString tmp;
-                        tmp.set(&sBuffer, cmd->nStart, cmd->nEnd);
-                        pTest->printf("TEXT (\"%s\")\n", tmp.get_utf8());
-                        break;
-                    }
-
-                    case CMD_WILDCARD:
-                    {
-                        pTest->printf("WILDCARD ('?' x %d)\n", cmd->nEnd - cmd->nStart);
+                        tmp.set(&sMask, cmd->nStart, cmd->nEnd);
+                        pTest->printf("PATTERN (\"%s\")\n", tmp.get_utf8());
                         break;
                     }
 
                     case CMD_ANY:
                     {
                         pTest->printf("ANY ('*')\n");
-                        break;
-                    }
-
-                    case CMD_SPLIT:
-                    {
-                        pTest->printf("SPLIT ('/', '\\')\n");
                         break;
                     }
 
@@ -156,6 +144,7 @@ UTEST_BEGIN("runtime.io", pathpattern)
             printf("Testing pattern \"%s\"...\n", *p);
             UTEST_ASSERT(xp.set(*p) == STATUS_OK);
             UTEST_ASSERT(xp.dump() == STATUS_OK);
+            printf("\n");
         }
     }
 

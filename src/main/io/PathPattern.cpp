@@ -20,6 +20,7 @@
  */
 
 #include <lsp-plug.in/io/PathPattern.h>
+#include <lsp-plug.in/io/charset.h>
 
 namespace lsp
 {
@@ -64,20 +65,19 @@ namespace lsp
                 return it->nToken;
 
             const LSPString *mask   = it->pMask;
-            LSPString *buf          = it->pBuffer;
 
             // End of input?
             if (it->nPosition >= mask->length())
                 return it->nToken       = T_EOF;
 
             // Analyze first character
-            bool escape     = false;
-            lsp_wchar_t c   = mask->char_at(it->nPosition++);
+            it->nStart              = it->nPosition;
+            it->nEnd                = it->nPosition;
+            lsp_wchar_t c           = mask->char_at(it->nPosition++);
+            bool escape;
 
             switch (c)
             {
-                case '?': // T_WILDCARD
-                    return it->nToken = T_WILDCARD;
                 case '&': // T_AND
                     return it->nToken = T_AND;
                 case '|': // T_OR
@@ -92,10 +92,6 @@ namespace lsp
                     return it->nToken = T_IGROUP_START;
                 case ')': // T_GROUP_END
                     return it->nToken = T_GROUP_END;
-
-                case '\\':
-                case '/': // T_SPLIT
-                    return it->nToken = T_SPLIT;
 
                 case '(': // T_GROUP_START, T_IGROUP_START
                     return it->nToken = T_GROUP_START;
@@ -112,22 +108,14 @@ namespace lsp
                     it->nPosition += 2;
                     return it->nToken = T_ANYPATH;
 
-                case '`': // T_TEXT starting from escape
-                    escape          = true;
-                    it->nToken      = T_TEXT;
-                    it->nStart      = buf->length();
-                    break;
-
                 default: // T_TEXT
                     it->nToken      = T_TEXT;
-                    it->nStart      = buf->length();
-                    if (!buf->append(c))
-                        return -STATUS_NO_MEM;
+                    escape          = c == '`';
                     break;
             }
 
             // Parse T_TEXT
-            for ( ; it->nPosition < mask->length(); ++it->nPosition)
+            for ( ; it->nPosition < mask->length(); ++it->nPosition )
             {
                 // Lookup next character
                 c   = mask->char_at(it->nPosition);
@@ -135,49 +123,28 @@ namespace lsp
                 switch (c)
                 {
                     // Special symbols
-                    case '*': case '?': case '/': case '\\':
-                    case '(': case ')': case '|': case '&':
-                    case '!':
+                    case '*': case '(': case ')': case '|':
+                    case '&': case '!':
                         if (!escape)
                         {
-                            it->nEnd    = buf->length();
+                            it->nEnd    = it->nPosition;
                             return it->nToken;
                         }
-
-                        if (!buf->append(c))
-                            return -STATUS_NO_MEM;
-                        escape =  false;
+                        escape = false;
                         break;
 
                     case '`':
-                        if (escape)
-                        {
-                            if (!buf->append(c))
-                                return -STATUS_NO_MEM;
-                        }
-                        escape = !escape;
+                        escape  = !escape;
                         break;
 
                     default:
-                        if (escape)
-                        {
-                            if (!buf->append('`'))
-                                return -STATUS_NO_MEM;
-                            escape = false;
-                        }
-                        if (!buf->append(c))
-                            return -STATUS_NO_MEM;
+                        escape  = false;
                         break;
                 }
             }
 
             // Escape character pending?
-            if (escape)
-            {
-                if (!buf->append('`'))
-                    return -STATUS_NO_MEM;
-            }
-            it->nEnd    = buf->length();
+            it->nEnd    = it->nPosition;
 
             return it->nToken;
         }
@@ -273,19 +240,7 @@ namespace lsp
 
                     case T_TEXT:
                         next_token(it);
-                        res = merge_simple(&out, CMD_SEQUENCE, CMD_TEXT, it->nStart, it->nEnd);
-                        break;
-
-                    case T_WILDCARD:
-                        next_token(it);
-                        // Premature optimization: Group wildcard characters into single one
-                        next = (out != NULL) ? out->sChildren.last() : NULL;
-                        if ((next != NULL) && (next->nCommand == CMD_WILDCARD))
-                        {
-                            ++next->nEnd;
-                            break;
-                        }
-                        res = merge_simple(&out, CMD_SEQUENCE, CMD_WILDCARD, 0, 1);
+                        res = merge_simple(&out, CMD_SEQUENCE, CMD_PATTERN, it->nStart, it->nEnd);
                         break;
 
                     case T_ANY:
@@ -306,11 +261,6 @@ namespace lsp
                         res = merge_simple(&out, CMD_SEQUENCE, CMD_ANYPATH, 0, 0);
                         break;
 
-                    case T_SPLIT:
-                        next_token(it);
-                        res = merge_simple(&out, CMD_SEQUENCE, CMD_SPLIT, it->nStart, it->nEnd);
-                        break;
-
                     default:
                         res = merge_step(&out, NULL, CMD_SEQUENCE);
                         if (res != STATUS_OK)
@@ -328,7 +278,7 @@ namespace lsp
                             if (out->sChildren.is_empty())
                             {
                                 // Premature optimization: Treat empty sequence as empty text
-                                out->nCommand   = CMD_TEXT;
+                                out->nCommand   = CMD_PATTERN;
                                 out->nStart     = 0;
                                 out->nEnd       = 0;
                             }
@@ -450,7 +400,6 @@ namespace lsp
             // Initialize tokenizer
             it.nToken       = -1;
             it.pMask        = &tmp.sMask;
-            it.pBuffer      = &tmp.sBuffer;
             it.nPosition    = 0;
             it.nStart       = 0;
             it.nEnd         = 0;
@@ -471,9 +420,147 @@ namespace lsp
             return res;
         }
 
-        bool PathPattern::check_match(const LSPString *path)
+        bool PathPattern::pattern_matcher_seek(matcher_t *m, const pos_t *pos)
+        {
+            text_matcher_t *sm = static_cast<text_matcher_t *>(m);
+
+            sm->pos.start   = pos->start;
+            sm->pos.end     = pos->end;
+            sm->calls       = 0;
+            return true;
+        }
+
+        bool PathPattern::pattern_matcher_match(matcher_t *m, pos_t *pos)
+        {
+            text_matcher_t *sm = static_cast<text_matcher_t *>(m);
+            const cmd_t *cmd = sm->cmd;
+
+            // Simple matcher can be called only once
+            if (sm->calls > 0)
+                return false;
+            ++sm->calls;
+
+            size_t len = cmd->nEnd - cmd->nStart;
+            bool match;
+
+
+//
+//            switch (cmd->nCommand)
+//            {
+//                case CMD_TEXT:
+//                {
+//                    const lsp_wchar_t *s1 = sm->buf->characters() + cmd->nStart;
+//                    const lsp_wchar_t *s2 = sm->str->characters() + sm->pos.start;
+//                    match = ((sm->flags & CASE_SENSITIVE) ? wchar_cmp(s1, s2, len) : wchar_casecmp(s1, s2, len)) == 0;
+//                    break;
+//                }
+//                case CMD_SPLIT:
+//                {
+//                    lsp_wchar_t c = sm->buf->char_at(sm->pos.start);
+//                    match = (c == '/') || (c == '\\');
+//                    break;
+//                }
+//                case CMD_WILDCARD:
+//                {
+//                    size_t len = cmd->nEnd - cmd->nStart;
+//                    const lsp_wchar_t *s = sm->str->characters() + sm->pos.start;
+//                    for ( ; len > 0; --len)
+//                    {
+//                        if ((*s == '/') || ((*s) == '\\'))
+//                            return false;
+//                    }
+//                    match = true;
+//                    break;
+//                }
+//                default:
+//                    return false;
+//            }
+
+            // Analyze match
+            if (cmd->bInverse == match)
+                return false;
+            pos->start      = (match) ? sm->pos.start + len : sm->pos.start;
+            pos->end        = sm->pos.end;
+
+            return true;
+        }
+
+        void PathPattern::destroy_matcher(matcher_t *m)
+        {
+            if (m == NULL)
+                return;
+
+            const cmd_t *cmd = m->cmd;
+            switch (cmd->nCommand)
+            {
+                case CMD_SEQUENCE:
+                    // TODO
+                    break;
+                case CMD_AND:
+                    // TODO
+                    break;
+                case CMD_OR:
+                    // TODO
+                    break;
+
+                case CMD_ANYPATH:
+                    // TODO
+                    break;
+
+                case CMD_ANY:
+                    // TODO
+                    break;
+
+                // Simple matchers
+                case CMD_PATTERN:
+                {
+                    text_matcher_t *sm = static_cast<text_matcher_t *>(m);
+                    delete sm;
+                    break;
+                }
+
+                default:
+                    break;
+            }
+        }
+
+        PathPattern::matcher_t *PathPattern::create_root_matcher()
+        {
+            return NULL;
+        }
+
+        bool PathPattern::match_full(const LSPString *path) const
         {
             return false;
+//            matcher_t *it = create_root_matcher();
+//            it.cmd      = pRoot;
+//            it.str      = path;
+//            it.buf      = &sBuffer;
+//            it.flags    = nFlags & ;
+//            it.nStart   = 0;
+//            it.nEnd     = path->length();
+
+//            pos_t pos;
+//            bool match;
+//
+//            while (true)
+//            {
+//                // Is there any next match?
+//                if (!next_match(&it, &pos))
+//                {
+//                    match = false;
+//                    break;
+//                }
+//
+//                // There is nothing left?
+//                if (pos.nStart == pos.nEnd)
+//                {
+//                    match = !it.pCmd->bInverse;
+//                    break;
+//                }
+//            }
+//
+//            return (nFlags & INVERSIVE) ? !match : match;
         }
 
         status_t PathPattern::set(const char *pattern, size_t flags)
@@ -489,8 +576,11 @@ namespace lsp
             return old;
         }
 
-        bool PathPattern::test(const char *path)
+        bool PathPattern::test(const char *path) const
         {
+            if (pRoot == NULL)
+                return false;
+
             Path tmp;
             if (tmp.set(path) != STATUS_OK)
                 return false;
@@ -501,11 +591,14 @@ namespace lsp
                     return false;
             }
 
-            return (nFlags & FULL_PATH) ? check_match(tmp.as_string()) : false;
+            return match_full(tmp.as_string());
         }
 
-        bool PathPattern::test(const LSPString *path)
+        bool PathPattern::test(const LSPString *path) const
         {
+            if (pRoot == NULL)
+                return false;
+
             Path tmp;
             if (tmp.set(path) != STATUS_OK)
                 return false;
@@ -516,24 +609,26 @@ namespace lsp
                     return false;
             }
 
-            return (nFlags & FULL_PATH) ? check_match(tmp.as_string()) : false;
+            return match_full(tmp.as_string());
         }
 
-        bool PathPattern::test(const Path *path)
+        bool PathPattern::test(const Path *path) const
         {
-            if (!(nFlags & FULL_PATH))
-                return check_match(path->as_string());
+            if (pRoot == NULL)
+                return false;
+
+            if (nFlags & FULL_PATH)
+                return match_full(path->as_string());
 
             Path tmp;
             if (tmp.get_last(&tmp) != STATUS_OK)
                 return false;
 
-            return check_match(tmp.as_string());
+            return match_full(tmp.as_string());
         }
 
         void PathPattern::swap(PathPattern *dst)
         {
-            sBuffer.swap(dst->sBuffer);
             sMask.swap(dst->sMask);
             lsp::swap(pRoot, dst->pRoot);
             lsp::swap(nFlags, dst->nFlags);

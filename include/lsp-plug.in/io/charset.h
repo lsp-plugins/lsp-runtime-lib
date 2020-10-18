@@ -24,6 +24,7 @@
 
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/common/types.h>
+#include <lsp-plug.in/stdlib/string.h>
 
 #if defined(PLATFORM_WINDOWS)
     #include <winnls.h>
@@ -292,6 +293,21 @@ namespace lsp
     inline size_t           utf32le_to_utf16(lsp_utf16_t *dst, size_t *ndst, const lsp_utf32_t *src, size_t *nsrc, bool force) { return __IF_LEBE(utf32le_to_utf16le, utf32le_to_utf16be)(dst, ndst, src, nsrc, force); }
     inline size_t           utf32be_to_utf16(lsp_utf16_t *dst, size_t *ndst, const lsp_utf32_t *src, size_t *nsrc, bool force) { return __IF_LEBE(utf32be_to_utf16le, utf32be_to_utf16be)(dst, ndst, src, nsrc, force); }
     inline size_t           utf32_to_utf16(lsp_utf16_t *dst, size_t *ndst, const lsp_utf32_t *src, size_t *nsrc, bool force)   { return __IF_LEBE(utf32le_to_utf16le, utf32be_to_utf16be)(dst, ndst, src, nsrc, force); }
+
+    /**
+     * Compare two character sequences.
+     * @param s1 character sequence 1
+     * @param s2 character sequence 2
+     * @param count number of characters to compare, you must be sure that both sequences have at least count characters
+     * @return comparison result
+     */
+#ifdef ARCH_LE
+    inline int              wchar_cmp(const lsp_wchar_t *s1, const lsp_wchar_t *s2, size_t count)   {   return ::memcmp(s1, s2, count * sizeof(lsp_wchar_t));         }
+#else
+    int                     wchar_cmp(const lsp_wchar_t *s1, const lsp_wchar_t *s2, size_t count);
+#endif
+
+    int                     wchar_casecmp(const lsp_wchar_t *s1, const lsp_wchar_t *s2, size_t count);
 
 }
 

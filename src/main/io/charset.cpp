@@ -27,6 +27,7 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <wctype.h>
 
 namespace lsp
 {
@@ -2438,4 +2439,28 @@ namespace lsp
         return nconv;
     }
 #endif /* PLATFORM_WINDOWS */
+
+#ifndef ARCH_LE
+    int wchar_cmp(const lsp_wchar_t *s1, const lsp_wchar_t *s2, size_t count)
+    {
+        while (count--)
+        {
+            int32_t retval = int32_t(*(s1++)) - int32_t(*(s1++));
+            if (retval != 0)
+                return (retval > 0) ? 1 : -1;
+        }
+        return 0;
+    }
+#endif
+
+    int wchar_casecmp(const lsp_wchar_t *s1, const lsp_wchar_t *s2, size_t count)
+    {
+        while (count--)
+        {
+            int32_t retval = int32_t(towlower(*(s1++))) - int32_t(towlower(*(s1++)));
+            if (retval != 0)
+                return (retval > 0) ? 1 : -1;
+        }
+        return 0;
+    }
 }
