@@ -54,8 +54,8 @@ namespace lsp
             public:
                 enum flags
                 {
-                    INVERSIVE       = 1 << 0,
-                    CASE_SENSITIVE  = 1 << 1,
+                    INVERSE         = 1 << 0,
+                    MATCH_CASE      = 1 << 1,
                     FULL_PATH       = 1 << 2,
 
                     NONE            = 0
@@ -67,9 +67,16 @@ namespace lsp
                     CMD_SEQUENCE,       // cmd1 cmd2 ...
                     CMD_AND,            // ... & ...
                     CMD_OR,             // ... | ...
-                    CMD_PATTERN,           // ... text ...
+                    CMD_PATTERN,        // ... text ...
                     CMD_ANY,            // ... * ...
                     CMD_ANYPATH,        // ... **/ ...
+                };
+
+                enum matcher_type_t
+                {
+                    M_PATTERN,
+                    M_ANY,
+                    M_ANYPATH
                 };
 
                 enum token_type_t
@@ -116,25 +123,23 @@ namespace lsp
                     size_t                  count;
                 } pos_t;
 
-                typedef bool (*match_seek_t) (matcher_t *m, const pos_t *it);
-                typedef bool (*match_match_t)(matcher_t *m, pos_t *it);
+                typedef bool        (*match_match_t)(matcher_t *m, size_t start, size_t count);
 
                 typedef struct matcher_t
                 {
-                    match_seek_t            seek;
+                    matcher_type_t          type;       // Type of matcher
                     match_match_t           match;
 
                     const cmd_t            *cmd;        // Command
-                    const LSPString        *mask;       // Source data
+                    const LSPString        *pat;        // Pattern data
                     const LSPString        *str;        // Destination string to match
-                    pos_t                   pos;        // Position in destination string
                     size_t                  flags;      // Flags
                 } matcher_t;
 
-                typedef struct text_matcher_t: public matcher_t
+                typedef struct any_matcher_t : public matcher_t
                 {
-                    size_t                  calls;      // Number of calls
-                } text_matcher_t;
+                    ssize_t                 bad;        // Index of last bad character
+                } any_matcher_t;
 
             protected:
                 LSPString                   sMask;
@@ -159,12 +164,15 @@ namespace lsp
                 static status_t             merge_step(cmd_t **out, cmd_t *next, command_t type);
                 static status_t             merge_last(cmd_t **dst, cmd_t *out, cmd_t *next, ssize_t tok);
 
-                static matcher_t           *create_matcher(const cmd_t *cmd, const matcher_t *src, const pos_t *pos);
+                static matcher_t           *create_matcher(const matcher_t *src, const cmd_t *cmd);
                 static void                 destroy_matcher(matcher_t *match);
-                matcher_t                  *create_root_matcher();
 
-                static bool                 pattern_matcher_seek(matcher_t *m, const pos_t *it);
-                static bool                 pattern_matcher_match(matcher_t *m, pos_t *it);
+                static bool                 pattern_matcher_match(matcher_t *m, size_t start, size_t count);
+                static bool                 any_matcher_match(matcher_t *m, size_t start, size_t count);
+                static bool                 anypath_matcher_match(matcher_t *m, size_t start, size_t count);
+
+                static bool                 check_pattern_case(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len);
+                static bool                 check_pattern_nocase(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len);
 
             public:
                 explicit PathPattern();

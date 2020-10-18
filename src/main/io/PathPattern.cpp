@@ -22,6 +22,8 @@
 #include <lsp-plug.in/io/PathPattern.h>
 #include <lsp-plug.in/io/charset.h>
 
+#include <wctype.h>
+
 namespace lsp
 {
     namespace io
@@ -433,74 +435,228 @@ namespace lsp
             return res;
         }
 
-        bool PathPattern::pattern_matcher_seek(matcher_t *m, const pos_t *pos)
+        bool PathPattern::check_pattern_case(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len)
         {
-            text_matcher_t *sm = static_cast<text_matcher_t *>(m);
-            const cmd_t *cmd = sm->cmd;
+            lsp_wchar_t c, pc;
 
-            // Seek success for inverse statement
-            if (!cmd->bInverse)
-                return true;
+            for (size_t off=0; off<len; )
+            {
+                c = *(s++);             // Matching character
+                pc = pat[off++];        // Pattern character
 
-            sm->pos.start   = pos->start;
-            sm->pos.count   = pos->count;
-            sm->calls       = 0;
+                switch (pc)
+                {
+                    case '/':
+                    case '\\':
+                        if ((c != '/') && (c != '\\'))
+                            return false;
+                        break;
+                    case '?':
+                        if ((c == '/') || (c == '\\'))
+                            return false;
+                        break;
+                    case '`':
+                        pc = (off < len) ? pat[off] : '`';
+                        switch (pc)
+                        {
+                            // Special symbols
+                            case '*': case '(': case ')': case '|':
+                            case '&': case '!': case '`':
+                                ++off;
+                                break;
+                            default:
+                                pc = '`';
+                                break;
+                        }
+                        if (c != pc)
+                            return false;
+                        break;
+
+                    default:
+                        if (c != pc)
+                            return false;
+                        break;
+                } // switch
+            }
+
             return true;
         }
 
-        bool PathPattern::pattern_matcher_match(matcher_t *m, pos_t *pos)
+        bool PathPattern::check_pattern_nocase(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len)
         {
-            text_matcher_t *sm = static_cast<text_matcher_t *>(m);
-            const cmd_t *cmd = sm->cmd;
+            lsp_wchar_t c, pc;
 
-            // Simple matcher can be called only once
-            if (sm->calls > 0)
-                return false;
-            ++sm->calls;
+            for (size_t off=0; off<len; )
+            {
+                c = *(s++);             // Matching character
+                pc = pat[off++];        // Pattern character
 
+                switch (pc)
+                {
+                    case '/':
+                    case '\\':
+                        if ((c != '/') && (c != '\\'))
+                            return false;
+                        break;
+                    case '?':
+                        if ((c == '/') || (c == '\\'))
+                            return false;
+                        break;
+                    case '`':
+                        pc = (off < len) ? pat[off] : '`';
+                        switch (pc)
+                        {
+                            // Special symbols
+                            case '*': case '(': case ')': case '|':
+                            case '&': case '!': case '`':
+                                ++off;
+                                break;
+                            default:
+                                pc = '`';
+                                break;
+                        }
+                        if (towlower(c) != towlower(pc))
+                            return false;
+                        break;
 
-            bool match;
-
-
-//
-//            switch (cmd->nCommand)
-//            {
-//                case CMD_TEXT:
-//                {
-//                    const lsp_wchar_t *s1 = sm->buf->characters() + cmd->nStart;
-//                    const lsp_wchar_t *s2 = sm->str->characters() + sm->pos.start;
-//                    match = ((sm->flags & CASE_SENSITIVE) ? wchar_cmp(s1, s2, len) : wchar_casecmp(s1, s2, len)) == 0;
-//                    break;
-//                }
-//                case CMD_SPLIT:
-//                {
-//                    lsp_wchar_t c = sm->buf->char_at(sm->pos.start);
-//                    match = (c == '/') || (c == '\\');
-//                    break;
-//                }
-//                case CMD_WILDCARD:
-//                {
-//                    size_t len = cmd->nEnd - cmd->nStart;
-//                    const lsp_wchar_t *s = sm->str->characters() + sm->pos.start;
-//                    for ( ; len > 0; --len)
-//                    {
-//                        if ((*s == '/') || ((*s) == '\\'))
-//                            return false;
-//                    }
-//                    match = true;
-//                    break;
-//                }
-//                default:
-//                    return false;
-//            }
-
-            // Analyze match
-            if (cmd->bInverse == match)
-                return false;
-            pos->start      = (match) ? sm->pos.start + sm->pos.count : sm->pos.start;
-            pos->count      = sm->pos.count;
+                    default:
+                        if (towlower(c) != towlower(pc))
+                            return false;
+                        break;
+                } // switch
+            }
 
             return true;
+        }
+
+        bool PathPattern::pattern_matcher_match(matcher_t *m, size_t start, size_t count)
+        {
+            const cmd_t *cmd        = m->cmd;
+            if (count != m->cmd->nChars)
+                return cmd->bInverse;
+
+            const lsp_wchar_t *pat = m->pat->characters() + cmd->nStart;
+            const lsp_wchar_t *str = m->str->characters() + start;
+            bool match = (m->flags & MATCH_CASE) ?
+                        check_pattern_case(pat, str, cmd->nLength) :
+                        check_pattern_nocase(pat, str, cmd->nLength);
+
+            return match ^ cmd->bInverse;
+        }
+
+        bool PathPattern::any_matcher_match(matcher_t *m, size_t start, size_t count)
+        {
+            const cmd_t *cmd        = m->cmd;
+            if (count == 0)
+                return !cmd->bInverse;
+
+            any_matcher_t *am       = static_cast<any_matcher_t *>(m);
+            if ((am->bad >= ssize_t(start)) && (am->bad < ssize_t(start + count)))
+                return cmd->bInverse;
+
+            // We need to ensure that there are no denied items within the area
+            const lsp_wchar_t *str = m->str->characters() + start;
+            for (size_t i=0; i<count; ++i)
+            {
+                lsp_wchar_t ch  = str[i];
+                if ((ch == '/') || (ch == '\\'))
+                {
+                    am->bad         = start + i; // Cache last bad value
+                    return cmd->bInverse;
+                }
+            }
+
+            return !cmd->bInverse;
+        }
+
+        bool PathPattern::anypath_matcher_match(matcher_t *m, size_t start, size_t count)
+        {
+            const cmd_t *cmd        = m->cmd;
+            const lsp_wchar_t *str  = m->str->characters() + start;
+            lsp_wchar_t ch;
+
+            // Not beginning of string?
+            if (start > 0)
+            {
+                // Previous character in sequence should be a path separator
+                ch                      = str[-1];
+                if ((ch != '/') && (ch != '\\'))
+                    return cmd->bInverse;
+
+                // Zero length, previous character is separator -> matches
+                if (count == 0)
+                    return !cmd->bInverse;
+            }
+            else if (count == 0)
+                return !cmd->bInverse; // Zero length, start of string -> matches
+
+            // Last character in sequence should be a path separator
+            ch  = str[count-1];
+            if ((ch == '/') || (ch == '/'))
+                return !cmd->bInverse;
+
+            // The separator is not necessary if we are at the end of line
+            if ((start + count) >= m->str->length())
+                return !cmd->bInverse;
+
+            return cmd->bInverse;
+        }
+
+        PathPattern::matcher_t *PathPattern::create_matcher(const matcher_t *src, const cmd_t *cmd)
+        {
+            switch (cmd->nCommand)
+            {
+                case CMD_PATTERN:
+                {
+                    matcher_t *m = new matcher_t();
+                    if (m != NULL)
+                    {
+                        m->type             = M_PATTERN;
+                        m->match            = pattern_matcher_match;
+                        m->cmd              = cmd;
+                        m->pat              = src->pat;
+                        m->str              = src->str;
+                        m->flags            = src->flags;
+                    }
+                    return m;
+                }
+
+                case CMD_ANY:
+                {
+                    any_matcher_t *m = new any_matcher_t();
+                    if (m != NULL)
+                    {
+                        m->type             = M_ANY;
+                        m->match            = any_matcher_match;
+                        m->cmd              = cmd;
+                        m->pat              = src->pat;
+                        m->str              = src->str;
+                        m->flags            = src->flags;
+                        m->bad              = -1;
+                    }
+                    return m;
+                }
+
+                case CMD_ANYPATH:
+                {
+                    matcher_t *m = new matcher_t();
+                    if (m != NULL)
+                    {
+                        m->type             = M_ANYPATH;
+                        m->match            = anypath_matcher_match;
+                        m->cmd              = cmd;
+                        m->pat              = src->pat;
+                        m->str              = src->str;
+                        m->flags            = src->flags;
+                    }
+                    return m;
+                }
+
+                default:
+                    break;
+            }
+
+            return NULL;
         }
 
         void PathPattern::destroy_matcher(matcher_t *m)
@@ -508,32 +664,14 @@ namespace lsp
             if (m == NULL)
                 return;
 
-            const cmd_t *cmd = m->cmd;
-            switch (cmd->nCommand)
+            switch (m->type)
             {
-                case CMD_SEQUENCE:
-                    // TODO
-                    break;
-                case CMD_AND:
-                    // TODO
-                    break;
-                case CMD_OR:
-                    // TODO
-                    break;
-
-                case CMD_ANYPATH:
-                    // TODO
-                    break;
-
+                // Pattern matcher
+                case M_PATTERN:
                 case CMD_ANY:
-                    // TODO
-                    break;
-
-                // Simple matchers
-                case CMD_PATTERN:
+                case CMD_ANYPATH:
                 {
-                    text_matcher_t *sm = static_cast<text_matcher_t *>(m);
-                    delete sm;
+                    delete m;
                     break;
                 }
 
@@ -542,43 +680,24 @@ namespace lsp
             }
         }
 
-        PathPattern::matcher_t *PathPattern::create_root_matcher()
-        {
-            return NULL;
-        }
-
         bool PathPattern::match_full(const LSPString *path) const
         {
-            return false;
-//            matcher_t *it = create_root_matcher();
-//            it.cmd      = pRoot;
-//            it.str      = path;
-//            it.buf      = &sBuffer;
-//            it.flags    = nFlags & ;
-//            it.nStart   = 0;
-//            it.nEnd     = path->length();
+            matcher_t root;
+            root.cmd            = NULL;
+            root.pat           = &sMask;
+            root.str            = path;
+            root.flags          = nFlags & MATCH_CASE;
 
-//            pos_t pos;
-//            bool match;
-//
-//            while (true)
-//            {
-//                // Is there any next match?
-//                if (!next_match(&it, &pos))
-//                {
-//                    match = false;
-//                    break;
-//                }
-//
-//                // There is nothing left?
-//                if (pos.nStart == pos.nEnd)
-//                {
-//                    match = !it.pCmd->bInverse;
-//                    break;
-//                }
-//            }
-//
-//            return (nFlags & INVERSIVE) ? !match : match;
+            matcher_t *rm       = create_matcher(&root, pRoot);
+            if (rm == NULL)
+                return false;
+
+            // Seek the matcher
+            bool match      = rm->match(rm, 0, path->length()) ^ bool(nFlags & INVERSE);
+
+            destroy_matcher(rm);
+
+            return match;
         }
 
         status_t PathPattern::set(const char *pattern, size_t flags)
@@ -590,7 +709,7 @@ namespace lsp
         size_t PathPattern::set_flags(size_t flags)
         {
             size_t old  = nFlags;
-            nFlags      = flags & (INVERSIVE | CASE_SENSITIVE | FULL_PATH);
+            nFlags      = flags & (INVERSE | MATCH_CASE | FULL_PATH);
             return old;
         }
 

@@ -149,9 +149,85 @@ UTEST_BEGIN("runtime.io", pathpattern)
         }
     }
 
+    typedef struct match_t
+    {
+        const char *pattern;
+        bool full;
+        const char *value;
+        bool match;
+    } match_t;
+
+    void test_match_simple()
+    {
+        static const match_t matches[] =
+        {
+            { "test",       false,  "test",                 true            },
+            { "test",       false,  "",                     false           },
+            { "test",       false,  "test.log",             false           },
+
+            { "!test",      false,  "test",                 false           },
+            { "!test",      false,  "",                     true            },
+            { "!test",      false,  "test.log",             true            },
+
+            { "*",          false,  "test.log",             true            },
+            { "*",          false,  "",                     true            },
+            { "*",          false,  "/",                    true            },
+            { "!*",         false,  "/",                    false           },
+            { "*",          true,   "/",                    false           },
+            { "!*",         true,   "/",                    true            },
+
+            { "**/",        false,  "",                     true            },
+            { "**/",        true,   "",                     true            },
+            { "**/",        false,  "/",                    true            },
+            { "**/",        true,   "/",                    true            },
+            { "**/",        true,   "//",                   true            },
+            { "**/",        true,   "/a",                   true            },
+            { "**/",        true,   "/a/b/c",               true            },
+            { "**/",        true,   "a/b/c",                true            },
+            { "**/",        true,   "a/b/",                 true            },
+
+            { NULL,         false,  NULL,                   false }
+        };
+
+        TestPathPattern p(this);
+
+        for (const match_t *m = matches; m->pattern != NULL; ++m)
+        {
+            size_t flags = 0;
+            if (m->full)
+                flags          |= io::PathPattern::FULL_PATH;
+            printf("Testing match for pattern \"%s\", value=\"%s\", full=%s, match=%s\n",
+                    m->pattern, m->value,
+                    (m->full) ? "true" : "false",
+                    (m->match) ? "true" : "false"
+                );
+
+            // Test direct
+            UTEST_ASSERT(p.set(m->pattern, flags) == STATUS_OK);
+            if (p.test(m->value) != m->match)
+            {
+                p.dump();
+                UTEST_FAIL_MSG("Falied direct match for pattern \"%s\", value=\"%s\", match=%s",
+                    m->pattern, m->value, (m->match) ? "true" : "false"
+                )
+            }
+
+            // Test inverse
+            UTEST_ASSERT(p.set(m->pattern, flags | io::PathPattern::INVERSE) == STATUS_OK);
+            if (p.test(m->value) == m->match)
+            {
+                p.dump();
+                UTEST_FAIL_MSG("Falied inverse match for pattern \"%s\", value=\"%s\", match=%s",
+                    m->pattern, m->value, (m->match) ? "true" : "false"
+                )
+            }
+        }
+    }
+
     UTEST_MAIN
     {
-        test_parse();
+//        test_parse();
+        test_match_simple();
     }
 
 UTEST_END
