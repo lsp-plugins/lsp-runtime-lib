@@ -326,7 +326,7 @@ namespace lsp
 
             status_t res = parse_sequence(dst, it);
             if (res == STATUS_OK)
-                (*dst)->bInverse    = inverse;
+                (*dst)->bInverse   ^= inverse;
 
             return res;
         }
@@ -602,6 +602,36 @@ namespace lsp
             return cmd->bInverse;
         }
 
+        bool PathPattern::and_matcher_match(matcher_t *m, size_t start, size_t count)
+        {
+            bool_matcher_t *bm = static_cast<bool_matcher_t *>(m);
+            const cmd_t *cmd        = m->cmd;
+
+            // If at least one matcher does not match - return result
+            for (size_t i=0, n=bm->cond.size(); i<n; ++i)
+            {
+                matcher_t *m = bm->cond.uget(i);
+                if (!m->match(m, start, count))
+                    return cmd->bInverse;
+            }
+            return !cmd->bInverse;
+        }
+
+        bool PathPattern::or_matcher_match(matcher_t *m, size_t start, size_t count)
+        {
+            bool_matcher_t *bm = static_cast<bool_matcher_t *>(m);
+            const cmd_t *cmd        = m->cmd;
+
+            // If at least one matcher matches - return result
+            for (size_t i=0, n=bm->cond.size(); i<n; ++i)
+            {
+                matcher_t *m = bm->cond.uget(i);
+                if (m->match(m, start, count))
+                    return !cmd->bInverse;
+            }
+            return cmd->bInverse;
+        }
+
         PathPattern::matcher_t *PathPattern::create_matcher(const matcher_t *src, const cmd_t *cmd)
         {
             switch (cmd->nCommand)
@@ -652,6 +682,34 @@ namespace lsp
                     return m;
                 }
 
+                case CMD_AND:
+                case CMD_OR:
+                {
+                    bool_matcher_t *m = new bool_matcher_t();
+                    if (m != NULL)
+                    {
+                        m->type             = M_BOOL;
+                        m->match            = (cmd->nCommand == CMD_AND) ? and_matcher_match : or_matcher_match;
+                        m->cmd              = cmd;
+                        m->pat              = src->pat;
+                        m->str              = src->str;
+                        m->flags            = src->flags;
+
+                        // Create child matchers
+                        for (size_t i=0, n=cmd->sChildren.size(); i<n; ++i)
+                        {
+                            const cmd_t *c      = cmd->sChildren.uget(i);
+                            matcher_t *cm       = create_matcher(m, c);
+                            if ((cm == NULL) || (!m->cond.add(cm)))
+                            {
+                                destroy_matcher(m);
+                                return NULL;
+                            }
+                        }
+                    }
+                    return m;
+                }
+
                 default:
                     break;
             }
@@ -668,10 +726,22 @@ namespace lsp
             {
                 // Pattern matcher
                 case M_PATTERN:
-                case CMD_ANY:
-                case CMD_ANYPATH:
+                case M_ANY:
+                case M_ANYPATH:
                 {
                     delete m;
+                    break;
+                }
+
+                case M_BOOL:
+                {
+                    bool_matcher_t *bm = static_cast<bool_matcher_t *>(m);
+
+                    // Destroy all child matchers
+                    for (size_t i=0, n=bm->cond.size(); i<n; ++i)
+                        destroy_matcher(bm->cond.uget(i));
+
+                    delete bm;
                     break;
                 }
 

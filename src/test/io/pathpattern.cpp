@@ -161,14 +161,15 @@ UTEST_BEGIN("runtime.io", pathpattern)
     {
         static const match_t matches[] =
         {
+            // PATTERN match
             { "test",       false,  "test",                 true            },
             { "test",       false,  "",                     false           },
             { "test",       false,  "test.log",             false           },
-
             { "!test",      false,  "test",                 false           },
             { "!test",      false,  "",                     true            },
             { "!test",      false,  "test.log",             true            },
 
+            // ANY match
             { "*",          false,  "test.log",             true            },
             { "*",          false,  "",                     true            },
             { "*",          false,  "/",                    true            },
@@ -176,6 +177,7 @@ UTEST_BEGIN("runtime.io", pathpattern)
             { "*",          true,   "/",                    false           },
             { "!*",         true,   "/",                    true            },
 
+            // ANYPATH match
             { "**/",        false,  "",                     true            },
             { "**/",        true,   "",                     true            },
             { "**/",        false,  "/",                    true            },
@@ -185,6 +187,43 @@ UTEST_BEGIN("runtime.io", pathpattern)
             { "**/",        true,   "/a/b/c",               true            },
             { "**/",        true,   "a/b/c",                true            },
             { "**/",        true,   "a/b/",                 true            },
+            { "**/",        true,   "a/b/",                 true            },
+
+            // OR match
+            { "a|b|c",      false,  "a",                    true            },
+            { "a|b|c",      false,  "b",                    true            },
+            { "a|b|c",      false,  "c",                    true            },
+            { "a|b|c",      false,  "d",                    false           },
+            { "!a|b|c",     false,  "a",                    false           },
+            { "!a|b|c",     false,  "b",                    true            },
+            { "!a|b|c",     false,  "c",                    true            },
+            { "!a|b|c",     false,  "d",                    true            },
+            { "a|b|!c",     false,  "a",                    true            },
+            { "a|b|!c",     false,  "b",                    true            },
+            { "a|b|!c",     false,  "c",                    false           },
+            { "a|b|!c",     false,  "d",                    true            },
+            { "!(a|b|c)",   false,  "a",                    false           },
+            { "!(a|b|c)",   false,  "b",                    false           },
+            { "!(a|b|c)",   false,  "c",                    false           },
+            { "!(a|b|c)",   false,  "d",                    true            },
+
+            // AND match
+            { "!a&!b&!c",   false,  "a",                    false           },
+            { "!a&!b&!c",   false,  "b",                    false           },
+            { "!a&!b&!c",   false,  "c",                    false           },
+            { "!a&!b&!c",   false,  "d",                    true            },
+            { "a&!b&!c",    false,  "a",                    true            },
+            { "a&!b&!c",    false,  "b",                    false           },
+            { "a&!b&!c",    false,  "c",                    false           },
+            { "a&!b&!c",    false,  "d",                    false           },
+            { "!a&!b&c",    false,  "a",                    false           },
+            { "!a&!b&c",    false,  "b",                    false           },
+            { "!a&!b&c",    false,  "c",                    true            },
+            { "!a&!b&c",    false,  "d",                    false           },
+            { "!(a&b&c)",   false,  "a",                    true            },
+            { "!(a&b&c)",   false,  "b",                    true            },
+            { "!(a&b&c)",   false,  "c",                    true            },
+            { "!(a&b&c)",   false,  "d",                    true            },
 
             { NULL,         false,  NULL,                   false }
         };

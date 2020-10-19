@@ -76,7 +76,8 @@ namespace lsp
                 {
                     M_PATTERN,
                     M_ANY,
-                    M_ANYPATH
+                    M_ANYPATH,
+                    M_BOOL
                 };
 
                 enum token_type_t
@@ -141,6 +142,11 @@ namespace lsp
                     ssize_t                 bad;        // Index of last bad character
                 } any_matcher_t;
 
+                typedef struct bool_matcher_t : public matcher_t
+                {
+                    lltl::parray<matcher_t>     cond;       // List of additionally checked conditions
+                } bool_matcher_t;
+
             protected:
                 LSPString                   sMask;
                 cmd_t                      *pRoot;
@@ -170,6 +176,8 @@ namespace lsp
                 static bool                 pattern_matcher_match(matcher_t *m, size_t start, size_t count);
                 static bool                 any_matcher_match(matcher_t *m, size_t start, size_t count);
                 static bool                 anypath_matcher_match(matcher_t *m, size_t start, size_t count);
+                static bool                 and_matcher_match(matcher_t *m, size_t start, size_t count);
+                static bool                 or_matcher_match(matcher_t *m, size_t start, size_t count);
 
                 static bool                 check_pattern_case(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len);
                 static bool                 check_pattern_nocase(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len);
