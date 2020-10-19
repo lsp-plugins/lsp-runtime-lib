@@ -21,6 +21,7 @@
 
 #include <lsp-plug.in/io/PathPattern.h>
 #include <lsp-plug.in/io/charset.h>
+#include <lsp-plug.in/common/debug.h>
 
 #include <wctype.h>
 
@@ -36,11 +37,11 @@ namespace lsp
 
         PathPattern::~PathPattern()
         {
-            destroy_data(pRoot);
+            destroy_cmd(pRoot);
             pRoot   = NULL;
         }
 
-        void PathPattern::destroy_data(cmd_t *cmd)
+        void PathPattern::destroy_cmd(cmd_t *cmd)
         {
             if (cmd == NULL)
                 return;
@@ -49,7 +50,7 @@ namespace lsp
             for (size_t i=0, n=cmd->sChildren.size(); i<n; ++i)
             {
                 cmd_t *child = cmd->sChildren.uget(i);
-                destroy_data(child);
+                destroy_cmd(child);
             }
 
             delete cmd;
@@ -189,7 +190,7 @@ namespace lsp
 
             status_t res = merge_step(out, tmp, type);
             if (res != STATUS_OK)
-                destroy_data(tmp);
+                destroy_cmd(tmp);
             return res;
         }
 
@@ -198,8 +199,8 @@ namespace lsp
             // Analyze last token
             if (tok < 0)
             {
-                destroy_data(next);
-                destroy_data(out);
+                destroy_cmd(next);
+                destroy_cmd(out);
                 return -tok;
             }
             else if (out == NULL)
@@ -209,8 +210,8 @@ namespace lsp
             }
             else if (!out->sChildren.add(next))
             {
-                destroy_data(out);
-                destroy_data(next);
+                destroy_cmd(out);
+                destroy_cmd(next);
                 return STATUS_NO_MEM;
             }
 
@@ -236,13 +237,22 @@ namespace lsp
                         next_token(it);
                         if ((res = parse_or(&next, it)) != STATUS_OK)
                             break;
-                        next->bInverse  = (tok == T_IGROUP_START);
-                        if ((res = merge_step(&out, next, CMD_SEQUENCE)) != STATUS_OK)
+
+                        // Premature optimization: ignore empty text since it has no rational sense
+                        if ((next->nCommand == CMD_PATTERN) && (next->nChars <= 0))
+                            destroy_cmd(next);
+                        else
                         {
-                            destroy_data(next);
-                            break;
+                            // Add item to the pattern list
+                            next->bInverse ^= (tok == T_IGROUP_START);
+                            if ((res = merge_step(&out, next, CMD_SEQUENCE)) != STATUS_OK)
+                            {
+                                destroy_cmd(next);
+                                break;
+                            }
                         }
 
+                        // Require END-OF-GROUP token
                         tok = get_token(it);
                         if (tok == T_EOF)
                             return -STATUS_EOF;
@@ -253,6 +263,11 @@ namespace lsp
 
                     case T_TEXT:
                         next_token(it);
+
+                        // Premature optimization: ignore empty text since it has no rational sense
+                        if (it->nChars == 0)
+                            break;
+
                         res = merge_simple(&out, CMD_SEQUENCE, CMD_PATTERN, it);
                         break;
 
@@ -284,7 +299,7 @@ namespace lsp
                             // Premature optimization: treat sequence of one element as this element
                             *dst = out->sChildren.uget(0);
                             out->sChildren.clear();
-                            destroy_data(out);
+                            destroy_cmd(out);
                         }
                         else
                         {
@@ -305,7 +320,7 @@ namespace lsp
 
                 if (res != STATUS_OK)
                 {
-                    destroy_data(out);
+                    destroy_cmd(out);
                     return res;
                 }
             }
@@ -354,8 +369,8 @@ namespace lsp
                 // Parse command
                 if (res != STATUS_OK)
                 {
-                    destroy_data(out);
-                    destroy_data(next);
+                    destroy_cmd(out);
+                    destroy_cmd(next);
                     return res;
                 }
 
@@ -389,8 +404,8 @@ namespace lsp
                 // Parse command
                 if (res != STATUS_OK)
                 {
-                    destroy_data(out);
-                    destroy_data(next);
+                    destroy_cmd(out);
+                    destroy_cmd(next);
                     return res;
                 }
 

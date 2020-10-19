@@ -165,7 +165,7 @@ namespace lsp
                 static status_t             parse_and(cmd_t **dst, tokenizer_t *it);
                 static status_t             parse_or(cmd_t **dst, tokenizer_t *it);
                 static status_t             parse_sequence(cmd_t **dst, tokenizer_t *it);
-                static void                 destroy_data(cmd_t *cmd);
+                static void                 destroy_cmd(cmd_t *cmd);
                 static status_t             merge_simple(cmd_t **out, command_t type, command_t cmd, tokenizer_t *it);
                 static status_t             merge_step(cmd_t **out, cmd_t *next, command_t type);
                 static status_t             merge_last(cmd_t **dst, cmd_t *out, cmd_t *next, ssize_t tok);

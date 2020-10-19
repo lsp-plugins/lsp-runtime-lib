@@ -73,7 +73,10 @@ UTEST_BEGIN("runtime.io", pathpattern)
                     {
                         LSPString tmp;
                         tmp.set(&sMask, cmd->nStart, cmd->nStart + cmd->nLength);
-                        pTest->printf("PATTERN (\"%s\") chars=%d\n", tmp.get_utf8(), int(cmd->nChars));
+                        pTest->printf("PATTERN (\"%s\") start=%d, length=%d, chars=%d\n",
+                                tmp.get_utf8(),
+                                int(cmd->nStart), int(cmd->nLength), int(cmd->nChars)
+                            );
                         break;
                     }
 
@@ -111,6 +114,8 @@ UTEST_BEGIN("runtime.io", pathpattern)
             "file.ext",
             "!file.ext",
             "!!!file.ext",
+            "file().txt",
+            "file!().txt",
             "file.!(c|h)",
             "!?file.ext",
             "?file.ext",
@@ -265,7 +270,7 @@ UTEST_BEGIN("runtime.io", pathpattern)
 
     UTEST_MAIN
     {
-//        test_parse();
+        test_parse();
         test_match_simple();
     }
 
