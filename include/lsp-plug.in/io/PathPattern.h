@@ -99,7 +99,7 @@ namespace lsp
                     command_t               nCommand;   // Command
                     size_t                  nStart;     // Start of character sequence
                     size_t                  nLength;    // Length of character sequence
-                    size_t                  nChars;     // Actual length in characters (without escaping)
+                    ssize_t                 nChars;     // Actual length in characters (without escaping)
                     bool                    bInverse;   // Inverse condition flag
                     lltl::parray<cmd_t>     sChildren;
                 } cmd_t;
@@ -112,7 +112,7 @@ namespace lsp
                     size_t                  nPosition;
                     size_t                  nStart;     // Start position of token data
                     size_t                  nLength;    // Length of character sequence
-                    size_t                  nChars;     // Actual length in characters (without escaping)
+                    ssize_t                 nChars;     // Actual length in characters (without escaping)
                 } token_t;
 
             protected:
@@ -140,11 +140,12 @@ namespace lsp
                 typedef struct any_matcher_t : public matcher_t
                 {
                     ssize_t                 bad;        // Index of last bad character
+                    ssize_t                 good;       // Index of last good match
                 } any_matcher_t;
 
                 typedef struct bool_matcher_t : public matcher_t
                 {
-                    lltl::parray<matcher_t>     cond;       // List of additionally checked conditions
+                    lltl::parray<matcher_t>     cond;   // List of additionally checked conditions
                 } bool_matcher_t;
 
             protected:
@@ -181,6 +182,8 @@ namespace lsp
 
                 static bool                 check_pattern_case(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len);
                 static bool                 check_pattern_nocase(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len);
+                static ssize_t              seek_pattern_case(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len, size_t rounds);
+                static ssize_t              seek_pattern_nocase(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len, size_t rounds);
 
             public:
                 explicit PathPattern();

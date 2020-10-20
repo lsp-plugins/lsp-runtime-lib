@@ -82,7 +82,14 @@ UTEST_BEGIN("runtime.io", pathpattern)
 
                     case CMD_ANY:
                     {
-                        pTest->printf("ANY ('*')\n");
+                        pTest->printf("ANY ('*'");
+                        if (cmd->nChars >= 0)
+                        {
+                            LSPString tmp;
+                            tmp.set(&sMask, cmd->nStart, cmd->nStart + cmd->nLength);
+                            pTest->printf(", except=\"%s\"", tmp.get_utf8());
+                        }
+                        pTest->printf(")\n");
                         break;
                     }
 
@@ -116,6 +123,8 @@ UTEST_BEGIN("runtime.io", pathpattern)
             "!!!file.ext",
             "file().txt",
             "file!().txt",
+            "file!(-test).txt",
+            "file!(!-test).txt",
             "file.!(c|h)",
             "!?file.ext",
             "?file.ext",
@@ -181,6 +190,14 @@ UTEST_BEGIN("runtime.io", pathpattern)
             { "!*",         false,  "/",                    false           },
             { "*",          true,   "/",                    false           },
             { "!*",         true,   "/",                    true            },
+            { "!()",        false,  "",                     false           },
+            { "!()",        false,  "1",                    true            },
+            { "!(test)",    false,  "",                     true            },
+            { "!(test)",    false,  "tes",                  true            },
+            { "!(test)",    false,  "test",                 false           },
+            { "!(test)",    false,  "test.txt",             false           },
+            { "!(test)",    false,  "local.test",           false           },
+            { "!(test)",    false,  "some-test.log",        false           },
 
             // ANYPATH match
             { "**/",        false,  "",                     true            },

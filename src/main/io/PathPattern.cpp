@@ -76,7 +76,7 @@ namespace lsp
             // Analyze first character
             it->nStart              = it->nPosition;
             it->nLength             = 0;
-            it->nChars              = 0;
+            it->nChars              = -1;
             lsp_wchar_t c           = mask->char_at(it->nPosition++);
             bool escape;
 
@@ -115,8 +115,7 @@ namespace lsp
                 default: // T_TEXT
                     it->nToken      = T_TEXT;
                     escape          = c == '`';
-                    if (!escape)
-                        ++it->nChars;
+                    it->nChars      = (escape) ? 0 : 1;
                     break;
             }
 
@@ -169,7 +168,7 @@ namespace lsp
                 tmp->nCommand   = type;
                 tmp->nStart     = 0;
                 tmp->nLength    = 0;
-                tmp->nChars     = 0;
+                tmp->nChars     = -1;
                 tmp->bInverse   = false;
                 *out            = tmp;
             }
@@ -238,18 +237,32 @@ namespace lsp
                         if ((res = parse_or(&next, it)) != STATUS_OK)
                             break;
 
+                        next->bInverse ^= (tok == T_IGROUP_START);
+
                         // Premature optimization: ignore empty text since it has no rational sense
-                        if ((next->nCommand == CMD_PATTERN) && (next->nChars <= 0))
-                            destroy_cmd(next);
-                        else
+                        if (next->nCommand == CMD_PATTERN)
                         {
-                            // Add item to the pattern list
-                            next->bInverse ^= (tok == T_IGROUP_START);
-                            if ((res = merge_step(&out, next, CMD_SEQUENCE)) != STATUS_OK)
+                            if (next->bInverse) // Special case: !(text) -> ANY except text pattern
                             {
-                                destroy_cmd(next);
-                                break;
+                                next->nCommand  = CMD_ANY;
+                                next->bInverse  = false;
                             }
+                            else if (next->nChars <= 0) // There is no sense of empty text
+                            {
+                                destroy_cmd(next); // Just drop the command
+                                next = NULL;
+                            }
+                        }
+
+                        // Merge next item
+                        if (next != NULL)
+                            res = merge_step(&out, next, CMD_SEQUENCE);
+
+                        // Check result
+                        if (res != STATUS_OK)
+                        {
+                            destroy_cmd(next);
+                            break;
                         }
 
                         // Require END-OF-GROUP token
@@ -267,7 +280,6 @@ namespace lsp
                         // Premature optimization: ignore empty text since it has no rational sense
                         if (it->nChars == 0)
                             break;
-
                         res = merge_simple(&out, CMD_SEQUENCE, CMD_PATTERN, it);
                         break;
 
@@ -544,10 +556,30 @@ namespace lsp
             return true;
         }
 
+        ssize_t PathPattern::seek_pattern_case(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len, size_t rounds)
+        {
+            for (size_t i=0; i < rounds; ++i)
+            {
+                if (check_pattern_case(pat, &s[i], len))
+                    return i;
+            }
+            return -1;
+        }
+
+        ssize_t PathPattern::seek_pattern_nocase(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len, size_t rounds)
+        {
+            for (size_t i=0; i < rounds; ++i)
+            {
+                if (check_pattern_nocase(pat, &s[i], len))
+                    return i;
+            }
+            return -1;
+        }
+
         bool PathPattern::pattern_matcher_match(matcher_t *m, size_t start, size_t count)
         {
             const cmd_t *cmd        = m->cmd;
-            if (count != m->cmd->nChars)
+            if (count != size_t(m->cmd->nChars))
                 return cmd->bInverse;
 
             const lsp_wchar_t *pat = m->pat->characters() + cmd->nStart;
@@ -562,12 +594,17 @@ namespace lsp
         bool PathPattern::any_matcher_match(matcher_t *m, size_t start, size_t count)
         {
             const cmd_t *cmd        = m->cmd;
-            if (count == 0)
+            if ((cmd->nChars < 0) && (count == 0))
                 return !cmd->bInverse;
 
+            // Bad match is inside of the passed range?
             any_matcher_t *am       = static_cast<any_matcher_t *>(m);
             if ((am->bad >= ssize_t(start)) && (am->bad < ssize_t(start + count)))
                 return cmd->bInverse;
+
+            // Good match is inside of the passed range? Return immediately
+            if ((am->good >= ssize_t(start)) && ((am->good + cmd->nChars) < ssize_t(start + count)))
+                return !cmd->bInverse;
 
             // We need to ensure that there are no denied items within the area
             const lsp_wchar_t *str = m->str->characters() + start;
@@ -581,7 +618,26 @@ namespace lsp
                 }
             }
 
-            return !cmd->bInverse;
+            // Additionally, if we have 'except' rule, lookup for the sub-string
+            if (cmd->nChars < 0)
+                return !cmd->bInverse;  // No 'except' rule
+            else if (cmd->nChars == 0)
+                return (count > 0) ^ cmd->bInverse; // Empty 'except', always match ranges longer than 0 characters
+
+            // Can we perform 'except' test
+            ssize_t loops = count - cmd->nChars + 1;
+            if (loops <= 0)
+                return !cmd->bInverse;   // We can not iterate, there is no 'except' match
+
+            // Perform seek by pattern
+            const lsp_wchar_t *pat = m->pat->characters() + cmd->nStart;
+            ssize_t match = (m->flags & MATCH_CASE) ?
+                        seek_pattern_case(pat, str, cmd->nLength, loops) :
+                        seek_pattern_nocase(pat, str, cmd->nLength, loops);
+            if (match >= 0)
+                am->good    = start + match;
+
+            return (match < 0) ^ cmd->bInverse; // There should be no match found for good reason
         }
 
         bool PathPattern::anypath_matcher_match(matcher_t *m, size_t start, size_t count)
@@ -678,6 +734,7 @@ namespace lsp
                         m->str              = src->str;
                         m->flags            = src->flags;
                         m->bad              = -1;
+                        m->good             = -1;
                     }
                     return m;
                 }
