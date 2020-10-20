@@ -27,6 +27,7 @@
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/lltl/parray.h>
+#include <lsp-plug.in/lltl/darray.h>
 
 namespace lsp
 {
@@ -77,7 +78,9 @@ namespace lsp
                     M_PATTERN,
                     M_ANY,
                     M_ANYPATH,
-                    M_BOOL
+                    M_BOOL,
+                    M_SEQUENCE,
+                    M_BRUTE
                 };
 
                 enum token_type_t
@@ -145,8 +148,28 @@ namespace lsp
 
                 typedef struct bool_matcher_t : public matcher_t
                 {
-                    lltl::parray<matcher_t>     cond;   // List of additionally checked conditions
+                    lltl::parray<matcher_t> cond;       // List of additionally checked conditions
                 } bool_matcher_t;
+
+                typedef struct mregion_t
+                {
+                    size_t                  start;      // Start of the region
+                    size_t                  count;      // Length of the region
+                    matcher_t              *matcher;    // Matcher assigned to the region
+                } mregion_t;
+
+                typedef struct sequence_matcher_t: public matcher_t
+                {
+                    size_t                  prefix;     // Number of fixed prefixes
+                    size_t                  postfix;    // Number of fixed postfixes
+                    lltl::darray<mregion_t> fixed;      // Fixed text regions
+                    lltl::darray<mregion_t> var;        // Variable text regions
+                } sequence_matcher_t;
+
+                typedef struct brute_matcher_t: public matcher_t
+                {
+                    lltl::darray<mregion_t> items;      // Matching regions
+                } brute_matcher_t;
 
             protected:
                 LSPString                   sMask;
@@ -172,6 +195,7 @@ namespace lsp
                 static status_t             merge_last(cmd_t **dst, cmd_t *out, cmd_t *next, ssize_t tok);
 
                 static matcher_t           *create_matcher(const matcher_t *src, const cmd_t *cmd);
+                static bool                 add_range_matcher(sequence_matcher_t *m, const pos_t *pos);
                 static void                 destroy_matcher(matcher_t *match);
 
                 static bool                 pattern_matcher_match(matcher_t *m, size_t start, size_t count);
@@ -179,6 +203,8 @@ namespace lsp
                 static bool                 anypath_matcher_match(matcher_t *m, size_t start, size_t count);
                 static bool                 and_matcher_match(matcher_t *m, size_t start, size_t count);
                 static bool                 or_matcher_match(matcher_t *m, size_t start, size_t count);
+                static bool                 sequence_matcher_match(matcher_t *m, size_t start, size_t count);
+                static bool                 brute_matcher_match(matcher_t *m, size_t start, size_t count);
 
                 static bool                 check_pattern_case(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len);
                 static bool                 check_pattern_nocase(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len);

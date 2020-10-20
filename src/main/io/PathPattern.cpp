@@ -239,18 +239,34 @@ namespace lsp
 
                         next->bInverse ^= (tok == T_IGROUP_START);
 
-                        // Premature optimization: ignore empty text since it has no rational sense
-                        if (next->nCommand == CMD_PATTERN)
+                        if ((next->nCommand == CMD_PATTERN) && (next->nChars <= 0) && (!next->bInverse))
                         {
-                            if (next->bInverse) // Special case: !(text) -> ANY except text pattern
+                            // Premature optimization: ignore empty text since it has no rational sense
+                            destroy_cmd(next); // Drop the command
+                            next = NULL;
+                        }
+                        else if ((next->nCommand == CMD_ANY) && (next->nChars < 0) && (next->bInverse))
+                        {
+                            // Premature optimization: ignore inverse ANY match since it has no rational sense
+                            destroy_cmd(next); // Drop the command
+                            next = NULL;
+                        }
+                        else if ((next->nCommand == CMD_PATTERN) && (next->bInverse))
+                        {
+                            next->nCommand  = CMD_ANY;
+                            next->bInverse  = false;
+
+                            // Premature optimization: replace previous ANY match with ANY EXCEPT match
+                            cmd_t *prev     = (out != NULL) ? out->sChildren.last() : NULL;
+                            if ((prev != NULL) && (prev->nCommand == CMD_ANY) && (prev->nChars < 0) && (!prev->bInverse))
                             {
-                                next->nCommand  = CMD_ANY;
-                                next->bInverse  = false;
-                            }
-                            else if (next->nChars <= 0) // There is no sense of empty text
-                            {
-                                destroy_cmd(next); // Just drop the command
-                                next = NULL;
+                                // Premature optimization: replace previous ANY match with ANY EXCEPT
+                                prev->nChars    = next->nChars;
+                                prev->nStart    = next->nStart;
+                                prev->nLength   = next->nLength;
+
+                                destroy_cmd(next); // Drop the command
+                                next            = NULL;
                             }
                         }
 
@@ -285,7 +301,7 @@ namespace lsp
 
                     case T_ANY:
                         next_token(it);
-                        // Premature optimization: Reduce sequence of * to one element
+                        // Premature optimization: Reduce sequence of multiple ANY elements to one ANY element
                         next = (out != NULL) ? out->sChildren.last() : NULL;
                         if ((next != NULL) && (next->nCommand == CMD_ANY))
                             break;
@@ -675,7 +691,7 @@ namespace lsp
 
         bool PathPattern::and_matcher_match(matcher_t *m, size_t start, size_t count)
         {
-            bool_matcher_t *bm = static_cast<bool_matcher_t *>(m);
+            bool_matcher_t *bm      = static_cast<bool_matcher_t *>(m);
             const cmd_t *cmd        = m->cmd;
 
             // If at least one matcher does not match - return result
@@ -690,7 +706,7 @@ namespace lsp
 
         bool PathPattern::or_matcher_match(matcher_t *m, size_t start, size_t count)
         {
-            bool_matcher_t *bm = static_cast<bool_matcher_t *>(m);
+            bool_matcher_t *bm      = static_cast<bool_matcher_t *>(m);
             const cmd_t *cmd        = m->cmd;
 
             // If at least one matcher matches - return result
@@ -703,6 +719,118 @@ namespace lsp
             return cmd->bInverse;
         }
 
+        bool PathPattern::sequence_matcher_match(matcher_t *m, size_t start, size_t count)
+        {
+            sequence_matcher_t *sm  = static_cast<sequence_matcher_t *>(m);
+            const cmd_t *cmd        = m->cmd;
+
+            // Check prefixes
+            for (size_t i=0; i<sm->prefix; ++i)
+            {
+                const cmd_t *xc         = cmd->sChildren.uget(i);
+                const lsp_wchar_t *src  = m->str->characters() + start;
+                const lsp_wchar_t *pat  = m->pat->characters() + xc->nStart;
+
+                bool match = (m->flags & MATCH_CASE) ?
+                               check_pattern_case(pat, src, xc->nLength) :
+                               check_pattern_nocase(pat, src, xc->nLength);
+
+                if (!match)
+                    return cmd->bInverse;
+
+                // Update the matching range
+                start                  += xc->nChars;
+                count                  -= xc->nChars;
+            }
+
+            // Check postfixes
+            for (size_t i=0, idx=cmd->sChildren.size()-1; i<sm->postfix; ++i, --idx)
+            {
+                const cmd_t *xc         = cmd->sChildren.uget(idx);
+                const lsp_wchar_t *src  = m->str->characters() + start + count - xc->nChars;
+                const lsp_wchar_t *pat  = m->pat->characters() + xc->nStart;
+
+                bool match = (m->flags & MATCH_CASE) ?
+                               check_pattern_case(pat, src, xc->nLength) :
+                               check_pattern_nocase(pat, src, xc->nLength);
+                if (!match)
+                    return cmd->bInverse;
+
+                // Update the matching range
+                count                  -= xc->nChars;
+            }
+
+            // Now we have only N fixed and N+1 variable positions left
+            mregion_t *r;
+            if (sm->fixed.size() == 0) // No fixed elements?
+            {
+                r   = sm->var.uget(0);
+                return r->matcher->match(r->matcher, start, count);
+            }
+
+            // TODO: perform initial match
+
+            // TODO: look for another matches
+
+            return false;
+        }
+
+        bool PathPattern::brute_matcher_match(matcher_t *m, size_t start, size_t count)
+        {
+            return false;
+        }
+
+        bool PathPattern::add_range_matcher(sequence_matcher_t *m, const pos_t *pos)
+        {
+            mregion_t *r = m->var.add();
+            if (r == NULL)
+                return false;
+
+            r->start            = 0;
+            r->count            = 0;
+            r->matcher          = NULL;
+
+            // Simple case (one command) ?
+            const cmd_t *cmd    = m->cmd;
+            if (pos->count <= 1)
+            {
+                const cmd_t *xc     = cmd->sChildren.uget(pos->start);
+                r->matcher          = create_matcher(m, xc);
+                return r->matcher != NULL;
+            }
+
+            // Create brute matcher
+            brute_matcher_t *bm = new brute_matcher_t();
+            if (bm == NULL)
+                return false;
+
+            bm->type            = M_BRUTE;
+            bm->match           = brute_matcher_match;
+            bm->cmd             = cmd;
+            bm->pat             = m->pat;
+            bm->str             = m->str;
+            bm->flags           = m->flags;
+            r->matcher          = bm;       // Link matcher
+
+            for (size_t i=0; i<pos->count; ++i)
+            {
+                const cmd_t *xc     = cmd->sChildren.uget(pos->start + i);
+
+                // Add new sub-matcher to brute matcher
+                if ((r = bm->items.add()) == NULL)
+                    return NULL;
+
+                r->start    = 0;
+                r->count    = 0;
+                r->matcher  = create_matcher(bm, xc);
+
+                if (r->matcher == NULL)
+                    return false;
+            }
+
+            return true;
+        }
+
         PathPattern::matcher_t *PathPattern::create_matcher(const matcher_t *src, const cmd_t *cmd)
         {
             switch (cmd->nCommand)
@@ -710,47 +838,50 @@ namespace lsp
                 case CMD_PATTERN:
                 {
                     matcher_t *m = new matcher_t();
-                    if (m != NULL)
-                    {
-                        m->type             = M_PATTERN;
-                        m->match            = pattern_matcher_match;
-                        m->cmd              = cmd;
-                        m->pat              = src->pat;
-                        m->str              = src->str;
-                        m->flags            = src->flags;
-                    }
+                    if (m == NULL)
+                        return NULL;
+
+                    m->type             = M_PATTERN;
+                    m->match            = pattern_matcher_match;
+                    m->cmd              = cmd;
+                    m->pat              = src->pat;
+                    m->str              = src->str;
+                    m->flags            = src->flags;
+
                     return m;
                 }
 
                 case CMD_ANY:
                 {
                     any_matcher_t *m = new any_matcher_t();
-                    if (m != NULL)
-                    {
-                        m->type             = M_ANY;
-                        m->match            = any_matcher_match;
-                        m->cmd              = cmd;
-                        m->pat              = src->pat;
-                        m->str              = src->str;
-                        m->flags            = src->flags;
-                        m->bad              = -1;
-                        m->good             = -1;
-                    }
+                    if (m == NULL)
+                        return NULL;
+
+                    m->type             = M_ANY;
+                    m->match            = any_matcher_match;
+                    m->cmd              = cmd;
+                    m->pat              = src->pat;
+                    m->str              = src->str;
+                    m->flags            = src->flags;
+                    m->bad              = -1;
+                    m->good             = -1;
+
                     return m;
                 }
 
                 case CMD_ANYPATH:
                 {
                     matcher_t *m = new matcher_t();
-                    if (m != NULL)
-                    {
-                        m->type             = M_ANYPATH;
-                        m->match            = anypath_matcher_match;
-                        m->cmd              = cmd;
-                        m->pat              = src->pat;
-                        m->str              = src->str;
-                        m->flags            = src->flags;
-                    }
+                    if (m == NULL)
+                        return NULL;
+
+                    m->type             = M_ANYPATH;
+                    m->match            = anypath_matcher_match;
+                    m->cmd              = cmd;
+                    m->pat              = src->pat;
+                    m->str              = src->str;
+                    m->flags            = src->flags;
+
                     return m;
                 }
 
@@ -758,27 +889,120 @@ namespace lsp
                 case CMD_OR:
                 {
                     bool_matcher_t *m = new bool_matcher_t();
-                    if (m != NULL)
-                    {
-                        m->type             = M_BOOL;
-                        m->match            = (cmd->nCommand == CMD_AND) ? and_matcher_match : or_matcher_match;
-                        m->cmd              = cmd;
-                        m->pat              = src->pat;
-                        m->str              = src->str;
-                        m->flags            = src->flags;
+                    if (m == NULL)
+                        return NULL;
 
-                        // Create child matchers
-                        for (size_t i=0, n=cmd->sChildren.size(); i<n; ++i)
+                    m->type             = M_BOOL;
+                    m->match            = (cmd->nCommand == CMD_AND) ? and_matcher_match : or_matcher_match;
+                    m->cmd              = cmd;
+                    m->pat              = src->pat;
+                    m->str              = src->str;
+                    m->flags            = src->flags;
+
+                    // Create child matchers
+                    for (size_t i=0, n=cmd->sChildren.size(); i<n; ++i)
+                    {
+                        const cmd_t *c      = cmd->sChildren.uget(i);
+                        matcher_t *cm       = create_matcher(m, c);
+                        if ((cm == NULL) || (!m->cond.add(cm)))
                         {
-                            const cmd_t *c      = cmd->sChildren.uget(i);
-                            matcher_t *cm       = create_matcher(m, c);
-                            if ((cm == NULL) || (!m->cond.add(cm)))
+                            destroy_matcher(m);
+                            return NULL;
+                        }
+                    }
+
+                    return m;
+                }
+
+                case CMD_SEQUENCE:
+                {
+                    sequence_matcher_t *m       = new sequence_matcher_t();
+
+                    m->type             = M_SEQUENCE;
+                    m->match            = sequence_matcher_match;
+                    m->cmd              = cmd;
+                    m->pat              = src->pat;
+                    m->str              = src->str;
+                    m->flags            = src->flags;
+                    m->prefix           = 0;
+                    m->postfix          = 0;
+
+                    size_t i = 0, n = cmd->sChildren.size();
+
+                    // Count prefixes
+                    for ( ; i < n; ++i)
+                    {
+                        const cmd_t *xc     = cmd->sChildren.uget(i);
+                        if ((xc->nCommand != CMD_PATTERN) || (xc->bInverse))
+                            break;
+                        ++m->prefix;
+                    }
+
+                    // Count postfixes
+                    for ( ; i < n; --n)
+                    {
+                        const cmd_t *xc     = cmd->sChildren.uget(n-1);
+                        if ((xc->nCommand != CMD_PATTERN) || (xc->bInverse))
+                            break;
+                        ++m->postfix;
+                    }
+
+                    // Scan for fixed items and create additional matchers
+                    pos_t range;
+                    range.start     = 0;
+                    range.count     = 0;
+
+                    for (; i<n; ++i)
+                    {
+                        const cmd_t *xc     = cmd->sChildren.uget(i);
+                        if ((xc->nCommand == CMD_PATTERN) && (!xc->bInverse))
+                        {
+                            mregion_t *r;
+
+                            // Add variable matcher
+                            if (!add_range_matcher(m, &range))
+                            {
+                                destroy_matcher(m);
+                                return NULL;
+                            }
+
+                            // Add fixed range matcher
+                            if ((r = m->fixed.add()) == NULL)
+                            {
+                                destroy_matcher(m);
+                                return NULL;
+                            }
+
+                            r->start    = 0;
+                            r->count    = 0;
+                            r->matcher  = create_matcher(m, xc);
+
+                            if (r->matcher == NULL)
                             {
                                 destroy_matcher(m);
                                 return NULL;
                             }
                         }
+                        else
+                        {
+                            // Save range as variable-size range
+                            if (range.count == 0)
+                                range.start     = i;
+                            ++range.count;
+                        }
                     }
+
+                    // Last operation: add variable matcher if there is one
+                    if (range.count <= 0)
+                        return m;
+
+                    // Add last range
+                    if (!add_range_matcher(m, &range))
+                    {
+                        destroy_matcher(m);
+                        return NULL;
+                    }
+
                     return m;
                 }
 
@@ -807,11 +1031,48 @@ namespace lsp
 
                 case M_BOOL:
                 {
-                    bool_matcher_t *bm = static_cast<bool_matcher_t *>(m);
+                    bool_matcher_t *bm      = static_cast<bool_matcher_t *>(m);
 
                     // Destroy all child matchers
                     for (size_t i=0, n=bm->cond.size(); i<n; ++i)
                         destroy_matcher(bm->cond.uget(i));
+
+                    delete bm;
+                    break;
+                }
+
+                case M_SEQUENCE:
+                {
+                    sequence_matcher_t *sm  = static_cast<sequence_matcher_t *>(m);
+
+                    // Destroy fixed matchers
+                    for (size_t i=0, n=sm->fixed.size(); i<n; ++i)
+                    {
+                        mregion_t *r    = sm->fixed.uget(i);
+                        destroy_matcher(r->matcher);
+                    }
+
+                    // Destroy variable matchers
+                    for (size_t i=0, n=sm->var.size(); i<n; ++i)
+                    {
+                        mregion_t *r    = sm->var.uget(i);
+                        destroy_matcher(r->matcher);
+                    }
+
+                    delete sm;
+                    break;
+                }
+
+                case M_BRUTE:
+                {
+                    brute_matcher_t *bm  = static_cast<brute_matcher_t *>(m);
+
+                    // Destroy nested matchers
+                    for (size_t i=0, n=bm->items.size(); i<n; ++i)
+                    {
+                        mregion_t *r    = bm->items.uget(i);
+                        destroy_matcher(r->matcher);
+                    }
 
                     delete bm;
                     break;

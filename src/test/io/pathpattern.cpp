@@ -147,6 +147,11 @@ UTEST_BEGIN("runtime.io", pathpattern)
             "!*.c&!*.h",
             "!(*.c|*.h)&!(test-*)",
             "file**.log",
+            "file***.log",
+            "file(!test).log",
+            "file*(!test).log",
+            "file(!test)*.log",
+            "file*(!test)*.log",
             "file*?*.log",
             "(*.c|*.h)&test-*",
             "(*.c|*.h)&!(*.cc|*.cpp)",
@@ -175,21 +180,21 @@ UTEST_BEGIN("runtime.io", pathpattern)
     {
         static const match_t matches[] =
         {
-            // PATTERN match
-            { "test",       false,  "test",                 true            },
-            { "test",       false,  "",                     false           },
-            { "test",       false,  "test.log",             false           },
-            { "!test",      false,  "test",                 false           },
-            { "!test",      false,  "",                     true            },
-            { "!test",      false,  "test.log",             true            },
-
-            // ANY match
-            { "*",          false,  "test.log",             true            },
-            { "*",          false,  "",                     true            },
-            { "*",          false,  "/",                    true            },
-            { "!*",         false,  "/",                    false           },
-            { "*",          true,   "/",                    false           },
-            { "!*",         true,   "/",                    true            },
+//            // PATTERN match
+//            { "test",       false,  "test",                 true            },
+//            { "test",       false,  "",                     false           },
+//            { "test",       false,  "test.log",             false           },
+//            { "!test",      false,  "test",                 false           },
+//            { "!test",      false,  "",                     true            },
+//            { "!test",      false,  "test.log",             true            },
+//
+//            // ANY match
+//            { "*",          false,  "test.log",             true            },
+//            { "*",          false,  "",                     true            },
+//            { "*",          false,  "/",                    true            },
+//            { "!*",         false,  "/",                    false           },
+//            { "*",          true,   "/",                    false           },
+//            { "!*",         true,   "/",                    true            },
             { "!()",        false,  "",                     false           },
             { "!()",        false,  "1",                    true            },
             { "!(test)",    false,  "",                     true            },
