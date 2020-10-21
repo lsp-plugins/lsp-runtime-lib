@@ -240,6 +240,7 @@ namespace lsp
 
                 inline status_t             set_pattern(const PathPattern *src)                         { return set(&src->sMask, nFlags);          }
                 inline status_t             set_pattern(const LSPString *pattern)                       { return set(pattern, nFlags);              }
+                inline status_t             set_pattern(const Path *pattern)                            { return set(pattern, nFlags);              }
                 inline status_t             set_pattern(const char *pattern)                            { return set(pattern, nFlags);              }
 
                 bool                        test(const char *path) const;
