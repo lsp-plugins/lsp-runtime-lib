@@ -794,7 +794,6 @@ namespace lsp
                     return false;
 
                 r->start                = start + match;
-                r->count                = xc->nChars;
                 start                   = r->start + xc->nChars;
             }
 
@@ -822,7 +821,7 @@ namespace lsp
                 if (match >= 0)
                 {
                     r->start                = first + match;
-                    first                   = r->start + r->count;
+                    first                   = r->start + xc->nChars;
                     if (sequence_alloc_fixed(sm, i + 1, first, last - first))
                         return true;
                 }
@@ -843,7 +842,7 @@ namespace lsp
                 m                       = sm->var.uget(i);
                 if (!m->match(m, first, r->start - first))
                     return false;
-                first                   = r->start + r->count;
+                first                   = r->start + r->cmd->nChars;
             }
 
             // Perform N+1'th match
@@ -953,7 +952,6 @@ namespace lsp
 
                 // Create sub-matcher
                 r->start    = 0;
-                r->count    = 0;
                 r->matcher  = create_matcher(bm, xc);
                 r->cmd      = NULL;
 
@@ -1110,7 +1108,6 @@ namespace lsp
 
                             // Initialize pattern matcher
                             r->start    = 0;
-                            r->count    = 0;
                             r->matcher  = NULL;
                             r->cmd      = xc;
 

@@ -154,7 +154,6 @@ namespace lsp
                 typedef struct mregion_t
                 {
                     size_t                  start;      // Start of the region
-                    size_t                  count;      // Length of the region
                     matcher_t              *matcher;    // Matcher assigned to the region
                     const cmd_t            *cmd;        // Command
                 } mregion_t;
