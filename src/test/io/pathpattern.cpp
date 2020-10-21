@@ -176,25 +176,62 @@ UTEST_BEGIN("runtime.io", pathpattern)
         bool match;
     } match_t;
 
+    void test_match_patterns(const match_t *matches)
+    {
+        TestPathPattern p(this);
+
+        for (const match_t *m = matches; m->pattern != NULL; ++m)
+        {
+            size_t flags = 0;
+            if (m->full)
+                flags          |= io::PathPattern::FULL_PATH;
+            printf("Testing match for pattern \"%s\", value=\"%s\", full=%s, match=%s\n",
+                    m->pattern, m->value,
+                    (m->full) ? "true" : "false",
+                    (m->match) ? "true" : "false"
+                );
+
+            // Test direct
+            UTEST_ASSERT(p.set(m->pattern, flags) == STATUS_OK);
+            if (p.test(m->value) != m->match)
+            {
+                p.dump();
+                UTEST_FAIL_MSG("Falied direct match for pattern \"%s\", value=\"%s\", match=%s",
+                    m->pattern, m->value, (m->match) ? "true" : "false"
+                )
+            }
+
+            // Test inverse
+            UTEST_ASSERT(p.set(m->pattern, flags | io::PathPattern::INVERSE) == STATUS_OK);
+            if (p.test(m->value) == m->match)
+            {
+                p.dump();
+                UTEST_FAIL_MSG("Falied inverse match for pattern \"%s\", value=\"%s\", match=%s",
+                    m->pattern, m->value, (m->match) ? "true" : "false"
+                )
+            }
+        }
+    }
+
     void test_match_simple()
     {
         static const match_t matches[] =
         {
-//            // PATTERN match
-//            { "test",       false,  "test",                 true            },
-//            { "test",       false,  "",                     false           },
-//            { "test",       false,  "test.log",             false           },
-//            { "!test",      false,  "test",                 false           },
-//            { "!test",      false,  "",                     true            },
-//            { "!test",      false,  "test.log",             true            },
-//
-//            // ANY match
-//            { "*",          false,  "test.log",             true            },
-//            { "*",          false,  "",                     true            },
-//            { "*",          false,  "/",                    true            },
-//            { "!*",         false,  "/",                    false           },
-//            { "*",          true,   "/",                    false           },
-//            { "!*",         true,   "/",                    true            },
+            // PATTERN match
+            { "test",       false,  "test",                 true            },
+            { "test",       false,  "",                     false           },
+            { "test",       false,  "test.log",             false           },
+            { "!test",      false,  "test",                 false           },
+            { "!test",      false,  "",                     true            },
+            { "!test",      false,  "test.log",             true            },
+
+            // ANY match
+            { "*",          false,  "test.log",             true            },
+            { "*",          false,  "",                     true            },
+            { "*",          false,  "/",                    true            },
+            { "!*",         false,  "/",                    false           },
+            { "*",          true,   "/",                    false           },
+            { "!*",         true,   "/",                    true            },
             { "!()",        false,  "",                     false           },
             { "!()",        false,  "1",                    true            },
             { "!(test)",    false,  "",                     true            },
@@ -252,48 +289,88 @@ UTEST_BEGIN("runtime.io", pathpattern)
             { "!(a&b&c)",   false,  "c",                    true            },
             { "!(a&b&c)",   false,  "d",                    true            },
 
-            { NULL,         false,  NULL,                   false }
+            { NULL,         false,  NULL,                   false           }
         };
 
-        TestPathPattern p(this);
+        test_match_patterns(matches);
+    }
 
-        for (const match_t *m = matches; m->pattern != NULL; ++m)
+    void test_match_sequence_only()
+    {
+        static const match_t matches[] =
         {
-            size_t flags = 0;
-            if (m->full)
-                flags          |= io::PathPattern::FULL_PATH;
-            printf("Testing match for pattern \"%s\", value=\"%s\", full=%s, match=%s\n",
-                    m->pattern, m->value,
-                    (m->full) ? "true" : "false",
-                    (m->match) ? "true" : "false"
-                );
+            // Prefix test
+            { "a*",                 false,  "a",                    true            },
+            { "a*",                 false,  "ab",                   true            },
+            { "a*",                 false,  "abc",                  true            },
 
-            // Test direct
-            UTEST_ASSERT(p.set(m->pattern, flags) == STATUS_OK);
-            if (p.test(m->value) != m->match)
-            {
-                p.dump();
-                UTEST_FAIL_MSG("Falied direct match for pattern \"%s\", value=\"%s\", match=%s",
-                    m->pattern, m->value, (m->match) ? "true" : "false"
-                )
-            }
+            { "a()b*",                 false,  "a",                 false           },
+            { "a()b*",                 false,  "ab",                true            },
+            { "a()b*",                 false,  "ad",                false           },
+            { "a()b*",                 false,  "abc",               true            },
 
-            // Test inverse
-            UTEST_ASSERT(p.set(m->pattern, flags | io::PathPattern::INVERSE) == STATUS_OK);
-            if (p.test(m->value) == m->match)
-            {
-                p.dump();
-                UTEST_FAIL_MSG("Falied inverse match for pattern \"%s\", value=\"%s\", match=%s",
-                    m->pattern, m->value, (m->match) ? "true" : "false"
-                )
-            }
-        }
+            { "a!(b)",              false,  "a",                    true            },
+            { "a!(b)",              false,  "b",                    false           },
+            { "a!(b)",              false,  "ab",                   false           },
+            { "a!(b)",              false,  "ac",                   true            },
+            { "a!(b)",              false,  "acb",                  false           },
+            { "a!(b)",              false,  "acd",                  true            },
+            { "a!(b)",              true,   "a/b",                  false           },
+
+            { "a()b()c",            false,  "a",                    false           },
+            { "a()b()c",            false,  "ab",                   false           },
+            { "a()b()c",            false,  "abc",                  true            },
+            { "a()b()c",            false,  "abcd",                 false           },
+
+            // Postfix test
+            { "*b",                 false,  "b",                    true            },
+            { "*b",                 false,  "ab",                   true            },
+            { "*b",                 false,  "ba",                   false           },
+            { "*b",                 false,  "cab",                  true            },
+
+            { "*b()c",              false,  "c",                    false           },
+            { "*b()c",              false,  "bc",                   true            },
+            { "*b()c",              false,  "ac",                   false           },
+            { "*b()c",              false,  "abc",                  true            },
+
+            { "!(a)b",              false,  "a",                    false           },
+            { "!(a)b",              false,  "b",                    true            },
+            { "!(a)b",              false,  "ab",                   false           },
+            { "!(a)b",              false,  "ac",                   false           },
+            { "!(a)b",              false,  "cb",                   true            },
+            { "!(a)b",              false,  "dcb",                  true            },
+            { "!(a)b",              true,   "a/b",                  false           },
+
+            // Variants test
+            { "a(!b)c(!d)e",        false,  "ace",                  true            },
+            { "a(!b)c(!d)e",        false,  "abcde",                false           },
+            { "a(!b)c(!d)e",        false,  "abcxe",                false           },
+            { "a(!b)c(!d)e",        false,  "axcde",                false           },
+            { "a(!b)c(!d)e",        false,  "abce",                 false           },
+            { "a(!b)c(!d)e",        false,  "acde",                 false           },
+            { "a(!b)c(!d)e",        false,  "a12c34e",              true            },
+
+            { "ab*cd*ef",           false,  "abbccddeef",           true            },
+            { "a*bcb(!b)d",         false,  "aXYbcbcbXYd",          true            },
+            { "a*bcb(!b)ded(!d)f",  false,  "aXYbcbcbXYdededXYf",   true            },
+            { "a*bcb(!b)ded(!d)f",  false,  "aXYbcbcbXYdeddedXYdf", false           },
+
+            // Including full path
+            { "ab/*cd/*ef",         true,   "ab/cd/ef",             true            },
+            { "ab/*cd/*ef",         true,   "ab/1cd/2ef",           true            },
+            { "ab*/*cd*/*ef",       true,   "abcd/cdef/ghef",       true            },
+
+            { NULL,                 false,  NULL,                   false           }
+        };
+
+        test_match_patterns(matches);
     }
 
     UTEST_MAIN
     {
         test_parse();
         test_match_simple();
+        test_match_sequence_only();
     }
 
 UTEST_END

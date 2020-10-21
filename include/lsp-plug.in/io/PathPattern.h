@@ -156,6 +156,7 @@ namespace lsp
                     size_t                  start;      // Start of the region
                     size_t                  count;      // Length of the region
                     matcher_t              *matcher;    // Matcher assigned to the region
+                    const cmd_t            *cmd;        // Command
                 } mregion_t;
 
                 typedef struct sequence_matcher_t: public matcher_t
@@ -208,8 +209,14 @@ namespace lsp
 
                 static bool                 check_pattern_case(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len);
                 static bool                 check_pattern_nocase(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len);
-                static ssize_t              seek_pattern_case(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len, size_t rounds);
-                static ssize_t              seek_pattern_nocase(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len, size_t rounds);
+                static ssize_t              seek_pattern_case(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len, ssize_t rounds);
+                static ssize_t              seek_pattern_nocase(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len, ssize_t rounds);
+
+                static ssize_t              sequence_check_prefix(sequence_matcher_t *sm, size_t start, size_t count);
+                static ssize_t              sequence_check_postfix(sequence_matcher_t *sm, size_t start, size_t count);
+                static bool                 sequence_alloc_fixed(sequence_matcher_t *sm, size_t idx, size_t start, size_t count);
+                static bool                 sequence_next_fixed(sequence_matcher_t *sm, size_t start, size_t count);
+                static bool                 sequence_match_variable(sequence_matcher_t *sm, size_t start, size_t count);
 
             public:
                 explicit PathPattern();

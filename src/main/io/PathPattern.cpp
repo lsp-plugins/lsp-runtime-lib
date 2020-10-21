@@ -572,9 +572,12 @@ namespace lsp
             return true;
         }
 
-        ssize_t PathPattern::seek_pattern_case(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len, size_t rounds)
+        ssize_t PathPattern::seek_pattern_case(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len, ssize_t rounds)
         {
-            for (size_t i=0; i < rounds; ++i)
+            if (rounds <= 0)
+                return -1;
+
+            for (ssize_t i=0; i < rounds; ++i)
             {
                 if (check_pattern_case(pat, &s[i], len))
                     return i;
@@ -582,9 +585,12 @@ namespace lsp
             return -1;
         }
 
-        ssize_t PathPattern::seek_pattern_nocase(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len, size_t rounds)
+        ssize_t PathPattern::seek_pattern_nocase(const lsp_wchar_t *pat, const lsp_wchar_t *s, size_t len, ssize_t rounds)
         {
-            for (size_t i=0; i < rounds; ++i)
+            if (rounds <= 0)
+                return -1;
+
+            for (ssize_t i=0; i < rounds; ++i)
             {
                 if (check_pattern_nocase(pat, &s[i], len))
                     return i;
@@ -618,9 +624,9 @@ namespace lsp
             if ((am->bad >= ssize_t(start)) && (am->bad < ssize_t(start + count)))
                 return cmd->bInverse;
 
-            // Good match is inside of the passed range? Return immediately
+            // Good match is inside of the passed range? Return immediately with unsuccess
             if ((am->good >= ssize_t(start)) && ((am->good + cmd->nChars) < ssize_t(start + count)))
-                return !cmd->bInverse;
+                return cmd->bInverse;
 
             // We need to ensure that there are no denied items within the area
             const lsp_wchar_t *str = m->str->characters() + start;
@@ -640,12 +646,8 @@ namespace lsp
             else if (cmd->nChars == 0)
                 return (count > 0) ^ cmd->bInverse; // Empty 'except', always match ranges longer than 0 characters
 
-            // Can we perform 'except' test
-            ssize_t loops = count - cmd->nChars + 1;
-            if (loops <= 0)
-                return !cmd->bInverse;   // We can not iterate, there is no 'except' match
-
             // Perform seek by pattern
+            ssize_t loops       = count - cmd->nChars + 1;
             const lsp_wchar_t *pat = m->pat->characters() + cmd->nStart;
             ssize_t match = (m->flags & MATCH_CASE) ?
                         seek_pattern_case(pat, str, cmd->nLength, loops) :
@@ -692,7 +694,7 @@ namespace lsp
         bool PathPattern::and_matcher_match(matcher_t *m, size_t start, size_t count)
         {
             bool_matcher_t *bm      = static_cast<bool_matcher_t *>(m);
-            const cmd_t *cmd        = m->cmd;
+            const cmd_t *cmd        = bm->cmd;
 
             // If at least one matcher does not match - return result
             for (size_t i=0, n=bm->cond.size(); i<n; ++i)
@@ -707,7 +709,7 @@ namespace lsp
         bool PathPattern::or_matcher_match(matcher_t *m, size_t start, size_t count)
         {
             bool_matcher_t *bm      = static_cast<bool_matcher_t *>(m);
-            const cmd_t *cmd        = m->cmd;
+            const cmd_t *cmd        = bm->cmd;
 
             // If at least one matcher matches - return result
             for (size_t i=0, n=bm->cond.size(); i<n; ++i)
@@ -719,58 +721,183 @@ namespace lsp
             return cmd->bInverse;
         }
 
-        bool PathPattern::sequence_matcher_match(matcher_t *m, size_t start, size_t count)
+        ssize_t PathPattern::sequence_check_prefix(sequence_matcher_t *sm, size_t start, size_t count)
         {
-            sequence_matcher_t *sm  = static_cast<sequence_matcher_t *>(m);
-            const cmd_t *cmd        = m->cmd;
+            const cmd_t *cmd        = sm->cmd;
 
-            // Check prefixes
             for (size_t i=0; i<sm->prefix; ++i)
             {
                 const cmd_t *xc         = cmd->sChildren.uget(i);
-                const lsp_wchar_t *src  = m->str->characters() + start;
-                const lsp_wchar_t *pat  = m->pat->characters() + xc->nStart;
+                if (count < size_t(xc->nChars))
+                    return -1;
 
-                bool match = (m->flags & MATCH_CASE) ?
+                const lsp_wchar_t *src  = sm->str->characters() + start;
+                const lsp_wchar_t *pat  = sm->pat->characters() + xc->nStart;
+                bool match = (sm->flags & MATCH_CASE) ?
                                check_pattern_case(pat, src, xc->nLength) :
                                check_pattern_nocase(pat, src, xc->nLength);
-
                 if (!match)
-                    return cmd->bInverse;
+                    return -1;
 
                 // Update the matching range
                 start                  += xc->nChars;
                 count                  -= xc->nChars;
             }
 
-            // Check postfixes
+            return start;
+        }
+
+        ssize_t PathPattern::sequence_check_postfix(sequence_matcher_t *sm, size_t start, size_t count)
+        {
+            const cmd_t *cmd        = sm->cmd;
+            start                  += count;
+
             for (size_t i=0, idx=cmd->sChildren.size()-1; i<sm->postfix; ++i, --idx)
             {
                 const cmd_t *xc         = cmd->sChildren.uget(idx);
-                const lsp_wchar_t *src  = m->str->characters() + start + count - xc->nChars;
-                const lsp_wchar_t *pat  = m->pat->characters() + xc->nStart;
+                if (count < size_t(xc->nChars))
+                    return -1;
+                start                  -= xc->nChars;
 
-                bool match = (m->flags & MATCH_CASE) ?
+                const lsp_wchar_t *src  = sm->str->characters() + start;
+                const lsp_wchar_t *pat  = sm->pat->characters() + xc->nStart;
+                bool match = (sm->flags & MATCH_CASE) ?
                                check_pattern_case(pat, src, xc->nLength) :
                                check_pattern_nocase(pat, src, xc->nLength);
                 if (!match)
-                    return cmd->bInverse;
+                    return -1;
 
                 // Update the matching range
                 count                  -= xc->nChars;
             }
 
-            // Now we have only N fixed and N+1 variable positions left
-            mregion_t *r;
-            if (sm->fixed.size() == 0) // No fixed elements?
+            return start;
+        }
+
+        bool PathPattern::sequence_alloc_fixed(sequence_matcher_t *sm, size_t idx, size_t start, size_t count)
+        {
+            ssize_t last            = start + count;
+            for (size_t i=idx, n=sm->fixed.size(); i<n; ++i)
             {
-                r   = sm->var.uget(0);
-                return r->matcher->match(r->matcher, start, count);
+                mregion_t *r            = sm->fixed.uget(i);
+                const cmd_t *xc         = r->cmd;
+                const lsp_wchar_t *src  = sm->str->characters() + start;
+                const lsp_wchar_t *pat  = sm->pat->characters() + xc->nStart;
+
+                // Find match
+                ssize_t loops           = last - start - xc->nChars + 1;
+                ssize_t match = (sm->flags & MATCH_CASE) ?
+                            seek_pattern_case(pat, src, xc->nLength, loops) :
+                            seek_pattern_nocase(pat, src, xc->nLength, loops);
+
+                if (match < 0) // No match found?
+                    return false;
+
+                r->start                = start + match;
+                r->count                = xc->nChars;
+                start                   = r->start + xc->nChars;
             }
 
-            // TODO: perform initial match
+            return true;
+        }
 
-            // TODO: look for another matches
+        bool PathPattern::sequence_next_fixed(sequence_matcher_t *sm, size_t start, size_t count)
+        {
+            // Now we need to update positions
+            ssize_t last            = start + count;
+
+            for (ssize_t i = sm->fixed.size() - 1; i >= 0; --i)
+            {
+                mregion_t *r            = sm->fixed.uget(i);
+                const cmd_t *xc         = r->cmd;
+                ssize_t first           = r->start + 1;
+                const lsp_wchar_t *src  = sm->str->characters() + first;
+                const lsp_wchar_t *pat  = sm->pat->characters() + xc->nStart;
+
+                ssize_t loops           = last - first;
+                ssize_t match = (sm->flags & MATCH_CASE) ?
+                        seek_pattern_case(pat, src, xc->nLength, loops) :
+                        seek_pattern_nocase(pat, src, xc->nLength, loops);
+
+                if (match >= 0)
+                {
+                    r->start                = first + match;
+                    first                   = r->start + r->count;
+                    if (sequence_alloc_fixed(sm, i + 1, first, last - first))
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        bool PathPattern::sequence_match_variable(sequence_matcher_t *sm, size_t start, size_t count)
+        {
+            mregion_t *r, *vr;
+
+            ssize_t first = start, last = start + count;
+            for (size_t i=0, n=sm->fixed.size(); i<n; ++i)
+            {
+                r                       = sm->fixed.uget(i);
+                vr                      = sm->var.uget(i);
+                if (!vr->matcher->match(vr->matcher, first, r->start - first))
+                    return false;
+                first                   = r->start + r->count;
+            }
+
+            // Perform N+1'th match
+            vr                      = sm->var.last();
+            if (!vr->matcher->match(vr->matcher, first, last - first))
+                return false;
+
+            return true;
+        }
+
+        bool PathPattern::sequence_matcher_match(matcher_t *m, size_t start, size_t count)
+        {
+            sequence_matcher_t *sm  = static_cast<sequence_matcher_t *>(m);
+            const cmd_t *cmd        = sm->cmd;
+
+            // Check prefixes
+            ssize_t last            = start + count;
+            ssize_t first           = sequence_check_prefix(sm, start, count);
+            if (first < 0)
+                return cmd->bInverse;
+
+            // Check postfixes
+            last                    = sequence_check_postfix(sm, first, last - first);
+            if (last < 0)
+                return cmd->bInverse;
+            count                   = last - first;
+            start                   = first;
+
+            // Now we have only N fixed and N+1 variable positions left
+            if (sm->fixed.size() <= 0) // No fixed elements?
+            {
+                if (sm->var.size() <= 0)
+                    return (first == last) ^ cmd->bInverse;
+
+                mregion_t *r            = sm->var.uget(0);
+                bool match              = r->matcher->match(r->matcher, first, count);
+                return match ^ cmd->bInverse;
+            }
+
+            // Perform initial match
+            if (!sequence_alloc_fixed(sm, 0, start, count))
+                return cmd->bInverse;
+
+            // Check for non-fixed match
+            while (true)
+            {
+                // Perform N matches
+                bool match              = sequence_match_variable(sm, start, count);
+                if (match)
+                    return !cmd->bInverse;
+
+                // Try to search next fixed pattern
+                if (!sequence_next_fixed(sm, start, count))
+                    return cmd->bInverse;
+            }
 
             return false;
         }
@@ -789,6 +916,7 @@ namespace lsp
             r->start            = 0;
             r->count            = 0;
             r->matcher          = NULL;
+            r->cmd              = NULL;
 
             // Simple case (one command) ?
             const cmd_t *cmd    = m->cmd;
@@ -917,6 +1045,8 @@ namespace lsp
                 case CMD_SEQUENCE:
                 {
                     sequence_matcher_t *m       = new sequence_matcher_t();
+                    if (m == NULL)
+                        return NULL;
 
                     m->type             = M_SEQUENCE;
                     m->match            = sequence_matcher_match;
@@ -973,15 +1103,14 @@ namespace lsp
                                 return NULL;
                             }
 
+                            // Initialize pattern matcher
                             r->start    = 0;
                             r->count    = 0;
-                            r->matcher  = create_matcher(m, xc);
+                            r->matcher  = NULL;
+                            r->cmd      = xc;
 
-                            if (r->matcher == NULL)
-                            {
-                                destroy_matcher(m);
-                                return NULL;
-                            }
+                            // Reset counter
+                            range.count = 0;
                         }
                         else
                         {
