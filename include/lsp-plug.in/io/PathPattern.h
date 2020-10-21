@@ -164,7 +164,7 @@ namespace lsp
                     size_t                  prefix;     // Number of fixed prefixes
                     size_t                  postfix;    // Number of fixed postfixes
                     lltl::darray<mregion_t> fixed;      // Fixed text regions
-                    lltl::darray<mregion_t> var;        // Variable text regions
+                    lltl::parray<matcher_t> var;        // Variable text regions
                 } sequence_matcher_t;
 
                 typedef struct brute_matcher_t: public matcher_t
@@ -196,7 +196,7 @@ namespace lsp
                 static status_t             merge_last(cmd_t **dst, cmd_t *out, cmd_t *next, ssize_t tok);
 
                 static matcher_t           *create_matcher(const matcher_t *src, const cmd_t *cmd);
-                static bool                 add_range_matcher(sequence_matcher_t *m, const pos_t *pos);
+                static bool                 add_range_matcher(sequence_matcher_t *sm, const pos_t *pos);
                 static void                 destroy_matcher(matcher_t *match);
 
                 static bool                 pattern_matcher_match(matcher_t *m, size_t start, size_t count);

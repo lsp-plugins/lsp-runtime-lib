@@ -833,21 +833,22 @@ namespace lsp
 
         bool PathPattern::sequence_match_variable(sequence_matcher_t *sm, size_t start, size_t count)
         {
-            mregion_t *r, *vr;
+            mregion_t *r;
+            matcher_t *m;
 
             ssize_t first = start, last = start + count;
             for (size_t i=0, n=sm->fixed.size(); i<n; ++i)
             {
                 r                       = sm->fixed.uget(i);
-                vr                      = sm->var.uget(i);
-                if (!vr->matcher->match(vr->matcher, first, r->start - first))
+                m                       = sm->var.uget(i);
+                if (!m->match(m, first, r->start - first))
                     return false;
                 first                   = r->start + r->count;
             }
 
             // Perform N+1'th match
-            vr                      = sm->var.last();
-            if (!vr->matcher->match(vr->matcher, first, last - first))
+            m                       = sm->var.last();
+            if (!m->match(m, first, last - first))
                 return false;
 
             return true;
@@ -877,8 +878,8 @@ namespace lsp
                 if (sm->var.size() <= 0)
                     return (first == last) ^ cmd->bInverse;
 
-                mregion_t *r            = sm->var.uget(0);
-                bool match              = r->matcher->match(r->matcher, first, count);
+                m                       = sm->var.uget(0);
+                bool match              = m->match(m, first, count);
                 return match ^ cmd->bInverse;
             }
 
@@ -907,24 +908,19 @@ namespace lsp
             return false;
         }
 
-        bool PathPattern::add_range_matcher(sequence_matcher_t *m, const pos_t *pos)
+        bool PathPattern::add_range_matcher(sequence_matcher_t *sm, const pos_t *pos)
         {
-            mregion_t *r = m->var.add();
-            if (r == NULL)
-                return false;
-
-            r->start            = 0;
-            r->count            = 0;
-            r->matcher          = NULL;
-            r->cmd              = NULL;
-
             // Simple case (one command) ?
-            const cmd_t *cmd    = m->cmd;
+            const cmd_t *cmd    = sm->cmd;
             if (pos->count <= 1)
             {
                 const cmd_t *xc     = cmd->sChildren.uget(pos->start);
-                r->matcher          = create_matcher(m, xc);
-                return r->matcher != NULL;
+                matcher_t *m        = create_matcher(sm, xc);
+                if ((m != NULL) && (sm->var.add(m)))
+                    return true;
+
+                destroy_matcher(m);
+                return false;
             }
 
             // Create brute matcher
@@ -935,22 +931,31 @@ namespace lsp
             bm->type            = M_BRUTE;
             bm->match           = brute_matcher_match;
             bm->cmd             = cmd;
-            bm->pat             = m->pat;
-            bm->str             = m->str;
-            bm->flags           = m->flags;
-            r->matcher          = bm;       // Link matcher
+            bm->pat             = sm->pat;
+            bm->str             = sm->str;
+            bm->flags           = sm->flags;
+
+            // Add matcher
+            if (!sm->var.add(bm))
+            {
+                destroy_matcher(bm);
+                return false;
+            }
 
             for (size_t i=0; i<pos->count; ++i)
             {
                 const cmd_t *xc     = cmd->sChildren.uget(pos->start + i);
 
-                // Add new sub-matcher to brute matcher
-                if ((r = bm->items.add()) == NULL)
+                // Add new sub-matcher descriptor to brute matcher
+                mregion_t *r        = bm->items.add();
+                if (r == NULL)
                     return NULL;
 
+                // Create sub-matcher
                 r->start    = 0;
                 r->count    = 0;
                 r->matcher  = create_matcher(bm, xc);
+                r->cmd      = NULL;
 
                 if (r->matcher == NULL)
                     return false;
@@ -1183,10 +1188,7 @@ namespace lsp
 
                     // Destroy variable matchers
                     for (size_t i=0, n=sm->var.size(); i<n; ++i)
-                    {
-                        mregion_t *r    = sm->var.uget(i);
-                        destroy_matcher(r->matcher);
-                    }
+                        destroy_matcher(sm->var.uget(i));
 
                     delete sm;
                     break;
