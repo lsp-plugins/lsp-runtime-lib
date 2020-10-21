@@ -228,9 +228,9 @@ namespace lsp
                 status_t                    set(const LSPString *pattern, size_t flags = NONE)          { return parse(pattern, flags);             }
                 status_t                    set(const char *pattern, size_t flags = NONE);
 
-                inline const char          *pattern() const                                             { return sMask.get_utf8();                  }
-                inline status_t             pattern(LSPString *mask) const                              { return (mask != NULL) ? mask->set(&sMask) : STATUS_BAD_ARGUMENTS; }
-                inline status_t             pattern(Path *mask) const                                   { return (mask != NULL) ? mask->set(&sMask) : STATUS_BAD_ARGUMENTS; }
+                inline const char          *get() const                                                 { return sMask.get_utf8();                  }
+                inline status_t             get(LSPString *mask) const                                  { return (mask != NULL) ? mask->set(&sMask) : STATUS_BAD_ARGUMENTS; }
+                inline status_t             get(Path *mask) const                                       { return (mask != NULL) ? mask->set(&sMask) : STATUS_BAD_ARGUMENTS; }
 
                 inline size_t               flags() const                                               { return nFlags;                            }
                 size_t                      set_flags(size_t flags);

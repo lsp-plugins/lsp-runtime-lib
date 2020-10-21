@@ -677,7 +677,7 @@ namespace lsp
                     return !cmd->bInverse;
             }
             else if (count == 0)
-                return !cmd->bInverse; // Zero length, start of string -> matches
+                return true; // Zero length, start of string -> matches, this is special case which always returns true
 
             // Last character in sequence should be a path separator
             ch  = str[count-1];

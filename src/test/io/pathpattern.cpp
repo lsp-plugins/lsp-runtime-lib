@@ -304,10 +304,10 @@ UTEST_BEGIN("runtime.io", pathpattern)
             { "a*",                 false,  "ab",                   true            },
             { "a*",                 false,  "abc",                  true            },
 
-            { "a()b*",                 false,  "a",                 false           },
-            { "a()b*",                 false,  "ab",                true            },
-            { "a()b*",                 false,  "ad",                false           },
-            { "a()b*",                 false,  "abc",               true            },
+            { "a()b*",              false,  "a",                    false           },
+            { "a()b*",              false,  "ab",                   true            },
+            { "a()b*",              false,  "ad",                   false           },
+            { "a()b*",              false,  "abc",                  true            },
 
             { "a!(b)",              false,  "a",                    true            },
             { "a!(b)",              false,  "b",                    false           },
@@ -354,6 +354,46 @@ UTEST_BEGIN("runtime.io", pathpattern)
             { "a*bcb(!b)d",         false,  "aXYbcbcbXYd",          true            },
             { "a*bcb(!b)ded(!d)f",  false,  "aXYbcbcbXYdededXYf",   true            },
             { "a*bcb(!b)ded(!d)f",  false,  "aXYbcbcbXYdeddedXYdf", false           },
+
+            // Paths
+            { "**/ab/cd*",          true,   "x/y/z/ab/cd",          true            },
+            { "**/ab/cd*",          true,   "x/y/z/ab/cdef",        true            },
+            { "**/ab/cd*",          true,   "x/y/z/ab/cd/ef",       false           },
+            { "**/ab/cd*",          true,   "x/y/ab/z/cd",          false           },
+            { "**/ab/cd*",          true,   "/ab/x/ab/cd",          true            },
+            { "**/ab/**/cd*",       true,   "x/y/z/ab/cd",          true            },
+            { "**/ab/**/cd*",       true,   "x/y/ab/z/cd",          true            },
+            { "**/ab/**/cd*",       true,   "x/y/ab/z/cdef",        true            },
+            { "**/ab/**/cd*",       true,   "x/y/ab/z/cd/ef",       false           },
+            { "(!**/)ab/**/cd*",    true,   "ab/x/cd",              true            },
+            { "(!**/)ab/**/cd*",    true,   "12ab/x/cd",            true            },
+            { "(!**/)ab/**/cd*",    true,   "/ab/x/cd",             false           },
+
+            // Sub-pattern
+            { "a(b|c)d",            false,  "a",                    false           },
+            { "a(b|c)d",            false,  "d",                    false           },
+            { "a(b|c)d",            false,  "ad",                   false           },
+            { "a(b|c)d",            false,  "abd",                  true            },
+            { "a(b|c)d",            false,  "acd",                  true            },
+            { "a(b|c)d",            false,  "abcd",                 false           },
+
+            { "a!(b|c)d",           false,  "a",                    false           },
+            { "a!(b|c)d",           false,  "ad",                   true            },
+            { "a!(b|c)d",           false,  "abd",                  false           },
+            { "a!(b|c)d",           false,  "acd",                  false           },
+            { "a!(b|c)d",           false,  "aed",                  true            },
+            { "a!(b|c)d",           false,  "a12d",                 true            },
+            { "a!(b|c)d",           false,  "abcd",                 true            },
+
+            // Logic expressions
+            { "a!(*b*|*c*)d",        false,  "abcd",                 false           },
+            { "a!(*b*|*c*)d",        false,  "a123b456d",            false           },
+            { "a!(*b*|*c*)d",        false,  "a123c456d",            false           },
+            { "a!(*b*|*c*)d",        false,  "a123e456d",            true            },
+            { "a(*b*&*c*)d",         false,  "a123x456d",            false           },
+            { "a(*b*&*c*)d",         false,  "a123b456d",            false           },
+            { "a(*b*&*c*)d",         false,  "a123c456d",            false           },
+            { "a(*b*&*c*)d",         false,  "a12bc456d",            true            },
 
             // Including full path
             { "ab/*cd/*ef",         true,   "ab/cd/ef",             true            },
