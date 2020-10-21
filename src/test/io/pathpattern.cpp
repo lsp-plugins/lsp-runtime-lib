@@ -225,6 +225,21 @@ UTEST_BEGIN("runtime.io", pathpattern)
             { "!test",      false,  "",                     true            },
             { "!test",      false,  "test.log",             true            },
 
+            { "`",          false,  "`",                    true            },
+            { "`",          false,  "``",                   false           },
+
+            { "`a",         false,  "`",                    false           },
+            { "`a",         false,  "`a",                   true            },
+            { "``a",        false,  "`",                    false           },
+            { "``a",        false,  "`a",                   true            },
+
+            { "`a`",        false,  "`a",                   false           },
+            { "`a`",        false,  "`a`",                  true            },
+            { "``a`",       false,  "`a",                   false           },
+            { "``a`",       false,  "`a`",                  true            },
+            { "``a``",      false,  "`a",                   false           },
+            { "``a``",      false,  "`a`",                  true            },
+
             // ANY match
             { "*",          false,  "test.log",             true            },
             { "*",          false,  "",                     true            },
@@ -406,11 +421,169 @@ UTEST_BEGIN("runtime.io", pathpattern)
         test_match_patterns(matches);
     }
 
+    void test_match_brute()
+    {
+        static const match_t matches[] =
+        {
+            // Simple group
+            { "*(*b*)*",            false,  "a",                    false           },
+            { "*(*b*)*",            false,  "b",                    true            },
+            { "*(*b*)*",            false,  "ab",                   true            },
+            { "*(*b*)*",            false,  "bb",                   true            },
+            { "(!*b*)",             false,  "a",                    true            },
+            { "(!*b*)",             false,  "b",                    false           },
+            { "(!*b*)",             false,  "ab",                   false           },
+            { "(!*b*)",             false,  "bb",                   false           },
+
+            // Multiple matches
+            { "*(a*|b*)*(c*|d*)",    false,  "a",                   false           },
+            { "*(a*|b*)*(c*|d*)",    false,  "b",                   false           },
+            { "*(a*|b*)*(c*|d*)",    false,  "c",                   false           },
+            { "*(a*|b*)*(c*|d*)",    false,  "d",                   false           },
+            { "*(a*|b*)*(c*|d*)",    false,  "ab",                  false           },
+            { "*(a*|b*)*(c*|d*)",    false,  "ac",                  true            },
+            { "*(a*|b*)*(c*|d*)",    false,  "ad",                  true            },
+            { "*(a*|b*)*(c*|d*)",    false,  "ab",                  false           },
+            { "*(a*|b*)*(c*|d*)",    false,  "ba",                  false           },
+            { "*(a*|b*)*(c*|d*)",    false,  "bc",                  true            },
+            { "*(a*|b*)*(c*|d*)",    false,  "bd",                  true            },
+            { "*(a*|b*)*(c*|d*)",    false,  "aXc",                 true            },
+            { "*(a*|b*)*(c*|d*)",    false,  "aXd",                 true            },
+            { "*(a*|b*)*(c*|d*)",    false,  "aXe",                 false           },
+            { "*(a*|b*)*(c*|d*)",    false,  "bXc",                 true            },
+            { "*(a*|b*)*(c*|d*)",    false,  "bXd",                 true            },
+            { "*(a*|b*)*(c*|d*)",    false,  "eXc",                 false           },
+            { "*(a*|b*)*(c*|d*)",    false,  "eXd",                 false           },
+            { "*(a*|b*)*(c*|d*)",    false,  "abcd",                true            },
+            { "*(a*|b*)*(c*|d*)",    false,  "12a34b56c78d90",      true            },
+            { "*(a*|b*)*(c*|d*)",    false,  "12a34b56",            false           },
+            { "*(a*|b*)*(c*|d*)",    false,  "12c34d56",            false           },
+            { "*(a*|b*)*(c*|d*)",    false,  "12a34c56",            true            },
+            { "*(a*|b*)*(c*|d*)",    false,  "12c34a56",            false           },
+            { "*(a*|b*)*(c*|d*)",    false,  "12a34d56",            true            },
+            { "*(a*|b*)*(c*|d*)",    false,  "12d34a56",            false           },
+            { "*(a*|b*)*(c*|d*)",    false,  "12b34c56",            true            },
+            { "*(a*|b*)*(c*|d*)",    false,  "12c34b56",            false           },
+            { "*(a*|b*)*(c*|d*)",    false,  "12b34d56",            true            },
+            { "*(a*|b*)*(c*|d*)",    false,  "12d34b56",            false           },
+
+            // Multiple matches with path
+            { "*(a*|b*)*(c*|d*)",    true,  "a/b",                  false           },
+            { "*(a*|b*)*(c*|d*)",    true,  "a/c",                  false           },
+            { "*(a*|b*)*(c*|d*)",    true,  "a/d",                  false           },
+            { "*(a*|b*)*(c*|d*)",    true,  "b/a",                  false           },
+            { "*(a*|b*)*(c*|d*)",    true,  "b/c",                  false           },
+            { "*(a*|b*)*(c*|d*)",    true,  "b/d",                  false           },
+            { "*(a*|b*)*(c*|d*)",    true,  "c/a",                  false           },
+            { "*(a*|b*)*(c*|d*)",    true,  "c/b",                  false           },
+            { "*(a*|b*)*(c*|d*)",    true,  "c/d",                  false           },
+            { "*(a*|b*)*(c*|d*)",    true,  "d/a",                  false           },
+            { "*(a*|b*)*(c*|d*)",    true,  "d/b",                  false           },
+            { "*(a*|b*)*(c*|d*)",    true,  "d/c",                  false           },
+
+            // Test with path at beginning
+            { "**/(a*|b*)*(c*|d*)",  true,  "ac",                   true            },
+            { "**/(a*|b*)*(c*|d*)",  true,  "ad",                   true            },
+            { "**/(a*|b*)*(c*|d*)",  true,  "bc",                   true            },
+            { "**/(a*|b*)*(c*|d*)",  true,  "bd",                   true            },
+            { "**/(a*|b*)*(c*|d*)",  true,  "x/ac",                 true            },
+            { "**/(a*|b*)*(c*|d*)",  true,  "x/ad",                 true            },
+            { "**/(a*|b*)*(c*|d*)",  true,  "x/bc",                 true            },
+            { "**/(a*|b*)*(c*|d*)",  true,  "x/bd",                 true            },
+            { "**/(a*|b*)*(c*|d*)",  true,  "x/a/c",                false           },
+            { "**/(a*|b*)*(c*|d*)",  true,  "x/a/d",                false           },
+            { "**/(a*|b*)*(c*|d*)",  true,  "x/b/c",                false           },
+            { "**/(a*|b*)*(c*|d*)",  true,  "x/b/d",                false           },
+            { "**/(a*|b*)*(c*|d*)",  true,  "x/a/a12c",             true            },
+            { "**/(a*|b*)*(c*|d*)",  true,  "x/a/a12d",             true            },
+            { "**/(a*|b*)*(c*|d*)",  true,  "x/a/b12c",             true            },
+            { "**/(a*|b*)*(c*|d*)",  true,  "x/a/b12d",             true            },
+            { "**/(a*|b*)*(c*|d*)",  true,  "x/a/0a12c34",          false           },
+            { "**/(a*|b*)*(c*|d*)",  true,  "x/a/0a12d34",          false           },
+            { "**/(a*|b*)*(c*|d*)",  true,  "x/a/0b12c34",          false           },
+            { "**/(a*|b*)*(c*|d*)",  true,  "x/a/0b12d34",          false           },
+
+            { NULL,                 false,  NULL,                   false           }
+        };
+
+        test_match_patterns(matches);
+    }
+
+    void test_match_examples()
+    {
+        static const match_t matches[] =
+        {
+            // One file type
+            { "*.c",                        false,  "main.c",               true            },
+            { "*.c",                        false,  "src/main.c",           true            },
+            { "!*.c",                       false,  "main.c",               false           },
+            { "!*.c",                       false,  "main.o",               true            },
+
+            // Two file types
+            { "*.c|*.h",                    false,  "main.c",               true            },
+            { "*.c|*.h",                    false,  "main.h",               true            },
+            { "*.c|*.h",                    false,  "src/main.c",           true            },
+            { "*.c|*.h",                    false,  "include/main.h",       true            },
+
+            // Except two file types
+            { "(!*.c)&(!*.h)",              false,  "main.c",               false           },
+            { "(!*.c)&(!*.h)",              false,  "main.h",               false           },
+            { "(!*.c)&(!*.h)",              false,  "src/main.c",           false           },
+            { "(!*.c)&(!*.h)",              false,  "include/main.h",       false           },
+            { "(!*.c)&(!*.h)",              true,   "src/main.c",           true            },
+            { "(!*.c)&(!*.h)",              true,   "include/main.h",       true            },
+
+            // Additional exceptions
+            { "(*.c|*.h)&(!test-*)",        false,  "main.c",               true            },
+            { "(*.c|*.h)&(!test-*)",        false,  "main.h",               true            },
+            { "(*.c|*.h)&(!test-*)",        false,  "test-main.c",          false           },
+            { "(*.c|*.h)&(!test-*)",        false,  "test-main.h",          false           },
+            { "(*.c|*.h)&(!test-*)",        false,  "src/main.c",           true            },
+            { "(*.c|*.h)&(!test-*)",        false,  "include/main.h",       true            },
+            { "(*.c|*.h)&(!test-*)",        false,  "src/test-main.c",      false           },
+            { "(*.c|*.h)&(!test-*)",        false,  "include/test-main.h",  false           },
+            { "(*.c|*.h)&(!test-*)",        true,   "src/main.c",           false           },
+            { "(*.c|*.h)&(!test-*)",        true,   "include/main.h",       false           },
+            { "(*.c|*.h)&(!test-*)",        true,   "src/test-main.c",      false           },
+            { "(*.c|*.h)&(!test-*)",        true,   "include/test-main.h",  false           },
+
+            // With paths
+            { "**/((*.c|*.h)&(!test-*))",   false,  "prj/main.c",               true            },
+            { "**/((*.c|*.h)&(!test-*))",   false,  "prj/main.h",               true            },
+            { "**/((*.c|*.h)&(!test-*))",   false,  "prj/test-main.c",          false           },
+            { "**/((*.c|*.h)&(!test-*))",   false,  "prj/test-main.h",          false           },
+            { "**/((*.c|*.h)&(!test-*))",   false,  "prj/src/main.c",           true            },
+            { "**/((*.c|*.h)&(!test-*))",   false,  "prj/include/main.h",       true            },
+            { "**/((*.c|*.h)&(!test-*))",   false,  "prj/src/test-main.c",      false           },
+            { "**/((*.c|*.h)&(!test-*))",   false,  "prj/include/test-main.h",  false           },
+            { "**/((*.c|*.h)&(!test-*))",   true,   "prj/src/main.c",           true            },
+            { "**/((*.c|*.h)&(!test-*))",   true,   "prj/include/main.h",       true            },
+            { "**/((*.c|*.h)&(!test-*))",   true,   "prj/src/test-main.c",      false           },
+            { "**/((*.c|*.h)&(!test-*))",   true,   "prj/include/test-main.h",  false           },
+
+            // More complicated condition
+            { "(*.c|*.h)&(test-*)|(*.o|*.a)&(!test-*)", true,   "main.c",       false           },
+            { "(*.c|*.h)&(test-*)|(*.o|*.a)&(!test-*)", true,   "main.h",       false           },
+            { "(*.c|*.h)&(test-*)|(*.o|*.a)&(!test-*)", true,   "test-main.c",  true            },
+            { "(*.c|*.h)&(test-*)|(*.o|*.a)&(!test-*)", true,   "test-main.h",  true            },
+            { "(*.c|*.h)&(test-*)|(*.o|*.a)&(!test-*)", true,   "main.o",       true            },
+            { "(*.c|*.h)&(test-*)|(*.o|*.a)&(!test-*)", true,   "main.a",       true            },
+            { "(*.c|*.h)&(test-*)|(*.o|*.a)&(!test-*)", true,   "test-main.o",  false           },
+            { "(*.c|*.h)&(test-*)|(*.o|*.a)&(!test-*)", true,   "test-main.a",  false           },
+
+            { NULL,                         false,  NULL,                   false           }
+        };
+
+        test_match_patterns(matches);
+    }
+
     UTEST_MAIN
     {
         test_parse();
         test_match_simple();
         test_match_sequence_only();
+        test_match_brute();
+        test_match_examples();
     }
 
 UTEST_END

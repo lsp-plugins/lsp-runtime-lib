@@ -146,8 +146,12 @@ namespace lsp
                         break;
 
                     default:
+                        if (escape)
+                        {
+                            ++it->nChars;
+                            escape  = false;
+                        }
                         ++it->nChars;
-                        escape  = false;
                         break;
                 }
             }
@@ -902,8 +906,82 @@ namespace lsp
             return false;
         }
 
+        bool PathPattern::brute_match_variable(brute_matcher_t *bm, size_t start, size_t count)
+        {
+            mregion_t *r    = bm->items.first();
+            ssize_t last    = start + count;
+
+            // Check all matchers except last one
+            for (size_t i=1, n=bm->items.size(); i < n; ++i)
+            {
+                mregion_t *nr   = bm->items.get(i);
+                if (!r->matcher->match(r->matcher, r->start, nr->start - r->start))
+                    return false;
+                r               = nr; // Update current matcher
+            }
+
+            // Check last matcher
+            return r->matcher->match(r->matcher, r->start, last - r->start);
+        }
+
+        bool PathPattern::brute_next_variable(brute_matcher_t *bm, size_t start, size_t count)
+        {
+            // We move all regions except the first one
+            for (size_t i=1, n=bm->items.size(); i < n; ++i)
+            {
+                mregion_t *r    = bm->items.get(i);
+
+                // Can move current region one position left?
+                if (r->start > start)
+                {
+                    --r->start;
+                    while ((i--) > 1)
+                    {
+                        mregion_t *pr   = bm->items.get(i);
+                        pr->start       = r->start;
+                    }
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         bool PathPattern::brute_matcher_match(matcher_t *m, size_t start, size_t count)
         {
+            brute_matcher_t *bm = static_cast<brute_matcher_t *>(m);
+            const cmd_t *cmd    = bm->cmd;
+
+            // Only one element?
+            if (bm->items.size() <= 1)
+            {
+                mregion_t *r            = bm->items.first();
+                bool match              = r->matcher->match(r->matcher, start, count);
+                return match ^ cmd->bInverse;
+            }
+
+            // Initialize positions
+            ssize_t last        = start + count;
+            mregion_t *r = bm->items.first();
+            r->start            = start;
+            for (size_t i=1; i<bm->items.size(); ++i)
+            {
+                r                       = bm->items.uget(i);
+                r->start                = last;
+            }
+
+            // Iterate over all variants
+            while (true)
+            {
+                bool match              = brute_match_variable(bm, start, count);
+                if (match)
+                    return !cmd->bInverse;
+
+                // Try to search next fixed pattern
+                if (!brute_next_variable(bm, start, count))
+                    return cmd->bInverse;
+            }
+
             return false;
         }
 

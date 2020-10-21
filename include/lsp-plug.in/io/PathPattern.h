@@ -217,6 +217,9 @@ namespace lsp
                 static bool                 sequence_next_fixed(sequence_matcher_t *sm, size_t start, size_t count);
                 static bool                 sequence_match_variable(sequence_matcher_t *sm, size_t start, size_t count);
 
+                static bool                 brute_match_variable(brute_matcher_t *bm, size_t start, size_t count);
+                static bool                 brute_next_variable(brute_matcher_t *bm, size_t start, size_t count);
+
             public:
                 explicit PathPattern();
                 ~PathPattern();
