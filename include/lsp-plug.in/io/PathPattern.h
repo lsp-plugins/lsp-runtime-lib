@@ -245,7 +245,7 @@ namespace lsp
 
                 bool                        test(const char *path) const;
                 bool                        test(const LSPString *path) const;
-                inline bool                 test(const Path *path) const;
+                bool                        test(const Path *path) const;
 
                 void                        swap(PathPattern *dst);
                 inline void                 swap(PathPattern &dst)                                      { swap(&dst);                               }
