@@ -64,6 +64,54 @@ namespace lsp
             return res;
         }
 
+        status_t JsonDictionary::init(const char *path)
+        {
+            LSPString spath;
+            if (!spath.set_utf8(path))
+                return STATUS_NO_MEM;
+            return init(&spath);
+        }
+
+        status_t JsonDictionary::init(io::IInSequence *is)
+        {
+            json::Parser p;
+            JsonDictionary tmp;
+
+            status_t res = p.wrap(is, json::JSON_VERSION5, WRAP_NONE);
+            if (res == STATUS_OK)
+                res = tmp.parse_json(&p);
+
+            if (res != STATUS_OK)
+                p.close();
+            else
+                res = p.close();
+
+            if (res == STATUS_OK)
+                vNodes.swap(&tmp.vNodes);
+
+            return res;
+        }
+
+        status_t JsonDictionary::init(io::IInStream *is)
+        {
+            json::Parser p;
+            JsonDictionary tmp;
+
+            status_t res = p.wrap(is, json::JSON_VERSION5, WRAP_NONE);
+            if (res == STATUS_OK)
+                res = tmp.parse_json(&p);
+
+            if (res != STATUS_OK)
+                p.close();
+            else
+                res = p.close();
+
+            if (res == STATUS_OK)
+                vNodes.swap(&tmp.vNodes);
+
+            return res;
+        }
+
         status_t JsonDictionary::add_node(const node_t *src)
         {
             // Perform binary search, the item should not exist

@@ -639,6 +639,21 @@ namespace lsp
 #endif
         }
 
+        status_t Path::remove_root()
+        {
+            if (!is_absolute())
+                return STATUS_OK;
+
+            ssize_t idx = sPath.index_of(FILE_SEPARATOR_C);
+            if (idx < 0)
+            {
+                sPath.set_length(0);
+                return STATUS_OK;
+            }
+
+            return (sPath.remove(idx + 1)) ? STATUS_OK : STATUS_NO_MEM;
+        }
+
         status_t Path::parent()
         {
             if (is_root())

@@ -8,6 +8,11 @@
 * Added Color::swap method.
 * Better work with vfork() system call.
 * Added io::PathPattern class for file name matching.
+* Added remove_root method to io::Path class.
+* Added resource::ILoader class that allows to access resources stored in some
+  location (not only file system).
+* Added resource::DirLoader class that allows access resources stored in some
+  directory and it's subdirectories.
 
 === 0.5.4 ===
 * Updated LSPString lltl specifier to match lltl-lib 0.5.3.
