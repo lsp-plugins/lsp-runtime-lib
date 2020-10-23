@@ -13,6 +13,8 @@
   location (not only file system).
 * Added resource::DirLoader class that allows access resources stored in some
   directory and it's subdirectories.
+* Added support of resource::ILoader by i18n::Dictionary class when loading JSON
+  files.
 
 === 0.5.4 ===
 * Updated LSPString lltl specifier to match lltl-lib 0.5.3.

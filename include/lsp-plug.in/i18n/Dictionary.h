@@ -26,6 +26,7 @@
 #include <lsp-plug.in/i18n/IDictionary.h>
 #include <lsp-plug.in/lltl/parray.h>
 #include <lsp-plug.in/io/Path.h>
+#include <lsp-plug.in/resource/ILoader.h>
 
 namespace lsp
 {
@@ -51,6 +52,7 @@ namespace lsp
             protected:
                 lltl::parray<node_t>    vNodes;
                 LSPString               sPath;
+                resource::ILoader      *pLoader;
 
             protected:
                 status_t            load_json(IDictionary **dict, const io::Path *path);
@@ -58,8 +60,12 @@ namespace lsp
                 status_t            load_dictionary(const LSPString *id, IDictionary **dict);
 
             public:
-                explicit Dictionary();
+                explicit Dictionary(resource::ILoader *loader = NULL);
                 virtual ~Dictionary();
+
+            public:
+                inline resource::ILoader       *loader()        {  return pLoader;             }
+                resource::ILoader              *set_loader();
 
             public:
                 using IDictionary::lookup;
