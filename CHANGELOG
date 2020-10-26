@@ -13,6 +13,7 @@
   location (not only file system).
 * Added resource::DirLoader class that allows access resources stored in some
   directory and it's subdirectories.
+* Added resource::Environment class that allows to map key<->value string pairs.
 * Added support of resource::ILoader by i18n::Dictionary class when loading JSON
   files.
 
