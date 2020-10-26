@@ -27,7 +27,7 @@ namespace lsp
     {
         DirLoader::DirLoader()
         {
-            bEnforce        = false;
+            bEnforce        = true;
         }
 
         DirLoader::~DirLoader()
@@ -56,21 +56,38 @@ namespace lsp
             return old;
         }
 
+        status_t DirLoader::build_path(io::Path *dst, const io::Path *name)
+        {
+            status_t res = dst->set(name);
+            if (nError == STATUS_OK)
+                nError  = dst->canonicalize();
+            if (nError == STATUS_OK)
+                nError  = dst->remove_root();
+            if (nError == STATUS_OK)
+                nError  = dst->set_parent(&sPath);
+            return res;
+        }
+
         io::IInStream *DirLoader::read_stream(const io::Path *name)
         {
             if (!bEnforce)
                 return ILoader::read_stream(name);
 
             io::Path tmp;
-            nError  = tmp.set(name);
-            if (nError == STATUS_OK)
-                nError  = tmp.canonicalize();
-            if (nError == STATUS_OK)
-                nError  = tmp.remove_root();
-            if (nError == STATUS_OK)
-                nError  = tmp.set_parent(&sPath);
+            nError  = build_path(&tmp, name);
 
             return (nError == STATUS_OK) ? ILoader::read_stream(&tmp) : NULL;
+        }
+
+        ssize_t DirLoader::enumerate(const io::Path *path, resource_t **list)
+        {
+            if (!bEnforce)
+                return ILoader::enumerate(path, list);
+
+            io::Path tmp;
+            nError  = build_path(&tmp, path);
+
+            return (nError == STATUS_OK) ? ILoader::enumerate(&tmp, list) : -nError;
         }
     }
 }

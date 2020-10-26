@@ -19,9 +19,13 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/stdlib/string.h>
 #include <lsp-plug.in/resource/ILoader.h>
 #include <lsp-plug.in/io/InSequence.h>
 #include <lsp-plug.in/io/InFileStream.h>
+#include <lsp-plug.in/io/Dir.h>
+#include <lsp-plug.in/io/Path.h>
+#include <lsp-plug.in/lltl/darray.h>
 
 namespace lsp
 {
@@ -121,6 +125,74 @@ namespace lsp
             }
 
             return NULL;
+        }
+
+        ssize_t ILoader::enumerate(const char *path, resource_t **list)
+        {
+            io::Path tmp;
+            if ((nError = tmp.set(path)) != STATUS_OK)
+                return -nError;
+            return enumerate(&tmp, list);
+        }
+
+        ssize_t ILoader::enumerate(const LSPString *path, resource_t **list)
+        {
+            io::Path tmp;
+            if ((nError = tmp.set(path)) != STATUS_OK)
+                return -nError;
+            return enumerate(&tmp, list);
+        }
+
+        ssize_t ILoader::enumerate(const io::Path *path, resource_t **list)
+        {
+            lltl::darray<resource_t> xlist;
+            io::Dir dir;
+            LSPString item;
+            io::fattr_t attr;
+
+            status_t res = dir.open(path);
+            if (res != STATUS_OK)
+                return -res;
+
+            while ((res = dir.reads(&item, &attr)) == STATUS_OK)
+            {
+                // Skip dot and dotdot
+                if ((item.equals_ascii(".")) ||
+                    (item.equals_ascii("..")))
+                    continue;
+
+                // Add resource to list
+                resource_t *r = xlist.add();
+                if (r == NULL)
+                {
+                    dir.close();
+                    return -STATUS_NO_MEM;
+                }
+                const char *name = item.get_utf8();
+                if (name == NULL)
+                {
+                    dir.close();
+                    return -STATUS_NO_MEM;
+                }
+
+                r->type = (attr.type == io::fattr_t::FT_DIRECTORY) ? RES_DIR : RES_FILE;
+                strncpy(r->name, name, RESOURCE_NAME_MAX);
+                r->name[RESOURCE_NAME_MAX-1] = '\0';
+            }
+
+            if (res != STATUS_EOF)
+            {
+                dir.close();
+                return -res;
+            }
+            else if ((res = dir.close()) != STATUS_OK)
+                return -res;
+
+            // Detach data pointer from the collection and return as result
+            res         = xlist.size();
+            *list       = xlist.release();
+
+            return res;
         }
     }
 }

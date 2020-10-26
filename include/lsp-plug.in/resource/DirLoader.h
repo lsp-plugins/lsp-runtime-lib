@@ -38,6 +38,9 @@ namespace lsp
                 io::Path        sPath;
                 bool            bEnforce;
 
+            protected:
+                status_t        build_path(io::Path *dst, const io::Path *name);
+
             public:
                 explicit DirLoader();
                 virtual ~DirLoader();
@@ -52,6 +55,7 @@ namespace lsp
 
             public:
                 virtual io::IInStream      *read_stream(const io::Path *name);
+                virtual ssize_t             enumerate(const io::Path *path, resource_t **list);
         };
     }
 }

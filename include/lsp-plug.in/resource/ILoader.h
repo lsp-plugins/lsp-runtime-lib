@@ -23,6 +23,7 @@
 #define LSP_PLUG_IN_IO_ILOADER_H_
 
 #include <lsp-plug.in/runtime/version.h>
+#include <lsp-plug.in/resource/types.h>
 #include <lsp-plug.in/io/IInSequence.h>
 #include <lsp-plug.in/io/IInStream.h>
 #include <lsp-plug.in/io/Path.h>
@@ -63,6 +64,17 @@ namespace lsp
                 virtual io::IInSequence    *read_sequence(const char *name, const char *charset = NULL);
                 virtual io::IInSequence    *read_sequence(const LSPString *name, const char *charset = NULL);
                 virtual io::IInSequence    *read_sequence(const io::Path *name, const char *charset = NULL);
+
+                /**
+                 * Enumerate resources
+                 * @param path the location of resources within resource tree
+                 * @param list pointer to store list of resources. Resources should be
+                 *        free()'d by caller after use
+                 * @return number of resources in list or negative error code
+                 */
+                virtual ssize_t             enumerate(const char *path, resource_t **list);
+                virtual ssize_t             enumerate(const LSPString *path, resource_t **list);
+                virtual ssize_t             enumerate(const io::Path *path, resource_t **list);
         };
     }
 }
