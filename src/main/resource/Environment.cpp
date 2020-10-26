@@ -90,6 +90,14 @@ namespace lsp
             return vEnv.get(key);
         }
 
+        const LSPString *Environment::get(const LSPString *key, const LSPString *dfl) const
+        {
+            if (key == NULL)
+                return NULL;
+            const LSPString *res = vEnv.get(key);
+            return (res != NULL) ? res : dfl;
+        }
+
         const char *Environment::get_utf8(const char *key) const
         {
             if (key == NULL)
@@ -97,6 +105,19 @@ namespace lsp
 
             const LSPString *res = get(key);
             return (res != NULL) ? res->get_utf8() : NULL;
+        }
+
+        const char *Environment::get_utf8(const char *key, const char *dfl) const
+        {
+            if (key == NULL)
+                return NULL;
+
+            LSPString k;
+            if (!k.set_utf8(key))
+                return NULL;
+
+            const LSPString *v = vEnv.get(&k);
+            return (v != NULL) ? v->get_utf8() : dfl;
         }
 
         const char *Environment::get_utf8(const LSPString *key) const

@@ -41,6 +41,7 @@ UTEST_BEGIN("runtime.resource", environment)
         UTEST_ASSERT(env.contains("k1"));
         UTEST_ASSERT(env.contains("k2"));
         UTEST_ASSERT(!env.contains("k3"));
+        UTEST_ASSERT(!env.contains("k4"));
 
         // Fetch values
         UTEST_ASSERT((s = env.get_utf8("k1")) != NULL);
@@ -48,6 +49,8 @@ UTEST_BEGIN("runtime.resource", environment)
         UTEST_ASSERT((s = env.get_utf8("k2")) != NULL);
         UTEST_ASSERT(strcmp(s, "value2") == 0);
         UTEST_ASSERT((s = env.get_utf8("k3")) == NULL);
+        UTEST_ASSERT((s = env.get_utf8("k4", "dfl")) != NULL);
+        UTEST_ASSERT(strcmp(s, "dfl") == 0);
 
         // Clone values
         UTEST_ASSERT((copy = env.clone()) != NULL);
@@ -57,32 +60,40 @@ UTEST_BEGIN("runtime.resource", environment)
         UTEST_ASSERT(env.remove("k1") == STATUS_OK);
         UTEST_ASSERT(env.remove("k2") == STATUS_OK);
         UTEST_ASSERT(env.remove("k3") == STATUS_NOT_FOUND);
+        UTEST_ASSERT(env.remove("k4") == STATUS_NOT_FOUND);
 
         // Fetch values again
         UTEST_ASSERT((s = env.get_utf8("k1")) == NULL);
         UTEST_ASSERT((s = env.get_utf8("k2")) == NULL);
         UTEST_ASSERT((s = env.get_utf8("k3")) == NULL);
+        UTEST_ASSERT((s = env.get_utf8("k4", "dfl")) != NULL);
+        UTEST_ASSERT(strcmp(s, "dfl") == 0);
 
         // Check presence again
         UTEST_ASSERT(!env.contains("k1"));
         UTEST_ASSERT(!env.contains("k2"));
         UTEST_ASSERT(!env.contains("k3"));
+        UTEST_ASSERT(!env.contains("k4"));
 
         // Process cloned environment
         // Remove values
         UTEST_ASSERT(copy->remove("k1") == STATUS_OK);
         UTEST_ASSERT(copy->remove("k2") == STATUS_OK);
         UTEST_ASSERT(copy->remove("k3") == STATUS_NOT_FOUND);
+        UTEST_ASSERT(copy->remove("k4") == STATUS_NOT_FOUND);
 
         // Fetch values again
         UTEST_ASSERT((s = copy->get_utf8("k1")) == NULL);
         UTEST_ASSERT((s = copy->get_utf8("k2")) == NULL);
         UTEST_ASSERT((s = copy->get_utf8("k3")) == NULL);
+        UTEST_ASSERT((s = copy->get_utf8("k4", "dfl")) != NULL);
+        UTEST_ASSERT(strcmp(s, "dfl") == 0);
 
         // Check presence again
         UTEST_ASSERT(!copy->contains("k1"));
         UTEST_ASSERT(!copy->contains("k2"));
         UTEST_ASSERT(!copy->contains("k3"));
+        UTEST_ASSERT(!copy->contains("k4"));
 
         // Destroy environment
         delete copy;

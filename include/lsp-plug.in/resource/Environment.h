@@ -49,7 +49,10 @@ namespace lsp
             public:
                 const LSPString *get(const char *key) const;
                 const LSPString *get(const LSPString *key) const;
+                const LSPString *get(const LSPString *key, const LSPString *dfl) const;
+
                 const char      *get_utf8(const char *key) const;
+                const char      *get_utf8(const char *key, const char *dfl) const;
                 const char      *get_utf8(const LSPString *key) const;
 
                 bool            contains(const char *key) const;
