@@ -75,7 +75,7 @@ namespace lsp
             if (!xp.append(path))
                 return STATUS_NO_MEM;
 
-            Dictionary *d = new Dictionary;
+            Dictionary *d = new Dictionary(pLoader);
             status_t res = d->init(&xp);
             if (res != STATUS_OK)
                 delete d;
