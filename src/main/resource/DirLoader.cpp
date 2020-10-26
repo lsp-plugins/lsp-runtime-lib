@@ -59,12 +59,12 @@ namespace lsp
         status_t DirLoader::build_path(io::Path *dst, const io::Path *name)
         {
             status_t res = dst->set(name);
-            if (nError == STATUS_OK)
-                nError  = dst->canonicalize();
-            if (nError == STATUS_OK)
-                nError  = dst->remove_root();
-            if (nError == STATUS_OK)
-                nError  = dst->set_parent(&sPath);
+            if (res == STATUS_OK)
+                res     = dst->canonicalize();
+            if (res == STATUS_OK)
+                res     = dst->remove_root();
+            if (res == STATUS_OK)
+                res     = dst->set_parent(&sPath);
             return res;
         }
 
