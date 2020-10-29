@@ -16,6 +16,8 @@
 * Added resource::Environment class that allows to map key<->value string pairs.
 * Added support of resource::ILoader by i18n::Dictionary class when loading JSON
   files.
+* Added static methods Path::is_dot() and Path::is_dotdot(), optimized non-static
+  methods Path::is_dot() and Path::is_dotdot();
 
 === 0.5.4 ===
 * Updated LSPString lltl specifier to match lltl-lib 0.5.3.

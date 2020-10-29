@@ -186,6 +186,15 @@ namespace lsp
                 status_t        mkdir() const;
                 status_t        mkdir(bool recursive) const;
                 status_t        remove() const;
+
+            public:
+                static bool     is_dot(const LSPString *path);
+                static bool     is_dot(const io::Path *path);
+                static bool     is_dot(const char *path);
+
+                static bool     is_dotdot(const LSPString *path);
+                static bool     is_dotdot(const io::Path *path);
+                static bool     is_dotdot(const char *path);
         };
     }
 } /* namespace lsp */

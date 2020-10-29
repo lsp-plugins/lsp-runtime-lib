@@ -733,38 +733,6 @@ namespace lsp
 #endif
         }
 
-        bool Path::is_dot() const
-        {
-            ssize_t idx = sPath.rindex_of(FILE_SEPARATOR_C);
-            if (idx > 0)
-            {
-                ssize_t len = sPath.length() - 2;
-                if (idx != len)
-                    return false;
-            }
-            else if (sPath.length() != 1)
-                return false;
-            return sPath.last() == '.';
-        }
-
-        bool Path::is_dotdot() const
-        {
-            ssize_t idx = sPath.rindex_of(FILE_SEPARATOR_C);
-            if (idx > 0)
-            {
-                ssize_t len = sPath.length() - 3;
-                if (idx != len)
-                    return false;
-
-                return (sPath.char_at(len + 1) == '.') &&
-                        (sPath.char_at(len + 2) == '.');
-            }
-            else if (sPath.length() != 2)
-                return false;
-
-            return (sPath.first() == '.') && (sPath.last() == '.');
-        }
-
         bool Path::is_relative() const
         {
             if (sPath.length() <= 0)
@@ -1180,6 +1148,106 @@ namespace lsp
             if (res > 0)
                 fixup_path();
             return res;
+        }
+
+        bool Path::is_dot() const
+        {
+            size_t len = sPath.length();
+            if (len < 1)
+                return false;
+            else if (len == 1)
+                return sPath.first() == '.';
+
+            len -= 2;
+            return (sPath.char_at(len) == FILE_SEPARATOR_C) &&
+                    (sPath.char_at(len+1) == '.');
+        }
+
+        bool Path::is_dotdot() const
+        {
+            size_t len = sPath.length();
+            if (len < 2)
+                return false;
+            else if (len == 2)
+                return (sPath.char_at(0) == '.') &&
+                        (sPath.char_at(1) == '.');
+
+            len -= 3;
+            return (sPath.char_at(len) == FILE_SEPARATOR_C) &&
+                    (sPath.char_at(len+1) == '.') &&
+                    (sPath.char_at(len+2) == '.');
+        }
+
+        bool Path::is_dot(const LSPString *path)
+        {
+            size_t len = path->length();
+            if (len < 1)
+                return false;
+            else if (len == 1)
+                return path->first() == '.';
+
+            len -= 2;
+            return (path->char_at(len) == FILE_SEPARATOR_C) &&
+                    (path->char_at(len+1) == '.');
+        }
+
+        bool Path::is_dot(const io::Path *path)
+        {
+            return (path != NULL) && (path->is_dot());
+        }
+
+        bool Path::is_dot(const char *path)
+        {
+            if (path == NULL)
+                return false;
+
+            ssize_t len = strlen(path);
+            if (len < 1)
+                return false;
+            else if (len == 1)
+                return path[0] == '.';
+
+            path = &path[len - 2];
+            return (path[0] == FILE_SEPARATOR_C) &&
+                    (path[1] == '.');
+        }
+
+        bool Path::is_dotdot(const LSPString *path)
+        {
+            size_t len = path->length();
+            if (len < 2)
+                return false;
+            else if (len == 2)
+                return (path->char_at(0) == '.') &&
+                        (path->char_at(1) == '.');
+
+            len -= 3;
+            return (path->char_at(len) == FILE_SEPARATOR_C) &&
+                    (path->char_at(len+1) == '.') &&
+                    (path->char_at(len+2) == '.');
+        }
+
+        bool Path::is_dotdot(const io::Path *path)
+        {
+            return (path != NULL) && (path->is_dotdot());
+        }
+
+        bool Path::is_dotdot(const char *path)
+        {
+            if (path == NULL)
+                return false;
+
+            ssize_t len = strlen(path);
+            if (len < 2)
+                return false;
+            else if (len == 2)
+                return (path[0] == '.') &&
+                        (path[1] == '.');
+
+            path = &path[len - 3];
+            return (path[0] == FILE_SEPARATOR_C) &&
+                    (path[1] == '.') &&
+                    (path[2] == '.');
         }
     }
 } /* namespace lsp */

@@ -394,7 +394,7 @@ UTEST_BEGIN("runtime.io", path)
         UTEST_ASSERT(p.remove_base() == STATUS_OK);
         UTEST_ASSERT(p.equals("bin"));
 
-        UTEST_ASSERT(p.set(TEST_PATH3) == STATUS_OK);
+        UTEST_ASSERT(p.set(TEST_PATH4) == STATUS_OK);
         UTEST_ASSERT(p.remove_base() == STATUS_OK);
         UTEST_ASSERT(p.equals("local"));
     }
@@ -487,6 +487,54 @@ UTEST_BEGIN("runtime.io", path)
         }
     }
 
+    void test_dots()
+    {
+        struct dot_t
+        {
+            const char *path;
+            bool dot;
+            bool dotdot;
+        };
+
+        static const dot_t dots[] =
+        {
+            { "", false, false },
+            { ".", true, false },
+            { "..", false, true },
+            { "...", false, false },
+            { FILE_SEPARATOR_S "..", false, true },
+            { FILE_SEPARATOR_S ".", true, false },
+            { FILE_SEPARATOR_S "...", false, false },
+            { FILE_SEPARATOR_S, false, false },
+            { "." FILE_SEPARATOR_S "a", false, false },
+            { ".." FILE_SEPARATOR_S "a", false, false },
+            { "a" FILE_SEPARATOR_S ".", true, false },
+            { "a" FILE_SEPARATOR_S "..", false, true },
+            { "a" FILE_SEPARATOR_S "...", false, false },
+            { NULL, false, false }
+        };
+
+        io::Path p;
+        LSPString s;
+
+        for (const dot_t *d = dots; d->path != NULL; ++d)
+        {
+            printf("Testing \"%s\"\n", d->path);
+            UTEST_ASSERT(Path::is_dot(d->path) == d->dot);
+            UTEST_ASSERT(Path::is_dotdot(d->path) == d->dotdot);
+
+            UTEST_ASSERT(p.set(d->path) == STATUS_OK);
+            UTEST_ASSERT(p.is_dot() == d->dot);
+            UTEST_ASSERT(p.is_dotdot() == d->dotdot);
+            UTEST_ASSERT(Path::is_dot(&p) == d->dot);
+            UTEST_ASSERT(Path::is_dotdot(&p) == d->dotdot);
+
+            UTEST_ASSERT(s.set_utf8(d->path));
+            UTEST_ASSERT(Path::is_dot(&s) == d->dot);
+            UTEST_ASSERT(Path::is_dotdot(&s) == d->dotdot);
+        }
+    }
+
     UTEST_MAIN
     {
         test_get_set();
@@ -498,6 +546,7 @@ UTEST_BEGIN("runtime.io", path)
         test_remove_base();
         test_flags();
         test_canonical();
+        test_dots();
     }
 UTEST_END;
 
