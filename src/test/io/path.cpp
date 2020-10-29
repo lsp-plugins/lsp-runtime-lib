@@ -522,16 +522,21 @@ UTEST_BEGIN("runtime.io", path)
             printf("Testing \"%s\"\n", d->path);
             UTEST_ASSERT(Path::is_dot(d->path) == d->dot);
             UTEST_ASSERT(Path::is_dotdot(d->path) == d->dotdot);
+            UTEST_ASSERT(Path::is_dots(d->path) == (d->dot || d->dotdot));
 
             UTEST_ASSERT(p.set(d->path) == STATUS_OK);
             UTEST_ASSERT(p.is_dot() == d->dot);
             UTEST_ASSERT(p.is_dotdot() == d->dotdot);
+            UTEST_ASSERT(p.is_dots() == (d->dot || d->dotdot));
+
             UTEST_ASSERT(Path::is_dot(&p) == d->dot);
             UTEST_ASSERT(Path::is_dotdot(&p) == d->dotdot);
+            UTEST_ASSERT(Path::is_dots(&p) == (d->dot || d->dotdot));
 
             UTEST_ASSERT(s.set_utf8(d->path));
             UTEST_ASSERT(Path::is_dot(&s) == d->dot);
             UTEST_ASSERT(Path::is_dotdot(&s) == d->dotdot);
+            UTEST_ASSERT(Path::is_dots(&s) == (d->dot || d->dotdot));
         }
     }
 

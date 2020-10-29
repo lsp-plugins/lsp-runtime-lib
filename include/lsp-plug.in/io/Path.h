@@ -140,6 +140,7 @@ namespace lsp
                 bool            is_root() const;
                 bool            is_dot() const;
                 bool            is_dotdot() const;
+                bool            is_dots() const;
                 inline bool     is_empty() const                        { return sPath.is_empty();  }
 
                 inline void     clear()                                 { sPath.clear();    }
@@ -195,6 +196,13 @@ namespace lsp
                 static bool     is_dotdot(const LSPString *path);
                 static bool     is_dotdot(const io::Path *path);
                 static bool     is_dotdot(const char *path);
+
+                static bool     is_dots(const LSPString *path);
+                static bool     is_dots(const io::Path *path);
+                static bool     is_dots(const char *path);
+
+                static bool     valid_file_name(const LSPString *fname);
+                static bool     valid_path_name(const LSPString *fname);
         };
     }
 } /* namespace lsp */
