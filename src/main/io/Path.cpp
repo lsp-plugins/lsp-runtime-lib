@@ -579,9 +579,9 @@ namespace lsp
                     idx             = 0;
                 sPath.set_length(idx);
             }
-            else if (idx > 0)
+            else if (idx >= 0)
             {
-                ssize_t idx2    = sPath.rindex_of(idx - 1, FILE_SEPARATOR_C);
+                ssize_t idx2    = (idx > 0) ? sPath.rindex_of(idx - 1, FILE_SEPARATOR_C) : -1;
                 if (idx2 < 0)
                     idx             = idx + 1;
                 sPath.set_length(idx);

@@ -29,12 +29,14 @@
     #define TEST_PATH2      "C:\\Windows\\system\\lib"
     #define TEST_PATH3      "C:\\Windows\\system\\bin"
     #define TEST_PATH4      "C:\\Windows\\system"
+    #define TEST_PATH5      "C:\\Windows"
     #define TEST_ROOT       "C:\\"
 #else
     #define TEST_PATH1      "/usr/local/bin"
     #define TEST_PATH2      "/usr/share/local/lib"
     #define TEST_PATH3      "/usr/share/local/bin"
     #define TEST_PATH4      "/usr/share/local"
+    #define TEST_PATH5      "/usr"
     #define TEST_ROOT       "/"
 #endif
 
@@ -345,6 +347,10 @@ UTEST_BEGIN("runtime.io", path)
         UTEST_ASSERT(p.set(TEST_PATH2) == STATUS_OK);
         UTEST_ASSERT(p.remove_last() == STATUS_OK);
         UTEST_ASSERT(p.equals(TEST_PATH4));
+
+        UTEST_ASSERT(p.set(TEST_PATH5) == STATUS_OK);
+        UTEST_ASSERT(p.remove_last() == STATUS_OK);
+        UTEST_ASSERT(p.equals(TEST_ROOT));
 
         UTEST_ASSERT(p.set(TEST_ROOT) == STATUS_OK);
         UTEST_ASSERT(p.remove_last() == STATUS_OK);

@@ -19,6 +19,7 @@
 * Added methods Path::is_dot(), Path::is_dotdot(), Path::is_dots().
 * Optimized methods Path::is_dot() and Path::is_dotdot().
 * Added methods Path::valid_file_name() and Path::valid_path_name().
+* Fixed bug in Path::remove_last() method.
 
 === 0.5.4 ===
 * Updated LSPString lltl specifier to match lltl-lib 0.5.3.
