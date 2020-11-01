@@ -19,8 +19,8 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef INCLUDE_LSP_PLUG_IN_IPC_MUTEX_H_
-#define INCLUDE_LSP_PLUG_IN_IPC_MUTEX_H_
+#ifndef LSP_PLUG_IN_IPC_MUTEX_H_
+#define LSP_PLUG_IN_IPC_MUTEX_H_
 
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/common/types.h>
@@ -173,4 +173,4 @@ namespace lsp
     } /* namespace ipc */
 } /* namespace lsp */
 
-#endif /* INCLUDE_LSP_PLUG_IN_IPC_MUTEX_H_ */
+#endif /* LSP_PLUG_IN_IPC_MUTEX_H_ */
