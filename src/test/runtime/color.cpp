@@ -190,6 +190,8 @@ UTEST_BEGIN("runtime.runtime", color)
         UTEST_ASSERT(test_color("#ff00ff"));
         UTEST_ASSERT(test_color("#00ffff"));
         UTEST_ASSERT(test_color("#ffffff"));
+        UTEST_ASSERT(test_color("#000000"));
+        UTEST_ASSERT(test_color("#cccccc"));
     }
 
     UTEST_MAIN

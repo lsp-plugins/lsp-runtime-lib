@@ -200,7 +200,7 @@ namespace lsp
         if (L <= 0.5f)
             S = (L <= 0.0f) ? 0.0f : d / L;
         else if (L > 0.5f)
-            S = d / (1.0f - L);
+            S = (L < 1.0f) ? d / (1.0f - L) : 0.0f;
 
         // Normalize hue
         H  /= 6.0f;
