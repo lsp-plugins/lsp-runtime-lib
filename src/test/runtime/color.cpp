@@ -82,7 +82,7 @@ UTEST_BEGIN("runtime.runtime", color)
 
     void test_parse_rgb()
     {
-        printf("Testing parse_rgb...");
+        printf("Testing parse_rgb...\n");
 
         UTEST_ASSERT(parse_rgb("#123", 0x00112233) == STATUS_OK);
         UTEST_ASSERT(parse_rgb("#112233", 0x00112233) == STATUS_OK);
@@ -100,7 +100,7 @@ UTEST_BEGIN("runtime.runtime", color)
 
     void test_parse_rgba()
     {
-        printf("Testing parse_rgba...");
+        printf("Testing parse_rgba...\n");
 
         UTEST_ASSERT(parse_rgba("#1234", 0x11223344) == STATUS_OK);
         UTEST_ASSERT(parse_rgba("#11223344", 0x11223344) == STATUS_OK);
@@ -118,7 +118,7 @@ UTEST_BEGIN("runtime.runtime", color)
 
     void test_parse_hsl()
     {
-        printf("Testing parse_hsl...");
+        printf("Testing parse_hsl...\n");
 
         UTEST_ASSERT(parse_hsl("@123", 0x00112233) == STATUS_OK);
         UTEST_ASSERT(parse_hsl("@112233", 0x00112233) == STATUS_OK);
@@ -136,7 +136,7 @@ UTEST_BEGIN("runtime.runtime", color)
 
     void test_parse_hsla()
     {
-        printf("Testing parse_hsla...");
+        printf("Testing parse_hsla...\n");
 
         UTEST_ASSERT(parse_hsla("@1234", 0x11223344) == STATUS_OK);
         UTEST_ASSERT(parse_hsla("@11223344", 0x11223344) == STATUS_OK);
@@ -152,12 +152,53 @@ UTEST_BEGIN("runtime.runtime", color)
         UTEST_ASSERT(parse_hsla("   ", 0) == STATUS_NO_DATA);
     }
 
+    bool check_component(int c1, int c2)
+    {
+        c1 -= c2;
+        return (c1 >= -5) && (c1 <= 5);
+    }
+
+    bool test_color(const char *value)
+    {
+        Color c1, c2;
+        char buf[32];
+
+        UTEST_ASSERT(c1.parse3(value) == STATUS_OK);
+        printf("  col = %s\n", value);
+        c1.format_hsl(buf, sizeof(buf), 2);
+        printf("  hsl = %s\n", buf);
+        c2.set_hsl24(c1.hsl24());
+        c2.format_rgb(buf, sizeof(buf), 2);
+        printf("  rgb = %s\n", buf);
+
+        uint32_t v1 = c1.rgb24(), v2 = c2.rgb24();
+
+        return
+            check_component(v1 & 0xff, v2 & 0xff) &&
+            check_component((v1 >> 8) & 0xff, (v2 >> 8) & 0xff) &&
+            check_component((v1 >> 16) & 0xff, (v2 >> 16) & 0xff);
+    }
+
+    void test_convert_hsl()
+    {
+        printf("Testing HSL conversion...\n");
+
+        UTEST_ASSERT(test_color("#ff0000"));
+        UTEST_ASSERT(test_color("#00ff00"));
+        UTEST_ASSERT(test_color("#0000ff"));
+        UTEST_ASSERT(test_color("#ffff00"));
+        UTEST_ASSERT(test_color("#ff00ff"));
+        UTEST_ASSERT(test_color("#00ffff"));
+        UTEST_ASSERT(test_color("#ffffff"));
+    }
+
     UTEST_MAIN
     {
         test_parse_rgb();
         test_parse_rgba();
         test_parse_hsl();
         test_parse_hsla();
+        test_convert_hsl();
     }
 
 UTEST_END
