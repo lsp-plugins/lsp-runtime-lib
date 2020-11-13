@@ -24,7 +24,7 @@ ARTIFACT_DESC               = Runtime library used by LSP Project for plugin dev
 ARTIFACT_VARS               = LSP_RUNTIME_LIB
 ARTIFACT_HEADERS            = lsp-plug.in
 ARTIFACT_EXPORT_ALL         = 1
-ARTIFACT_VERSION            = 0.5.5
+ARTIFACT_VERSION            = 0.5.6-devel
 
 # List of dependencies
 TEST_DEPENDENCIES = \
