@@ -29,12 +29,14 @@
     #define TEST_PATH2      "C:\\Windows\\system\\lib"
     #define TEST_PATH3      "C:\\Windows\\system\\bin"
     #define TEST_PATH4      "C:\\Windows\\system"
+    #define TEST_PATH5      "C:\\Windows"
     #define TEST_ROOT       "C:\\"
 #else
     #define TEST_PATH1      "/usr/local/bin"
     #define TEST_PATH2      "/usr/share/local/lib"
     #define TEST_PATH3      "/usr/share/local/bin"
     #define TEST_PATH4      "/usr/share/local"
+    #define TEST_PATH5      "/usr"
     #define TEST_ROOT       "/"
 #endif
 
@@ -346,6 +348,10 @@ UTEST_BEGIN("runtime.io", path)
         UTEST_ASSERT(p.remove_last() == STATUS_OK);
         UTEST_ASSERT(p.equals(TEST_PATH4));
 
+        UTEST_ASSERT(p.set(TEST_PATH5) == STATUS_OK);
+        UTEST_ASSERT(p.remove_last() == STATUS_OK);
+        UTEST_ASSERT(p.equals(TEST_ROOT));
+
         UTEST_ASSERT(p.set(TEST_ROOT) == STATUS_OK);
         UTEST_ASSERT(p.remove_last() == STATUS_OK);
         UTEST_ASSERT(p.equals(TEST_ROOT));
@@ -389,6 +395,14 @@ UTEST_BEGIN("runtime.io", path)
         UTEST_ASSERT(p.set(TEST_PATH3) == STATUS_OK);
         UTEST_ASSERT(p.remove_base(&xp) == STATUS_OK);
         UTEST_ASSERT(p.is_empty());
+
+        UTEST_ASSERT(p.set(TEST_PATH3) == STATUS_OK);
+        UTEST_ASSERT(p.remove_base() == STATUS_OK);
+        UTEST_ASSERT(p.equals("bin"));
+
+        UTEST_ASSERT(p.set(TEST_PATH4) == STATUS_OK);
+        UTEST_ASSERT(p.remove_base() == STATUS_OK);
+        UTEST_ASSERT(p.equals("local"));
     }
 
 //    void        clear()
@@ -479,6 +493,59 @@ UTEST_BEGIN("runtime.io", path)
         }
     }
 
+    void test_dots()
+    {
+        struct dot_t
+        {
+            const char *path;
+            bool dot;
+            bool dotdot;
+        };
+
+        static const dot_t dots[] =
+        {
+            { "", false, false },
+            { ".", true, false },
+            { "..", false, true },
+            { "...", false, false },
+            { FILE_SEPARATOR_S "..", false, true },
+            { FILE_SEPARATOR_S ".", true, false },
+            { FILE_SEPARATOR_S "...", false, false },
+            { FILE_SEPARATOR_S, false, false },
+            { "." FILE_SEPARATOR_S "a", false, false },
+            { ".." FILE_SEPARATOR_S "a", false, false },
+            { "a" FILE_SEPARATOR_S ".", true, false },
+            { "a" FILE_SEPARATOR_S "..", false, true },
+            { "a" FILE_SEPARATOR_S "...", false, false },
+            { NULL, false, false }
+        };
+
+        io::Path p;
+        LSPString s;
+
+        for (const dot_t *d = dots; d->path != NULL; ++d)
+        {
+            printf("Testing \"%s\"\n", d->path);
+            UTEST_ASSERT(Path::is_dot(d->path) == d->dot);
+            UTEST_ASSERT(Path::is_dotdot(d->path) == d->dotdot);
+            UTEST_ASSERT(Path::is_dots(d->path) == (d->dot || d->dotdot));
+
+            UTEST_ASSERT(p.set(d->path) == STATUS_OK);
+            UTEST_ASSERT(p.is_dot() == d->dot);
+            UTEST_ASSERT(p.is_dotdot() == d->dotdot);
+            UTEST_ASSERT(p.is_dots() == (d->dot || d->dotdot));
+
+            UTEST_ASSERT(Path::is_dot(&p) == d->dot);
+            UTEST_ASSERT(Path::is_dotdot(&p) == d->dotdot);
+            UTEST_ASSERT(Path::is_dots(&p) == (d->dot || d->dotdot));
+
+            UTEST_ASSERT(s.set_utf8(d->path));
+            UTEST_ASSERT(Path::is_dot(&s) == d->dot);
+            UTEST_ASSERT(Path::is_dotdot(&s) == d->dotdot);
+            UTEST_ASSERT(Path::is_dots(&s) == (d->dot || d->dotdot));
+        }
+    }
+
     UTEST_MAIN
     {
         test_get_set();
@@ -490,6 +557,7 @@ UTEST_BEGIN("runtime.io", path)
         test_remove_base();
         test_flags();
         test_canonical();
+        test_dots();
     }
 UTEST_END;
 

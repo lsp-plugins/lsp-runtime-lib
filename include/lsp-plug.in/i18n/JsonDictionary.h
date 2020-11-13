@@ -26,6 +26,8 @@
 #include <lsp-plug.in/fmt/json/Parser.h>
 #include <lsp-plug.in/i18n/IDictionary.h>
 #include <lsp-plug.in/lltl/parray.h>
+#include <lsp-plug.in/io/IInSequence.h>
+#include <lsp-plug.in/io/IInStream.h>
 
 namespace lsp
 {
@@ -62,7 +64,13 @@ namespace lsp
                 using IDictionary::get_child;
                 using IDictionary::lookup;
 
+                virtual status_t    init(const char *path);
+
                 virtual status_t    init(const LSPString *path);
+
+                virtual status_t    init(io::IInSequence *is);
+
+                virtual status_t    init(io::IInStream *is);
 
                 virtual status_t    lookup(const LSPString *key, LSPString *value);
 

@@ -54,6 +54,7 @@ namespace lsp
                 token_t             lookup_identifier(token_t type);
                 token_t             lookup_string();
                 token_t             lookup_number();
+                token_t             lookup_color();
                 token_t             commit(token_t token);
                 token_t             set_error(status_t code);
                 token_t             decode_bareword();
@@ -68,9 +69,16 @@ namespace lsp
                 /**
                  * Check that character matches first identifier letter
                  * @param ch character
-                 * @return true if character matchers
+                 * @return true if character matches
                  */
                 static bool             is_identifier_first(lsp_wchar_t ch);
+
+                /**
+                 * Check that character matches hexadecimal letter
+                 * @param ch character
+                 * @return true if character matches
+                 */
+                static bool             is_hex(lsp_wchar_t ch);
 
                 /**
                  * Check that character matches next identifier letter

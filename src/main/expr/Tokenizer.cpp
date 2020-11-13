@@ -180,6 +180,17 @@ namespace lsp
             return ch == '_';
         }
 
+        bool Tokenizer::is_hex(lsp_wchar_t ch)
+        {
+            if ((ch >= '0') && (ch <= '9'))
+                return true;
+            if ((ch >= 'a') && (ch <= 'f'))
+                return true;
+            if ((ch >= 'A') && (ch <= 'F'))
+                return true;
+            return false;
+        }
+
         bool Tokenizer::is_identifier_next(lsp_wchar_t ch)
         {
             if ((ch >= 'a') && (ch <= 'z'))
@@ -312,6 +323,31 @@ namespace lsp
             }
 
             return enToken = TT_STRING;
+        }
+
+        token_t Tokenizer::lookup_color()
+        {
+            if (cCurrent < 0)
+                cCurrent = pIn->read();
+
+            if (!is_hex(cCurrent))
+                return enToken;
+
+            do {
+                // Append character
+                if (!sValue.append(cCurrent))
+                    return set_error(STATUS_NO_MEM);
+
+                // Read next character
+                if ((cCurrent = pIn->read()) < 0)
+                {
+                    if (cCurrent == -STATUS_EOF)
+                        break;
+                    return set_error(-cCurrent);
+                }
+            } while (is_hex(cCurrent));
+
+            return enToken = TT_COLOR;
         }
 
         token_t Tokenizer::lookup_number()
@@ -549,6 +585,21 @@ namespace lsp
                     return commit(TT_LCBRACE);
                 case '}': // TT_RCBRACE
                     return commit(TT_RCBRACE);
+
+                case '#': // TT_SHARP
+                    if (!(flags & TF_COLOR))
+                        return commit(TT_SHARP);
+
+                    c = commit_lookup(TT_SHARP);
+                    return lookup_color();
+
+                case '@': // TT_AT
+                    if (!(flags & TF_COLOR))
+                        return commit(TT_AT);
+
+                    c = commit_lookup(TT_AT);
+                    return lookup_color();
+
                 case '*': // TT_MUL, TT_POW
                 {
                     commit(TT_MUL);

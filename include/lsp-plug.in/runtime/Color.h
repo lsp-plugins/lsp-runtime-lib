@@ -185,7 +185,8 @@ namespace lsp
             status_t        parse_hsla(const LSPString *src)                { return parse_hsla(src->get_utf8());           }
 
         public:
-            void scale_lightness(float amount);
+            void            scale_lightness(float amount);
+            void            swap(Color *src);
     };
 
 } /* namespace lsp */

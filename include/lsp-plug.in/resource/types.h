@@ -3,7 +3,7 @@
  *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
- * Created on: 9 апр. 2020 г.
+ * Created on: 26 окт. 2020 г.
  *
  * lsp-runtime-lib is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,23 +19,33 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LSP_PLUG_IN_RUNTIME_VERSION_H_
-#define LSP_PLUG_IN_RUNTIME_VERSION_H_
+#ifndef LSP_PLUG_IN_RESOURCE_TYPES_H_
+#define LSP_PLUG_IN_RESOURCE_TYPES_H_
 
-#define LSP_RUNTIME_LIB_MAJOR       0
-#define LSP_RUNTIME_LIB_MINOR       5
-#define LSP_RUNTIME_LIB_MICRO       5
+#include <lsp-plug.in/runtime/version.h>
+#include <lsp-plug.in/common/types.h>
 
-#ifdef LSP_RUNTIME_LIB_BUILTIN
-    #define LSP_RUNTIME_LIB_EXPORT
-    #define LSP_RUNTIME_LIB_CEXPORT
-    #define LSP_RUNTIME_LIB_IMPORT          LSP_SYMBOL_IMPORT
-    #define LSP_RUNTIME_LIB_CIMPORT         LSP_CSYMBOL_IMPORT
-#else
-    #define LSP_RUNTIME_LIB_EXPORT          LSP_SYMBOL_EXPORT
-    #define LSP_RUNTIME_LIB_CEXPORT         LSP_CSYMBOL_EXPORT
-    #define LSP_RUNTIME_LIB_IMPORT          LSP_SYMBOL_IMPORT
-    #define LSP_RUNTIME_LIB_CIMPORT         LSP_CSYMBOL_IMPORT
-#endif
+namespace lsp
+{
+    namespace resource
+    {
+        static const size_t RESOURCE_NAME_MAX       = 64;
 
-#endif /* LSP_PLUG_IN_RUNTIME_VERSION_H_ */
+        enum resource_type_t
+        {
+            RES_FILE,
+            RES_DIR
+        };
+
+        /**
+         * Resource descriptor
+         */
+        typedef struct resource_t
+        {
+            resource_type_t     type;
+            char                name[RESOURCE_NAME_MAX];
+        } resource_t;
+    }
+}
+
+#endif /* LSP_PLUG_IN_RESOURCE_TYPES_H_ */

@@ -27,8 +27,9 @@ namespace lsp
 {
     namespace i18n
     {
-        Dictionary::Dictionary()
+        Dictionary::Dictionary(resource::ILoader *loader)
         {
+            pLoader     = loader;
         }
 
         Dictionary::~Dictionary()
@@ -39,7 +40,23 @@ namespace lsp
         status_t Dictionary::load_json(IDictionary **dict, const io::Path *path)
         {
             JsonDictionary *d = new JsonDictionary();
-            status_t res = d->init(path);
+            status_t res;
+
+            if (pLoader != NULL)
+            {
+                io::IInStream *is = pLoader->read_stream(path);
+                if (is != NULL)
+                {
+                    res     = d->init(is);
+                    is->close();
+                    delete is;
+                }
+                else
+                    res     = pLoader->last_error();
+            }
+            else
+                res = d->init(path);
+
             if (res == STATUS_OK)
                 *dict = d;
             else
@@ -58,7 +75,7 @@ namespace lsp
             if (!xp.append(path))
                 return STATUS_NO_MEM;
 
-            Dictionary *d = new Dictionary;
+            Dictionary *d = new Dictionary(pLoader);
             status_t res = d->init(&xp);
             if (res != STATUS_OK)
                 delete d;

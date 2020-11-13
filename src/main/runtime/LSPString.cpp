@@ -931,7 +931,7 @@ namespace lsp
         if (nLength < (src->nLength + offset))
             return false;
 
-        return xcasecmp(&pData[offset], src->pData, src->nLength) == 0;
+        return xcmp(&pData[offset], src->pData, src->nLength) == 0;
     }
 
     bool LSPString::starts_with_ascii(const char *str, size_t offset) const
@@ -1654,6 +1654,14 @@ namespace lsp
     bool LSPString::equals(const lsp_wchar_t *src) const
     {
         return equals(src, xlen(src));
+    }
+
+    bool LSPString::equals(const LSPString *src, ssize_t first, ssize_t last) const
+    {
+        XSAFE_TRANS(first, src->nLength, false);
+        XSAFE_TRANS(last, src->nLength, false);
+
+        return equals(&src->pData[first], last - first);
     }
 
     bool LSPString::equals_nocase(const lsp_wchar_t *src, size_t len) const

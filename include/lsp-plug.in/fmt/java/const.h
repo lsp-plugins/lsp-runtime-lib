@@ -115,4 +115,4 @@ namespace lsp
     }
 }
 
-#endif /* INCLUDE_LSP_PLUG_IN_FMT_JAVA_CONST_H_ */
+#endif /* LSP_PLUG_IN_FMT_JAVA_CONST_H_ */

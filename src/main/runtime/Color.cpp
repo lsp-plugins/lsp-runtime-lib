@@ -25,7 +25,6 @@
 
 namespace lsp
 {
-    static const float HSL_RGB_0_5          = 0.5f;
     static const float HSL_RGB_1_3          = 1.0f / 3.0f;
     static const float HSL_RGB_1_6          = 1.0f / 6.0f;
     static const float HSL_RGB_2_3          = 2.0f / 3.0f;
@@ -132,46 +131,35 @@ namespace lsp
         if (nMask & M_RGB)
             return;
 
-        if (S > 0.0)
+        if (S > 0.0f)
         {
-            float temp1, temp2, tempr, tempg, tempb, k;
+            float Q     = (L < 0.5f) ? L * (1.0f + S) : L + S - L*S;
+            float P     = L + L - Q; // 2.0 * L - Q
+            float D     = 6.0f * (Q - P);
 
-            //Set the temporary values
-            if  (L < HSL_RGB_0_5)
-                temp2 = L + (L * S);
+            float TR    = H + HSL_RGB_1_3;
+            float TG    = H;
+            float TB    = H - HSL_RGB_1_3;
+
+            if (TR > 1.0f)
+                TR  -= 1.0f;
+            if (TB < 0.0f)
+                TB  += 1.0f;
+
+            if (TR < 0.5f)
+                R       = (TR < HSL_RGB_1_6) ? P + D * TR : Q;
             else
-                temp2 = (L + S) - (L * S);
+                R       = (TR < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TR) : P;
 
-            temp1 = L + L - temp2;
-            tempr = H + HSL_RGB_1_3;
-            if (tempr > 1.0f)
-                tempr   -= 1.0f;
-
-            tempg = H;
-            tempb = H - HSL_RGB_1_3;
-
-            if (tempb < 0.0f)
-                tempb   += 1.0f;
-
-            k = (temp2 - temp1) * 6.0f;
-
-            //Red
-            if (tempr < HSL_RGB_0_5)
-                R = (tempr < HSL_RGB_1_6) ? temp1 + k * tempr : temp2;
+            if (TG < 0.5f)
+                G       = (TG < HSL_RGB_1_6) ? P + D * TG : Q;
             else
-                R = (tempr < HSL_RGB_2_3) ? temp1 + k * (HSL_RGB_2_3 - tempr) : temp1;
+                G       = (TG < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TG) : P;
 
-            //Green
-            if (tempg < HSL_RGB_0_5)
-                G = (tempg < HSL_RGB_1_6) ? temp1 + k * tempg : temp2;
+            if (TB < 0.5f)
+                B       = (TB < HSL_RGB_1_6) ? P + D * TB : Q;
             else
-                G = (tempg < HSL_RGB_2_3) ? temp1 + k * (HSL_RGB_2_3 - tempg) : temp1;
-
-            //Blue
-            if (tempb < HSL_RGB_0_5)
-                B = (tempb < HSL_RGB_1_6) ? temp1 + k * tempb : temp2;
-            else
-                B = (tempb < HSL_RGB_2_3) ? temp1 + k * (HSL_RGB_2_3 - tempb) : temp1;
+                B       = (TB < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TB) : P;
         }
         else
         {
@@ -192,31 +180,31 @@ namespace lsp
         float cmin = (R < G) ? ((B < R) ? B : R) : ((B < G) ? B : G);
         float d = cmax - cmin;
 
-        H = 0.0;
-        S = 0.0;
-        L = 0.5 * (cmax + cmin);
+        H = 0.0f;
+        S = 0.0f;
+        L = 0.5f * (cmax + cmin);
 
         // Calculate hue
         if (R == cmax)
         {
             H = (G - B) / d;
             if (G < B)
-                H += 6.0;
+                H += 6.0f;
         }
         else if (G == cmax)
-            H = (B - R) / d + 2.0;
+            H = (B - R) / d + 2.0f;
         else if (B == cmax)
-            H = (R - G) / d + 4.0;
+            H = (R - G) / d + 4.0f;
 
         // Calculate saturation
-        if (L < 1.0)
-            S = d / L;
-        else if (L > 1.0)
-            S = d / (1.0 - L);
+        if (L <= 0.5f)
+            S = (L <= 0.0f) ? 0.0f : d / L;
+        else if (L > 0.5f)
+            S = (L < 1.0f) ? d / (1.0f - L) : 0.0f;
 
         // Normalize hue
-        H  /= 6.0;
-        S  *= 0.5;
+        H  /= 6.0f;
+        S  *= 0.5f;
 
         nMask |= M_HSL;
     }
@@ -375,10 +363,10 @@ namespace lsp
 
             return ::snprintf(
                     dst, len, fmt, prefix,
-                    int(v[3] * tol) & tol,
-                    int(v[0] * tol) & tol,
-                    int(v[1] * tol) & tol,
-                    int(v[2] * tol) & tol
+                    int(v[3] * tol + 0.25f) & tol,
+                    int(v[0] * tol + 0.25f) & tol,
+                    int(v[1] * tol + 0.25f) & tol,
+                    int(v[2] * tol + 0.25f) & tol
                 );
         }
         else
@@ -405,9 +393,9 @@ namespace lsp
 
             return ::snprintf(
                     dst, len, fmt, prefix,
-                    int(v[0] * tol) & tol,
-                    int(v[1] * tol) & tol,
-                    int(v[2] * tol) & tol
+                    int(v[0] * tol + 0.25f) & tol,
+                    int(v[1] * tol + 0.25f) & tol,
+                    int(v[2] * tol + 0.25f) & tol
                 );
         }
     }
@@ -574,39 +562,50 @@ namespace lsp
     {
         check_rgb();
         return
-            (uint32_t(R * 0xff) << 16) |
-            (uint32_t(G * 0xff) << 8) |
-            (uint32_t(B * 0xff) << 0);
+            (uint32_t(R * 0xff + 0.25f) << 16) |
+            (uint32_t(G * 0xff + 0.25f) << 8) |
+            (uint32_t(B * 0xff + 0.25f) << 0);
     }
 
     uint32_t Color::rgba32() const
     {
         check_rgb();
         return
-            (uint32_t(A * 0xff) << 24) |
-            (uint32_t(R * 0xff) << 16) |
-            (uint32_t(G * 0xff) << 8) |
-            (uint32_t(B * 0xff) << 0);
+            (uint32_t(A * 0xff + 0.25f) << 24) |
+            (uint32_t(R * 0xff + 0.25f) << 16) |
+            (uint32_t(G * 0xff + 0.25f) << 8) |
+            (uint32_t(B * 0xff + 0.25f) << 0);
     }
 
     uint32_t Color::hsl24() const
     {
         check_hsl();
         return
-            (uint32_t(H * 0xff) << 16) |
-            (uint32_t(S * 0xff) << 8) |
-            (uint32_t(L * 0xff) << 0);
+            (uint32_t(H * 0xff + 0.25f) << 16) |
+            (uint32_t(S * 0xff + 0.25f) << 8) |
+            (uint32_t(L * 0xff + 0.25f) << 0);
     }
 
     uint32_t Color::hsla32() const
     {
         check_rgb();
         return
-            (uint32_t(A * 0xff) << 24) |
-            (uint32_t(H * 0xff) << 16) |
-            (uint32_t(S * 0xff) << 8) |
-            (uint32_t(L * 0xff) << 0);
+            (uint32_t(A * 0xff + 0.25f) << 24) |
+            (uint32_t(H * 0xff + 0.25f) << 16) |
+            (uint32_t(S * 0xff + 0.25f) << 8) |
+            (uint32_t(L * 0xff + 0.25f) << 0);
     }
 
+    void Color::swap(Color *c)
+    {
+        lsp::swap(R, c->R);
+        lsp::swap(G, c->G);
+        lsp::swap(B, c->B);
+        lsp::swap(H, c->H);
+        lsp::swap(S, c->S);
+        lsp::swap(L, c->L);
+        lsp::swap(A, c->A);
+        lsp::swap(nMask, c->nMask);
+    }
 
 } /* namespace lsp */

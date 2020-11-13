@@ -19,8 +19,8 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef INCLUDE_LSP_PLUG_IN_IO_PATH_H_
-#define INCLUDE_LSP_PLUG_IN_IO_PATH_H_
+#ifndef LSP_PLUG_IN_IO_PATH_H_
+#define LSP_PLUG_IN_IO_PATH_H_
 
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/runtime/LSPString.h>
@@ -68,122 +68,143 @@ namespace lsp
                 ~Path();
                 
             public:
-                status_t    set(const char *path);
-                status_t    set(const LSPString *path);
-                status_t    set(const Path *path);
+                status_t        set(const char *path);
+                status_t        set(const LSPString *path);
+                status_t        set(const Path *path);
 
-                status_t    set(const char *path, const char *child);
-                status_t    set(const char *path, const LSPString *child);
-                status_t    set(const char *path, const Path *child);
+                status_t        set(const char *path, const char *child);
+                status_t        set(const char *path, const LSPString *child);
+                status_t        set(const char *path, const Path *child);
 
-                status_t    set(const LSPString *path, const char *child);
-                status_t    set(const LSPString *path, const LSPString *child);
-                status_t    set(const LSPString *path, const Path *child);
+                status_t        set(const LSPString *path, const char *child);
+                status_t        set(const LSPString *path, const LSPString *child);
+                status_t        set(const LSPString *path, const Path *child);
 
-                status_t    set(const Path *path, const char *child);
-                status_t    set(const Path *path, const LSPString *child);
-                status_t    set(const Path *path, const Path *child);
+                status_t        set(const Path *path, const char *child);
+                status_t        set(const Path *path, const LSPString *child);
+                status_t        set(const Path *path, const Path *child);
 
                 inline const char *get() const                          { return sPath.get_utf8();  }
-                status_t    get(char *path, size_t maxlen) const;
-                status_t    get(LSPString *path) const;
-                status_t    get(Path *path) const;
+                status_t        get(char *path, size_t maxlen) const;
+                status_t        get(LSPString *path) const;
+                status_t        get(Path *path) const;
 
-                status_t    set_last(const char *path);
-                status_t    set_last(const LSPString *path);
-                status_t    set_last(const Path *path);
+                status_t        set_last(const char *path);
+                status_t        set_last(const LSPString *path);
+                status_t        set_last(const Path *path);
 
-                status_t    get_last(char *path, size_t maxlen) const;
-                status_t    get_last(LSPString *path) const;
-                status_t    get_last(Path *path) const;
+                status_t        get_last(char *path, size_t maxlen) const;
+                status_t        get_last(LSPString *path) const;
+                status_t        get_last(Path *path) const;
 
-                status_t    get_parent(char *path, size_t maxlen) const;
-                status_t    get_parent(LSPString *path) const;
-                status_t    get_parent(Path *path) const;
+                status_t        get_parent(char *path, size_t maxlen) const;
+                status_t        get_parent(LSPString *path) const;
+                status_t        get_parent(Path *path) const;
 
-                status_t    set_parent(const char *path);
-                status_t    set_parent(LSPString *path);
-                status_t    set_parent(Path *path);
+                status_t        set_parent(const char *path);
+                status_t        set_parent(LSPString *path);
+                status_t        set_parent(Path *path);
 
-                status_t    concat(const char *path);
-                status_t    concat(LSPString *path);
-                status_t    concat(Path *path);
+                status_t        concat(const char *path);
+                status_t        concat(LSPString *path);
+                status_t        concat(Path *path);
 
-                status_t    append_child(const char *path);
-                status_t    append_child(const LSPString *path);
-                status_t    append_child(const Path *path);
+                status_t        append_child(const char *path);
+                status_t        append_child(const LSPString *path);
+                status_t        append_child(const Path *path);
 
-                status_t    append(const char *path);
-                status_t    append(const LSPString *path);
-                status_t    append(const Path *path);
+                status_t        append(const char *path);
+                status_t        append(const LSPString *path);
+                status_t        append(const Path *path);
 
-                status_t    remove_last();
-                status_t    remove_last(char *path, size_t maxlen);
-                status_t    remove_last(LSPString *path);
-                status_t    remove_last(Path *path);
+                status_t        remove_last();
+                status_t        remove_last(char *path, size_t maxlen);
+                status_t        remove_last(LSPString *path);
+                status_t        remove_last(Path *path);
 
-                status_t    remove_base(const char *path);
-                status_t    remove_base(const LSPString *path);
-                status_t    remove_base(const Path *path);
+                status_t        remove_base(const char *path);
+                status_t        remove_base(const LSPString *path);
+                status_t        remove_base(const Path *path);
+                status_t        remove_base();
 
-                ssize_t     fmt(const char *fmt...);
-                ssize_t     fmt(const LSPString *fmt...);
-                ssize_t     vfmt(const char *fmt, va_list args);
-                ssize_t     vfmt(const LSPString *fmt, va_list args);
+                status_t        remove_root();
 
-                bool        is_absolute() const;
-                bool        is_relative() const;
-                bool        is_canonical() const;
-                bool        is_root() const;
-                bool        is_dot() const;
-                bool        is_dotdot() const;
-                inline bool is_empty() const                        { return sPath.is_empty();  }
+                ssize_t         fmt(const char *fmt...);
+                ssize_t         fmt(const LSPString *fmt...);
+                ssize_t         vfmt(const char *fmt, va_list args);
+                ssize_t         vfmt(const LSPString *fmt, va_list args);
 
-                inline void clear()                                 { sPath.clear();    }
+                bool            is_absolute() const;
+                bool            is_relative() const;
+                bool            is_canonical() const;
+                bool            is_root() const;
+                bool            is_dot() const;
+                bool            is_dotdot() const;
+                bool            is_dots() const;
+                inline bool     is_empty() const                        { return sPath.is_empty();  }
 
-                inline void swap(Path *path)                        { sPath.swap(&path->sPath); }
+                inline void     clear()                                 { sPath.clear();    }
 
-                status_t    canonicalize();
+                inline void     swap(Path *path)                        { sPath.swap(&path->sPath); }
 
-                status_t    root();
-                status_t    current();
-                status_t    parent();
+                status_t        canonicalize();
 
-                status_t    get_canonical(char *path, size_t maxlen) const;
-                status_t    get_canonical(LSPString *path) const;
-                status_t    get_canonical(Path *path) const;
+                status_t        root();
+                status_t        current();
+                status_t        parent();
+
+                status_t        get_canonical(char *path, size_t maxlen) const;
+                status_t        get_canonical(LSPString *path) const;
+                status_t        get_canonical(Path *path) const;
 
                 inline status_t as_relative(const char *path)       { return remove_base(path); }
                 inline status_t as_relative(const LSPString *path)  { return remove_base(path); }
                 inline status_t as_relative(const Path *path)       { return remove_base(path); }
 
-                bool        equals(const Path *path) const;
-                bool        equals(const LSPString *path) const;
-                bool        equals(const char *path) const;
+                bool            equals(const Path *path) const;
+                bool            equals(const LSPString *path) const;
+                bool            equals(const char *path) const;
 
-                inline const LSPString *as_string() const                       { return &sPath;                    }
-                inline const char *as_utf8(const char *charset = NULL) const    { return sPath.get_utf8();          }
-                inline const char *as_native(const char *charset = NULL) const  { return sPath.get_native(charset); }
-                inline void take(Path *src)                                     { sPath.take(&src->sPath);          }
-                void take(LSPString *src);
+                inline const    LSPString *as_string() const                        { return &sPath;                    }
+                inline const    char *as_utf8() const                               { return sPath.get_utf8();          }
+                inline const    char *as_native(const char *charset = NULL) const   { return sPath.get_native(charset); }
+                inline void     take(Path *src)                                     { sPath.take(&src->sPath);          }
+                inline size_t   length() const                                      { return sPath.length();            }
+                void            take(LSPString *src);
 
             public:
-                status_t    stat(fattr_t *attr) const;
-                status_t    sym_stat(fattr_t *attr) const;
-                wssize_t    size() const;
-                bool        exists() const;
-                bool        is_reg() const;
-                bool        is_dir() const;
-                bool        is_block_dev() const;
-                bool        is_char_dev() const;
-                bool        is_fifo() const;
-                bool        is_symlink() const;
-                bool        is_socket() const;
-                status_t    mkdir() const;
-                status_t    mkdir(bool recursive) const;
-                status_t    remove() const;
+                status_t        stat(fattr_t *attr) const;
+                status_t        sym_stat(fattr_t *attr) const;
+                wssize_t        size() const;
+                bool            exists() const;
+                bool            is_reg() const;
+                bool            is_dir() const;
+                bool            is_block_dev() const;
+                bool            is_char_dev() const;
+                bool            is_fifo() const;
+                bool            is_symlink() const;
+                bool            is_socket() const;
+                status_t        mkdir() const;
+                status_t        mkdir(bool recursive) const;
+                status_t        remove() const;
+
+            public:
+                static bool     is_dot(const LSPString *path);
+                static bool     is_dot(const io::Path *path);
+                static bool     is_dot(const char *path);
+
+                static bool     is_dotdot(const LSPString *path);
+                static bool     is_dotdot(const io::Path *path);
+                static bool     is_dotdot(const char *path);
+
+                static bool     is_dots(const LSPString *path);
+                static bool     is_dots(const io::Path *path);
+                static bool     is_dots(const char *path);
+
+                static bool     valid_file_name(const LSPString *fname);
+                static bool     valid_path_name(const LSPString *fname);
         };
     }
 } /* namespace lsp */
 
-#endif /* INCLUDE_LSP_PLUG_IN_IO_PATH_H_ */
+#endif /* LSP_PLUG_IN_IO_PATH_H_ */

@@ -2,6 +2,26 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 0.5.5 ===
+* Added support of color parsing by expr::Tokenizer when using expr::TF_COLOR flag.
+* Added new token types: expr::TT_SHARP and expr::TT_AT.
+* Added Color::swap method.
+* Better work with vfork() system call.
+* Added io::PathPattern class for file name matching.
+* Added remove_root method to io::Path class.
+* Added resource::ILoader class that allows to access resources stored in some
+  location (not only file system).
+* Added resource::DirLoader class that allows access resources stored in some
+  directory and it's subdirectories.
+* Added resource::Environment class that allows to map key<->value string pairs.
+* Added support of resource::ILoader by i18n::Dictionary class when loading JSON
+  files.
+* Added methods Path::is_dot(), Path::is_dotdot(), Path::is_dots().
+* Optimized methods Path::is_dot() and Path::is_dotdot().
+* Added methods Path::valid_file_name() and Path::valid_path_name().
+* Fixed bug in Path::remove_last() method.
+* Fixed RGB to HSL conversion in Color class.
+
 === 0.5.4 ===
 * Updated LSPString lltl specifier to match lltl-lib 0.5.3.
 * Updated build files to support static library builds.
