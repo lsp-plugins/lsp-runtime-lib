@@ -38,6 +38,10 @@ LIBSNDFILE_VERSION         := system
 LIBSNDFILE_NAME            := sndfile
 LIBSNDFILE_TYPE            := pkg
 
+LIBICONV_VERSION           := system
+LIBICONV_TYPE              := opt
+LIBICONV_LDFLAGS           := -liconv
+
 ifeq ($(PLATFORM),Windows)
   STDLIB_VERSION             := system
   STDLIB_TYPE                := opt
@@ -45,7 +49,7 @@ ifeq ($(PLATFORM),Windows)
 else ifeq ($(PLATFORM),BSD)
   STDLIB_VERSION             := system
   STDLIB_TYPE                := opt
-  STDLIB_LDFLAGS             := -lpthread -ldl -liconv
+  STDLIB_LDFLAGS             := -lpthread -ldl
 else
   STDLIB_VERSION             := system
   STDLIB_TYPE                := opt
