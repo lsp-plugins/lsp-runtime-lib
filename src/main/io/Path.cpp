@@ -1390,7 +1390,7 @@ namespace lsp
                 ssize_t next = fname->index_of(semicolon + 1, ':');
                 if (next >= 0)
                     return false;
-                if ((semicolon + 1) < fname->length()) // Should be "?:\"
+                if (size_t(semicolon + 1) < fname->length()) // Should be "?:\"
                 {
                     if (fname->char_at(semicolon + 1) != FILE_SEPARATOR_C)
                         return false;
