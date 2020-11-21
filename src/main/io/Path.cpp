@@ -1387,7 +1387,7 @@ namespace lsp
             ssize_t semicolon = fname->index_of(':');
             if (semicolon > 0)
             {
-                ssize_t next = fname->index_of(':', semicolon + 1);
+                ssize_t next = fname->index_of(semicolon + 1, ':');
                 if (next >= 0)
                     return false;
                 if ((semicolon + 1) < fname->length()) // Should be "?:\"
