@@ -19,12 +19,12 @@
 #
 
 # Variables that describe dependencies
-LSP_COMMON_LIB_VERSION     := 1.0.10
+LSP_COMMON_LIB_VERSION     := 1.0.11
 LSP_COMMON_LIB_NAME        := lsp-common-lib
 LSP_COMMON_LIB_TYPE        := src
 LSP_COMMON_LIB_URL         := https://github.com/sadko4u/$(LSP_COMMON_LIB_NAME).git
 
-LSP_LLTL_LIB_VERSION       := 0.5.4
+LSP_LLTL_LIB_VERSION       := 0.5.5
 LSP_LLTL_LIB_NAME          := lsp-lltl-lib
 LSP_LLTL_LIB_TYPE          := src
 LSP_LLTL_LIB_URL           := https://github.com/sadko4u/$(LSP_LLTL_LIB_NAME).git
