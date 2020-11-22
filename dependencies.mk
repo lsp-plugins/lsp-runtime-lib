@@ -56,12 +56,6 @@ else
   STDLIB_LDFLAGS             := -lpthread -ldl
 endif
 
-ifeq ($(PLATFORM),Windows)
-  TEST_STDLIB_VERSION        := system
-  TEST_STDLIB_TYPE           := opt
-  TEST_STDLIB_LDFLAGS        := 
-else
-  TEST_STDLIB_VERSION        := system
-  TEST_STDLIB_TYPE           := opt
-  TEST_STDLIB_LDFLAGS        := 
-endif
+TEST_STDLIB_VERSION        := system
+TEST_STDLIB_TYPE           := opt
+TEST_STDLIB_LDFLAGS        := 

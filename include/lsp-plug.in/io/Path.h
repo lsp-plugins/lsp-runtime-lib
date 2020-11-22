@@ -68,6 +68,7 @@ namespace lsp
                 ~Path();
                 
             public:
+                status_t        set_native(const char *path, const char *charset = NULL);
                 status_t        set(const char *path);
                 status_t        set(const LSPString *path);
                 status_t        set(const Path *path);

@@ -54,6 +54,16 @@ namespace lsp
 #endif /* PLATFORM_WINDOWS */
         }
 
+        status_t Path::set_native(const char *path, const char *charset)
+        {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+            if (!sPath.set_native(path, charset))
+                return STATUS_NO_MEM;
+            fixup_path();
+            return STATUS_OK;
+        }
+
         status_t Path::set(const char *path)
         {
             if (path == NULL)
