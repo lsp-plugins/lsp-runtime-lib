@@ -24,7 +24,7 @@ ARTIFACT_DESC               = Runtime library used by LSP Project for plugin dev
 ARTIFACT_VARS               = LSP_RUNTIME_LIB
 ARTIFACT_HEADERS            = lsp-plug.in
 ARTIFACT_EXPORT_ALL         = 1
-ARTIFACT_VERSION            = 0.5.5
+ARTIFACT_VERSION            = 0.5.6
 
 # List of dependencies
 TEST_DEPENDENCIES = \
@@ -40,7 +40,8 @@ LINUX_DEPENDENCIES = \
   LIBSNDFILE
 
 BSD_DEPENDENCIES = \
-  LIBSNDFILE
+  LIBSNDFILE \
+  LIBICONV
 
 # For Linux-based systems, use libsndfile
 ifeq ($(PLATFORM),Linux)

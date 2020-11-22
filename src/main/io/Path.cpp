@@ -54,6 +54,16 @@ namespace lsp
 #endif /* PLATFORM_WINDOWS */
         }
 
+        status_t Path::set_native(const char *path, const char *charset)
+        {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+            if (!sPath.set_native(path, charset))
+                return STATUS_NO_MEM;
+            fixup_path();
+            return STATUS_OK;
+        }
+
         status_t Path::set(const char *path)
         {
             if (path == NULL)
@@ -1387,10 +1397,10 @@ namespace lsp
             ssize_t semicolon = fname->index_of(':');
             if (semicolon > 0)
             {
-                ssize_t next = fname->index_of(':', semicolon + 1);
+                ssize_t next = fname->index_of(semicolon + 1, ':');
                 if (next >= 0)
                     return false;
-                if ((semicolon + 1) < fname->length()) // Should be "?:\"
+                if (size_t(semicolon + 1) < fname->length()) // Should be "?:\"
                 {
                     if (fname->char_at(semicolon + 1) != FILE_SEPARATOR_C)
                         return false;

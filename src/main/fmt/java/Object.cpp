@@ -386,7 +386,7 @@ namespace lsp
                         {
                             if (&curr[k] < end)
                             {
-                                char c      = curr[k];
+                                uint8_t c   = curr[k];
                                 if ((c < 0x20) || (c >= 0x80))
                                     c           = '.';
                                 res = dst->append(c);

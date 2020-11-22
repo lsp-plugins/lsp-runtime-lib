@@ -1026,7 +1026,7 @@ namespace lsp
                 // Add new sub-matcher descriptor to brute matcher
                 mregion_t *r        = bm->items.add();
                 if (r == NULL)
-                    return NULL;
+                    return false;
 
                 // Create sub-matcher
                 r->start    = 0;
