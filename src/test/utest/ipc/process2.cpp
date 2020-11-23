@@ -87,7 +87,10 @@ UTEST_BEGIN("runtime.ipc", process2)
 
         // Test static data for being not destructed and atexit() has not been called
         UTEST_ASSERT(static_test.status() == STATUS_OK);
-        UTEST_ASSERT(atexit_calls == 0);
+
+        #ifdef PLATFORM_POSIX
+            UTEST_ASSERT(atexit_calls == 0);
+        #endif /* PLATFORM_POSIX */
     }
 UTEST_END;
 
