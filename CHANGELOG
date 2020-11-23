@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 0.5.7 ===
+* Added system::get_localtime function.
 
 === 0.5.6 ===
 * Updated build (better support for BSD systems).
