@@ -305,7 +305,6 @@ namespace lsp
             {
                 FILETIME tmp, stime;
                 uint64_t itime      = (time->seconds * 10000000) | (time->nanos / 100);
-                FILETIME tmp;
                 tmp.dwHighDateTime  = DWORD(itime >> 32);
                 tmp.dwLowDateTime   = DWORD(itime);
 
