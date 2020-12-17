@@ -5,6 +5,7 @@
 === 0.5.7 ===
 * Added system::get_localtime function.
 * Refactored test directory tree.
+* Added instrumentComponent tag support for Hydrogen.
 
 === 0.5.6 ===
 * Updated build (better support for BSD systems).
