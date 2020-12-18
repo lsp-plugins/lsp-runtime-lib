@@ -546,6 +546,62 @@ UTEST_BEGIN("runtime.io", path)
         }
     }
 
+    void test_relative()
+    {
+        struct rel_t
+        {
+            const char *child;
+            const char *base;
+            status_t code;
+            const char *res;
+        };
+
+        static const rel_t paths[] =
+        {
+            { "", "", STATUS_NOT_FOUND, "" },
+            { "", "/", STATUS_NOT_FOUND, NULL },
+            { "/", "/", STATUS_OK, "" },
+            { "a", "a", STATUS_OK, "" },
+            { "abc", "a", STATUS_NOT_FOUND, NULL },
+            { "a", "abc", STATUS_NOT_FOUND, NULL },
+            { "/a", "/a", STATUS_OK, "" },
+            { "/a/b", "/a", STATUS_OK, "b" },
+            { "/a/b/c", "/a", STATUS_OK, "b/c" },
+            { "a", "b", STATUS_NOT_FOUND, NULL },
+            { "/a", "/b", STATUS_OK, "../a" },
+            { "/b", "/a", STATUS_OK, "../b" },
+            { "/a/b/c", "/a/b/d", STATUS_OK, "../c" },
+            { "/a/b", "/a/b/d", STATUS_OK, ".." },
+            { "/a/", "/a/b/d/", STATUS_OK, "../.." },
+            { "/a/x", "/a/b/d/", STATUS_OK, "../../x" },
+            { "/a/c/../b", "/a/../a/b/d", STATUS_OK, ".." },
+
+            { NULL, NULL, 0, NULL }
+        };
+
+        printf("Testing as_relative() methods...\n");
+
+        for (const rel_t *d = paths; d->child != NULL; ++d)
+        {
+            if (d->code == STATUS_OK)
+                printf("Testing \"%s\" - \"%s\" -> \"%s\" \n", d->child, d->base, d->res);
+            else
+                printf("Testing \"%s\" - \"%s\" -> error(%d) \n", d->child, d->base, int(d->code));
+
+            io::Path base, child, res;
+            UTEST_ASSERT(base.set(d->base) == STATUS_OK);
+            UTEST_ASSERT(child.set(d->child) == STATUS_OK);
+
+            status_t code = child.as_relative(&base);
+            UTEST_ASSERT_MSG(code == d->code, "Invalid code %d", int(code));
+            if (d->code == STATUS_OK)
+            {
+                UTEST_ASSERT(res.set(d->res) == STATUS_OK);
+                UTEST_ASSERT_MSG(child.equals(&res), "Returned path: %s", child.as_utf8());
+            }
+        }
+    }
+
     UTEST_MAIN
     {
         test_get_set();
@@ -558,6 +614,7 @@ UTEST_BEGIN("runtime.io", path)
         test_flags();
         test_canonical();
         test_dots();
+        test_relative();
     }
 UTEST_END;
 
