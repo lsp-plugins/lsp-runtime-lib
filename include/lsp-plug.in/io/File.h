@@ -260,6 +260,25 @@ namespace lsp
                  * @return status of operation
                  */
                 static status_t remove(const Path *path);
+
+                /**
+                 * Rename the file. If the destination file exists, it will be replaced
+                 *
+                 * @param from source name
+                 * @param to destination name
+                 * @return status of operation
+                 */
+                static status_t rename(const char *from, const char *to);
+                static status_t rename(const LSPString *from, const char *to);
+                static status_t rename(const Path *from, const char *to);
+
+                static status_t rename(const char *from, const LSPString *to);
+                static status_t rename(const LSPString *from, const LSPString *to);
+                static status_t rename(const Path *from, const LSPString *to);
+
+                static status_t rename(const char *from, const Path *to);
+                static status_t rename(const LSPString *from, const Path *to);
+                static status_t rename(const Path *from, const Path *to);
         };
     
     } /* namespace io */

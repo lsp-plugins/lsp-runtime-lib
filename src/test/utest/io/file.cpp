@@ -24,6 +24,9 @@
 #include <lsp-plug.in/stdlib/string.h>
 #include <lsp-plug.in/io/StdioFile.h>
 #include <lsp-plug.in/io/NativeFile.h>
+#include <lsp-plug.in/io/InFileStream.h>
+#include <lsp-plug.in/io/InSequence.h>
+#include <lsp-plug.in/io/OutFileStream.h>
 
 using namespace lsp;
 using namespace lsp::io;
@@ -237,6 +240,114 @@ UTEST_BEGIN("runtime.io", file)
             UTEST_ASSERT(fd.close() == STATUS_OK);
         }
 
+    void createFile(const io::Path *prefix, int num)
+    {
+        io::Path path;
+        const char *buf;
+        io::OutFileStream ofs;
+        LSPString postfix;
+
+        printf("  creating file: %d\n", num);
+
+        // Form file name
+        UTEST_ASSERT(postfix.fmt_ascii("rendel-%02d.tmp", num) > 0);
+        UTEST_ASSERT(path.set(prefix) == STATUS_OK);
+        UTEST_ASSERT(path.append(&postfix) == STATUS_OK);
+
+        // Write data to file and close
+        UTEST_ASSERT(ofs.open(&path, io::File::FM_WRITE_NEW) == STATUS_OK);
+        UTEST_ASSERT((buf = path.as_utf8()) != NULL);
+        UTEST_ASSERT(ofs.write(buf, strlen(buf)) > 0);
+        UTEST_ASSERT(ofs.close() == STATUS_OK);
+    }
+
+    void renameFile(const io::Path *prefix, int from, int to, int mode)
+    {
+        io::Path f, t;
+        LSPString postfix;
+        printf("  renaming file: %d -> %d\n", from, to);
+
+        // Form source file name
+        UTEST_ASSERT(postfix.fmt_ascii("rendel-%02d.tmp", from) > 0);
+        UTEST_ASSERT(f.set(prefix) == STATUS_OK);
+        UTEST_ASSERT(f.append(&postfix) == STATUS_OK);
+
+        // Form destination file name
+        UTEST_ASSERT(postfix.fmt_ascii("rendel-%02d.tmp", to) > 0);
+        UTEST_ASSERT(t.set(prefix) == STATUS_OK);
+        UTEST_ASSERT(t.append(&postfix) == STATUS_OK);
+
+        // Rename the file
+        status_t res = STATUS_NOT_IMPLEMENTED;
+        switch (mode)
+        {
+            case 0: res = io::File::rename(f.as_utf8(), t.as_utf8()); break;
+            case 1: res = io::File::rename(f.as_utf8(), t.as_string()); break;
+            case 2: res = io::File::rename(f.as_utf8(), &t); break;
+            case 3: res = io::File::rename(f.as_string(), t.as_utf8()); break;
+            case 4: res = io::File::rename(f.as_string(), t.as_string()); break;
+            case 5: res = io::File::rename(f.as_string(), &t); break;
+            case 6: res = io::File::rename(&f, t.as_utf8()); break;
+            case 7: res = io::File::rename(&f, t.as_string()); break;
+            case 8: res = io::File::rename(&f, &t); break;
+            default: break;
+        }
+
+        UTEST_ASSERT(res == STATUS_OK);
+    }
+
+    void checkFile(const io::Path *prefix, int from, int to)
+    {
+        io::Path f, t;
+        io::InFileStream ifs;
+        io::InSequence is;
+        LSPString postfix, payload;
+        printf("  checking file: unexists %d, exists %d\n", from, to);
+
+        // Form source file name
+        UTEST_ASSERT(postfix.fmt_ascii("rendel-%02d.tmp", from) > 0);
+        UTEST_ASSERT(f.set(prefix) == STATUS_OK);
+        UTEST_ASSERT(f.append(&postfix) == STATUS_OK);
+        UTEST_ASSERT(!f.exists());
+
+        // Form destination file name
+        UTEST_ASSERT(postfix.fmt_ascii("rendel-%02d.tmp", to) > 0);
+        UTEST_ASSERT(t.set(prefix) == STATUS_OK);
+        UTEST_ASSERT(t.append(&postfix) == STATUS_OK);
+
+        // Open file
+        UTEST_ASSERT(ifs.open(&t) == STATUS_OK);
+        UTEST_ASSERT(is.wrap(&ifs, WRAP_NONE, "UTF-8") == STATUS_OK);
+        UTEST_ASSERT(is.read_line(&payload, true) == STATUS_OK);
+        UTEST_ASSERT(is.close() == STATUS_OK);
+        UTEST_ASSERT(ifs.close() == STATUS_OK);
+
+        // Test the output
+        UTEST_ASSERT_MSG(payload.equals(f.as_string()),
+                "Payload: %s, expected: %s", payload.get_native(), f.as_native()
+        );
+    }
+
+    void testRenameDelete()
+    {
+        printf("Testing rename and delete...\n");
+
+        io::Path prefix;
+        UTEST_ASSERT(prefix.fmt("%s/utest-%s-rendel", tempdir(), full_name()));
+
+        // Create files
+        for (int i=0; i<18; ++i)
+            createFile(&prefix, i);
+
+        // Rename/move files
+        for (int i=0; i<18; i += 2)
+            renameFile(&prefix, i, i+1, i >> 1);
+
+        // Check file
+        for (int i=0; i<18; i += 2)
+            checkFile(&prefix, i, i+1);
+    }
+
     UTEST_MAIN
     {
         LSPString path;
@@ -269,6 +380,9 @@ UTEST_BEGIN("runtime.io", file)
         testWriteonlyFileName("test_writeonly_filename (native)", &path, native_fd);
         testReadonlyFileName("test_readonly_filename (native)", &path, native_fd);
         testUnexistingFile("test_unexsiting_file (native)", native_fd);
+
+        // Test rename and delete
+        testRenameDelete();
     }
 
 UTEST_END

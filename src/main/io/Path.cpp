@@ -1108,6 +1108,21 @@ namespace lsp
             return (res == STATUS_NOT_DIRECTORY) ? STATUS_IO_ERROR : res;
         }
 
+        status_t Path::rename(const char *dst) const
+        {
+            return io::File::rename(&sPath, dst);
+        }
+
+        status_t Path::rename(const LSPString *dst) const
+        {
+            return io::File::rename(&sPath, dst);
+        }
+
+        status_t Path::rename(const io::Path *dst) const
+        {
+            return io::File::rename(&sPath, dst);
+        }
+
         void Path::take(LSPString *src)
         {
             sPath.take(src);

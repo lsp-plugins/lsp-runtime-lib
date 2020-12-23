@@ -190,6 +190,10 @@ namespace lsp
                 status_t        mkdir(bool recursive) const;
                 status_t        remove() const;
 
+                status_t        rename(const char *dst) const;
+                status_t        rename(const LSPString *dst) const;
+                status_t        rename(const io::Path *dst) const;
+
             public:
                 static bool     is_dot(const LSPString *path);
                 static bool     is_dot(const io::Path *path);
