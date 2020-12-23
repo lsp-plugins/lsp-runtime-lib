@@ -558,13 +558,7 @@ namespace lsp
             switch (code)
             {
                 case ERROR_ACCESS_DENIED:
-                {
-                    fattr_t attr;
-                    status_t res = stat(path, &attr);
-                    if ((res == STATUS_OK) && (attr.type == fattr_t::FT_DIRECTORY))
-                        return STATUS_IS_DIRECTORY;
                     return STATUS_PERMISSION_DENIED;
-                }
                 case ERROR_PATH_NOT_FOUND:
                     return STATUS_NOT_FOUND;
                 default:
