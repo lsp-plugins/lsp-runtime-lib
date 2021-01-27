@@ -19,42 +19,50 @@
 #
 
 # Package version
+ARTIFACT_ID                 = LSP_RUNTIME_LIB
 ARTIFACT_NAME               = lsp-runtime-lib
 ARTIFACT_DESC               = Runtime library used by LSP Project for plugin development
-ARTIFACT_VARS               = LSP_RUNTIME_LIB
 ARTIFACT_HEADERS            = lsp-plug.in
 ARTIFACT_EXPORT_ALL         = 1
 ARTIFACT_VERSION            = 0.5.7-devel
 
 # List of dependencies
-TEST_DEPENDENCIES = \
-  TEST_STDLIB \
-  LSP_TEST_FW
-
 DEPENDENCIES = \
-  STDLIB \
+  LIBPTHREAD \
+  LIBDL \
   LSP_COMMON_LIB \
   LSP_LLTL_LIB
 
-LINUX_DEPENDENCIES = \
-  LIBSNDFILE
+TEST_DEPENDENCIES = \
+  LSP_TEST_FW
 
-BSD_DEPENDENCIES = \
-  LIBSNDFILE \
-  LIBICONV
-
-# For Linux-based systems, use libsndfile
+# Platform-specific dependencies
 ifeq ($(PLATFORM),Linux)
-  DEPENDENCIES             += $(LINUX_DEPENDENCIES)
+  DEPENDENCIES             += \
+    LIBSNDFILE
 endif
 
-# For BSD-based systems, use libsndfile
 ifeq ($(PLATFORM),BSD)
-  DEPENDENCIES             += $(BSD_DEPENDENCIES)
+  DEPENDENCIES             += \
+    LIBSNDFILE \
+    LIBICONV
+endif
+
+ifeq ($(PLATFORM),Windows)
+  DEPENDENCIES             += \
+    LIBSHLWAPI \
+    LIBWINMM \
+    LIBMSACM
 endif
 
 ALL_DEPENDENCIES = \
   $(DEPENDENCIES) \
   $(TEST_DEPENDENCIES) \
-  $(LINUX_DEPENDENCIES) \
-  $(BSD_DEPENDENCIES)
+  LIBPTHREAD \
+  LIBDL \
+  LIBSNDFILE \
+  LIBICONV \
+  LIBSHLWAPI \
+  LIBWINMM \
+  LIBMSACM
+
