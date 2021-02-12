@@ -7,6 +7,9 @@
 * Refactored test directory tree.
 * Added instrumentComponent tag support for Hydrogen.
 * Added io::Path::rename and io::File::rename functions.
+* Added mark() and reset() methods to io::IInSequence interface.
+* Added support of mark() and reset() methods by io::InStringSequence class.
+* Added io::InMarkSequence class to allow mark() and reset() for input data.
 
 === 0.5.6 ===
 * Updated build (better support for BSD systems).

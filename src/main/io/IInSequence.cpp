@@ -74,5 +74,14 @@ namespace lsp
             return set_error(STATUS_OK);
         }
 
+        status_t IInSequence::mark(ssize_t limit)
+        {
+            return set_error(STATUS_NOT_SUPPORTED);
+        }
+
+        status_t IInSequence::reset()
+        {
+            return set_error(STATUS_NOT_SUPPORTED);
+        }
     }
 } /* namespace lsp */

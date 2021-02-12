@@ -30,6 +30,8 @@ namespace lsp
             pString     = NULL;
             bDelete     = false;
             nOffset     = 0;
+            nMark       = -1;
+            nMarkLen    = 0;
         }
 
         InStringSequence::InStringSequence(const LSPString *s)
@@ -37,6 +39,8 @@ namespace lsp
             pString     = const_cast<LSPString *>(s);
             bDelete     = false;
             nOffset     = 0;
+            nMark       = -1;
+            nMarkLen    = 0;
         }
 
         InStringSequence::InStringSequence(LSPString *s, bool destroy)
@@ -44,6 +48,8 @@ namespace lsp
             pString     = s;
             bDelete     = destroy;
             nOffset     = 0;
+            nMark       = -1;
+            nMarkLen    = 0;
         }
 
         InStringSequence::~InStringSequence()
@@ -64,6 +70,9 @@ namespace lsp
                 return set_error(STATUS_BAD_ARGUMENTS);
             pString     = in;
             bDelete     = del;
+            nMark       = -1;
+            nMarkLen    = 0;
+
             return set_error(STATUS_OK);
         }
 
@@ -115,6 +124,9 @@ namespace lsp
 
         void InStringSequence::do_close()
         {
+            nMark       = -1;
+            nMarkLen    = 0;
+
             if (pString == NULL)
                 return;
             if (bDelete)
@@ -140,6 +152,10 @@ namespace lsp
             nOffset += count;
             ::memcpy(dst, v, avail * sizeof(lsp_wchar_t));
 
+            // Reset mark if it was set
+            if ((nMark > 0) && (nOffset > size_t(nMark + nMarkLen)))
+                nMark       = -1;
+
             set_error(STATUS_OK);
             return count;
         }
@@ -152,7 +168,13 @@ namespace lsp
             if (nOffset < pString->length())
             {
                 set_error(STATUS_OK);
-                return pString->char_at(nOffset++);
+                lsp_swchar_t ch = pString->char_at(nOffset++);
+
+                // Reset mark if it was set
+                if ((nMark > 0) && (nOffset > size_t(nMark + nMarkLen)))
+                    nMark       = -1;
+
+                return ch;
             }
             return -set_error(STATUS_EOF);
         }
@@ -184,6 +206,10 @@ namespace lsp
 
             nOffset     = new_pos;
 
+            // Reset mark if it was set
+            if ((nMark > 0) && (nOffset > size_t(nMark + nMarkLen)))
+                nMark       = -1;
+
             return set_error(STATUS_OK);
         }
 
@@ -195,7 +221,13 @@ namespace lsp
             size_t avail = pString->length() - nOffset;
             if (count > avail)
                 count = avail;
+
             nOffset    += count;
+
+            // Reset mark if it was set
+            if ((nMark > 0) && (nOffset > size_t(nMark + nMarkLen)))
+                nMark       = -1;
+
             set_error(STATUS_OK);
             return count;
         }
@@ -203,6 +235,27 @@ namespace lsp
         status_t InStringSequence::close()
         {
             do_close();
+            return set_error(STATUS_OK);
+        }
+
+        status_t InStringSequence::mark(ssize_t limit)
+        {
+            if (limit < 0)
+                return set_error(STATUS_OK);
+            if (pString == NULL)
+                return set_error(STATUS_CLOSED);
+
+            nMark       = nOffset;
+            nMarkLen    = limit;
+
+            return set_error(STATUS_OK);
+        }
+
+        status_t InStringSequence::reset()
+        {
+            if (nMark < 0)
+                return set_error(STATUS_NOT_FOUND);
+            nOffset     = nMark;
             return set_error(STATUS_OK);
         }
     }

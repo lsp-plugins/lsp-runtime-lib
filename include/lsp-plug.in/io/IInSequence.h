@@ -87,6 +87,25 @@ namespace lsp
                  * @return status of operation
                  */
                 virtual status_t    close();
+
+                /**
+                 * Mark position of the input sequence
+                 * @param limit the read limit after that the mark becomes invalid,
+                 *        negative value is allowed to check support of mark() and reset()
+                 *        calls by sequence
+                 * @return status of operation
+                 *        - STATUS_NOT_SUPPORTED if feature is not supported by this sequence
+                 */
+                virtual status_t    mark(ssize_t limit);
+
+                /**
+                 * Reset position to the sequence to previously set mark
+                 * @return status of operation
+                 *        - STATUS_NOT_FOUND if mark was not set or became invalid
+                 *        - STATUS_NOT_SUPPORTED if feature is not supported by this sequence
+                 */
+                virtual status_t    reset();
+
         };
     }
     
