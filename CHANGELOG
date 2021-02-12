@@ -10,6 +10,8 @@
 * Added mark() and reset() methods to io::IInSequence interface.
 * Added support of mark() and reset() methods by io::InStringSequence class.
 * Added io::InMarkSequence class to allow mark() and reset() for input data.
+* Fixed bug in io::InStringSequence::read method which could overflow
+  the output buffer.
 
 === 0.5.6 ===
 * Updated build (better support for BSD systems).

@@ -43,7 +43,7 @@ namespace lsp
             do_close();
         }
 
-        status_t InMarkSequence::wrap(InMarkSequence *in, bool close)
+        status_t InMarkSequence::wrap(IInSequence *in, bool close)
         {
             if (in == NULL)
                 return set_error(STATUS_BAD_ARGUMENTS);
@@ -83,7 +83,7 @@ namespace lsp
         {
             size_t last = lsp_min(nMarkMax, ssize_t(nMarkPos + amount));
             if (last <= nBufCap)
-                return STATUS_OK;
+                return nBufCap - nMarkPos;
             last        = lsp_min(last, size_t(MARKSEQ_SIZE));
             size_t cap  = lsp_max(last, (nBufCap + (nBufCap >> 1)));
 
@@ -116,9 +116,9 @@ namespace lsp
                 return -set_error(STATUS_CLOSED);
 
             // Simple read if there is no mark set or mark buffer is full
-            if (nMarkLen < 0)
+            if (nMarkMax < 0)
             {
-                nread = pSequence->read();
+                nread = pSequence->read(dst, count);
                 if (nread < 0)
                     set_error(-nread);
                 return nread;
@@ -152,7 +152,7 @@ namespace lsp
                     avail       = count;
 
                 // Read data
-                ssize_t nread   = pSequence->read(&pBuf[nMarkPos], avail);
+                nread       = pSequence->read(&pBuf[nMarkPos], avail);
                 if (nread < 0)
                 {
                     if (total > 0)
@@ -204,7 +204,7 @@ namespace lsp
                 return -set_error(STATUS_CLOSED);
 
             // Simple read if there is no mark set or mark buffer is full
-            if (nMarkLen < 0)
+            if (nMarkMax < 0)
             {
                 ch = pSequence->read();
                 set_error((ch < 0) ? -ch : STATUS_OK);
@@ -251,7 +251,7 @@ namespace lsp
                 return -set_error(STATUS_CLOSED);
 
             // No mark set?
-            if (nMarkLen < 0)
+            if (nMarkMax < 0)
             {
                 ssize_t res = pSequence->skip(count);
                 set_error((res < 0) ? -res : STATUS_OK);
@@ -342,7 +342,7 @@ namespace lsp
         {
             if (pSequence == NULL)
                 return set_error(STATUS_CLOSED);
-            else if (nMarkLen < 0)
+            else if (nMarkMax < 0)
                 return set_error(STATUS_NOT_FOUND);
 
             nMarkPos        = 0;

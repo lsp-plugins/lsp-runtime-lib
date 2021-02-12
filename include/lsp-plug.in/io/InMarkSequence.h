@@ -57,7 +57,7 @@ namespace lsp
                 virtual ~InMarkSequence();
 
             public:
-                status_t                wrap(InMarkSequence *in, bool close = false);
+                status_t                wrap(IInSequence *in, bool close = false);
 
                 virtual status_t        close();
 
