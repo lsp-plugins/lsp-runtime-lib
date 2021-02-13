@@ -248,9 +248,11 @@ namespace lsp
             }
 
             // Update node value
-            if ((pNode = clear_node(pNode)) == NULL)
+            node_t *node    = clear_node(pNode);
+            if (node == NULL)
                 return STATUS_NO_MEM;
 
+            pNode           = node;
             pNode->type     = JN_INT;
             pNode->nValue   = ivalue;
 
@@ -296,7 +298,8 @@ namespace lsp
             }
 
             // Update node value
-            if ((pNode = clear_node(pNode)) == NULL)
+            node_t *node    = clear_node(pNode);
+            if (node == NULL)
                 return STATUS_NO_MEM;
 
             pNode->type     = JN_DOUBLE;
@@ -344,7 +347,8 @@ namespace lsp
             }
 
             // Update node value
-            if ((pNode = clear_node(pNode)) == NULL)
+            node_t *node    = clear_node(pNode);
+            if (node == NULL)
                 return STATUS_NO_MEM;
 
             pNode->type     = JN_BOOL;
@@ -386,8 +390,10 @@ namespace lsp
                 return STATUS_NO_MEM;
 
             // Update node value
-            if ((pNode = clear_node(pNode)) == NULL)
+            node_t *node    = clear_node(pNode);
+            if (node == NULL)
                 return STATUS_NO_MEM;
+
             pNode->type     = JN_STRING;
             pNode->sValue   = ns;
 
@@ -427,11 +433,17 @@ namespace lsp
             // Transfer data
             if (pNode != NULL)
                 move_data(child, pNode);
-            else if ((pNode = clear_node(pNode)) == NULL)
+            else
             {
-                delete child;
-                delete tmp;
-                return STATUS_NO_MEM;
+                // Update node value
+                node_t *node    = clear_node(pNode);
+                if (node == NULL)
+                {
+                    delete child;
+                    delete tmp;
+                    return STATUS_NO_MEM;
+                }
+                pNode           = node;
             }
 
             // Update node value
@@ -475,11 +487,17 @@ namespace lsp
             // Transfer data
             if (pNode != NULL)
                 move_data(child, pNode);
-            else if ((pNode = clear_node(pNode)) == NULL)
+            else
             {
-                delete child;
-                delete tmp;
-                return STATUS_NO_MEM;
+                // Update node value
+                node_t *node    = clear_node(pNode);
+                if (node == NULL)
+                {
+                    delete child;
+                    delete tmp;
+                    return STATUS_NO_MEM;
+                }
+                pNode           = node;
             }
 
             // Update node value

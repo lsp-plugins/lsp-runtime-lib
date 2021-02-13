@@ -3,7 +3,7 @@
  *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
- * Created on: 31 янв. 2021 г.
+ * Created on: 13 февр. 2021 г.
  *
  * lsp-runtime-lib is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,8 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LSP_PLUG_IN_FMT_JSON_DOM_INTEGER_H_
-#define LSP_PLUG_IN_FMT_JSON_DOM_INTEGER_H_
+#ifndef LSP_PLUG_IN_FMT_JSON_DOM_BOOLEAN_H_
+#define LSP_PLUG_IN_FMT_JSON_DOM_BOOLEAN_H_
 
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/fmt/json/dom/Node.h>
@@ -30,58 +30,58 @@ namespace lsp
     namespace json
     {
         /**
-         * JSON node of integer type
+         * JSON node of boolean type
          */
-        class Integer: public Node
+        class Boolean: public Node
         {
             public:
-                inline Integer(): Node() {}
-                inline Integer(const Node &src): Node(src) {}
-                inline Integer(const Node *src): Node(src) {}
+                inline Boolean(): Node() {}
+                inline Boolean(const Node &src): Node(src) {}
+                inline Boolean(const Node *src): Node(src) {}
 
             public:
-                Integer &operator = (const Node &src)   { copy_ref(&src); return *this; }
-                Integer &operator = (const Node *src)   { copy_ref(src); return *this;  }
+                Boolean &operator = (const Node &src)   { copy_ref(&src); return *this; }
+                Boolean &operator = (const Node *src)   { copy_ref(src); return *this;  }
 
             public:
                 virtual bool valid() const;
 
             public:
                 /**
-                 * Try to cast value to integer and return the casted value
-                 * @return integer value or 0 if cast was unsuccessful
+                 * Try to cast value to Boolean and return the casted value
+                 * @return Boolean value or false if cast was unsuccessful
                  */
-                ssize_t get() const;
+                bool get() const;
 
                 /**
-                 * Strict get: check that value is of integer type and return it
-                 * @return integer value or 0 if value is not integer
+                 * Strict get: check that value is of Boolean type and return it
+                 * @return Boolean value or false if value is not Boolean
                  */
-                ssize_t sget() const;
+                bool sget() const;
 
                 /**
-                 * Cast value to integer
+                 * Cast value to Boolean
                  * @return success if value has been successful casted
                  */
                 status_t cast();
 
                 /**
-                 * Cast to integer and set value
+                 * Cast to Boolean and set value
                  * @param value value to set
                  * @return success if property has been set
                  */
-                status_t set(ssize_t value);
+                status_t set(bool value);
 
                 /**
-                 * Strict set: check that value is of integer type and change it
+                 * Strict set: check that value is of Boolean type and change it
                  * @param value value to set
                  * @return success if value has been set
                  */
-                status_t sset(ssize_t value);
+                status_t sset(bool value);
         };
     }
 }
 
 
 
-#endif /* LSP_PLUG_IN_FMT_JSON_DOM_INTEGER_H_ */
+#endif /* LSP_PLUG_IN_FMT_JSON_DOM_BOOLEAN_H_ */

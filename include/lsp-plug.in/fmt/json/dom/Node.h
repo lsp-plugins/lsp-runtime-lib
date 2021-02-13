@@ -67,7 +67,7 @@ namespace lsp
                     };
                 } node_t;
 
-            private:
+            protected:
                 mutable node_t     *pNode;
 
             protected:
@@ -77,6 +77,7 @@ namespace lsp
                 static void         release_ref(node_t *node);
                 static void         undef_node(node_t *node);
                 static node_t      *clear_node(node_t *node);
+                static node_t      *create_node(node_t *node);
                 static void         move_data(node_t *dst, node_t *src);
 
                 status_t            cast_to(node_type_t type);
