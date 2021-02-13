@@ -72,8 +72,7 @@ namespace lsp
 
             protected:
                 void                copy_ref(const Node *src);
-                void                copy_ref(node_t *node);
-                void                release_ref();
+                node_t             *make_reference();
                 static void         release_ref(node_t *node);
                 static void         undef_node(node_t *node);
                 static node_t      *clear_node(node_t *node);
@@ -87,6 +86,9 @@ namespace lsp
                 status_t            cast_to_string();
                 status_t            cast_to_array();
                 status_t            cast_to_object();
+
+            protected:
+                Node(node_t *node);
 
             public:
                 inline Node()                       { pNode = NULL;                                                 }

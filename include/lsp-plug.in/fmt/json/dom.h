@@ -26,6 +26,7 @@
 #include <lsp-plug.in/fmt/json/dom/Node.h>
 #include <lsp-plug.in/fmt/json/dom/Integer.h>
 #include <lsp-plug.in/fmt/json/dom/Double.h>
+#include <lsp-plug.in/fmt/json/dom/Array.h>
 
 
 #endif /* LSP_PLUG_IN_FMT_JSON_DOM_H_ */

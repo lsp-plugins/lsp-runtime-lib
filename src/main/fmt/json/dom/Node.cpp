@@ -27,32 +27,54 @@ namespace lsp
 {
     namespace json
     {
+        Node::Node(node_t *node)
+        {
+            if (node != NULL)
+                node->refs++;
+            pNode       = node;
+        }
+
         Node::~Node()
         {
-            release_ref();
+            if (pNode != NULL)
+            {
+                release_ref(pNode);
+                pNode = NULL;
+            }
         }
 
         void Node::copy_ref(const Node *src)
         {
-            copy_ref((src != NULL) ? src->pNode : NULL);
-        }
-
-        void Node::copy_ref(node_t *node)
-        {
-            // Check that node is not the same
-            if (pNode == node)
+            if (this == src)
+                return;
+            else if (this->pNode == src->pNode)
                 return;
 
-            // Release previously stored node
-            release_ref();
+            // Increment number of references for source node
+            if (src->pNode != NULL)
+                src->pNode->refs++;
+
+            // Release self reference and replace with new one
+            if (pNode != NULL)
+                release_ref(pNode);
+
+            pNode       = src->pNode;
         }
 
-        void Node::release_ref()
+        Node::node_t *Node::make_reference()
         {
-            // Forget the reference
-            node_t *node = pNode;
-            pNode = NULL;
-            release_ref(node);
+            if (pNode != NULL)
+            {
+                pNode->refs ++;
+                return pNode;
+            }
+
+            // Need to allocate the node
+            if ((pNode = new node_t()) == NULL)
+                return NULL;
+
+            pNode->refs = 2; // self and exported
+            return pNode;
         }
 
         void Node::undef_node(node_t *node)
