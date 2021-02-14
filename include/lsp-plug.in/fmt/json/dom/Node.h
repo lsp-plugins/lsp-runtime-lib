@@ -68,6 +68,13 @@ namespace lsp
                 } node_t;
 
             protected:
+                friend class Integer;
+                friend class Double;
+                friend class Boolean;
+                friend class Array;
+                friend class Object;
+
+            protected:
                 mutable node_t     *pNode;
 
             protected:
@@ -88,12 +95,12 @@ namespace lsp
                 status_t            cast_to_object();
 
             protected:
-                explicit Node(node_t *node);
+                Node(node_t *node);
 
             public:
-                inline Node()                       { pNode = NULL;                                                 }
-                inline Node(const Node &src)        { copy_ref(&src);                                               }
-                inline Node(const Node *src)        { copy_ref(src);                                                }
+                inline Node()                               { pNode = NULL;                                                 }
+                inline Node(const Node &src)                { copy_ref(&src);                                               }
+                inline Node(const Node *src)                { copy_ref(src);                                                }
                 virtual ~Node();
 
             public:

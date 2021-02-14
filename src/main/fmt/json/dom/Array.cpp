@@ -61,6 +61,8 @@ namespace lsp
             if (node == NULL)
                 node = &null;
             node_t *ref = node->make_ref();
+            if (ref == NULL)
+                return STATUS_NO_MEM;
             if (pNode->pArray->add(ref))
                 return STATUS_OK;
 
@@ -77,6 +79,8 @@ namespace lsp
             if (node == NULL)
                 node = &null;
             node_t *ref = node->make_ref();
+            if (ref == NULL)
+                return STATUS_NO_MEM;
             if (pNode->pArray->append(ref))
                 return STATUS_OK;
 
@@ -93,6 +97,8 @@ namespace lsp
             if (node == NULL)
                 node = &null;
             node_t *ref = node->make_ref();
+            if (ref == NULL)
+                return STATUS_NO_MEM;
             if (pNode->pArray->prepend(ref))
                 return STATUS_OK;
 
@@ -109,6 +115,8 @@ namespace lsp
             if (node == NULL)
                 node = &null;
             node_t *ref = node->make_ref();
+            if (ref == NULL)
+                return STATUS_NO_MEM;
             if (pNode->pArray->insert(index, ref))
                 return STATUS_OK;
 
