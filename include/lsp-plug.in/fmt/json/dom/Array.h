@@ -55,7 +55,7 @@ namespace lsp
                 status_t    add(Node *node);
                 status_t    append(Node *node);
                 status_t    prepend(Node *node);
-                status_t    insert(Node *node, size_t index);
+                status_t    insert(size_t index, Node *node);
                 status_t    remove(size_t index);
                 status_t    remove_n(size_t index, size_t count);
         };

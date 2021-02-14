@@ -72,7 +72,7 @@ namespace lsp
 
             protected:
                 void                copy_ref(const Node *src);
-                node_t             *make_reference();
+                node_t             *make_ref();
                 static void         release_ref(node_t *node);
                 static void         undef_node(node_t *node);
                 static node_t      *clear_node(node_t *node);
@@ -88,7 +88,7 @@ namespace lsp
                 status_t            cast_to_object();
 
             protected:
-                Node(node_t *node);
+                explicit Node(node_t *node);
 
             public:
                 inline Node()                       { pNode = NULL;                                                 }
@@ -104,6 +104,7 @@ namespace lsp
                 inline bool is_null() const         { return (pNode == NULL) || (pNode->type == JN_NULL);           }
                 inline bool is_int() const          { return (pNode != NULL) && (pNode->type == JN_INT);            }
                 inline bool is_double() const       { return (pNode != NULL) && (pNode->type == JN_DOUBLE);         }
+                inline bool is_bool() const         { return (pNode != NULL) && (pNode->type == JN_BOOL);           }
                 inline bool is_string() const       { return (pNode != NULL) && (pNode->type == JN_STRING);         }
                 inline bool is_object() const       { return (pNode != NULL) && (pNode->type == JN_OBJECT);         }
                 inline bool is_array() const        { return (pNode != NULL) && (pNode->type == JN_ARRAY);          }

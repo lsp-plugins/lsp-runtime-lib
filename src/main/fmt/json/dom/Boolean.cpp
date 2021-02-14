@@ -73,7 +73,7 @@ namespace lsp
 
         bool Boolean::sget() const
         {
-            return (pNode != NULL) && (pNode->type == JN_BOOL) ? pNode->bValue : false;
+            return (is_bool()) ? pNode->bValue : false;
         }
 
         status_t Boolean::cast()
@@ -96,7 +96,7 @@ namespace lsp
 
         status_t Boolean::sset(bool value)
         {
-            if ((pNode == NULL) || (pNode->type != JN_BOOL))
+            if (!is_bool())
                 return STATUS_BAD_TYPE;
 
             pNode->fValue   = value;

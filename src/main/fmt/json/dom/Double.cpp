@@ -73,7 +73,7 @@ namespace lsp
 
         ssize_t Double::sget() const
         {
-            return (pNode != NULL) && (pNode->type == JN_DOUBLE) ? pNode->nValue : 0;
+            return (is_double()) ? pNode->nValue : 0;
         }
 
         status_t Double::cast()
@@ -96,7 +96,7 @@ namespace lsp
 
         status_t Double::sset(double value)
         {
-            if ((pNode == NULL) || (pNode->type != JN_DOUBLE))
+            if (!is_double())
                 return STATUS_BAD_TYPE;
 
             pNode->fValue   = value;

@@ -61,7 +61,7 @@ namespace lsp
             pNode       = src->pNode;
         }
 
-        Node::node_t *Node::make_reference()
+        Node::node_t *Node::make_ref()
         {
             if (pNode != NULL)
             {

@@ -73,7 +73,7 @@ namespace lsp
 
         ssize_t Integer::sget() const
         {
-            return (pNode != NULL) && (pNode->type == JN_INT) ? pNode->nValue : 0;
+            return (is_int()) ? pNode->nValue : 0;
         }
 
         status_t Integer::cast()
@@ -96,7 +96,7 @@ namespace lsp
 
         status_t Integer::sset(ssize_t value)
         {
-            if ((pNode == NULL) || (pNode->type != JN_INT))
+            if (!is_int())
                 return STATUS_BAD_TYPE;
 
             pNode->nValue   = value;
