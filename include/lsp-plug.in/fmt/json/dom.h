@@ -23,10 +23,37 @@
 #define LSP_PLUG_IN_FMT_JSON_DOM_H_
 
 #include <lsp-plug.in/runtime/version.h>
+#include <lsp-plug.in/fmt/json/token.h>
 #include <lsp-plug.in/fmt/json/dom/Node.h>
 #include <lsp-plug.in/fmt/json/dom/Integer.h>
 #include <lsp-plug.in/fmt/json/dom/Double.h>
 #include <lsp-plug.in/fmt/json/dom/Array.h>
 #include <lsp-plug.in/fmt/json/dom/Object.h>
+
+#include <lsp-plug.in/runtime/LSPString.h>
+#include <lsp-plug.in/io/Path.h>
+#include <lsp-plug.in/io/IInSequence.h>
+#include <lsp-plug.in/io/IInStream.h>
+
+namespace lsp
+{
+    namespace json
+    {
+        enum dom_flags_t
+        {
+            DOM_CLOSE       = 1 << 0,
+            DOM_DELETE      = 1 << 1,
+            DOM_FLEXIBLE    = 1 << 2
+        };
+
+        status_t    dom_load(const char *path, Node *node, json_version_t version, const char *charset = NULL);
+        status_t    dom_load(const LSPString *path, Node *node, json_version_t version, const char *charset = NULL);
+        status_t    dom_load(const io::Path *path, Node *node, json_version_t version, const char *charset = NULL);
+
+        status_t    dom_parse(io::IInStream *is, Node *node, json_version_t version, size_t flags = 0, const char *charset = NULL);
+        status_t    dom_parse(const LSPString *data, Node *node, json_version_t version);
+        status_t    dom_parse(io::IInSequence *is, Node *node, json_version_t version, size_t flags = 0);
+    }
+}
 
 #endif /* LSP_PLUG_IN_FMT_JSON_DOM_H_ */

@@ -79,7 +79,7 @@ namespace lsp
 
             protected:
                 void                copy_ref(const Node *src);
-                node_t             *make_ref();
+                node_t             *make_ref() const;
                 static void         release_ref(node_t *node);
                 static void         undef_node(node_t *node);
                 static node_t      *clear_node(node_t *node);
@@ -104,8 +104,11 @@ namespace lsp
                 virtual ~Node();
 
             public:
-                inline Node &operator = (const Node &src)  { copy_ref(&src); return *this; }
-                inline Node &operator = (const Node *src)  { copy_ref(src); return *this;  }
+                inline Node &operator = (const Node &src)   { copy_ref(&src); return *this; }
+                inline Node &operator = (const Node *src)   { copy_ref(src); return *this;  }
+
+                inline Node &assign(const Node &src)        { copy_ref(&src); return *this; }
+                inline Node &assign(const Node *src)        { copy_ref(src); return *this;  }
 
             public:
                 inline bool is_null() const         { return (pNode == NULL) || (pNode->type == JN_NULL);           }

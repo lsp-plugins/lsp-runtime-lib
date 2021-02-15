@@ -40,8 +40,11 @@ namespace lsp
                 inline Double(const Node *src): Node(src) {}
 
             public:
-                Double &operator = (const Node &src)   { copy_ref(&src); return *this; }
-                Double &operator = (const Node *src)   { copy_ref(src); return *this;  }
+                Double &operator = (const Node &src)    { copy_ref(&src); return *this; }
+                Double &operator = (const Node *src)    { copy_ref(src); return *this;  }
+
+                Double &assign(const Node &src)         { copy_ref(&src); return *this; }
+                Double &assign(const Node *src)         { copy_ref(src); return *this;  }
 
             public:
                 virtual bool valid() const;

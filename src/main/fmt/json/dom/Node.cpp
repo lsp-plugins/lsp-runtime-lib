@@ -51,8 +51,7 @@ namespace lsp
                 return;
 
             // Increment number of references for source node
-            if (src->pNode != NULL)
-                src->pNode->refs++;
+            node_t *ref = src->make_ref();
 
             // Release self reference and replace with new one
             if (pNode != NULL)
@@ -61,7 +60,7 @@ namespace lsp
             pNode       = src->pNode;
         }
 
-        Node::node_t *Node::make_ref()
+        Node::node_t *Node::make_ref() const
         {
             if (pNode != NULL)
             {

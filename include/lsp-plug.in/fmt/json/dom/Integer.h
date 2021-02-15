@@ -43,6 +43,9 @@ namespace lsp
                 Integer &operator = (const Node &src)   { copy_ref(&src); return *this; }
                 Integer &operator = (const Node *src)   { copy_ref(src); return *this;  }
 
+                Integer &assign(const Node &src)        { copy_ref(&src); return *this; }
+                Integer &assign(const Node *src)        { copy_ref(src); return *this;  }
+
             public:
                 virtual bool valid() const;
 

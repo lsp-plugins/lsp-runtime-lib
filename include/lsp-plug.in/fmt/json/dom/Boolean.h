@@ -43,6 +43,9 @@ namespace lsp
                 Boolean &operator = (const Node &src)   { copy_ref(&src); return *this; }
                 Boolean &operator = (const Node *src)   { copy_ref(src); return *this;  }
 
+                Boolean &assign(const Node &src)        { copy_ref(&src); return *this; }
+                Boolean &assign(const Node *src)        { copy_ref(src); return *this;  }
+
             public:
                 virtual bool valid() const;
 

@@ -40,8 +40,11 @@ namespace lsp
                 inline Array(const Node *src): Node(src) {}
 
             public:
-                Array &operator = (const Node &src)   { copy_ref(&src); return *this; }
-                Array &operator = (const Node *src)   { copy_ref(src); return *this;  }
+                Array &operator = (const Node &src)     { copy_ref(&src); return *this; }
+                Array &operator = (const Node *src)     { copy_ref(src); return *this;  }
+
+                Array &assign(const Node &src)          { copy_ref(&src); return *this; }
+                Array &assign(const Node *src)          { copy_ref(src); return *this;  }
 
             public:
                 virtual bool valid() const;

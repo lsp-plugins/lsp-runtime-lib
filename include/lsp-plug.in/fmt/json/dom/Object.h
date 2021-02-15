@@ -40,8 +40,11 @@ namespace lsp
                 inline Object(const Node *src): Node(src) {}
 
             public:
-                Object &operator = (const Node &src)   { copy_ref(&src); return *this; }
-                Object &operator = (const Node *src)   { copy_ref(src); return *this;  }
+                Object &operator = (const Node &src)    { copy_ref(&src); return *this; }
+                Object &operator = (const Node *src)    { copy_ref(src); return *this;  }
+
+                Object &assign(const Node &src)         { copy_ref(&src); return *this; }
+                Object &assign(const Node *src)         { copy_ref(src); return *this;  }
 
             public:
                 virtual bool valid() const;
