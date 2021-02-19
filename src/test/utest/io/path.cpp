@@ -602,6 +602,64 @@ UTEST_BEGIN("runtime.io", path)
         }
     }
 
+    void test_ext()
+    {
+        struct file_t
+        {
+            const char *path;
+            const char *noext;
+            const char *ext;
+        };
+
+        LSPString spath;
+        io::Path ipath;
+        char cpath[32];
+
+        static const file_t files[] =
+        {
+            { "", "", ""},
+            { "a", "a", ""},
+            { "long_file", "long_file", ""},
+            { "file.ext", "file", "ext"},
+            { ".config", "", "config"},
+            { "file.ext1.ext2", "file.ext1", "ext2"},
+
+            { "/path/a", "a", ""},
+            { "/path/long_file", "long_file", ""},
+            { "/path/file.ext", "file", "ext"},
+            { "/path/.config", "", "config"},
+            { "/path/file.ext1.ext2", "file.ext1", "ext2"},
+
+            { NULL, NULL, NULL }
+        };
+
+        printf("Testing get_ext() and get_noext() methods...\n");
+
+        for (const file_t *f = files; f->path != NULL; ++f)
+        {
+            io::Path tmp;
+            UTEST_ASSERT(tmp.set(f->path) == STATUS_OK);
+
+            // noext()
+            printf("  testing noext('%s') \n", f->path);
+            UTEST_ASSERT(tmp.get_noext(&spath) == STATUS_OK);
+            UTEST_ASSERT(tmp.get_noext(&ipath) == STATUS_OK);
+            UTEST_ASSERT(tmp.get_noext(cpath, sizeof(cpath)) == STATUS_OK);
+            UTEST_ASSERT(spath.equals_ascii(f->noext));
+            UTEST_ASSERT(ipath.as_string()->equals_ascii(f->noext));
+            UTEST_ASSERT(strcmp(cpath, f->noext) == 0);
+
+            // ext()
+            printf("  testing ext('%s') \n", f->path);
+            UTEST_ASSERT(tmp.get_ext(&spath) == STATUS_OK);
+            UTEST_ASSERT(tmp.get_ext(&ipath) == STATUS_OK);
+            UTEST_ASSERT(tmp.get_ext(cpath, sizeof(cpath)) == STATUS_OK);
+            UTEST_ASSERT(spath.equals_ascii(f->ext));
+            UTEST_ASSERT(ipath.as_string()->equals_ascii(f->ext));
+            UTEST_ASSERT(strcmp(cpath, f->ext) == 0);
+        }
+    }
+
     UTEST_MAIN
     {
         test_get_set();
@@ -615,6 +673,7 @@ UTEST_BEGIN("runtime.io", path)
         test_canonical();
         test_dots();
         test_relative();
+        test_ext();
     }
 UTEST_END;
 

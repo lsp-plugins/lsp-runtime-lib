@@ -99,6 +99,14 @@ namespace lsp
                 status_t        get_last(LSPString *path) const;
                 status_t        get_last(Path *path) const;
 
+                status_t        get_ext(char *path, size_t maxlen) const;
+                status_t        get_ext(LSPString *path) const;
+                status_t        get_ext(Path *path) const;
+
+                status_t        get_noext(char *path, size_t maxlen) const;
+                status_t        get_noext(LSPString *path) const;
+                status_t        get_noext(Path *path) const;
+
                 status_t        get_parent(char *path, size_t maxlen) const;
                 status_t        get_parent(LSPString *path) const;
                 status_t        get_parent(Path *path) const;

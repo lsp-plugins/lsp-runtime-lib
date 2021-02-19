@@ -12,6 +12,7 @@
 * Added io::InMarkSequence class to allow mark() and reset() for input data.
 * Fixed bug in io::InStringSequence::read method which could overflow
   the output buffer.
+* Added get_ext() and get_noext() methods to the io::Path class.
 
 === 0.5.6 ===
 * Updated build (better support for BSD systems).
