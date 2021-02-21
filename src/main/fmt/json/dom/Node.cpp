@@ -57,7 +57,7 @@ namespace lsp
             if (pNode != NULL)
                 release_ref(pNode);
 
-            pNode       = src->pNode;
+            pNode       = ref;
         }
 
         Node::node_t *Node::make_ref() const
