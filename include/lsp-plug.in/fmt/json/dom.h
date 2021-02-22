@@ -27,6 +27,8 @@
 #include <lsp-plug.in/fmt/json/dom/Node.h>
 #include <lsp-plug.in/fmt/json/dom/Integer.h>
 #include <lsp-plug.in/fmt/json/dom/Double.h>
+#include <lsp-plug.in/fmt/json/dom/Boolean.h>
+#include <lsp-plug.in/fmt/json/dom/String.h>
 #include <lsp-plug.in/fmt/json/dom/Array.h>
 #include <lsp-plug.in/fmt/json/dom/Object.h>
 

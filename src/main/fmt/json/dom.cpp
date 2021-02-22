@@ -26,10 +26,204 @@ namespace lsp
 {
     namespace json
     {
+        status_t dom_drop_stack(lltl::parray<Node> *stack, status_t res)
+        {
+            for (size_t i=0, n=stack->size(); i<n; ++i)
+            {
+                Node *node = stack->uget(i);
+                if (node != NULL)
+                    delete node;
+            }
+            stack->flush();
+
+            return res;
+        }
+
+        status_t dom_parse_item(Node **dst, lltl::parray<Node> *stack, const event_t *ev)
+        {
+            status_t res;
+            Node *out = NULL;
+
+            switch (ev->type)
+            {
+                case JE_OBJECT_START:
+                {
+                    json::Object jo;
+                    out     = new Node(jo);
+                    break;
+                }
+                case JE_ARRAY_START:
+                {
+                    json::Array ja;
+                    out     = new Node(ja);
+                    break;
+                }
+
+                case JE_STRING:
+                {
+                    json::String js;
+                    if ((res = js.set(&ev->sValue)) != STATUS_OK)
+                        return res;
+                    out     = new Node(js);
+                    break;
+                }
+
+                case JE_INTEGER:
+                {
+                    json::Integer ji;
+                    ji.set(ev->iValue);
+                    out     = new Node(ji);
+                    break;
+                }
+
+                case JE_DOUBLE:
+                {
+                    json::Double jd;
+                    jd.set(ev->fValue);
+                    out     = new Node(jd);
+                    break;
+                }
+
+                case JE_BOOL:
+                {
+                    json::Boolean jb;
+                    jb.set(ev->bValue);
+                    out     = new Node(jb);
+                    break;
+                }
+
+                case JE_NULL:
+                    out     = new Node();
+                    break;
+
+                default:
+                    return STATUS_BAD_FORMAT;
+            }
+
+            // Check result
+            if (out == NULL)
+                return STATUS_NO_MEM;
+            *dst = out;
+
+            return STATUS_OK;
+        }
+
         status_t dom_parse(Parser *p, Node *node, bool strict)
         {
-            // TODO
-            return STATUS_NOT_IMPLEMENTED;
+            Node out, *xnode = NULL;
+            event_t ev;
+            status_t res;
+            lltl::parray<Node> stack;
+
+            // Initialize tree
+            do
+            {
+                Node *last = stack.last();
+                Node::node_type_t type = (last != NULL) ? last->type() : Node::JN_NULL;
+
+                // Read next event
+                if ((res = p->read_next(&ev)) != STATUS_OK)
+                    return dom_drop_stack(&stack, res);
+
+                switch (type)
+                {
+                    case Node::JN_ARRAY:
+                    {
+                        // Pre-check tokens
+                        if (ev.type == JE_ARRAY_END)
+                        {
+                            stack.pop();
+                            if (stack.is_empty())
+                                out.assign(last);
+                            delete last;
+                            break;
+                        }
+                        else if ((ev.type == JE_OBJECT_END) || (ev.type == JE_PROPERTY))
+                            return dom_drop_stack(&stack, STATUS_BAD_FORMAT);
+
+                        Array ao(last);
+
+                        // Parse simple item from event
+                        if ((res = dom_parse_item(&xnode, &stack, &ev)) != STATUS_OK)
+                            return dom_drop_stack(&stack, res);
+
+                        if ((res = ao.add(xnode)) != STATUS_OK)
+                        {
+                            delete xnode;
+                            return dom_drop_stack(&stack, res);
+                        }
+
+                        break;
+                    }
+                    case Node::JN_OBJECT:
+                    {
+                        // Pre-check tokens
+                        if (ev.type == JE_OBJECT_END)
+                        {
+                            stack.pop();
+                            if (stack.is_empty())
+                                out.assign(last);
+                            delete last;
+                            break;
+                        }
+                        else if (ev.type != JE_PROPERTY)
+                            return dom_drop_stack(&stack, STATUS_BAD_FORMAT);
+
+                        // Validate and remember the property name
+                        Object jo(last);
+                        if (jo.contains(&ev.sValue)) // Check that object already contains such key
+                            return dom_drop_stack(&stack, STATUS_BAD_FORMAT);
+                        LSPString key;
+                        if (!key.set(&ev.sValue))
+                            return dom_drop_stack(&stack, STATUS_NO_MEM);
+
+                        // Read next event
+                        if ((res = p->read_next(&ev)) != STATUS_OK)
+                            return dom_drop_stack(&stack, res);
+
+                        // Parse simple item from event
+                        if ((res = dom_parse_item(&xnode, &stack, &ev)) != STATUS_OK)
+                            return dom_drop_stack(&stack, res);
+                        if ((res = jo.set(&key, xnode)) != STATUS_OK)
+                        {
+                            delete xnode;
+                            return dom_drop_stack(&stack, res);
+                        }
+
+                        break;
+                    }
+
+                    default:
+                    {
+                        // Parse simple item
+                        if ((res = dom_parse_item(&xnode, &stack, &ev)) != STATUS_OK)
+                            return dom_drop_stack(&stack, res);
+
+                        break;
+                    }
+                }
+
+                // Add extra node to the stack if it is present
+                if ((xnode->is_array()) || (xnode->is_object()))
+                {
+                    if (!stack.push(xnode))
+                        return dom_drop_stack(&stack, STATUS_NO_MEM);
+                }
+                xnode   = NULL;
+
+            } while (stack.size() > 0);
+
+            // Check for EOF
+            if (strict)
+            {
+                if ((res = p->read_next(&ev)) != STATUS_EOF)
+                    return dom_drop_stack(&stack, STATUS_BAD_FORMAT);
+            }
+
+            // Assign node and return
+            node->assign(out);
+
+            return STATUS_OK;
         }
 
         status_t dom_load(const char *path, Node *node, json_version_t version, const char *charset)
