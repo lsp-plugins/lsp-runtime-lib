@@ -37,9 +37,24 @@ namespace lsp
          */
         typedef struct time_t
         {
-            size_t  seconds;    /* The value in seconds */
-            size_t  nanos;      /* The value in nanoseconds between 0 and 10^9-1 */
+            size_t      seconds;    /* The value in seconds */
+            size_t      nanos;      /* The value in nanoseconds between 0 and 10^9-1 */
         } time_t;
+
+        /**
+         * Local time information
+         */
+        typedef struct localtime_t
+        {
+            int32_t     year;       /* Year */
+            uint8_t     month;      /* Month, starting with 1 */
+            uint8_t     mday;       /* Day of month, starting from 1 */
+            uint8_t     wday;       /* Day of week, starting from 1 */
+            uint8_t     hour;       /* Hour of a day, 0-23 */
+            uint8_t     min;        /* Minute of an hour, 0-59 */
+            uint8_t     sec;        /* Second of a minute, 0-59 */
+            uint32_t    nanos;      /* Number of nanoseconds */
+        } localtime_t;
 
         /**
          * Get environment variable
@@ -128,6 +143,13 @@ namespace lsp
          * @param time pointer to structure to store time value
          */
         void get_time(time_t *time);
+
+        /**
+         * Convert time structure to the local time
+         * @param ltime pointer to store the result
+         * @param time time structure to convert, use current time if NULL
+         */
+        void get_localtime(localtime_t *local, const time_t *time = NULL);
 
         /**
          * Get temporary directory

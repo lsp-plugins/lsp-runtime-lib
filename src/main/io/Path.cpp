@@ -48,9 +48,9 @@ namespace lsp
         inline void Path::fixup_path()
         {
 #ifdef PLATFORM_WINDOWS
-            sPath.replace_all('/', '\\');
+            sPath.replace_all('/', FILE_SEPARATOR_C);
 #else
-            sPath.replace_all('\\', '/');
+            sPath.replace_all('\\', FILE_SEPARATOR_C);
 #endif /* PLATFORM_WINDOWS */
         }
 
@@ -322,14 +322,131 @@ namespace lsp
 
         status_t Path::get_last(Path *path) const
         {
+            return (path != NULL) ? get_last(&path->sPath) : STATUS_BAD_ARGUMENTS;
+        }
+
+        status_t Path::get_ext(char *path, size_t maxlen) const
+        {
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
-            ssize_t idx = sPath.rindex_of(FILE_SEPARATOR_C);
-            idx     = (idx < 0) ? 0 : idx + 1;
+            ssize_t start, next;
 
-            return (path->sPath.set(&sPath, idx)) ? STATUS_OK : STATUS_NO_MEM;
+            start   = sPath.rindex_of(FILE_SEPARATOR_C);
+            start   = (start < 0) ? 0 : start + 1;
+
+            // Lookup for last dot
+            if ((next = sPath.index_of(start, '.')) >= 0)
+            {
+                start       = next+1;
+                while ((next = sPath.index_of(start, '.')) >= 0)
+                    start       = next+1;
+            }
+            else
+                start   = sPath.length();
+
+            // Copy data to output
+            const char *utf8 = sPath.get_utf8(start);
+            if (utf8 == NULL)
+                return STATUS_NO_MEM;
+
+            size_t len = ::strlen(utf8);
+            if (len >= maxlen)
+                return STATUS_TOO_BIG;
+
+            ::memcpy(path, utf8, len + 1);
+            return STATUS_OK;
         }
+
+        status_t Path::get_ext(LSPString *path) const
+        {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            ssize_t start, next;
+
+            start   = sPath.rindex_of(FILE_SEPARATOR_C);
+            start   = (start < 0) ? 0 : start + 1;
+
+            // Lookup for last dot
+            if ((next = sPath.index_of(start, '.')) >= 0)
+            {
+                start       = next+1;
+                while ((next = sPath.index_of(start, '.')) >= 0)
+                    start       = next+1;
+            }
+            else
+                start   = sPath.length();
+
+            return (path->set(&sPath, start)) ? STATUS_OK : STATUS_NO_MEM;
+        }
+
+        status_t Path::get_ext(Path *path) const
+        {
+            return (path != NULL) ? get_ext(&path->sPath) : STATUS_BAD_ARGUMENTS;
+        }
+
+        status_t Path::get_noext(char *path, size_t maxlen) const
+        {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            ssize_t start, next, end;
+
+            start   = sPath.rindex_of(FILE_SEPARATOR_C);
+            start   = (start < 0) ? 0 : start + 1;
+
+            // Lookup for last dot
+            end     = sPath.index_of(start, '.');
+            if (end >= 0)
+            {
+                while ((next = sPath.index_of(end + 1, '.')) >= 0)
+                    end     = next;
+            }
+            if (end < 0)
+                end = sPath.length();
+
+            // Copy data to output
+            const char *utf8 = sPath.get_utf8(start, end);
+            if (utf8 == NULL)
+                return STATUS_NO_MEM;
+
+            size_t len = ::strlen(utf8);
+            if (len >= maxlen)
+                return STATUS_TOO_BIG;
+
+            ::memcpy(path, utf8, len + 1);
+            return STATUS_OK;
+        }
+
+        status_t Path::get_noext(LSPString *path) const
+        {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            ssize_t start, next, end;
+
+            start   = sPath.rindex_of(FILE_SEPARATOR_C);
+            start   = (start < 0) ? 0 : start + 1;
+
+            // Lookup for last dot
+            end     = sPath.index_of(start, '.');
+            if (end >= 0)
+            {
+                while ((next = sPath.index_of(end + 1, '.')) >= 0)
+                    end     = next;
+            }
+            if (end < 0)
+                end = sPath.length();
+
+            return (path->set(&sPath, start, end)) ? STATUS_OK : STATUS_NO_MEM;
+        }
+
+        status_t Path::get_noext(Path *path) const
+        {
+            return (path != NULL) ? get_noext(&path->sPath) : STATUS_BAD_ARGUMENTS;
+        }
+
 
         status_t Path::get_parent(char *path, size_t maxlen) const
         {
@@ -1108,6 +1225,21 @@ namespace lsp
             return (res == STATUS_NOT_DIRECTORY) ? STATUS_IO_ERROR : res;
         }
 
+        status_t Path::rename(const char *dst) const
+        {
+            return io::File::rename(&sPath, dst);
+        }
+
+        status_t Path::rename(const LSPString *dst) const
+        {
+            return io::File::rename(&sPath, dst);
+        }
+
+        status_t Path::rename(const io::Path *dst) const
+        {
+            return io::File::rename(&sPath, dst);
+        }
+
         void Path::take(LSPString *src)
         {
             sPath.take(src);
@@ -1423,6 +1555,126 @@ namespace lsp
             #endif /* PLATFORM_WINDOWS */
 
             return true;
+        }
+
+        status_t Path::as_relative(const char *path)
+        {
+            status_t res;
+            io::Path child, base;
+            if ((res = base.set(path)) != STATUS_OK)
+                return res;
+            if ((res = child.set(this)) != STATUS_OK)
+                return res;
+
+            if ((res = child.compute_relative(&base)) == STATUS_OK)
+                sPath.swap(&child.sPath);
+            return res;
+        }
+
+        status_t Path::as_relative(const LSPString *path)
+        {
+            status_t res;
+            io::Path child, base;
+            if ((res = base.set(path)) != STATUS_OK)
+                return res;
+            if ((res = child.set(this)) != STATUS_OK)
+                return res;
+
+            if ((res = child.compute_relative(&base)) == STATUS_OK)
+                sPath.swap(&child.sPath);
+            return res;
+        }
+
+        status_t Path::as_relative(const Path *path)
+        {
+            status_t res;
+            io::Path child, base;
+            if ((res = base.set(path)) != STATUS_OK)
+                return res;
+            if ((res = child.set(this)) != STATUS_OK)
+                return res;
+
+            if ((res = child.compute_relative(&base)) == STATUS_OK)
+                sPath.swap(&child.sPath);
+            return res;
+        }
+
+        status_t Path::compute_relative(Path *base)
+        {
+            // Canonicalize both paths
+            status_t res;
+            if ((res = canonicalize()) != STATUS_OK)
+                return res;
+            if ((res = base->canonicalize()) != STATUS_OK)
+                return res;
+
+            // Check that beginning of paths matches
+            size_t matched = sPath.match(&base->sPath);
+            if (matched <= 0)
+                return STATUS_NOT_FOUND;
+
+            // The length matches the base file?
+            ssize_t idx1, idx2;
+            if (matched == base->length())
+            {
+                if (sPath.length() == base->length())
+                {
+                    // Lengths match - clear
+                    sPath.clear();
+                    return STATUS_OK;
+                }
+                else if (sPath.char_at(matched) == FILE_SEPARATOR_C)
+                {
+                    // Just remove file base
+                    sPath.remove(0, matched+1);
+                    return STATUS_OK;
+                }
+
+                // Find last matchind file separator
+                idx1 = sPath.rindex_of(matched, FILE_SEPARATOR_C);
+                idx2 = base->sPath.rindex_of(matched, FILE_SEPARATOR_C);
+                if ((idx1 < 0) || (idx2 != idx1))
+                    return STATUS_NOT_FOUND;
+            }
+            else if (matched == sPath.length())
+            {
+                if (base->sPath.char_at(matched) != FILE_SEPARATOR_C)
+                    return STATUS_NOT_FOUND;
+
+                // All is OK, we're just at the end of the child path
+                idx1 = matched - 1;
+                idx2 = matched;
+            }
+            else
+            {
+                // Find last matchind file separator
+                idx1 = sPath.rindex_of(matched, FILE_SEPARATOR_C);
+                idx2 = base->sPath.rindex_of(matched, FILE_SEPARATOR_C);
+                if ((idx1 < 0) || (idx2 != idx1))
+                    return STATUS_NOT_FOUND;
+            }
+
+            // Add the necessary amount of '../' references
+            LSPString tmp;
+            while (true)
+            {
+                idx2        = base->sPath.index_of(idx2 + 1, FILE_SEPARATOR_C);
+                if (!tmp.append_ascii(".." FILE_SEPARATOR_S))
+                    return STATUS_NO_MEM;
+                if (idx2 < 0)
+                    break;
+            }
+
+            // Append the rest path
+            if (!tmp.append(&sPath, idx1 + 1))
+                return STATUS_NO_MEM;
+            // Remove the trailing '/' character if present
+            if (tmp.ends_with(FILE_SEPARATOR_C))
+                tmp.remove_last();
+
+            sPath.swap(&tmp);
+
+            return STATUS_OK;
         }
     }
 } /* namespace lsp */

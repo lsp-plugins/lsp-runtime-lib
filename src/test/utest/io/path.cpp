@@ -546,6 +546,120 @@ UTEST_BEGIN("runtime.io", path)
         }
     }
 
+    void test_relative()
+    {
+        struct rel_t
+        {
+            const char *child;
+            const char *base;
+            status_t code;
+            const char *res;
+        };
+
+        static const rel_t paths[] =
+        {
+            { "", "", STATUS_NOT_FOUND, "" },
+            { "", "/", STATUS_NOT_FOUND, NULL },
+            { "/", "/", STATUS_OK, "" },
+            { "a", "a", STATUS_OK, "" },
+            { "abc", "a", STATUS_NOT_FOUND, NULL },
+            { "a", "abc", STATUS_NOT_FOUND, NULL },
+            { "/a", "/a", STATUS_OK, "" },
+            { "/a/b", "/a", STATUS_OK, "b" },
+            { "/a/b/c", "/a", STATUS_OK, "b/c" },
+            { "a", "b", STATUS_NOT_FOUND, NULL },
+            { "/a", "/b", STATUS_OK, "../a" },
+            { "/b", "/a", STATUS_OK, "../b" },
+            { "/a/b/c", "/a/b/d", STATUS_OK, "../c" },
+            { "/a/b", "/a/b/d", STATUS_OK, ".." },
+            { "/a/", "/a/b/d/", STATUS_OK, "../.." },
+            { "/a/x", "/a/b/d/", STATUS_OK, "../../x" },
+            { "/a/c/../b", "/a/../a/b/d", STATUS_OK, ".." },
+
+            { NULL, NULL, 0, NULL }
+        };
+
+        printf("Testing as_relative() methods...\n");
+
+        for (const rel_t *d = paths; d->child != NULL; ++d)
+        {
+            if (d->code == STATUS_OK)
+                printf("Testing \"%s\" - \"%s\" -> \"%s\" \n", d->child, d->base, d->res);
+            else
+                printf("Testing \"%s\" - \"%s\" -> error(%d) \n", d->child, d->base, int(d->code));
+
+            io::Path base, child, res;
+            UTEST_ASSERT(base.set(d->base) == STATUS_OK);
+            UTEST_ASSERT(child.set(d->child) == STATUS_OK);
+
+            status_t code = child.as_relative(&base);
+            UTEST_ASSERT_MSG(code == d->code, "Invalid code %d", int(code));
+            if (d->code == STATUS_OK)
+            {
+                UTEST_ASSERT(res.set(d->res) == STATUS_OK);
+                UTEST_ASSERT_MSG(child.equals(&res), "Returned path: %s", child.as_utf8());
+            }
+        }
+    }
+
+    void test_ext()
+    {
+        struct file_t
+        {
+            const char *path;
+            const char *noext;
+            const char *ext;
+        };
+
+        LSPString spath;
+        io::Path ipath;
+        char cpath[32];
+
+        static const file_t files[] =
+        {
+            { "", "", ""},
+            { "a", "a", ""},
+            { "long_file", "long_file", ""},
+            { "file.ext", "file", "ext"},
+            { ".config", "", "config"},
+            { "file.ext1.ext2", "file.ext1", "ext2"},
+
+            { "/path/a", "a", ""},
+            { "/path/long_file", "long_file", ""},
+            { "/path/file.ext", "file", "ext"},
+            { "/path/.config", "", "config"},
+            { "/path/file.ext1.ext2", "file.ext1", "ext2"},
+
+            { NULL, NULL, NULL }
+        };
+
+        printf("Testing get_ext() and get_noext() methods...\n");
+
+        for (const file_t *f = files; f->path != NULL; ++f)
+        {
+            io::Path tmp;
+            UTEST_ASSERT(tmp.set(f->path) == STATUS_OK);
+
+            // noext()
+            printf("  testing noext('%s') \n", f->path);
+            UTEST_ASSERT(tmp.get_noext(&spath) == STATUS_OK);
+            UTEST_ASSERT(tmp.get_noext(&ipath) == STATUS_OK);
+            UTEST_ASSERT(tmp.get_noext(cpath, sizeof(cpath)) == STATUS_OK);
+            UTEST_ASSERT(spath.equals_ascii(f->noext));
+            UTEST_ASSERT(ipath.as_string()->equals_ascii(f->noext));
+            UTEST_ASSERT(strcmp(cpath, f->noext) == 0);
+
+            // ext()
+            printf("  testing ext('%s') \n", f->path);
+            UTEST_ASSERT(tmp.get_ext(&spath) == STATUS_OK);
+            UTEST_ASSERT(tmp.get_ext(&ipath) == STATUS_OK);
+            UTEST_ASSERT(tmp.get_ext(cpath, sizeof(cpath)) == STATUS_OK);
+            UTEST_ASSERT(spath.equals_ascii(f->ext));
+            UTEST_ASSERT(ipath.as_string()->equals_ascii(f->ext));
+            UTEST_ASSERT(strcmp(cpath, f->ext) == 0);
+        }
+    }
+
     UTEST_MAIN
     {
         test_get_set();
@@ -558,6 +672,8 @@ UTEST_BEGIN("runtime.io", path)
         test_flags();
         test_canonical();
         test_dots();
+        test_relative();
+        test_ext();
     }
 UTEST_END;
 

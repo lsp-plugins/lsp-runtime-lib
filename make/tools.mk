@@ -41,7 +41,6 @@ GIT                := git
 INSTALL            := install
 
 # Patch flags and tools
-# Patch flags and tools
 FLAG_RELRO          = -Wl,-z,relro,-z,now
 FLAG_STDLIB         = -lc
 CFLAGS_EXT          =

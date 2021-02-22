@@ -295,6 +295,35 @@ namespace lsp
             time->seconds   = itime / 10000000;
             time->nanos     = (itime % 10000000) * 100;
         }
+
+        void get_localtime(localtime_t *local, const time_t *time)
+        {
+            SYSTEMTIME t;
+
+            // Get system file time into tmp
+            if (time != NULL)
+            {
+                FILETIME tmp, stime;
+                uint64_t itime      = (time->seconds * 10000000) | (time->nanos / 100);
+                tmp.dwHighDateTime  = DWORD(itime >> 32);
+                tmp.dwLowDateTime   = DWORD(itime);
+
+                ::FileTimeToLocalFileTime(&tmp, &stime);
+                ::FileTimeToSystemTime(&stime, &t);
+            }
+            else
+                ::GetLocalTime(&t);
+
+            // Decode
+            local->year     = t.wYear;
+            local->month    = t.wMonth;
+            local->mday     = t.wDay;
+            local->wday     = t.wDayOfWeek;
+            local->hour     = t.wHour;
+            local->min      = t.wMinute;
+            local->sec      = t.wSecond;
+            local->nanos    = time->nanos;
+        }
 #else
         void get_time(time_t *time)
         {
@@ -303,6 +332,38 @@ namespace lsp
 
             time->seconds   = t.tv_sec;
             time->nanos     = t.tv_nsec;
+        }
+
+        void get_localtime(localtime_t *local, const time_t *time)
+        {
+            // Store actual time to timespec struct
+            struct timespec stime;
+
+            if (time != NULL)
+            {
+                stime.tv_sec        = time->seconds;
+                stime.tv_nsec       = time->nanos;
+            }
+            else
+                ::clock_gettime(CLOCK_REALTIME, &stime);
+
+            // Now convert the struct to local time
+            struct tm *t;
+        #if defined(_POSIX_C_SOURCE) || defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
+            struct tm ctime;
+            t               = localtime_r(&stime.tv_sec, &ctime);
+        #else
+            t               = localtime(&stime.tv_sec);
+        #endif
+
+            local->year     = t->tm_year + 1900;
+            local->month    = t->tm_mon + 1;
+            local->mday     = t->tm_mday + 1;
+            local->wday     = t->tm_wday + 1;
+            local->hour     = t->tm_hour;
+            local->min      = t->tm_min;
+            local->sec      = t->tm_sec;
+            local->nanos    = stime.tv_nsec;
         }
 #endif /* PLATFORM_WINDOWS */
 

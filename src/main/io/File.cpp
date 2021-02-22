@@ -21,14 +21,17 @@
 
 #include <lsp-plug.in/io/File.h>
 #include <lsp-plug.in/common/debug.h>
+#include <lsp-plug.in/stdlib/stdio.h>
 
 #ifdef PLATFORM_WINDOWS
     #include <fileapi.h>
     #include <io.h>
+    #include <winbase.h>
 #else
     #include <sys/stat.h>
     #include <errno.h>
     #include <unistd.h>
+    #include <fcntl.h>
 #endif /* PLATFORM_WINDOWS */
 
 namespace lsp
@@ -459,6 +462,150 @@ namespace lsp
             }
 #endif /* PLATFORM_WINDOWS */
             return STATUS_OK;
+        }
+
+        status_t File::rename(const char *from, const char *to)
+        {
+            if ((from == NULL) || (to == NULL))
+                return STATUS_BAD_ARGUMENTS;
+
+            LSPString f, t;
+            if (!f.set_utf8(from))
+                return STATUS_NO_MEM;
+            if (!t.set_utf8(to))
+                return STATUS_NO_MEM;
+            return rename(&f, &t);
+        }
+
+        status_t File::rename(const LSPString *from, const char *to)
+        {
+            if ((from == NULL) || (to == NULL))
+                return STATUS_BAD_ARGUMENTS;
+
+            LSPString t;
+            if (!t.set_utf8(to))
+                return STATUS_NO_MEM;
+            return rename(from, &t);
+        }
+
+        status_t File::rename(const Path *from, const char *to)
+        {
+            if ((from == NULL) || (to == NULL))
+                return STATUS_BAD_ARGUMENTS;
+
+            LSPString t;
+            if (!t.set_utf8(to))
+                return STATUS_NO_MEM;
+            return rename(from->as_string(), &t);
+        }
+
+        status_t File::rename(const char *from, const LSPString *to)
+        {
+            if ((from == NULL) || (to == NULL))
+                return STATUS_BAD_ARGUMENTS;
+
+            LSPString f;
+            if (!f.set_native(from))
+                return STATUS_NO_MEM;
+            return rename(&f, to);
+        }
+
+        status_t File::rename(const Path *from, const LSPString *to)
+        {
+            if ((from == NULL) || (to == NULL))
+                return STATUS_BAD_ARGUMENTS;
+            return rename(from->as_string(), to);
+        }
+
+        status_t File::rename(const char *from, const Path *to)
+        {
+            if ((from == NULL) || (to == NULL))
+                return STATUS_BAD_ARGUMENTS;
+
+            LSPString f;
+            if (!f.set_utf8(from))
+                return STATUS_NO_MEM;
+            return rename(&f, to->as_string());
+        }
+
+        status_t File::rename(const LSPString *from, const Path *to)
+        {
+            if ((from == NULL) || (to == NULL))
+                return STATUS_BAD_ARGUMENTS;
+
+            return rename(from, to->as_string());
+        }
+
+        status_t File::rename(const Path *from, const Path *to)
+        {
+            if ((from == NULL) || (to == NULL))
+                return STATUS_BAD_ARGUMENTS;
+
+            return rename(from->as_string(), to->as_string());
+        }
+
+        status_t File::rename(const LSPString *from, const LSPString *to)
+        {
+            if ((from == NULL) || (to == NULL))
+                return STATUS_BAD_ARGUMENTS;
+
+#ifdef PLATFORM_WINDOWS
+            if (::MoveFileExW(from->get_utf16(), to->get_utf16(), MOVEFILE_REPLACE_EXISTING))
+                return STATUS_OK;
+
+            // Analyze error code
+            DWORD code = ::GetLastError();
+            switch (code)
+            {
+                case ERROR_ACCESS_DENIED:
+                    return STATUS_PERMISSION_DENIED;
+                case ERROR_PATH_NOT_FOUND:
+                    return STATUS_NOT_FOUND;
+                default:
+                    break;;
+            }
+#else
+            // Try to remove file
+            if (::rename(from->get_native(), to->get_native()) == 0)
+                return STATUS_OK;
+
+            switch (errno)
+            {
+                case EPERM:
+                case EACCES:
+                case EROFS:
+                case EXDEV:
+                    return STATUS_PERMISSION_DENIED;
+                case EBUSY:
+                    return STATUS_LOCKED;
+                case EFAULT:
+                    return STATUS_BAD_PATH;
+                case EINVAL:
+                    return STATUS_INVALID_VALUE;
+                case EISDIR:
+                    return STATUS_IS_DIRECTORY;
+                case EDQUOT:
+                case ELOOP:
+                case EMLINK:
+                    return STATUS_OVERFLOW;
+                case ENAMETOOLONG:
+                    return STATUS_BAD_ARGUMENTS;
+                case ENOENT:
+                    return STATUS_NOT_FOUND;
+                case ENOMEM:
+                case ENOSPC:
+                    return STATUS_NO_MEM;
+                case ENOTDIR:
+                    return STATUS_NOT_DIRECTORY;
+                case ENOTEMPTY:
+                case EEXIST:
+                    return STATUS_ALREADY_EXISTS;
+                default:
+                    break;
+            }
+#endif /* PLATFORM_WINDOWS */
+
+            return STATUS_IO_ERROR;
         }
 
     } /* namespace io */

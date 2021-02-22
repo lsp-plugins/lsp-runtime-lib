@@ -61,7 +61,8 @@ namespace lsp
             private:
                 Path & operator = (const Path &);
 
-                inline void fixup_path();
+                inline void     fixup_path();
+                status_t        compute_relative(Path *base);
 
             public:
                 explicit Path();
@@ -97,6 +98,14 @@ namespace lsp
                 status_t        get_last(char *path, size_t maxlen) const;
                 status_t        get_last(LSPString *path) const;
                 status_t        get_last(Path *path) const;
+
+                status_t        get_ext(char *path, size_t maxlen) const;
+                status_t        get_ext(LSPString *path) const;
+                status_t        get_ext(Path *path) const;
+
+                status_t        get_noext(char *path, size_t maxlen) const;
+                status_t        get_noext(LSPString *path) const;
+                status_t        get_noext(Path *path) const;
 
                 status_t        get_parent(char *path, size_t maxlen) const;
                 status_t        get_parent(LSPString *path) const;
@@ -158,9 +167,9 @@ namespace lsp
                 status_t        get_canonical(LSPString *path) const;
                 status_t        get_canonical(Path *path) const;
 
-                inline status_t as_relative(const char *path)       { return remove_base(path); }
-                inline status_t as_relative(const LSPString *path)  { return remove_base(path); }
-                inline status_t as_relative(const Path *path)       { return remove_base(path); }
+                status_t        as_relative(const char *path);
+                status_t        as_relative(const LSPString *path);
+                status_t        as_relative(const Path *path);
 
                 bool            equals(const Path *path) const;
                 bool            equals(const LSPString *path) const;
@@ -188,6 +197,10 @@ namespace lsp
                 status_t        mkdir() const;
                 status_t        mkdir(bool recursive) const;
                 status_t        remove() const;
+
+                status_t        rename(const char *dst) const;
+                status_t        rename(const LSPString *dst) const;
+                status_t        rename(const io::Path *dst) const;
 
             public:
                 static bool     is_dot(const LSPString *path);

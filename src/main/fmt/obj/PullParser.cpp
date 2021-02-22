@@ -575,14 +575,18 @@ namespace lsp
                             s   = skip_spaces(s);
                             if (!parse_int(&v, &s))
                                 break;
-                            if (*(s++) != '/')
-                                return result;
-                            if (!parse_int(&vt, &s))
-                                vt  = 0;
-                            if (*(s++) != '/')
-                                return result;
-                            if (!parse_int(&vn, &s))
-                                vn = 0;
+                            if (*s == '/')
+                            {
+                                ++s;
+                                if (!parse_int(&vt, &s))
+                                    vt  = 0;
+                                if (*s == '/')
+                                {
+                                    ++s;
+                                    if (!parse_int(&vn, &s))
+                                        vn = 0;
+                                }
+                            }
 
                             // Ensure that indexes are correct
                             v   = (v < 0) ? nVx + v : v - 1;
