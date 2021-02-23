@@ -54,8 +54,13 @@ namespace lsp
                 status_t            create(const LSPString *value);
                 status_t            create(const char *value, const char *charset = NULL);
 
+                static String      *allocate();
                 static String      *allocate(const LSPString *value);
                 static String      *allocate(const char *value, const char *charset = NULL);
+
+                static String       build();
+                static String       build(const LSPString *value);
+                static String       build(const char *value, const char *charset = NULL);
 
             public:
                 /**

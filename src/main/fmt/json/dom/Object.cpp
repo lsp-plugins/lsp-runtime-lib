@@ -38,8 +38,9 @@ namespace lsp
             node_t *node    = new node_t();
             if (node == NULL)
                 return STATUS_NO_MEM;
-            node->type      = JN_OBJECT;
+
             node->refs      = 1;
+            node->type      = JN_OBJECT;
             node->pObject   = new lltl::pphash<LSPString, node_t>();
             if (node->pObject == NULL)
             {
@@ -63,6 +64,13 @@ namespace lsp
 
             delete res;
             return NULL;
+        }
+
+        Object Object::build()
+        {
+            Object res;
+            res.create();
+            return res;
         }
 
         size_t Object::size() const
@@ -126,7 +134,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t Object::set(const char *field, Node *node)
+        status_t Object::set(const char *field, const Node *node)
         {
             LSPString tmp;
             if (!tmp.set_utf8(field))
@@ -134,7 +142,7 @@ namespace lsp
             return set(&tmp, node);
         }
 
-        status_t Object::set(const LSPString *field, Node *node)
+        status_t Object::set(const LSPString *field, const Node *node)
         {
             if (!is_object())
                 return STATUS_NOT_FOUND;
@@ -156,6 +164,16 @@ namespace lsp
 
             release_ref(oref);
             return STATUS_OK;
+        }
+
+        status_t Object::set(const char *field, const Node &node)
+        {
+            return set(field, &node);
+        }
+
+        status_t Object::set(const LSPString *field, const Node &node)
+        {
+            return set(field, &node);
         }
 
         status_t Object::fields(lltl::parray<LSPString> *list)

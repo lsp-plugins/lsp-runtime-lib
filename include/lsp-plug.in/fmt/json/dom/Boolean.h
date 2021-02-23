@@ -55,6 +55,8 @@ namespace lsp
 
                 static Boolean     *allocate(bool value = false);
 
+                static Boolean      build(bool value = false);
+
             public:
                 /**
                  * Try to cast value to Boolean and return the casted value

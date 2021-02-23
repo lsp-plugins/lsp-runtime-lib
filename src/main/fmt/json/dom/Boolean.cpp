@@ -30,7 +30,7 @@ namespace lsp
     {
         bool Boolean::valid() const
         {
-            return is_int();
+            return is_bool();
         }
 
         status_t Boolean::create()
@@ -43,14 +43,10 @@ namespace lsp
             node_t *node    = new node_t();
             if (node == NULL)
                 return STATUS_NO_MEM;
-            node->type      = JN_BOOL;
+
             node->refs      = 1;
+            node->type      = JN_BOOL;
             node->bValue    = value;
-            if (node->pObject == NULL)
-            {
-                delete node;
-                return STATUS_NO_MEM;
-            }
 
             release_ref(pNode);
             pNode           = node;
@@ -68,6 +64,13 @@ namespace lsp
 
             delete res;
             return NULL;
+        }
+
+        Boolean Boolean::build(bool value)
+        {
+            Boolean res;
+            res.create(value);
+            return res;
         }
 
         bool Boolean::get() const
@@ -126,7 +129,7 @@ namespace lsp
 
             pNode           = node;
             pNode->type     = JN_BOOL;
-            pNode->fValue   = value;
+            pNode->bValue   = value;
 
             return STATUS_OK;
         }

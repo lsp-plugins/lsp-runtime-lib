@@ -39,9 +39,10 @@ namespace lsp
             node_t *node    = new node_t();
             if (node == NULL)
                 return STATUS_NO_MEM;
-            node->type      = JN_STRING;
+
             node->refs      = 1;
-            node->sValue    = new LSPString;
+            node->type      = JN_STRING;
+            node->sValue    = new LSPString();
             if (node->sValue == NULL)
             {
                 delete node;
@@ -62,8 +63,9 @@ namespace lsp
             node_t *node    = new node_t();
             if (node == NULL)
                 return STATUS_NO_MEM;
-            node->type      = JN_STRING;
+
             node->refs      = 1;
+            node->type      = JN_STRING;
             node->sValue    = value->clone();
             if (node->sValue == NULL)
             {
@@ -85,8 +87,9 @@ namespace lsp
             node_t *node    = new node_t();
             if (node == NULL)
                 return STATUS_NO_MEM;
-            node->type      = JN_STRING;
+
             node->refs      = 1;
+            node->type      = JN_STRING;
             node->sValue    = new LSPString();
             if (node->sValue == NULL)
             {
@@ -104,6 +107,18 @@ namespace lsp
             pNode           = node;
 
             return STATUS_OK;
+        }
+
+        String *String::allocate()
+        {
+            String *res = new String();
+            if (res == NULL)
+                return NULL;
+            else if (res->create() == STATUS_OK)
+                return res;
+
+            delete res;
+            return NULL;
         }
 
         String *String::allocate(const LSPString *value)
@@ -134,6 +149,27 @@ namespace lsp
 
             delete res;
             return NULL;
+        }
+
+        String String::build()
+        {
+            String res;
+            res.create();
+            return res;
+        }
+
+        String String::build(const LSPString *value)
+        {
+            String res;
+            res.create(value);
+            return res;
+        }
+
+        String String::build(const char *value, const char *charset)
+        {
+            String res;
+            res.create(value, charset);
+            return res;
         }
 
         status_t String::get(LSPString *dst) const

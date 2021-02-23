@@ -98,9 +98,9 @@ namespace lsp
                 Node(node_t *node);
 
             public:
-                inline Node()                               { pNode = NULL;                                                 }
-                inline Node(const Node &src)                { copy_ref(&src);                                               }
-                inline Node(const Node *src)                { copy_ref(src);                                                }
+                inline Node()                               { pNode = NULL;                 }
+                Node(const Node &src);
+                Node(const Node *src);
                 virtual ~Node();
 
             public:
@@ -128,9 +128,12 @@ namespace lsp
 
                 virtual status_t    create();
 
+                static Node         build();
+
                 static Node        *allocate();
 
                 inline void         undef()         { undef_node(pNode);                                            }
+                inline void         set_null()      { undef_node(pNode);                                            }
         };
     }
 }

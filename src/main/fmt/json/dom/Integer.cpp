@@ -43,14 +43,10 @@ namespace lsp
             node_t *node    = new node_t();
             if (node == NULL)
                 return STATUS_NO_MEM;
-            node->type      = JN_INT;
+
             node->refs      = 1;
+            node->type      = JN_INT;
             node->nValue    = value;
-            if (node->pObject == NULL)
-            {
-                delete node;
-                return STATUS_NO_MEM;
-            }
 
             release_ref(pNode);
             pNode           = node;
@@ -68,6 +64,13 @@ namespace lsp
 
             delete res;
             return NULL;
+        }
+
+        Integer Integer::build(ssize_t value)
+        {
+            Integer res;
+            res.create(value);
+            return res;
         }
 
         ssize_t Integer::get() const

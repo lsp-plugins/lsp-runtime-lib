@@ -55,6 +55,8 @@ namespace lsp
 
                 static Integer     *allocate(ssize_t value = 0);
 
+                static Integer      build(ssize_t value = 0);
+
             public:
                 /**
                  * Try to cast value to integer and return the casted value

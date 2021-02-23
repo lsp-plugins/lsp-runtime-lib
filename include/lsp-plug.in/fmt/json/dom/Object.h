@@ -53,6 +53,8 @@ namespace lsp
 
                 static Object      *allocate();
 
+                static Object       build();
+
             public:
                 size_t      size() const;
                 size_t      capacity() const;
@@ -66,8 +68,11 @@ namespace lsp
                 status_t    remove(const char *field);
                 status_t    remove(const LSPString *field);
 
-                status_t    set(const char *field, Node *node);
-                status_t    set(const LSPString *field, Node *node);
+                status_t    set(const char *field, const Node *node);
+                status_t    set(const LSPString *field, const Node *node);
+
+                status_t    set(const char *field, const Node &node);
+                status_t    set(const LSPString *field, const Node &node);
 
                 status_t    fields(lltl::parray<LSPString> *list);
         };

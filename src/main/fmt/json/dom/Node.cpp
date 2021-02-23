@@ -29,9 +29,21 @@ namespace lsp
     {
         Node::Node(node_t *node)
         {
+            pNode       = node;
             if (node != NULL)
                 node->refs++;
-            pNode       = node;
+        }
+
+        Node::Node(const Node &src)
+        {
+            pNode       = NULL;
+            copy_ref(&src);
+        }
+
+        Node::Node(const Node *src)
+        {
+            pNode       = NULL;
+            copy_ref(src);
         }
 
         Node::~Node()
@@ -48,14 +60,22 @@ namespace lsp
             node_t *node    = new node_t();
             if (node == NULL)
                 return STATUS_NO_MEM;
-            node->type      = JN_NULL;
+
             node->refs      = 1;
+            node->type      = JN_NULL;
             node->pData     = NULL;
 
             release_ref(pNode);
             pNode           = node;
 
             return STATUS_OK;
+        }
+
+        Node Node::build()
+        {
+            Node res;
+            res.create();
+            return res;
         }
 
         Node *Node::allocate()
@@ -81,9 +101,7 @@ namespace lsp
             node_t *ref = src->make_ref();
 
             // Release self reference and replace with new one
-            if (pNode != NULL)
-                release_ref(pNode);
-
+            release_ref(pNode);
             pNode       = ref;
         }
 
@@ -172,6 +190,9 @@ namespace lsp
                     break;
                 }
             }
+
+            // Clear type
+            node->type  = JN_NULL;
         }
 
         Node::node_t *Node::clear_node(node_t *node)
@@ -557,6 +578,7 @@ namespace lsp
 
             return STATUS_OK;
         }
+
     }
 }
 

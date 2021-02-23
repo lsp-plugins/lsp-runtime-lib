@@ -55,6 +55,8 @@ namespace lsp
 
                 static Double      *allocate(double value = 0.0);
 
+                static Double       build(double value = 0.0);
+
             public:
                 /**
                  * Try to cast value to Double and return the casted value
