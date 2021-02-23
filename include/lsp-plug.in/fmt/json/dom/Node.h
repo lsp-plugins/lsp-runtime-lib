@@ -124,7 +124,13 @@ namespace lsp
                 bool of_type(node_type_t type) const;
 
             public:
-                virtual bool valid() const          { return true;                                                  }
+                virtual bool        valid() const   { return true;                                                  }
+
+                virtual status_t    create();
+
+                static Node        *allocate();
+
+                inline void         undef()         { undef_node(pNode);                                            }
         };
     }
 }

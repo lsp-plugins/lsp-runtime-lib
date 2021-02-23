@@ -33,6 +33,42 @@ namespace lsp
             return is_int();
         }
 
+        status_t Boolean::create()
+        {
+            return Boolean::create(false);
+        }
+
+        status_t Boolean::create(bool value)
+        {
+            node_t *node    = new node_t();
+            if (node == NULL)
+                return STATUS_NO_MEM;
+            node->type      = JN_BOOL;
+            node->bValue    = value;
+            if (node->pObject == NULL)
+            {
+                delete node;
+                return STATUS_NO_MEM;
+            }
+
+            release_ref(pNode);
+            pNode           = node;
+
+            return STATUS_OK;
+        }
+
+        Boolean *Boolean::allocate(bool value)
+        {
+            Boolean *res = new Boolean();
+            if (res == NULL)
+                return NULL;
+            else if (res->create(value) == STATUS_OK)
+                return res;
+
+            delete res;
+            return NULL;
+        }
+
         bool Boolean::get() const
         {
             if (pNode == NULL)

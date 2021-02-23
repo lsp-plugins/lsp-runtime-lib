@@ -47,7 +47,13 @@ namespace lsp
                 Integer &assign(const Node *src)        { copy_ref(src); return *this;  }
 
             public:
-                virtual bool valid() const;
+                virtual bool        valid() const;
+
+                virtual status_t    create();
+
+                status_t            create(ssize_t value);
+
+                static Integer     *allocate(ssize_t value = 0);
 
             public:
                 /**

@@ -47,7 +47,15 @@ namespace lsp
                 String &assign(const Node *src)        { copy_ref(src); return *this;  }
 
             public:
-                virtual bool valid() const;
+                virtual bool        valid() const;
+
+                virtual status_t    create();
+
+                status_t            create(const LSPString *value);
+                status_t            create(const char *value, const char *charset = NULL);
+
+                static String      *allocate(const LSPString *value);
+                static String      *allocate(const char *value, const char *charset = NULL);
 
             public:
                 /**

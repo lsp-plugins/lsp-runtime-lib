@@ -47,7 +47,13 @@ namespace lsp
                 Boolean &assign(const Node *src)        { copy_ref(src); return *this;  }
 
             public:
-                virtual bool valid() const;
+                virtual bool        valid() const;
+
+                virtual status_t    create();
+
+                status_t            create(bool value);
+
+                static Boolean     *allocate(bool value = false);
 
             public:
                 /**

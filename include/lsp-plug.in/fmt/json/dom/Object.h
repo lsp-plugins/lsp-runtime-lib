@@ -47,7 +47,11 @@ namespace lsp
                 Object &assign(const Node *src)         { copy_ref(src); return *this;  }
 
             public:
-                virtual bool valid() const;
+                virtual bool        valid() const;
+
+                virtual status_t    create();
+
+                static Object      *allocate();
 
             public:
                 size_t      size() const;

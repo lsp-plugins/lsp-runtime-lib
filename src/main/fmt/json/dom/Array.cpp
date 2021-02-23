@@ -33,6 +33,37 @@ namespace lsp
             return is_array();
         }
 
+        status_t Array::create()
+        {
+            node_t *node    = new node_t();
+            if (node == NULL)
+                return STATUS_NO_MEM;
+            node->type      = JN_ARRAY;
+            node->pArray    = new lltl::parray<node_t>();
+            if (node->pArray == NULL)
+            {
+                delete node;
+                return STATUS_NO_MEM;
+            }
+
+            release_ref(pNode);
+            pNode           = node;
+
+            return STATUS_OK;
+        }
+
+        Array *Array::allocate()
+        {
+            Array *res = new Array();
+            if (res == NULL)
+                return NULL;
+            else if (res->create() == STATUS_OK)
+                return res;
+
+            delete res;
+            return NULL;
+        }
+
         size_t Array::size() const
         {
             return (is_array()) ? pNode->pArray->size() : 0;

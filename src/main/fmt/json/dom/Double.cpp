@@ -33,6 +33,42 @@ namespace lsp
             return is_int();
         }
 
+        status_t Double::create()
+        {
+            return Double::create(0.0);
+        }
+
+        status_t Double::create(double value)
+        {
+            node_t *node    = new node_t();
+            if (node == NULL)
+                return STATUS_NO_MEM;
+            node->type      = JN_DOUBLE;
+            node->fValue    = value;
+            if (node->pObject == NULL)
+            {
+                delete node;
+                return STATUS_NO_MEM;
+            }
+
+            release_ref(pNode);
+            pNode           = node;
+
+            return STATUS_OK;
+        }
+
+        Double *Double::allocate(double value)
+        {
+            Double *res = new Double();
+            if (res == NULL)
+                return NULL;
+            else if (res->create(value) == STATUS_OK)
+                return res;
+
+            delete res;
+            return NULL;
+        }
+
         ssize_t Double::get() const
         {
             if (pNode == NULL)

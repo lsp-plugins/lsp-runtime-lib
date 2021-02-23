@@ -47,7 +47,13 @@ namespace lsp
                 Double &assign(const Node *src)         { copy_ref(src); return *this;  }
 
             public:
-                virtual bool valid() const;
+                virtual bool        valid() const;
+
+                virtual status_t    create();
+
+                status_t            create(double value);
+
+                static Double      *allocate(double value = 0.0);
 
             public:
                 /**

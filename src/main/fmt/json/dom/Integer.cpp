@@ -33,6 +33,42 @@ namespace lsp
             return is_int();
         }
 
+        status_t Integer::create()
+        {
+            return Integer::create(0);
+        }
+
+        status_t Integer::create(ssize_t value)
+        {
+            node_t *node    = new node_t();
+            if (node == NULL)
+                return STATUS_NO_MEM;
+            node->type      = JN_INT;
+            node->nValue    = value;
+            if (node->pObject == NULL)
+            {
+                delete node;
+                return STATUS_NO_MEM;
+            }
+
+            release_ref(pNode);
+            pNode           = node;
+
+            return STATUS_OK;
+        }
+
+        Integer *Integer::allocate(ssize_t value)
+        {
+            Integer *res = new Integer();
+            if (res == NULL)
+                return NULL;
+            else if (res->create(value) == STATUS_OK)
+                return res;
+
+            delete res;
+            return NULL;
+        }
+
         ssize_t Integer::get() const
         {
             if (pNode == NULL)

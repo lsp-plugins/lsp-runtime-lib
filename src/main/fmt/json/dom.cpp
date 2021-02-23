@@ -41,61 +41,31 @@ namespace lsp
 
         status_t dom_parse_item(Node **dst, lltl::parray<Node> *stack, const event_t *ev)
         {
-            status_t res;
             Node *out = NULL;
 
             switch (ev->type)
             {
                 case JE_OBJECT_START:
-                {
-                    json::Object jo;
-                    out     = new Node(jo);
+                    out     = json::Object::allocate();
                     break;
-                }
                 case JE_ARRAY_START:
-                {
-                    json::Array ja;
-                    out     = new Node(ja);
+                    out     = json::Array::allocate();
                     break;
-                }
-
                 case JE_STRING:
-                {
-                    json::String js;
-                    if ((res = js.set(&ev->sValue)) != STATUS_OK)
-                        return res;
-                    out     = new Node(js);
+                    out     = json::String::allocate(&ev->sValue);
                     break;
-                }
-
                 case JE_INTEGER:
-                {
-                    json::Integer ji;
-                    ji.set(ev->iValue);
-                    out     = new Node(ji);
+                    out     = json::Integer::allocate(ev->iValue);
                     break;
-                }
-
                 case JE_DOUBLE:
-                {
-                    json::Double jd;
-                    jd.set(ev->fValue);
-                    out     = new Node(jd);
+                    out     = json::Double::allocate(ev->fValue);
                     break;
-                }
-
                 case JE_BOOL:
-                {
-                    json::Boolean jb;
-                    jb.set(ev->bValue);
-                    out     = new Node(jb);
+                    out     = json::Boolean::allocate(ev->bValue);
                     break;
-                }
-
                 case JE_NULL:
-                    out     = new Node();
+                    out     = json::Node::allocate();
                     break;
-
                 default:
                     return STATUS_BAD_FORMAT;
             }

@@ -43,6 +43,32 @@ namespace lsp
             }
         }
 
+        status_t Node::create()
+        {
+            node_t *node    = new node_t();
+            if (node == NULL)
+                return STATUS_NO_MEM;
+            node->type      = JN_NULL;
+            node->pData     = NULL;
+
+            release_ref(pNode);
+            pNode           = node;
+
+            return STATUS_OK;
+        }
+
+        Node *Node::allocate()
+        {
+            Node *res = new Node();
+            if (res == NULL)
+                return NULL;
+            else if (res->create() == STATUS_OK)
+                return res;
+
+            delete res;
+            return NULL;
+        }
+
         void Node::copy_ref(const Node *src)
         {
             if (this == src)
@@ -73,6 +99,9 @@ namespace lsp
                 return NULL;
 
             pNode->refs = 2; // self and exported
+            pNode->type = JN_NULL;
+            pNode->pData= NULL;
+
             return pNode;
         }
 

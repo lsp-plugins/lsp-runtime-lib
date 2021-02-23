@@ -33,6 +33,37 @@ namespace lsp
             return is_object();
         }
 
+        status_t Object::create()
+        {
+            node_t *node    = new node_t();
+            if (node == NULL)
+                return STATUS_NO_MEM;
+            node->type      = JN_OBJECT;
+            node->pObject   = new lltl::pphash<LSPString, node_t>();
+            if (node->pObject == NULL)
+            {
+                delete node;
+                return STATUS_NO_MEM;
+            }
+
+            release_ref(pNode);
+            pNode           = node;
+
+            return STATUS_OK;
+        }
+
+        Object *Object::allocate()
+        {
+            Object *res = new Object();
+            if (res == NULL)
+                return NULL;
+            else if (res->create() == STATUS_OK)
+                return res;
+
+            delete res;
+            return NULL;
+        }
+
         size_t Object::size() const
         {
             return (is_object()) ? pNode->pObject->size() : 0;

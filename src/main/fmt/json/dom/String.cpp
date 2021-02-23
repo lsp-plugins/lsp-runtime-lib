@@ -34,6 +34,105 @@ namespace lsp
             return is_string();
         }
 
+        status_t String::create()
+        {
+            node_t *node    = new node_t();
+            if (node == NULL)
+                return STATUS_NO_MEM;
+            node->type      = JN_STRING;
+            node->sValue    = new LSPString;
+            if (node->sValue == NULL)
+            {
+                delete node;
+                return STATUS_NO_MEM;
+            }
+
+            release_ref(pNode);
+            pNode           = node;
+
+            return STATUS_OK;
+        }
+
+        status_t String::create(const LSPString *value)
+        {
+            if (value == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            node_t *node    = new node_t();
+            if (node == NULL)
+                return STATUS_NO_MEM;
+            node->type      = JN_STRING;
+            node->sValue    = value->clone();
+            if (node->sValue == NULL)
+            {
+                delete node;
+                return STATUS_NO_MEM;
+            }
+
+            release_ref(pNode);
+            pNode           = node;
+
+            return STATUS_OK;
+        }
+
+        status_t String::create(const char *value, const char *charset)
+        {
+            if (value == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            node_t *node    = new node_t();
+            if (node == NULL)
+                return STATUS_NO_MEM;
+            node->type      = JN_STRING;
+            node->sValue    = new LSPString();
+            if (node->sValue == NULL)
+            {
+                delete node;
+                return STATUS_NO_MEM;
+            }
+            if (!node->sValue->set_native(value, charset))
+            {
+                delete node->sValue;
+                delete node;
+                return STATUS_NO_MEM;
+            }
+
+            release_ref(pNode);
+            pNode           = node;
+
+            return STATUS_OK;
+        }
+
+        String *String::allocate(const LSPString *value)
+        {
+            if (value == NULL)
+                return NULL;
+
+            String *res = new String();
+            if (res == NULL)
+                return NULL;
+            else if (res->create(value) == STATUS_OK)
+                return res;
+
+            delete res;
+            return NULL;
+        }
+
+        String *String::allocate(const char *value, const char *charset)
+        {
+            if (value == NULL)
+                return NULL;
+
+            String *res = new String();
+            if (res == NULL)
+                return NULL;
+            else if (res->create(value, charset) == STATUS_OK)
+                return res;
+
+            delete res;
+            return NULL;
+        }
+
         status_t String::get(LSPString *dst) const
         {
             if (dst == NULL)
