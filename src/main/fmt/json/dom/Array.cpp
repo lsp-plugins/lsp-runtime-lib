@@ -39,6 +39,7 @@ namespace lsp
             if (node == NULL)
                 return STATUS_NO_MEM;
             node->type      = JN_ARRAY;
+            node->refs      = 1;
             node->pArray    = new lltl::parray<node_t>();
             if (node->pArray == NULL)
             {

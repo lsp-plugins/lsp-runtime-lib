@@ -49,6 +49,7 @@ namespace lsp
             if (node == NULL)
                 return STATUS_NO_MEM;
             node->type      = JN_NULL;
+            node->refs      = 1;
             node->pData     = NULL;
 
             release_ref(pNode);

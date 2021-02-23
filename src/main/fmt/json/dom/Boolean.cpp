@@ -44,6 +44,7 @@ namespace lsp
             if (node == NULL)
                 return STATUS_NO_MEM;
             node->type      = JN_BOOL;
+            node->refs      = 1;
             node->bValue    = value;
             if (node->pObject == NULL)
             {

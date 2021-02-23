@@ -39,6 +39,7 @@ namespace lsp
             if (node == NULL)
                 return STATUS_NO_MEM;
             node->type      = JN_OBJECT;
+            node->refs      = 1;
             node->pObject   = new lltl::pphash<LSPString, node_t>();
             if (node->pObject == NULL)
             {

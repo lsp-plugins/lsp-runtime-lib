@@ -40,6 +40,7 @@ namespace lsp
             if (node == NULL)
                 return STATUS_NO_MEM;
             node->type      = JN_STRING;
+            node->refs      = 1;
             node->sValue    = new LSPString;
             if (node->sValue == NULL)
             {
@@ -62,6 +63,7 @@ namespace lsp
             if (node == NULL)
                 return STATUS_NO_MEM;
             node->type      = JN_STRING;
+            node->refs      = 1;
             node->sValue    = value->clone();
             if (node->sValue == NULL)
             {
@@ -84,6 +86,7 @@ namespace lsp
             if (node == NULL)
                 return STATUS_NO_MEM;
             node->type      = JN_STRING;
+            node->refs      = 1;
             node->sValue    = new LSPString();
             if (node->sValue == NULL)
             {
