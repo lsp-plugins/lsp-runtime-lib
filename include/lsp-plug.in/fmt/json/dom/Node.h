@@ -33,6 +33,13 @@ namespace lsp
 {
     namespace json
     {
+        class Array;
+        class Boolean;
+        class Double;
+        class Integer;
+        class Object;
+        class String;
+
         /**
          * Generalized JSON node
          */
@@ -124,6 +131,14 @@ namespace lsp
                 bool of_type(node_type_t type) const;
 
             public:
+                Integer             as_int() const;
+                Double              as_double() const;
+                Boolean             as_bool() const;
+                String              as_string() const;
+                Array               as_array() const;
+                Object              as_object() const;
+
+            public:
                 virtual bool        valid() const   { return true;                                                  }
 
                 virtual status_t    create();
@@ -138,5 +153,11 @@ namespace lsp
     }
 }
 
+#include <lsp-plug.in/fmt/json/dom/Integer.h>
+#include <lsp-plug.in/fmt/json/dom/Double.h>
+#include <lsp-plug.in/fmt/json/dom/Boolean.h>
+#include <lsp-plug.in/fmt/json/dom/String.h>
+#include <lsp-plug.in/fmt/json/dom/Array.h>
+#include <lsp-plug.in/fmt/json/dom/Object.h>
 
 #endif /* LSP_PLUG_IN_FMT_JSON_DOM_NODE_H_ */

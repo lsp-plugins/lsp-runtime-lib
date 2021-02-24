@@ -118,18 +118,10 @@ namespace lsp
 
         void Serializer::copy_settings(const serial_flags_t *flags)
         {
-            if (flags != NULL)
-            {
+            if (flags == NULL)
+                init_serial_flags(&sSettings);
+            else
                 sSettings       = *flags;
-                return;
-            }
-
-            sSettings.version           = JSON_LEGACY;
-            sSettings.identifiers       = false;
-            sSettings.ident             = ' ';
-            sSettings.padding           = 0;
-            sSettings.separator         = false;
-            sSettings.multiline         = false;
         }
 
         status_t Serializer::wrap(LSPString *str, const serial_flags_t *settings)
@@ -387,7 +379,8 @@ namespace lsp
                 return (value < 0.0) ? write_raw("-Infinity", 9) : write_raw("Infinity", 8);
 
             char buf[0x20];
-            int len = ::snprintf(buf, sizeof(buf), "%f", value);
+            const char *fmt = (sSettings.fmt_double != NULL) ? sSettings.fmt_double : "%f";
+            int len = ::snprintf(buf, sizeof(buf), fmt, value);
             return (len < int(sizeof(buf))) ? write_raw(buf, len) : STATUS_OVERFLOW;
         }
 

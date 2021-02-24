@@ -23,6 +23,34 @@
 #include <lsp-plug.in/test-fw/helpers.h>
 #include <lsp-plug.in/fmt/json/dom.h>
 
+namespace
+{
+    static const char *serialized=
+        "{"
+            "\"array\":"
+            "["
+                "null" ","
+                "32" ","
+                "-20.0" ","
+                "true" ","
+                "\"array\""
+            "]" ","
+            "\"bool\":" "true" ","
+            "\"float\":" "440.0" ","
+            "\"int\":" "42" ","
+            "\"null\":" "null" ","
+            "\"object\":"
+            "{"
+                "\"bv\":" "false" ","
+                "\"fv\":" "123.0" ","
+                "\"iv\":" "10" ","
+                "\"nv\":" "null" ","
+                "\"sv\":" "\"string\""
+            "}" ","
+            "\"str\":" "\"test\""
+        "}";
+}
+
 UTEST_BEGIN("runtime.fmt.json", dom)
 
     void create_object(json::Node &node)
@@ -174,7 +202,7 @@ UTEST_BEGIN("runtime.fmt.json", dom)
 
     void test_create_object()
     {
-        printf("Testing JSON object creation");
+        printf("Testing JSON object creation\n");
 
         json::Node node;
         create_object(node);
@@ -183,7 +211,7 @@ UTEST_BEGIN("runtime.fmt.json", dom)
 
     void test_change_object()
     {
-        printf("Testing JSON object modification");
+        printf("Testing JSON object modification\n");
 
         LSPString str;
 
@@ -311,10 +339,74 @@ UTEST_BEGIN("runtime.fmt.json", dom)
         UTEST_ASSERT(iv.get() == 100500);
     }
 
+    void test_string_serialize()
+    {
+        json::Node obj;
+        LSPString out;
+        json::serial_flags_t settings;
+
+        printf("Testing JSON object to string serialization\n");
+
+        json::init_serial_flags(&settings);
+        settings.fmt_double = "%.1f";
+        create_object(obj);
+
+        UTEST_ASSERT(json::dom_write(&out, &obj, &settings) == STATUS_OK);
+        printf("Expected:   %s\n", serialized);
+        printf("Serialized: %s\n", out.get_native());
+        UTEST_ASSERT(out.equals_ascii(serialized));
+    }
+
+    void test_string_deserialize()
+    {
+        json::Node obj;
+
+        printf("Testing JSON string to object to deserialization\n");
+        UTEST_ASSERT(json::dom_parse(serialized, &obj, json::JSON_LEGACY) == STATUS_OK);
+        validate_object(obj);
+    }
+
+    void test_file_serialization()
+    {
+        json::Node obj1;
+        json::Node obj2;
+        LSPString out;
+        json::serial_flags_t settings;
+        io::Path path;
+
+        printf("Testing JSON object to file serialization\n");
+
+        UTEST_ASSERT(path.fmt("%s/%s.json", tempdir(), full_name()) > 0);
+
+        // Serialize file
+        json::init_serial_flags(&settings);
+        settings.fmt_double = "%.2f";
+        settings.padding = '\t';
+        settings.multiline = true;
+        settings.separator = true;
+        create_object(obj1);
+
+        UTEST_ASSERT(json::dom_save(&path, &obj1, &settings, "UTF-8") == STATUS_OK);
+        printf("  saved JSON to file: %s\n", path.as_native());
+
+        // Validate
+        validate_object(obj1);
+
+        // Deserialize file
+        UTEST_ASSERT(json::dom_load(&path, &obj2, json::JSON_LEGACY, "UTF-8") == STATUS_OK);
+        printf("  loaded JSON from file: %s\n", path.as_native());
+
+        // Validate
+        validate_object(obj2);
+    }
+
     UTEST_MAIN
     {
         test_create_object();
         test_change_object();
+        test_string_serialize();
+        test_string_deserialize();
+        test_file_serialization();
     }
 UTEST_END
 

@@ -579,6 +579,35 @@ namespace lsp
             return STATUS_OK;
         }
 
+        Integer Node::as_int() const
+        {
+            return Integer(this);
+        }
+
+        Double Node::as_double() const
+        {
+            return Double(this);
+        }
+
+        Boolean Node::as_bool() const
+        {
+            return Boolean(this);
+        }
+
+        String Node::as_string() const
+        {
+            return String(this);
+        }
+
+        Array Node::as_array() const
+        {
+            return Array(this);
+        }
+
+        Object Node::as_object() const
+        {
+            return Object(this);
+        }
     }
 }
 
