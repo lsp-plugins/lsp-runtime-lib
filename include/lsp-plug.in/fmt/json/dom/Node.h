@@ -126,6 +126,7 @@ namespace lsp
                 inline bool is_object() const       { return (pNode != NULL) && (pNode->type == JN_OBJECT);         }
                 inline bool is_array() const        { return (pNode != NULL) && (pNode->type == JN_ARRAY);          }
                 inline node_type_t type() const     { return (pNode != NULL) ? pNode->type : JN_NULL;               }
+                const char        *stype() const;
                 bool of_type(const Node *src) const;
                 bool of_type(const Node &src) const;
                 bool of_type(node_type_t type) const;

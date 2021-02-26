@@ -608,6 +608,24 @@ namespace lsp
         {
             return Object(this);
         }
+
+        const char *Node::stype() const
+        {
+            size_t type = (pNode == NULL) ? JN_NULL : pNode->type;
+            switch (type)
+            {
+                case JN_NULL:   return "NULL";
+                case JN_INT:    return "INT";
+                case JN_DOUBLE: return "DOUBLE";
+                case JN_BOOL:   return "BOOL";
+                case JN_STRING: return "STRING";
+                case JN_ARRAY:  return "ARRAY";
+                case JN_OBJECT: return "OBJECT";
+                default: break;
+            }
+
+            return "UNKNOWN (corrupted)";
+        }
     }
 }
 
