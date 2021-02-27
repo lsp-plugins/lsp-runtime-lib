@@ -20,6 +20,7 @@
  */
 
 #include <lsp-plug.in/io/File.h>
+#include <lsp-plug.in/io/NativeFile.h>
 #include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/stdlib/stdio.h>
 
@@ -608,5 +609,150 @@ namespace lsp
             return STATUS_IO_ERROR;
         }
 
+        wssize_t File::copy(const char *from, const char *to, size_t io_buf_size)
+        {
+            if ((from == NULL) || (to == NULL))
+                return -STATUS_BAD_ARGUMENTS;
+
+            LSPString f, t;
+            if (!f.set_utf8(from))
+                return -STATUS_NO_MEM;
+            if (!t.set_utf8(to))
+                return -STATUS_NO_MEM;
+            return copy(&f, &t, io_buf_size);
+        }
+
+        wssize_t File::copy(const LSPString *from, const char *to, size_t io_buf_size)
+        {
+            if ((from == NULL) || (to == NULL))
+                return -STATUS_BAD_ARGUMENTS;
+
+            LSPString t;
+            if (!t.set_utf8(to))
+                return -STATUS_NO_MEM;
+            return copy(from, &t, io_buf_size);
+        }
+
+        wssize_t File::copy(const Path *from, const char *to, size_t io_buf_size)
+        {
+            if ((from == NULL) || (to == NULL))
+                return -STATUS_BAD_ARGUMENTS;
+
+            LSPString t;
+            if (!t.set_utf8(to))
+                return -STATUS_NO_MEM;
+            return copy(from->as_string(), &t, io_buf_size);
+        }
+
+        wssize_t File::copy(const char *from, const LSPString *to, size_t io_buf_size)
+        {
+            if ((from == NULL) || (to == NULL))
+                return -STATUS_BAD_ARGUMENTS;
+
+            LSPString f;
+            if (!f.set_native(from))
+                return -STATUS_NO_MEM;
+            return copy(&f, to, io_buf_size);
+        }
+
+        wssize_t File::copy(const Path *from, const LSPString *to, size_t io_buf_size)
+        {
+            if ((from == NULL) || (to == NULL))
+                return -STATUS_BAD_ARGUMENTS;
+            return copy(from->as_string(), to, io_buf_size);
+        }
+
+        wssize_t File::copy(const char *from, const Path *to, size_t io_buf_size)
+        {
+            if ((from == NULL) || (to == NULL))
+                return -STATUS_BAD_ARGUMENTS;
+
+            LSPString f;
+            if (!f.set_utf8(from))
+                return -STATUS_NO_MEM;
+            return copy(&f, to->as_string(), io_buf_size);
+        }
+
+        wssize_t File::copy(const LSPString *from, const Path *to, size_t io_buf_size)
+        {
+            if ((from == NULL) || (to == NULL))
+                return -STATUS_BAD_ARGUMENTS;
+
+            return copy(from, to->as_string(), io_buf_size);
+        }
+
+        wssize_t File::copy(const Path *from, const Path *to, size_t io_buf_size)
+        {
+            if ((from == NULL) || (to == NULL))
+                return -STATUS_BAD_ARGUMENTS;
+
+            return copy(from->as_string(), to->as_string(), io_buf_size);
+        }
+
+        wssize_t File::copy(const LSPString *from, const LSPString *to, size_t io_buf_size)
+        {
+            io::NativeFile src, dst;
+            status_t res = STATUS_OK, xres;
+            ssize_t copied = 0;
+
+            // Open source file
+            if ((res = src.open(from, File::FM_READ)) == STATUS_OK)
+            {
+                // Open destination file
+                if ((res = dst.open(to, File::FM_READWRITE_NEW)) == STATUS_OK)
+                {
+                    // Allocate I/O buffer
+                    io_buf_size     = lsp_max(io_buf_size, 0x100U);
+                    uint8_t *buf    = static_cast<uint8_t *>(malloc(io_buf_size));
+                    if (buf != NULL)
+                    {
+                        // Perform copy
+                        do
+                        {
+                            // Read block
+                            ssize_t nread = src.read(buf, io_buf_size);
+                            if (nread < 0)
+                            {
+                                res = (nread == -STATUS_EOF) ? STATUS_OK : -nread;
+                                break;
+                            }
+
+                            // Write block to destination file
+                            for (ssize_t i=0; i<nread; ++i)
+                            {
+                                ssize_t nwritten = dst.write(&buf[i], nread - i);
+                                if (nwritten < 0)
+                                {
+                                    res     = - nwritten;
+                                    break;
+                                }
+
+                                i += nwritten;
+                            }
+
+                            // Update number of copied bytes
+                            copied     += nread;
+                        } while (res == STATUS_OK);
+
+                        // Free allocated buffer
+                        free(buf);
+                    }
+                    else
+                        res = STATUS_NO_MEM;
+
+                    // Close destination file
+                    xres = dst.close();
+                    if (res == STATUS_OK)
+                        res = xres;
+                }
+
+                // Close source file
+                xres = src.close();
+                if (res == STATUS_OK)
+                    res = xres;
+            }
+
+            return (res == STATUS_OK) ? copied : -res;
+        }
     } /* namespace io */
 } /* namespace lsp */

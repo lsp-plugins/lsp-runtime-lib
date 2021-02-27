@@ -4,6 +4,7 @@
 
 === 0.5.8 ===
 * Added support of DOM parsing and serializing for JSON files.
+* Added io::File::copy methods for copying files.
 
 === 0.5.7 ===
 * Added system::get_localtime function.

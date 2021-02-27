@@ -20,6 +20,7 @@
  */
 
 #include <lsp-plug.in/test-fw/utest.h>
+#include <lsp-plug.in/test-fw/ByteBuffer.h>
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/stdlib/string.h>
 #include <lsp-plug.in/io/StdioFile.h>
@@ -348,6 +349,57 @@ UTEST_BEGIN("runtime.io", file)
             checkFile(&prefix, i, i+1);
     }
 
+    void testCopy()
+    {
+        printf("Testing file copy...\n");
+
+        ssize_t res, nread;
+        io::Path dst, src;
+        io::NativeFile in, out;
+        UTEST_ASSERT(src.fmt("%s/utest-%s-copy-src.bin", tempdir(), full_name()) > 0);
+        UTEST_ASSERT(dst.fmt("%s/utest-%s-copy-dst.bin", tempdir(), full_name()) > 0);
+
+        // Generate source file
+        printf("  generating source file...\n");
+        ByteBuffer buf1(0x1000), buf2(0x1000);
+        UTEST_ASSERT(in.open(&src, io::File::FM_READWRITE_NEW) == STATUS_OK);
+        wssize_t written = 0;
+
+        for (size_t i=0; i<0x100; ++i)
+        {
+            buf1.randomize();
+            UTEST_ASSERT(in.write(buf1.data(), buf1.size()) == ssize_t(buf1.size()));
+            written    += buf1.size();
+        }
+
+        UTEST_ASSERT(in.flush() == STATUS_OK);
+
+        // Copy the file
+        printf("  copying output file...\n");
+        UTEST_ASSERT(io::File::copy(&src, &dst, 0x1234) == written);
+
+        // Validate the file
+        printf("  verifying file contents...\n");
+        UTEST_ASSERT(in.seek(0, io::File::FSK_SET) == STATUS_OK);
+        UTEST_ASSERT(out.open(&dst, io::File::FM_READ) == STATUS_OK);
+
+        wssize_t copied = 0;
+        while ((res = in.read(buf1.data(), buf1.size())) >= 0)
+        {
+            nread = out.read(buf2.data(), res);
+            UTEST_ASSERT(nread == res);
+            UTEST_ASSERT(buf1.equals(buf2.data(), res));
+
+            copied += nread;
+        }
+        UTEST_ASSERT(res == -STATUS_EOF);
+        UTEST_ASSERT(in.close() == STATUS_OK);
+        UTEST_ASSERT(out.close() == STATUS_OK);
+        UTEST_ASSERT(copied == written);
+
+        printf("  all is ok, %d bytes copied\n", written);
+    }
+
     UTEST_MAIN
     {
         LSPString path;
@@ -383,6 +435,9 @@ UTEST_BEGIN("runtime.io", file)
 
         // Test rename and delete
         testRenameDelete();
+
+        // Test file copy
+        testCopy();
     }
 
 UTEST_END
