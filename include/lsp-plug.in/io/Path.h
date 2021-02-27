@@ -196,6 +196,8 @@ namespace lsp
                 bool            is_socket() const;
                 status_t        mkdir() const;
                 status_t        mkdir(bool recursive) const;
+                status_t        mkparent() const;
+                status_t        mkparent(bool recursive) const;
                 status_t        remove() const;
 
                 status_t        rename(const char *dst) const;

@@ -1217,6 +1217,30 @@ namespace lsp
             return Dir::create(&sPath);
         }
 
+        status_t Path::mkparent() const
+        {
+            io::Path tmp;
+            status_t res;
+            if ((res = tmp.set(this)) != STATUS_OK)
+                return res;
+            if ((res = tmp.remove_last()) != STATUS_OK)
+                return res;
+
+            return tmp.mkdir();
+        }
+
+        status_t Path::mkparent(bool recursive) const
+        {
+            io::Path tmp;
+            status_t res;
+            if ((res = tmp.set(this)) != STATUS_OK)
+                return res;
+            if ((res = tmp.remove_last()) != STATUS_OK)
+                return res;
+
+            return tmp.mkdir(recursive);
+        }
+
         status_t Path::remove() const
         {
             status_t res = File::remove(&sPath);

@@ -754,5 +754,63 @@ namespace lsp
 
             return (res == STATUS_OK) ? copied : -res;
         }
+
+        status_t File::mkparent(const char *path)
+        {
+            io::Path tmp;
+            status_t res;
+            if ((res = tmp.set(path)) != STATUS_OK)
+                return res;
+            if ((res = tmp.remove_last()) != STATUS_OK)
+                return res;
+
+            return tmp.mkdir();
+        }
+
+        status_t File::mkparent(const LSPString *path)
+        {
+            io::Path tmp;
+            status_t res;
+            if ((res = tmp.set(path)) != STATUS_OK)
+                return res;
+            if ((res = tmp.remove_last()) != STATUS_OK)
+                return res;
+
+            return tmp.mkdir();
+        }
+
+        status_t File::mkparent(const io::Path *path)
+        {
+            return path->mkparent();
+        }
+
+        status_t File::mkparent(const char *path, bool recursive)
+        {
+            io::Path tmp;
+            status_t res;
+            if ((res = tmp.set(path)) != STATUS_OK)
+                return res;
+            if ((res = tmp.remove_last()) != STATUS_OK)
+                return res;
+
+            return tmp.mkdir(recursive);
+        }
+
+        status_t File::mkparent(const LSPString *path, bool recursive)
+        {
+            io::Path tmp;
+            status_t res;
+            if ((res = tmp.set(path)) != STATUS_OK)
+                return res;
+            if ((res = tmp.remove_last()) != STATUS_OK)
+                return res;
+
+            return tmp.mkdir(recursive);
+        }
+
+        status_t File::mkparent(const io::Path *path, bool recursive)
+        {
+            return path->mkparent(recursive);
+        }
     } /* namespace io */
 } /* namespace lsp */

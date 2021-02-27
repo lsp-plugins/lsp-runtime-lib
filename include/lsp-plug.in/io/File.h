@@ -300,6 +300,19 @@ namespace lsp
                 static wssize_t copy(const char *from, const Path *to, size_t io_buf_size = IO_FILE_DEFAULT_BUF_SIZE);
                 static wssize_t copy(const LSPString *from, const Path *to, size_t io_buf_size = IO_FILE_DEFAULT_BUF_SIZE);
                 static wssize_t copy(const Path *from, const Path *to, size_t io_buf_size = IO_FILE_DEFAULT_BUF_SIZE);
+
+                /**
+                 * Create parent directory
+                 * @param path path to the directory
+                 * @return status of operation
+                 */
+                static status_t mkparent(const char *path);
+                static status_t mkparent(const LSPString *path);
+                static status_t mkparent(const io::Path *path);
+
+                static status_t mkparent(const char *path, bool recursive);
+                static status_t mkparent(const LSPString *path, bool recursive);
+                static status_t mkparent(const io::Path *path, bool recursive);
         };
     
     } /* namespace io */
