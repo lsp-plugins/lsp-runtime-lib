@@ -20,6 +20,7 @@
  */
 
 #include <lsp-plug.in/resource/Compressor.h>
+#include <lsp-plug.in/stdlib/string.h>
 
 namespace lsp
 {
@@ -27,6 +28,9 @@ namespace lsp
     {
         Compressor::Compressor()
         {
+            sRoot.code      = 0;
+            sRoot.next      = NULL;
+            sRoot.child     = NULL;
         }
 
         Compressor::~Compressor()
@@ -58,6 +62,38 @@ namespace lsp
                 res         = res2;
 
             return res;
+        }
+
+        Compressor::node_t *Compressor::add_child(node_t *parent, uint8_t code)
+        {
+            node_t *node    = static_cast<node_t *>(malloc(sizeof(node)));
+            if (node == NULL)
+                return NULL;
+            if (!vNodes.add(node))
+            {
+                free(node);
+                return NULL;
+            }
+
+            // Initialize node and link to parent
+            node->code      = code;
+            node->hits      = 0;
+            node->next      = parent->child;
+            node->child     = NULL;
+            parent->child   = node;
+
+            return node;
+        }
+
+        Compressor::node_t *Compressor::get_child(node_t *parent, uint8_t code)
+        {
+            for (node_t *child = parent->child; child != NULL; child = child->next)
+                if (child->code == code)
+                {
+                    ++child->hits;
+                    return child;
+                }
+            return NULL;
         }
 
         status_t Compressor::alloc_entry(raw_resource_t *r, io::Path *path, resource_type_t type)
@@ -105,6 +141,7 @@ namespace lsp
                     found->type     = type;
                     found->parent   = index;
                     found->offset   = 0;
+                    found->length   = 0;
                     found->name     = item.clone_utf8();
 
                     if (found->name == NULL)
@@ -122,6 +159,7 @@ namespace lsp
                         found->type     = RES_DIR;
                         found->parent   = index;
                         found->offset   = 0;
+                        found->length   = 0;
                         found->name     = item.clone_utf8();
 
                         if (found->name == NULL)
@@ -134,8 +172,107 @@ namespace lsp
             }
         }
 
+        bool Compressor::add_strings(const uint8_t *s, size_t len)
+        {
+            // For string "12345"
+            // Register strings "12345", "2345", "345", "45" and "5"
+            for (; len > 0; ++s, --len)
+            {
+                node_t *curr            = &sRoot;
+
+                for (size_t i=0; i<len; ++i)
+                {
+                    // Lookup for existing child node
+                    node_t *next        = get_child(curr, s[i]);
+                    if (next != NULL)
+                    {
+                        curr                = next;
+                        continue;
+                    }
+
+                    // Allocate yet another child node
+                    curr                = add_child(curr, s[i]);
+                    if (curr == NULL)
+                        return false;
+                }
+            }
+
+            // All is OK, return
+            return true;
+        }
+
+        status_t Compressor::update_dictionary(const void *buf, size_t bytes)
+        {
+            const uint8_t *ptr      = static_cast<const uint8_t *>(buf);
+            const uint8_t *end      = &ptr[bytes];
+            node_t *curr            = &sRoot;
+
+            while (ptr < end)
+            {
+                uint8_t b           = *(ptr++);
+                node_t *next        = get_child(curr, b);
+
+                // Word was found?
+                if (next != NULL)
+                {
+                    curr                = next; // Move to child node
+                    continue;
+                }
+
+                // No word found at all?
+                if (curr == &sRoot)
+                {
+                    // Move pointer until we get at least one duplicated character
+                    const uint8_t *head     = ptr - 1;
+                    while (ptr < end)
+                    {
+                        if (memchr(head, *ptr, ptr - head) != NULL)
+                            break;
+                        b                       = *(ptr++);
+                    }
+
+                    // Now index all strings from head to ptr
+                    while (head < ptr)
+                    {
+                        if (!add_strings(head, ptr - head))
+                            return STATUS_NO_MEM;
+                    }
+                }
+                else
+                {
+                    // Word was not found, need to add
+                    if (!add_child(curr, b))
+                        return STATUS_NO_MEM;
+                }
+
+                // Skip repeated characters
+                while ((ptr < end) && (*ptr == b))
+                    ++ptr;
+            }
+
+            return STATUS_OK;
+        }
+
         status_t Compressor::write_entry(raw_resource_t *r, io::IInStream *is)
         {
+            // Copy all data to memory
+            io::OutMemoryStream os;
+            wssize_t length     = is->sink(&os);
+            status_t res        = (length >= 0) ? STATUS_OK : status_t(-length);
+
+            // Build dictionary
+            if (res == STATUS_OK)
+                res         = update_dictionary(os.data(), os.size());
+            if (res == STATUS_OK)
+            {
+                length      = sBuffer.write(os.data(), os.size());
+                res         = (length >= 0) ? STATUS_OK : status_t(-length);
+            }
+
+            // Drop data
+            os.drop();
+            os.close();
+            return res;
         }
 
         status_t Compressor::create_file(const char *name, io::IInStream *is)
