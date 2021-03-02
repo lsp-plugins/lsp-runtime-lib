@@ -36,7 +36,7 @@ namespace lsp
             RES_FILE,
             RES_DIR
         };
-
+        
         /**
          * Resource descriptor
          */
@@ -45,6 +45,27 @@ namespace lsp
             resource_type_t     type;
             char                name[RESOURCE_NAME_MAX];
         } resource_t;
+
+        /**
+         * Raw resource descriptor
+         */
+        typedef struct raw_resource_t
+        {
+            resource_type_t         type;                       // Type of resource
+            const char             *name;                       // Name of resource
+            ssize_t                 parent;                     // Index of parent resource (negative if none)
+            size_t                  offset;                     // Offset of the resource
+        } raw_resource_t;
+
+        /**
+         * Raw resource storage
+         */
+        typedef struct raw_storage_t
+        {
+            const char             *data;                       // The resource data
+            const char             *commands;                   // The list of compression commands
+            const raw_resource_t   *resources;                  // The list of built-in resources
+        } raw_storage_t;
     }
 }
 

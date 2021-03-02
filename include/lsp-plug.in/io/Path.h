@@ -99,6 +99,18 @@ namespace lsp
                 status_t        get_last(LSPString *path) const;
                 status_t        get_last(Path *path) const;
 
+                status_t        pop_last(char *path, size_t maxlen);
+                status_t        pop_last(LSPString *path);
+                status_t        pop_last(Path *path);
+
+                status_t        get_first(char *path, size_t maxlen) const;
+                status_t        get_first(LSPString *path) const;
+                status_t        get_first(Path *path) const;
+
+                status_t        pop_first(char *path, size_t maxlen);
+                status_t        pop_first(LSPString *path);
+                status_t        pop_first(Path *path);
+
                 status_t        get_ext(char *path, size_t maxlen) const;
                 status_t        get_ext(LSPString *path) const;
                 status_t        get_ext(Path *path) const;
@@ -128,9 +140,14 @@ namespace lsp
                 status_t        append(const Path *path);
 
                 status_t        remove_last();
-                status_t        remove_last(char *path, size_t maxlen);
-                status_t        remove_last(LSPString *path);
-                status_t        remove_last(Path *path);
+                status_t        remove_last(char *path, size_t maxlen) const;
+                status_t        remove_last(LSPString *path) const;
+                status_t        remove_last(Path *path) const;
+
+                status_t        remove_first();
+                status_t        remove_first(char *path, size_t maxlen) const;
+                status_t        remove_first(LSPString *path) const;
+                status_t        remove_first(Path *path) const;
 
                 status_t        remove_base(const char *path);
                 status_t        remove_base(const LSPString *path);
