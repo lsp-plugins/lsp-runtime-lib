@@ -63,9 +63,9 @@ namespace lsp
                 static node_t      *get_child(node_t *parent, uint8_t code);
                 node_t             *add_child(node_t *parent, uint8_t code);
                 status_t            update_dictionary(const void *buf, size_t bytes);
-                bool                add_strings(const uint8_t *s, size_t len);
+                bool                add_string(const uint8_t *s, size_t len);
 
-            protected:
+            public:
                 explicit Compressor();
                 ~Compressor();
 

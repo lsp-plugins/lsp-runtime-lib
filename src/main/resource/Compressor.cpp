@@ -29,6 +29,7 @@ namespace lsp
         Compressor::Compressor()
         {
             sRoot.code      = 0;
+            sRoot.hits      = 0;
             sRoot.next      = NULL;
             sRoot.child     = NULL;
         }
@@ -40,6 +41,20 @@ namespace lsp
 
         status_t Compressor::close()
         {
+            // Drop nodes
+            for (size_t i=0, n=vNodes.size(); i<n; ++i)
+            {
+                node_t *node    = vNodes.get(i);
+                if (node != NULL)
+                    free(node);
+            }
+            vNodes.flush();
+
+            sRoot.code      = 0;
+            sRoot.hits      = 0;
+            sRoot.child     = NULL;
+            sRoot.next      = NULL;
+
             // Drop entries
             for (size_t i=0, n=vEntries.size(); i < n; ++i)
             {
@@ -66,7 +81,7 @@ namespace lsp
 
         Compressor::node_t *Compressor::add_child(node_t *parent, uint8_t code)
         {
-            node_t *node    = static_cast<node_t *>(malloc(sizeof(node)));
+            node_t *node    = static_cast<node_t *>(malloc(sizeof(node_t)));
             if (node == NULL)
                 return NULL;
             if (!vNodes.add(node))
@@ -146,6 +161,8 @@ namespace lsp
 
                     if (found->name == NULL)
                         return STATUS_NO_MEM;
+
+                    return STATUS_OK;
                 }
                 else
                 {
@@ -172,29 +189,24 @@ namespace lsp
             }
         }
 
-        bool Compressor::add_strings(const uint8_t *s, size_t len)
+        bool Compressor::add_string(const uint8_t *s, size_t len)
         {
-            // For string "12345"
-            // Register strings "12345", "2345", "345", "45" and "5"
-            for (; len > 0; ++s, --len)
+            node_t *curr            = &sRoot;
+
+            for (size_t i=0; i<len; ++i)
             {
-                node_t *curr            = &sRoot;
-
-                for (size_t i=0; i<len; ++i)
+                // Lookup for existing child node
+                node_t *next        = get_child(curr, s[i]);
+                if (next != NULL)
                 {
-                    // Lookup for existing child node
-                    node_t *next        = get_child(curr, s[i]);
-                    if (next != NULL)
-                    {
-                        curr                = next;
-                        continue;
-                    }
-
-                    // Allocate yet another child node
-                    curr                = add_child(curr, s[i]);
-                    if (curr == NULL)
-                        return false;
+                    curr                = next;
+                    continue;
                 }
+
+                // Allocate yet another child node
+                curr                = add_child(curr, s[i]);
+                if (curr == NULL)
+                    return false;
             }
 
             // All is OK, return
@@ -232,9 +244,11 @@ namespace lsp
                     }
 
                     // Now index all strings from head to ptr
-                    while (head < ptr)
+                    // For string "12345"
+                    // Register strings "12345", "2345", "345", "45" and "5"
+                    for (; head < ptr; ++head)
                     {
-                        if (!add_strings(head, ptr - head))
+                        if (!add_string(head, ptr - head))
                             return STATUS_NO_MEM;
                     }
                 }
@@ -243,6 +257,9 @@ namespace lsp
                     // Word was not found, need to add
                     if (!add_child(curr, b))
                         return STATUS_NO_MEM;
+
+                    // Reset current pointer to root
+                    curr    = &sRoot;
                 }
 
                 // Skip repeated characters

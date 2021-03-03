@@ -374,9 +374,13 @@ namespace lsp
 
             ssize_t idx         = sPath.index_of(FILE_SEPARATOR_C);
             if (idx < 0)
-                return STATUS_NOT_FOUND;
-            if (is_absolute())
-                ++idx;
+            {
+                if (sPath.is_empty())
+                    return STATUS_NOT_FOUND;
+                idx         = sPath.length();
+            }
+            else if (is_absolute())
+                idx        += 1;
 
             const char *utf8    = sPath.get_utf8(0, idx);
             if (utf8 == NULL)
@@ -397,9 +401,13 @@ namespace lsp
 
             ssize_t idx         = sPath.index_of(FILE_SEPARATOR_C);
             if (idx < 0)
-                return STATUS_NOT_FOUND;
-            if (is_absolute())
-                ++idx;
+            {
+                if (sPath.is_empty())
+                    return STATUS_NOT_FOUND;
+                idx         = sPath.length();
+            }
+            else if (is_absolute())
+                idx        += 1;
 
             return (path->set(&sPath, 0, idx)) ? STATUS_OK : STATUS_NO_MEM;
         }
@@ -423,11 +431,21 @@ namespace lsp
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
+            size_t tail;
             ssize_t idx         = sPath.index_of(FILE_SEPARATOR_C);
             if (idx < 0)
-                return STATUS_NOT_FOUND;
+            {
+                if (sPath.is_empty())
+                    return STATUS_NOT_FOUND;
+                tail        = sPath.length();
+                idx         = tail;
+            }
+            else
+            {
+                tail        = (is_absolute()) ? idx + 1 : idx;
+                idx        += 1;
+            }
 
-            size_t tail         = (is_absolute()) ? idx : idx + 1;
             const char *utf8    = sPath.get_utf8(0, tail);
             if (utf8 == NULL)
                 return STATUS_NO_MEM;
@@ -437,7 +455,7 @@ namespace lsp
                 return STATUS_TOO_BIG;
 
             ::memcpy(path, utf8, len + 1);
-            sPath.remove(0, idx + 1);
+            sPath.remove(0, idx);
 
             return STATUS_OK;
         }
@@ -447,15 +465,25 @@ namespace lsp
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
+            size_t tail;
             ssize_t idx         = sPath.index_of(FILE_SEPARATOR_C);
             if (idx < 0)
-                return STATUS_NOT_FOUND;
-            size_t tail         = (is_absolute()) ? idx : idx + 1;
+            {
+                if (sPath.is_empty())
+                    return STATUS_NOT_FOUND;
+                tail        = sPath.length();
+                idx         = tail;
+            }
+            else
+            {
+                tail        = (is_absolute()) ? idx + 1 : idx;
+                idx        += 1;
+            }
 
             if (!path->set(&sPath, 0, tail))
                 return STATUS_NO_MEM;
 
-            sPath.remove(0, idx + 1);
+            sPath.remove(0, idx);
             return STATUS_OK;
         }
 
