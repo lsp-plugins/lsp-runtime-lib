@@ -8,6 +8,8 @@
 * Added io::Path::mkparent methods for creating parent directories.
 * Added io::File::mkparent methods for creating parent directories.
 * Added io::Path::get_first, io::Path::remove_first, io::Path::pop_first, io::Path::pop_last methods.
+- Implemented resource compressor.
+- Added io::OutBitStream class for implementing bit streams.
 
 === 0.5.7 ===
 * Added system::get_localtime function.
