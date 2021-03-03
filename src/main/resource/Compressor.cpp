@@ -21,6 +21,9 @@
 
 #include <lsp-plug.in/resource/Compressor.h>
 #include <lsp-plug.in/stdlib/string.h>
+#include <lsp-plug.in/stdlib/stdio.h>
+#include <lsp-plug.in/common/debug.h>
+#include <lsp-plug.in/io/OutSequence.h>
 
 namespace lsp
 {
@@ -31,6 +34,7 @@ namespace lsp
             sRoot.code      = 0;
             sRoot.hits      = 0;
             sRoot.next      = NULL;
+            sRoot.parent    = NULL;
             sRoot.child     = NULL;
         }
 
@@ -52,8 +56,9 @@ namespace lsp
 
             sRoot.code      = 0;
             sRoot.hits      = 0;
-            sRoot.child     = NULL;
             sRoot.next      = NULL;
+            sRoot.parent    = NULL;
+            sRoot.child     = NULL;
 
             // Drop entries
             for (size_t i=0, n=vEntries.size(); i < n; ++i)
@@ -68,10 +73,11 @@ namespace lsp
             vEntries.flush();
 
             // Drop buffer data
+            sData.drop();
             sBuffer.drop();
             sCommands.drop();
 
-            status_t res    = sBuffer.close();
+            status_t res    = sData.close();
             status_t res2   = sCommands.close();
             if (res == STATUS_OK)
                 res         = res2;
@@ -94,6 +100,7 @@ namespace lsp
             node->code      = code;
             node->hits      = 0;
             node->next      = parent->child;
+            node->parent    = parent;
             node->child     = NULL;
             parent->child   = node;
 
@@ -104,14 +111,11 @@ namespace lsp
         {
             for (node_t *child = parent->child; child != NULL; child = child->next)
                 if (child->code == code)
-                {
-                    ++child->hits;
                     return child;
-                }
             return NULL;
         }
 
-        status_t Compressor::alloc_entry(raw_resource_t *r, io::Path *path, resource_type_t type)
+        status_t Compressor::alloc_entry(raw_resource_t **r, io::Path *path, resource_type_t type)
         {
             if (path->is_empty())
                 return STATUS_BAD_ARGUMENTS;
@@ -158,10 +162,14 @@ namespace lsp
                     found->offset   = 0;
                     found->length   = 0;
                     found->name     = item.clone_utf8();
+                    found->data     = NULL;
 
                     if (found->name == NULL)
                         return STATUS_NO_MEM;
 
+                    // Return the pointer
+                    if (r != NULL)
+                        *r              = found;
                     return STATUS_OK;
                 }
                 else
@@ -178,6 +186,7 @@ namespace lsp
                         found->offset   = 0;
                         found->length   = 0;
                         found->name     = item.clone_utf8();
+                        found->data     = NULL;
 
                         if (found->name == NULL)
                             return STATUS_NO_MEM;
@@ -227,30 +236,17 @@ namespace lsp
                 // Word was found?
                 if (next != NULL)
                 {
-                    curr                = next; // Move to child node
+                    curr                = next; // Move to child node and repeat
                     continue;
                 }
 
                 // No word found at all?
                 if (curr == &sRoot)
                 {
-                    // Move pointer until we get at least one duplicated character
-                    const uint8_t *head     = ptr - 1;
-                    while (ptr < end)
-                    {
-                        if (memchr(head, *ptr, ptr - head) != NULL)
-                            break;
-                        b                       = *(ptr++);
-                    }
-
-                    // Now index all strings from head to ptr
-                    // For string "12345"
-                    // Register strings "12345", "2345", "345", "45" and "5"
-                    for (; head < ptr; ++head)
-                    {
-                        if (!add_string(head, ptr - head))
-                            return STATUS_NO_MEM;
-                    }
+                    // Word was not found, need to add
+                    if (!(next = add_child(curr, b)))
+                        return STATUS_NO_MEM;
+                    ++ next->hits;
                 }
                 else
                 {
@@ -258,8 +254,9 @@ namespace lsp
                     if (!add_child(curr, b))
                         return STATUS_NO_MEM;
 
-                    // Reset current pointer to root
-                    curr    = &sRoot;
+                    // Increment number of hits for each node
+                    for ( ; curr != &sRoot; curr = curr->parent)
+                        ++ curr->hits;
                 }
 
                 // Skip repeated characters
@@ -282,7 +279,9 @@ namespace lsp
                 res         = update_dictionary(os.data(), os.size());
             if (res == STATUS_OK)
             {
-                length      = sBuffer.write(os.data(), os.size());
+                r->offset   = sData.size();
+                r->length   = length;
+                length      = sData.write(os.data(), os.size());
                 res         = (length >= 0) ? STATUS_OK : status_t(-length);
             }
 
@@ -295,13 +294,13 @@ namespace lsp
         status_t Compressor::create_file(const char *name, io::IInStream *is)
         {
             io::Path tmp;
-            raw_resource_t r;
+            raw_resource_t *r = NULL;
 
             status_t res = tmp.set(name);
             if (res == STATUS_OK)
                 res     = alloc_entry(&r, &tmp, RES_FILE);
             if (res == STATUS_OK)
-                res     = write_entry(&r, is);
+                res     = write_entry(r, is);
 
             return res;
         }
@@ -309,13 +308,13 @@ namespace lsp
         status_t Compressor::create_file(const LSPString *name, io::IInStream *is)
         {
             io::Path tmp;
-            raw_resource_t r;
+            raw_resource_t *r = NULL;
 
             status_t res = tmp.set(name);
             if (res == STATUS_OK)
                 res     = alloc_entry(&r, &tmp, RES_FILE);
             if (res == STATUS_OK)
-                res     = write_entry(&r, is);
+                res     = write_entry(r, is);
 
             return res;
         }
@@ -323,13 +322,13 @@ namespace lsp
         status_t Compressor::create_file(const io::Path *name, io::IInStream *is)
         {
             io::Path tmp;
-            raw_resource_t r;
+            raw_resource_t *r = NULL;
 
             status_t res = tmp.set(name);
             if (res == STATUS_OK)
                 res     = alloc_entry(&r, &tmp, RES_FILE);
             if (res == STATUS_OK)
-                res     = write_entry(&r, is);
+                res     = write_entry(r, is);
 
             return res;
         }
@@ -337,11 +336,10 @@ namespace lsp
         status_t Compressor::create_dir(const char *name)
         {
             io::Path tmp;
-            raw_resource_t r;
 
             status_t res = tmp.set(name);
             if (res == STATUS_OK)
-                res     = alloc_entry(&r, &tmp, RES_DIR);
+                res     = alloc_entry(NULL, &tmp, RES_DIR);
 
             return res;
         }
@@ -349,11 +347,10 @@ namespace lsp
         status_t Compressor::create_dir(const LSPString *name)
         {
             io::Path tmp;
-            raw_resource_t r;
 
             status_t res = tmp.set(name);
             if (res == STATUS_OK)
-                res     = alloc_entry(&r, &tmp, RES_DIR);
+                res     = alloc_entry(NULL, &tmp, RES_DIR);
 
             return res;
         }
@@ -361,13 +358,179 @@ namespace lsp
         status_t Compressor::create_dir(const io::Path *name)
         {
             io::Path tmp;
-            raw_resource_t r;
 
             status_t res = tmp.set(name);
             if (res == STATUS_OK)
-                res     = alloc_entry(&r, &tmp, RES_DIR);
+                res     = alloc_entry(NULL, &tmp, RES_DIR);
 
             return res;
+        }
+
+        status_t Compressor::dump_dictionary(io::IOutStream *os)
+        {
+            LSPString word;
+            io::OutSequence out;
+            status_t res;
+
+            if ((res = out.wrap(os, WRAP_NONE, "UTF-8")) != STATUS_OK)
+                return res;
+
+            res = dump_dict(&out, &sRoot, &word);
+            status_t xres = out.close();
+
+            return (res == STATUS_OK) ? xres : res;
+        }
+
+        status_t Compressor::dump_dict(io::IOutSequence *os, node_t *curr, LSPString *word)
+        {
+            LSPString tmp;
+            status_t res;
+
+            size_t len = word->length();
+            for (node_t *child = curr->child; child != NULL; child = child->next)
+            {
+                word->append(child->code);
+
+                if (tmp.fmt_ascii("\n[%5d]: ", int(child->hits)) <= 0)
+                    return STATUS_NO_MEM;
+                if ((res = os->write(&tmp)) != STATUS_OK)
+                    return res;
+                if ((res = os->write(word)) != STATUS_OK)
+                    return res;
+                if ((res = dump_dict(os, child, word)) != STATUS_OK)
+                    return res;
+
+                word->set_length(len);
+            }
+
+            return STATUS_OK;
+        }
+
+        ssize_t Compressor::lookup_word(const uint8_t *buf, size_t len)
+        {
+            node_t *curr = &sRoot;
+
+            for (size_t n=0; n<len; ++n)
+            {
+                uint8_t b           = *(buf++);
+                node_t *next        = get_child(curr, b);
+                if (next == NULL)
+                    return n;
+
+                curr                = next;
+            }
+
+            return len;
+        }
+
+        status_t Compressor::emit_to_buffer(const uint8_t *s, size_t len)
+        {
+            const uint8_t *buf  = sBuffer.data();
+            const uint8_t *last = &buf[sBuffer.size()];
+            size_t rest         = len;
+
+            for ( ; buf < last; ++buf)
+            {
+                // Check first match
+                if (*buf != *s)
+                    continue;
+
+                // Check full match
+                size_t compare  = lsp_min(size_t(last - buf), len);
+                if (memcmp(buf, s, compare) != 0)
+                    continue;
+
+                // Buffers matched
+                rest     = len - compare;
+                break;
+            }
+
+//            IF_TRACE(LSPString tmp);
+
+            if (rest == 0)
+            {
+//                IF_TRACE(
+//                    tmp.set_ascii(reinterpret_cast<const char *>(s), len);
+//                    lsp_trace("hits %s\n", tmp.get_native());
+//                );
+                return STATUS_OK;
+            }
+
+            // Append buffer with rest data
+//            IF_TRACE(
+//                tmp.set_ascii(reinterpret_cast<const char *>(&s[len-rest]), rest);
+//                lsp_trace("miss %s\n", tmp.get_native());
+//            );
+
+            ssize_t res = sBuffer.write(&s[len-rest], rest);
+            if (res < ssize_t(rest))
+                return (res < 0) ? -res : STATUS_NO_MEM;
+
+            return STATUS_OK;
+        }
+
+        status_t Compressor::compress()
+        {
+//            location_t loc;
+            status_t res;
+            IF_TRACE(
+                LSPString tmp;
+            )
+
+            // Pre-build buffer
+            for (size_t i=0, n=vEntries.size(); i<n; ++i)
+            {
+                raw_resource_t *r = vEntries.uget(i);
+                if ((r == NULL) || (r->type != RES_FILE))
+                    continue;
+
+                lsp_trace("  preprocessing entry: %s", r->name);
+                const uint8_t *head = sData.data();
+                head               += r->offset;
+                const uint8_t *tail = &head[r->length];
+
+                while (head < tail)
+                {
+                    // Lookup for the dictionary word
+                    ssize_t len = lookup_word(head, tail-head);
+                    if (len < 0)
+                        return -len;
+                    else if (len == 0)
+                        len = 1;
+
+                    // Emit word to buffer
+                    if ((res = emit_to_buffer(head, len)) != STATUS_OK)
+                        return res;
+
+                    // Update pointer
+                    head       += len;
+                }
+            }
+
+            //                lsp_trace("  compressing entry: %s", r->name);
+            //                const uint8_t *head = sData.data();
+            //                head               += r->offset;
+            //                const uint8_t *tail = &head[r->length];
+            //
+            //                while (head < tail)
+            //                {
+            //                    status_t res = lookup_buffer(&loc, head, tail - head);
+            //                    if (res != STATUS_OK)
+            //                        return res;
+            //
+            //                    #ifdef LSP_TRACE
+            //                        LSPString tmp;
+            //                        const uint8_t *buf = sBuffer.data();
+            //                        tmp.set_ascii(reinterpret_cast<const char *>(&buf[loc.offset]), loc.len);
+            //                        uint8_t ch = buf[loc.offset + loc.len - 1];
+            //                        for (size_t i=0; i<loc.repeat; ++i)
+            //                            tmp.append(ch);
+            //
+            //                        lsp_trace("  off=%d, len=%d, rep=%d, out=%s", );
+            //                    #endif /* LSP_TRACE */
+            //                }
+
+            return STATUS_OK;
         }
     }
 }

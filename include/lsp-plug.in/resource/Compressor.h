@@ -25,6 +25,8 @@
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/resource/ILoader.h>
 #include <lsp-plug.in/io/OutMemoryStream.h>
+#include <lsp-plug.in/io/IOutSequence.h>
+#include <lsp-plug.in/io/IOutStream.h>
 #include <lsp-plug.in/lltl/darray.h>
 #include <lsp-plug.in/lltl/parray.h>
 
@@ -46,24 +48,36 @@ namespace lsp
                     uint8_t     code;       // The octet code
                     wsize_t     hits;       // Number of hits for the node
                     node_t     *next;       // Next node in list
+                    node_t     *parent;     // Parent node
                     node_t     *child;      // Child element
                 } node_t;
+
+                typedef struct location_t
+                {
+                    size_t      offset;     // Offset relative to the buffer
+                    size_t      len;        // Length of the block
+                    size_t      repeat;     // Number of repeats
+                } location_t;
 
             protected:
                 lltl::darray<raw_resource_t>    vEntries;
                 lltl::parray<node_t>            vNodes;         // List of nodes
                 node_t                          sRoot;          // Root node
-                io::OutMemoryStream             sBuffer;        // Data buffer
+                io::OutMemoryStream             sData;          // Data buffer
+                io::OutMemoryStream             sBuffer;        // Compression buffer
                 io::OutMemoryStream             sCommands;
 
             protected:
-                status_t            alloc_entry(raw_resource_t *r, io::Path *path, resource_type_t type);
+                status_t            alloc_entry(raw_resource_t **r, io::Path *path, resource_type_t type);
                 status_t            write_entry(raw_resource_t *r, io::IInStream *is);
                 node_t             *alloc_node(uint8_t code);
                 static node_t      *get_child(node_t *parent, uint8_t code);
                 node_t             *add_child(node_t *parent, uint8_t code);
                 status_t            update_dictionary(const void *buf, size_t bytes);
                 bool                add_string(const uint8_t *s, size_t len);
+                status_t            dump_dict(io::IOutSequence *os, node_t *curr, LSPString *word);
+                ssize_t             lookup_word(const uint8_t *buf, size_t len);
+                status_t            emit_to_buffer(const uint8_t *s, size_t len);
 
             public:
                 explicit Compressor();
@@ -78,12 +92,13 @@ namespace lsp
 
             public:
                 template <class T>
-                    inline const T         *data() const        { return reinterpret_cast<const T *>(sBuffer.data());       }
-                template <class T>
-                    inline const T         *commands() const    { return reinterpret_cast<const T *>(sCommands.data());     }
+                    inline const T         *data() const        { return reinterpret_cast<const T *>(sData.data());         }
+                inline const void      *buffer() const          { return sBuffer.data();                                    }
+
                 inline const raw_resource_t *entries() const    { return vEntries.array();                                  }
 
-                inline size_t           data_size() const       { return sBuffer.size();                                    }
+                inline size_t           data_size() const       { return sData.size();                                      }
+                inline size_t           buffer_size() const     { return sBuffer.size();                                    }
                 inline size_t           commands_size() const   { return sCommands.size();                                  }
                 inline size_t           num_entires() const     { return vEntries.size();                                   }
 
@@ -105,6 +120,18 @@ namespace lsp
                 status_t                create_dir(const char *name);
                 status_t                create_dir(const LSPString *name);
                 status_t                create_dir(const io::Path *name);
+
+                /**
+                 * Perform the compression
+                 * @return compression
+                 */
+                status_t                compress();
+
+                /**
+                 * Dump contents to stream
+                 * @param os output stream
+                 */
+                status_t                dump_dictionary(io::IOutStream *os);
         };
     }
 }
