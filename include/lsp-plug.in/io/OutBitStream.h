@@ -73,22 +73,22 @@ namespace lsp
             public:
 
                 status_t            writeb(bool value);
-                inline status_t     write(bool value)                                       { return writeb(value);                 }
-                inline status_t     write(uint8_t value, size_t bits = sizeof(uint8_t))     { return write(umword_t(value), bits);  }
-                inline status_t     write(int8_t value, size_t bits = sizeof(int8_t))       { return write(umword_t(value), bits);  }
-                inline status_t     write(uint16_t value, size_t bits = sizeof(uint16_t))   { return write(umword_t(value), bits);  }
-                inline status_t     write(int16_t value, size_t bits = sizeof(int16_t))     { return write(umword_t(value), bits);  }
+                inline status_t     write(bool value)                                           { return writeb(value);                 }
+                inline status_t     write(uint8_t value, size_t bits = sizeof(uint8_t)*8)       { return write(umword_t(value), bits);  }
+                inline status_t     write(int8_t value, size_t bits = sizeof(int8_t)*8)         { return write(umword_t(value), bits);  }
+                inline status_t     write(uint16_t value, size_t bits = sizeof(uint16_t)*8)     { return write(umword_t(value), bits);  }
+                inline status_t     write(int16_t value, size_t bits = sizeof(int16_t)*8)       { return write(umword_t(value), bits);  }
 
 #ifdef ARCH_64BIT
-                status_t            write(uint32_t value, size_t bits = sizeof(uint32_t))   { return write(uint64_t(value), bits);  }
-                inline status_t     write(int32_t value, size_t bits = sizeof(int32_t))     { return write(uint64_t(value), bits);  }
-                status_t            write(uint64_t value, size_t bits = sizeof(uint64_t));
-                inline status_t     write(int64_t value, size_t bits = sizeof(int64_t))     { return write(uint64_t(value), bits);  }
+                status_t            write(uint32_t value, size_t bits = sizeof(uint32_t)*8)     { return write(uint64_t(value), bits);  }
+                inline status_t     write(int32_t value, size_t bits = sizeof(int32_t)*8)       { return write(uint64_t(value), bits);  }
+                status_t            write(uint64_t value, size_t bits = sizeof(uint64_t)*8);
+                inline status_t     write(int64_t value, size_t bits = sizeof(int64_t)*8)       { return write(uint64_t(value), bits);  }
 #else
-                status_t            write(uint32_t value, size_t bits = sizeof(uint32_t));
-                inline status_t     write(int32_t value, size_t bits = sizeof(int32_t))     { return write(uint32_t(value), bits);  }
-                status_t            write(uint64_t value, size_t bits = sizeof(uint64_t));
-                inline status_t     write(int64_t value, size_t bits = sizeof(int64_t))     { return write(uint64_t(value), bits);  }
+                status_t            write(uint32_t value, size_t bits = sizeof(uint32_t)*8);
+                inline status_t     write(int32_t value, size_t bits = sizeof(int32_t)*8)       { return write(uint32_t(value), bits);  }
+                status_t            write(uint64_t value, size_t bits = sizeof(uint64_t)*8);
+                inline status_t     write(int64_t value, size_t bits = sizeof(int64_t)*8)       { return write(uint64_t(value), bits);  }
 #endif /* ARCH_64BIT */
         };
     }

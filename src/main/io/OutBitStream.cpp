@@ -249,8 +249,8 @@ namespace lsp
             size_t written      = 0;
             while (written < bits)
             {
-                size_t to_write = lsp_min(sizeof(uint8_t) * 8, bits);
-                status_t res    = write(ptr[written], to_write);
+                size_t to_write = lsp_min(sizeof(uint8_t) * 8, bits - written);
+                status_t res    = write(*(ptr++), to_write);
                 if (res != STATUS_OK)
                 {
                     set_error(res);
@@ -264,21 +264,37 @@ namespace lsp
 
         status_t OutBitStream::do_flush_buffer()
         {
-            umword_t buf;
-            size_t bytes = (nBits + 7) >> 3; // Overall number of bytes to write
-            if (bytes == 0)
+            if (nBits == 0)
                 return set_error(STATUS_OK);
 
-            // Pad buffer with zeros and set the proper memory layout
-            buf             = CPU_TO_BE(nBuffer << (BITSTREAM_BUFSZ - nBits));
+            size_t written, bytes;
+            umword_t buf;
 
-            // Write the buffer to underlying storage
-            ssize_t written = pOS->write(&buf, bytes);
-            if (written < 0)
-                return -set_error(-written);
+            if (nBits == sizeof(umword_t) * 8)
+            {
+                buf         = CPU_TO_BE(nBuffer);
+                written     = pOS->write(&buf, sizeof(umword_t));
 
-            written       <<= 3;
-            nBits          -= written;
+                if (written != sizeof(umword_t))
+                    return -set_error(-written);
+            }
+            else
+            {
+                uint8_t data[sizeof(umword_t)];
+
+                bytes       = (nBits + 7) >> 3; // Overall number of bytes to write
+                buf         = nBuffer << (BITSTREAM_BUFSZ - nBits);
+                size_t s    = BITSTREAM_BUFSZ - 8;
+
+                for (size_t i=0; i<bytes; ++i, s -= 8)
+                    data[i]     = buf >> s;
+
+                written     = pOS->write(data, bytes);
+                if (written != bytes)
+                    return -set_error(-written);
+            }
+
+            nBits       = 0;
 
             return set_error(STATUS_OK);
         }
@@ -335,7 +351,7 @@ namespace lsp
             status_t res;
 
             #ifdef ARCH_64BIT
-                value  <<= BITSTREAM_BUFSZ - bits;
+                value  <<= (BITSTREAM_BUFSZ - bits);
                 while (bits > 0)
                 {
                     // Need to flush?
@@ -349,6 +365,7 @@ namespace lsp
                     nBuffer         = (nBuffer << avail) | (value >> (BITSTREAM_BUFSZ - avail));
                     nBits          += avail;
                     bits           -= avail;
+                    value         <<= avail;
                 }
 
                 return set_error(STATUS_OK);
