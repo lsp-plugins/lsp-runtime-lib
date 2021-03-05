@@ -54,7 +54,7 @@ namespace lsp
 
                 typedef struct location_t
                 {
-                    size_t      offset;     // Offset relative to the buffer
+                    ssize_t     offset;     // Offset relative to the buffer
                     size_t      len;        // Length of the block
                     size_t      repeat;     // Number of repeats
                 } location_t;
@@ -76,8 +76,10 @@ namespace lsp
                 status_t            update_dictionary(const void *buf, size_t bytes);
                 bool                add_string(const uint8_t *s, size_t len);
                 status_t            dump_dict(io::IOutSequence *os, node_t *curr, LSPString *word);
-                ssize_t             lookup_word(const uint8_t *buf, size_t len);
                 status_t            emit_to_buffer(const uint8_t *s, size_t len);
+                status_t            emit_buffer_command(size_t bpos, const location_t *loc);
+                ssize_t             lookup_word(const uint8_t *buf, size_t len);
+                ssize_t             lookup_buffer(location_t *out, const uint8_t *s, size_t len);
 
             public:
                 explicit Compressor();
@@ -91,9 +93,9 @@ namespace lsp
                 status_t                close();
 
             public:
-                template <class T>
-                    inline const T         *data() const        { return reinterpret_cast<const T *>(sData.data());         }
+                inline const void      *data() const            { return sData.data();                                      }
                 inline const void      *buffer() const          { return sBuffer.data();                                    }
+                inline const void      *commands() const        { return sCommands.data();                                  }
 
                 inline const raw_resource_t *entries() const    { return vEntries.array();                                  }
 

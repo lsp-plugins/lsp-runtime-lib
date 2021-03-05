@@ -469,10 +469,89 @@ namespace lsp
             return STATUS_OK;
         }
 
+        ssize_t Compressor::lookup_buffer(location_t *out, const uint8_t *s, size_t len)
+        {
+            out->offset     = -1;
+            out->len        = 0;
+            out->repeat     = 0;
+
+            const uint8_t *p    = sBuffer.data();
+            for (size_t i=0, n=sBuffer.size(); i<n; ++i)
+            {
+                // Find first character match
+                if (p[i] != *s)
+                    continue;
+
+                size_t slen     = 1; // Sequence length
+                size_t count    = lsp_min(len, n - i);
+                for (size_t j=1; j<count; ++j, ++slen)
+                    if (p[i+j] != s[j])
+                        break;
+
+                // Compute the number of repetitions
+                size_t rpt      = 0;
+                for (size_t j = slen; j < len; ++j, ++rpt)
+                    if (s[slen-1] != s[j])
+                        break;
+
+                if ((out->len + out->repeat) < (slen + rpt))
+                {
+                    out->offset     = i;
+                    out->len        = slen;
+                    out->repeat     = rpt;
+                }
+            }
+
+            return out->len + out->repeat;
+        }
+
+        status_t Compressor::emit_buffer_command(size_t bpos, const location_t *loc)
+        {
+            uint8_t buf[64];
+            ssize_t blen = 0;
+
+            // Compute the relative offset
+            ssize_t delta       = loc->offset;//loc->offset - bpos;
+
+            // Emit data offset
+            size_t i            = (delta >= 0) ? (delta << 1) : ((-delta) << 1) | 1;
+            i                   = (i << 2) | ((loc->repeat >= 0x3) ? 0x3 : loc->repeat);
+            do
+            {
+                buf[blen++]     = (i < 0x80) ? i : 0x80 | (i & 0x7f);
+                i             >>= 7;
+            } while (i > 0);
+
+            // Emit data length and flag
+            i                   = loc->len;
+            do
+            {
+                buf[blen++]     = (i < 0x80) ? i : 0x80 | (i & 0x7f);
+                i             >>= 7;
+            } while (i > 0);
+
+            // Additional repeat flag
+            if (loc->repeat >= 0x3)
+            {
+                i       = loc->repeat;
+                do
+                {
+                    buf[blen++]     = (i < 0x80) ? i : 0x80 | (i & 0x7f);
+                    i             >>= 7;
+                } while (i > 0);
+            }
+
+            // Now write to buffer
+            ssize_t written = sCommands.write(buf, blen);
+            if (written < 0)
+                return -written;
+            return (written == blen) ? STATUS_OK : STATUS_NO_MEM;
+        }
+
         status_t Compressor::compress()
         {
-//            location_t loc;
             status_t res;
+            location_t loc;
             IF_TRACE(
                 LSPString tmp;
             )
@@ -488,6 +567,7 @@ namespace lsp
                 const uint8_t *head = sData.data();
                 head               += r->offset;
                 const uint8_t *tail = &head[r->length];
+//                uint8_t b;
 
                 while (head < tail)
                 {
@@ -504,7 +584,50 @@ namespace lsp
 
                     // Update pointer
                     head       += len;
+
+                    // Skip repeted characters
+                    uint8_t b   = head[-1];
+                    while ((head < tail) && (b == *head))
+                        ++head;
                 }
+            }
+
+            // Build commands
+            for (size_t i=0, n=vEntries.size(); i<n; ++i)
+            {
+                raw_resource_t *r = vEntries.uget(i);
+                if ((r == NULL) || (r->type != RES_FILE))
+                    continue;
+
+                lsp_trace("  processing entry: %s", r->name);
+                const uint8_t *head = sData.data();
+                head               += r->offset;
+                const uint8_t *tail = &head[r->length];
+                r->offset           = sCommands.size();
+                size_t buf_pos      = 0;
+
+                while (head < tail)
+                {
+                    // Lookup for the dictionary word
+                    ssize_t len = lookup_buffer(&loc, head, tail-head);
+                    if (len > 0)
+                    {
+                        status_t res = emit_buffer_command(buf_pos, &loc);
+                        if (res != STATUS_OK)
+                            return res;
+
+                        // Update pointer
+                        head       += len;
+                        buf_pos     = loc.offset + len;
+                    }
+                    else
+                    {
+                        // TODO
+                        ++head;
+                    }
+                }
+
+                sCommands.flush();
             }
 
             //                lsp_trace("  compressing entry: %s", r->name);

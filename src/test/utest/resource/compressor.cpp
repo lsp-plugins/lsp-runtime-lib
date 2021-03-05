@@ -88,12 +88,23 @@ UTEST_BEGIN("runtime.resource", compressor)
         size_t data_sz = c.data_size();
         double ratio = double(data_sz) / double(buf_sz);
 
-        printf("Buffer size: %d, data size: %d, ratio: %.2f\n", int(c.buffer_size()), int(c.data_size()), ratio);
+        printf("Buffer size: %d, command size: %d, data size: %d, ratio: %.2f\n",
+            int(c.buffer_size()),
+            int(c.commands_size()),
+            int(c.data_size()),
+            ratio
+        );
 
         UTEST_ASSERT(path.fmt("%s/%s.buffer", tempdir(), full_name()) > 0);
         printf("Dumping buffer to: %s\n", path.as_native());
         UTEST_ASSERT(ofs.open(&path, io::File::FM_WRITE_NEW) == STATUS_OK);
         ofs.write(c.buffer(), c.buffer_size());
+        UTEST_ASSERT(ofs.close() == STATUS_OK);
+
+        UTEST_ASSERT(path.fmt("%s/%s.commands", tempdir(), full_name()) > 0);
+        printf("Dumping commands to: %s\n", path.as_native());
+        UTEST_ASSERT(ofs.open(&path, io::File::FM_WRITE_NEW) == STATUS_OK);
+        ofs.write(c.commands(), c.commands_size());
         UTEST_ASSERT(ofs.close() == STATUS_OK);
 
         c.close();
