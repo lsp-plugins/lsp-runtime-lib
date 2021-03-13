@@ -45,43 +45,19 @@ namespace lsp
                 Compressor & operator = (const Compressor &);
 
             protected:
-                typedef struct node_t
-                {
-                    uint8_t     code;       // The octet code
-                    wsize_t     hits;       // Number of hits for the node
-                    ssize_t     off;        // Offset in the buffer
-                    node_t     *next;       // Next node in list
-                    node_t     *parent;     // Parent node
-                    node_t     *child;      // Child element
-                } node_t;
-
-            protected:
                 lltl::darray<raw_resource_t>    vEntries;
-                lltl::parray<node_t>            vNodes;         // List of nodes
-                node_t                          sRoot;          // Root node
                 io::OutMemoryStream             sData;          // Data buffer
                 io::OutMemoryStream             sCommands;
+                io::OutBitStream                sOut;           // Output bit stream
+                size_t                          nSegment;       // Start of data segment
+                size_t                          nOffset;        // Current offset in segment
                 buffer_t                        sBuffer;        // Buffer for caching
 
             protected:
                 status_t            alloc_entry(raw_resource_t **r, io::Path *path, resource_type_t type);
-                status_t            write_entry(raw_resource_t *r, io::IInStream *is);
-                node_t             *alloc_node(uint8_t code);
-                static node_t      *get_child(node_t *parent, uint8_t code);
-                node_t             *add_child(node_t *parent, uint8_t code);
-                status_t            update_dictionary(const void *buf, size_t bytes);
-                status_t            update_dictionary2(const void *buf, size_t bytes);
-                bool                add_string(const uint8_t *s, size_t len);
-                status_t            dump_dict(io::IOutSequence *os, node_t *curr, LSPString *word);
-                status_t            emit_buffer_command(size_t bpos, const location_t *loc);
-                ssize_t             lookup_word(const uint8_t *buf, size_t len);
-
+                ssize_t             write_entry(raw_resource_t *r, io::IInStream *is);
                 static size_t       calc_repeats(const uint8_t *head, const uint8_t *tail);
-
-                static ssize_t      lookup_dict(location_t *out, node_t *root, const uint8_t *s, size_t avail);
-                static ssize_t      commit_dict(io::OutMemoryStream *out, location_t *loc, node_t *root, const uint8_t *s);
-
-                static status_t     emit_uint(io::OutBitStream *obs, size_t value, size_t initial, size_t stepping);
+                status_t            emit_uint(size_t value, size_t initial, size_t stepping);
 
             public:
                 explicit Compressor();
@@ -94,10 +70,16 @@ namespace lsp
                  */
                 status_t                close();
 
+                /**
+                 * Initialize compressor
+                 * @param buf_size buffer size
+                 * @return status of operation
+                 */
+                status_t                init(size_t buf_size);
+
             public:
                 inline const void      *data() const            { return sData.data();                                      }
                 inline const void      *commands() const        { return sCommands.data();                                  }
-
                 inline const raw_resource_t *entries() const    { return vEntries.array();                                  }
 
                 inline size_t           data_size() const       { return sData.size();                                      }
@@ -114,11 +96,11 @@ namespace lsp
                  * Create resource entry and start it's writing
                  * @param name resource entry name
                  * @param is input stream to read entry from
-                 * @return status of operation
+                 * @return number of bytes read from original stream or negative error code
                  */
-                status_t                create_file(const char *name, io::IInStream *is);
-                status_t                create_file(const LSPString *name, io::IInStream *is);
-                status_t                create_file(const io::Path *name, io::IInStream *is);
+                wssize_t                create_file(const char *name, io::IInStream *is);
+                wssize_t                create_file(const LSPString *name, io::IInStream *is);
+                wssize_t                create_file(const io::Path *name, io::IInStream *is);
 
                 /**
                  * Create directory
@@ -128,18 +110,6 @@ namespace lsp
                 status_t                create_dir(const char *name);
                 status_t                create_dir(const LSPString *name);
                 status_t                create_dir(const io::Path *name);
-
-                /**
-                 * Perform the compression
-                 * @return compression
-                 */
-                status_t                compress();
-
-                /**
-                 * Dump contents to stream
-                 * @param os output stream
-                 */
-                status_t                dump_dictionary(io::IOutStream *os);
         };
     }
 }

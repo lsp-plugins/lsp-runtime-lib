@@ -54,8 +54,8 @@ namespace lsp
             resource_type_t         type;                       // Type of resource
             const char             *name;                       // Name of resource
             ssize_t                 parent;                     // Index of parent resource (negative if none)
-            size_t                  offset;                     // Offset of the resource
-            size_t                  cbytes;                     // Compressed bytes
+            ssize_t                 segment;                    // The start of segment
+            ssize_t                 offset;                     // Offset of the resource
             size_t                  length;                     // Length of the resource
             const char             *data;                       // Compressed/decompressed data
         } raw_resource_t;

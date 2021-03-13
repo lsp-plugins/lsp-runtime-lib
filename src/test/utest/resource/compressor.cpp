@@ -28,9 +28,11 @@
 
 using namespace lsp;
 
+#define BUFFER_SIZE     0x100000
+
 UTEST_BEGIN("runtime.resource", compressor)
 
-    void scan_directory(const io::Path *base, const io::Path *path, resource::Compressor *c)
+    void scan_directory(wsize_t *data_size, const io::Path *base, const io::Path *path, resource::Compressor *c)
     {
         io::Dir dir;
         status_t res;
@@ -54,13 +56,16 @@ UTEST_BEGIN("runtime.resource", compressor)
             {
                 io::InFileStream ifs;
                 UTEST_ASSERT(ifs.open(&child) == STATUS_OK);
-                UTEST_ASSERT(c->create_file(&relative, &ifs) == STATUS_OK);
+                wssize_t len = c->create_file(&relative, &ifs);
+                UTEST_ASSERT(c >= 0);
                 UTEST_ASSERT(ifs.close() == STATUS_OK);
+
+                *data_size += len;
             }
             else if (fattr.type == io::fattr_t::FT_DIRECTORY)
             {
                 UTEST_ASSERT(c->create_dir(&relative) == STATUS_OK);
-                scan_directory(base, &child, c);
+                scan_directory(data_size, base, &child, c);
             }
         }
     }
@@ -70,29 +75,24 @@ UTEST_BEGIN("runtime.resource", compressor)
         io::Path path;
         resource::Compressor c;
         io::OutFileStream ofs;
+        wsize_t data_size = 0;
 
         UTEST_ASSERT(path.fmt("%s/compressor", resources()) > 0);
         printf("Resource directory: %s\n", path.as_native());
 
-        scan_directory(&path, &path, &c);
+        // Scan and compress directory
+        UTEST_ASSERT(c.init(BUFFER_SIZE) == STATUS_OK);
 
-        c.compress();
+        scan_directory(&data_size, &path, &path, &c);
 
         size_t buf_sz = c.commands_size();
-        size_t data_sz = c.data_size();
-        double ratio = double(data_sz) / double(buf_sz);
+        double ratio = double(data_size) / double(buf_sz);
 
         printf("Command size: %d, data size: %d, ratio: %.2f\n",
             int(c.commands_size()),
-            int(c.data_size()),
+            int(data_size),
             ratio
         );
-
-        UTEST_ASSERT(path.fmt("%s/%s.dictionary", tempdir(), full_name()) > 0);
-        printf("Dumping dictionary to: %s\n", path.as_native());
-        UTEST_ASSERT(ofs.open(&path, io::File::FM_WRITE_NEW) == STATUS_OK);
-        UTEST_ASSERT(c.dump_dictionary(&ofs) == STATUS_OK);
-        UTEST_ASSERT(ofs.close() == STATUS_OK);
 
         UTEST_ASSERT(path.fmt("%s/%s.commands", tempdir(), full_name()) > 0);
         printf("Dumping commands to: %s\n", path.as_native());
@@ -100,7 +100,7 @@ UTEST_BEGIN("runtime.resource", compressor)
         ofs.write(c.commands(), c.commands_size());
         UTEST_ASSERT(ofs.close() == STATUS_OK);
 
-        c.close();
+        UTEST_ASSERT(c.close() == STATUS_OK);
     }
 
 UTEST_END
