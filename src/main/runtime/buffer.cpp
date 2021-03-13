@@ -111,12 +111,27 @@ namespace lsp
             const uint8_t *s    = reinterpret_cast<const uint8_t *>(src);
             const uint8_t *p    = &data[head];
 
-            for (size_t i=0, n=tail - head; i<n; ++i)
+            for (size_t i=0, n=tail - head; i<(n - len); ++i)
             {
                 // Find first character match
                 if (p[i] != *s)
                     continue;
 
+                // Quick test
+                if (len >= 3)
+                {
+                    // Check last byte
+                    size_t last   = len - 1;
+                    if (p[i + last] != s[last])
+                        continue;
+
+                    // Check middle byte
+                    last >>= 1;
+                    if (p[i + last] != s[last])
+                        continue;
+                }
+
+                // Perform full test
                 size_t slen     = 1; // Sequence length
                 size_t count    = lsp_min(avail, n - i);
                 for (size_t j=1; j<count; ++j, ++slen)

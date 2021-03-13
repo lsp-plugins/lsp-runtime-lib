@@ -210,17 +210,28 @@ namespace lsp
 
             while (head < tail)
             {
+                // Estimate the length of match
                 length      = sBuffer.lookup(&offset, head, tail-head);
+                if (length == 0)
+                    length      = 1;
 
-                if (length >= 2) // Prefer buffer over dictionary
+                // Calc number of repeats
+                rep         = calc_repeats(&head[length], tail);
+
+                // Estimate size of output
+                size_t est1 = (est_uint(sBuffer.size() + rep, 5, 5) + 8) * length;     // How many bits per octet
+                size_t est2 = (offset < 0) ? est1 + 1 :
+                                est_uint(offset, 5, 5) +
+                                est_uint(length - 1, 5, 5) +
+                                est_uint(rep, 0, 4);
+
+                if (est1 > est2) // Prefer buffer over dictionary
                 {
-                    rep         = calc_repeats(&head[length], tail);
-
                     // Offset
                     if ((res = emit_uint(offset, 5, 5)) != STATUS_OK)
                         break;
                     // Length
-                    if ((res = emit_uint(length - 2, 5, 5)) != STATUS_OK)
+                    if ((res = emit_uint(length - 1, 5, 5)) != STATUS_OK)
                         break;
                     // Repeat
                     if ((res = emit_uint(rep, 0, 4)) != STATUS_OK)
@@ -231,15 +242,11 @@ namespace lsp
                         if (rep)
                             ++ repeats;
                     )
-
-                    sBuffer.append(head, length);
-                    head           += length;
                 }
                 else
                 {
                     // OCTET
-                    rep         = calc_repeats(head, tail);
-                    length      = lsp_min(rep, 4) + 1;
+                    length     += lsp_min(rep, 4);
 
                     // Offset
                     if ((res = emit_uint(sBuffer.size() + rep, 5, 5)) != STATUS_OK)
@@ -247,12 +254,13 @@ namespace lsp
                     // Value
                     if ((res = sOut.writev(*head)) != STATUS_OK)
                         break;
-                    // Append to buffer and proceed
-                    sBuffer.append(head, length);
-                    head           += length;
 
                     IF_TRACE(++octets);
                 }
+
+                // Append data to buffer
+                sBuffer.append(head, length);
+                head           += length;
             }
 
             // Flush the bit sequence
@@ -370,14 +378,32 @@ namespace lsp
             return (bits > 0) ? sOut.writev(value, bits) : STATUS_OK;
         }
 
+        size_t Compressor::est_uint(size_t value, size_t initial, size_t stepping)
+        {
+            size_t bits     = initial;
+            size_t est      = 1;
+
+            while (true)
+            {
+                size_t max  = (1 << bits);
+                if (value < max)
+                    break;
+                est        ++;
+                value      -= max;
+                bits       += stepping;
+            }
+
+            return est + bits;
+        }
+
         size_t Compressor::calc_repeats(const uint8_t *head, const uint8_t *tail)
         {
-            uint8_t b       = *head;
-            ssize_t nrep    = 0;
-            for (const uint8_t *ptr=head + 1; (ptr < tail) && (*ptr == b); ++ptr)
-                ++nrep;
+            uint8_t b       = head[-1];
+            const uint8_t *s= head;
+            while ((s < tail) && (*s == b))
+                ++s;
 
-            return nrep;
+            return s - head;
         }
 
         status_t Compressor::flush()
