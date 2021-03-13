@@ -687,20 +687,21 @@ namespace lsp
 
                 clear_buffer(buf);
 
+                size_t octets = 0;
+                size_t roctets = 0;
+                size_t replays = 0;
+                size_t rreplays = 0;
+
                 while (head < tail)
                 {
                     ssize_t len     = lookup_buffer(&loc, buf, head, tail-head);
 
                     if (loc.len >= 2)
                     {
-                        // 1x - REPLAY
-                        if ((res = obs.writeb(true)) != STATUS_OK)
-                            break;
-
                         if (loc.repeat > 0)
                         {
-                            // 11 - REPLAY WITH REPEAT
-                            if ((res = obs.writeb(true)) != STATUS_OK)
+                            // 111 - REPLAY WITH REPEAT
+                            if ((res = obs.writev(0x7, 3)) != STATUS_OK)
                                 break;
                             // Offset
                             if ((res = emit_uint(&obs, loc.offset, 5, 5)) != STATUS_OK)
@@ -711,11 +712,12 @@ namespace lsp
                             // Repeat
                             if ((res = emit_uint(&obs, loc.repeat-1, 0, 4)) != STATUS_OK)
                                 break;
+                            ++ rreplays;
                         }
                         else
                         {
-                            // 10 - REPLAY
-                            if ((res = obs.writeb(false)) != STATUS_OK)
+                            // 10 - REPLAY WITHOUT REPEAT
+                            if ((res = obs.writev(0x2, 2)) != STATUS_OK)
                                 break;
                             // Offset
                             if ((res = emit_uint(&obs, loc.offset, 5, 5)) != STATUS_OK)
@@ -723,6 +725,7 @@ namespace lsp
                             // Length
                             if ((res = emit_uint(&obs, loc.len - 2, 0, 4)) != STATUS_OK)
                                 break;
+                            ++ replays;
                         }
 
                         // Append to buffer and proceed
@@ -735,8 +738,8 @@ namespace lsp
 
                         if (loc.repeat > 0)
                         {
-                            // 01 - REPEATED OCTET
-                            if ((res = obs.writeb(true)) != STATUS_OK)
+                            // 110 - REPEATED OCTET
+                            if ((res = obs.writev(0x6, 3)) != STATUS_OK)
                                 break;
 
                             // Character
@@ -749,10 +752,12 @@ namespace lsp
 
                             append_buffer(buf, head, len);
                             head           += len;
+
+                            ++ roctets;
                         }
                         else
                         {
-                            // 00 - SINGLE OCTET
+                            // 0 - SINGLE OCTET
                             if ((res = obs.writeb(false)) != STATUS_OK)
                                 break;
 
@@ -763,6 +768,8 @@ namespace lsp
                             // Append to buffer and proceed
                             append_buffer(buf, b);
                             head            ++;
+
+                            ++ octets;
                         }
                     }
                 }
@@ -776,6 +783,8 @@ namespace lsp
                 // Compute number of bytes for compressed item
                 r->cbytes   = sCommands.size() - r->offset;
 
+                lsp_trace("  octets: %d, roctets: %d, replays: %d, rreplays: %d",
+                        int(octets), int(roctets), int(replays), int(rreplays));
                 lsp_trace("  original size: %d, compressed size: %d, ratio: %.2f",
                         r->length, r->cbytes, float(r->length) / float(r->cbytes));
             }
