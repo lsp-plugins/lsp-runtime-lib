@@ -28,7 +28,7 @@
 #include <lsp-plug.in/common/bits.h>
 #include <lsp-plug.in/common/alloc.h>
 
-#define BUFFER_CAPACITY         0x8000
+#define BUFFER_CAPACITY         0x100000
 
 namespace lsp
 {
@@ -47,6 +47,7 @@ namespace lsp
         {
             sRoot.code      = 0;
             sRoot.hits      = 0;
+            sRoot.off       = -1;
             sRoot.next      = NULL;
             sRoot.parent    = NULL;
             sRoot.child     = NULL;
@@ -60,16 +61,12 @@ namespace lsp
         status_t Compressor::close()
         {
             // Drop nodes
-            for (size_t i=0, n=vNodes.size(); i<n; ++i)
-            {
-                node_t *node    = vNodes.get(i);
-                if (node != NULL)
-                    free(node);
-            }
+            sBuffer.destroy();
             vNodes.flush();
 
             sRoot.code      = 0;
             sRoot.hits      = 0;
+            sRoot.off       = -1;
             sRoot.next      = NULL;
             sRoot.parent    = NULL;
             sRoot.child     = NULL;
@@ -88,7 +85,6 @@ namespace lsp
 
             // Drop buffer data
             sData.drop();
-            sBuffer.drop();
             sCommands.drop();
 
             status_t res    = sData.close();
@@ -113,6 +109,7 @@ namespace lsp
             // Initialize node and link to parent
             node->code      = code;
             node->hits      = 0;
+            node->off       = -1;
             node->next      = parent->child;
             node->parent    = parent;
             node->child     = NULL;
@@ -267,7 +264,7 @@ namespace lsp
                 else
                 {
                     // Word was not found, need to add
-                    if (!add_child(curr, b))
+                    if (!(curr = add_child(curr, b)))
                         return STATUS_NO_MEM;
 
                     // Increment number of hits for each node
@@ -278,6 +275,65 @@ namespace lsp
                 // Skip repeated characters
                 while ((ptr < end) && (*ptr == b))
                     ++ptr;
+            }
+
+            return STATUS_OK;
+        }
+
+        status_t Compressor::update_dictionary2(const void *buf, size_t bytes)
+        {
+            location_t locd;
+            const uint8_t *ptr      = static_cast<const uint8_t *>(buf);
+            const uint8_t *end      = &ptr[bytes];
+
+            while (ptr < end)
+            {
+                // Find dicionary match
+                ssize_t lend    = lookup_dict(&locd, &sRoot, ptr, end - ptr);
+                if (locd.len >= 4)
+                {
+                    ptr    += lend;
+                    continue;
+                }
+
+                // No match - add new word
+                node_t *curr            = &sRoot;
+                while (ptr < end)
+                {
+                    uint8_t b           = *(ptr++);
+                    node_t *next        = get_child(curr, b);
+
+                    // Word was found?
+                    if (next != NULL)
+                    {
+                        curr                = next; // Move to child node and repeat
+                        continue;
+                    }
+
+                    // No word found at all?
+                    if (curr == &sRoot)
+                    {
+                        // Word was not found, need to add
+                        if (!(next = add_child(curr, b)))
+                            return STATUS_NO_MEM;
+                        ++ next->hits;
+                    }
+                    else
+                    {
+                        // Word was not found, need to add
+                        if (!(curr = add_child(curr, b)))
+                            return STATUS_NO_MEM;
+
+                        // Increment number of hits for each node
+                        for ( ; curr != &sRoot; curr = curr->parent)
+                            ++ curr->hits;
+                    }
+
+                    // Skip repeated characters
+                    while ((ptr < end) && (*ptr == b))
+                        ++ptr;
+                    break;
+                }
             }
 
             return STATUS_OK;
@@ -439,155 +495,62 @@ namespace lsp
             return len;
         }
 
-        status_t Compressor::emit_to_buffer(const uint8_t *s, size_t len)
-        {
-            const uint8_t *buf  = sBuffer.data();
-            const uint8_t *last = &buf[sBuffer.size()];
-            size_t rest         = len;
-
-            for ( ; buf < last; ++buf)
-            {
-                // Check first match
-                if (*buf != *s)
-                    continue;
-
-                // Check full match
-                size_t compare  = lsp_min(size_t(last - buf), len);
-                if (memcmp(buf, s, compare) != 0)
-                    continue;
-
-                // Buffers matched
-                rest     = len - compare;
-                break;
-            }
-
-//            IF_TRACE(LSPString tmp);
-
-            if (rest == 0)
-            {
-//                IF_TRACE(
-//                    tmp.set_ascii(reinterpret_cast<const char *>(s), len);
-//                    lsp_trace("hits %s\n", tmp.get_native());
-//                );
-                return STATUS_OK;
-            }
-
-            // Append buffer with rest data
-//            IF_TRACE(
-//                tmp.set_ascii(reinterpret_cast<const char *>(&s[len-rest]), rest);
-//                lsp_trace("miss %s\n", tmp.get_native());
-//            );
-
-            ssize_t res = sBuffer.write(&s[len-rest], rest);
-            if (res < ssize_t(rest))
-                return (res < 0) ? -res : STATUS_NO_MEM;
-
-            return STATUS_OK;
-        }
-
-        ssize_t Compressor::lookup_buffer(location_t *out, const buffer_t *buf, const uint8_t *s, size_t avail)
+        ssize_t Compressor::lookup_dict(location_t *out, node_t *root, const uint8_t *s, size_t avail)
         {
             out->offset     = -1;
             out->len        = 0;
             out->repeat     = 0;
 
-            const uint8_t *p    = &buf->data[buf->head];
+            node_t *curr        = root;
+            size_t i            = 0;
 
-            for (size_t i=0, n=buf->tail - buf->head; i<n; ++i)
+            for (; i < avail; ++i)
             {
-                // Find first character match
-                if (p[i] != *s)
-                    continue;
+                node_t *next        = get_child(curr, s[i]);
 
-                size_t slen     = 1; // Sequence length
-                size_t count    = lsp_min(avail, n - i);
-                for (size_t j=1; j<count; ++j, ++slen)
-                    if (p[i+j] != s[j])
-                        break;
+                // No more node or length reduced dramatially?
+                if ((next == NULL) || (next->hits < (i+1)))
+                    break;
 
-                // Compute the number of repetitions
-                size_t rpt      = 0;
-                for (size_t j = slen; j < avail; ++j, ++rpt)
-                    if (s[slen-1] != s[j])
-                        break;
-
-                if ((out->len + out->repeat) < (slen + rpt))
-                {
-                    out->offset     = i;
-                    out->len        = slen;
-                    out->repeat     = rpt;
-                }
+                // Move to next node
+                curr                = next;
             }
+
+            // Remember the length and offset
+            out->offset     = curr->off;
+            out->len        = i;
+
+            // Compute the number of repetitions
+            for (size_t j = i+1; j < avail; ++j, ++out->repeat)
+                if (s[i] != s[j])
+                    break;
 
             return out->len + out->repeat;
         }
 
-        Compressor::buffer_t *Compressor::alloc_buffer(size_t capacity)
+        ssize_t Compressor::commit_dict(io::OutMemoryStream *out, location_t *loc, node_t *root, const uint8_t *s)
         {
-            size_t szbuf    = align_size(sizeof(buffer_t), DEFAULT_ALIGN);
-            size_t szdata   = align_size(capacity * 2, DEFAULT_ALIGN);
+            // Offset is defined?
+            if (loc->offset >= 0)
+                return STATUS_OK;
 
-            uint8_t *ptr    = static_cast<uint8_t *>(malloc(szbuf + szdata));
-            if (ptr == NULL)
-                return NULL;
-
-            buffer_t *buf   = reinterpret_cast<buffer_t *>(ptr);
-            buf->data       = &ptr[szbuf];
-            buf->head       = 0;
-            buf->tail       = 0;
-            buf->cap        = capacity;
-
-            return buf;
-        }
-
-        void Compressor::free_buffer(buffer_t *buf)
-        {
-            free(buf);
-        }
-
-        void Compressor::clear_buffer(buffer_t *buf)
-        {
-            buf->head       = 0;
-            buf->tail       = 0;
-        }
-
-        void Compressor::append_buffer(buffer_t *buf, const uint8_t *v, ssize_t count)
-        {
-            if (count >= buf->cap)
+            // Emit the word
+            loc->offset         = out->size();
+            node_t *curr        = root;
+            for (size_t i=0; i<loc->len; ++i)
             {
-                memcpy(buf->data, &v[count - buf->cap], buf->cap);
-                buf->head       = 0;
-                buf->tail       = buf->cap;
+                curr                = get_child(curr, s[i]);
+
+                // Remember the start position of the word
+                if (curr->off < 0)
+                    curr->off           = loc->offset;
             }
 
-            ssize_t avail   = ((buf->cap << 1) - buf->tail);
-            if (count < avail)
-            {
-                memcpy(&buf->data[buf->tail], v, count);
-                buf->tail      += count;
-                buf->head       = lsp_max(buf->head, buf->tail - buf->cap);
-            }
-            else
-            {
-                ssize_t head    = buf->tail + count - buf->cap;
-                memmove(buf->data, &buf->data[head], buf->tail - head);
-                memcpy(&buf->data[buf->tail - head], v, count);
-            }
-        }
-
-        void Compressor::append_buffer(buffer_t *buf, uint8_t v)
-        {
-            // Shift buffer if needed
-            if (buf->tail >= (buf->cap << 1))
-            {
-                memmove(buf->data, &buf->data[buf->cap], buf->cap);
-                buf->head  -= buf->cap;
-                buf->tail  -= buf->cap;
-            }
-
-            // Append byte
-            buf->data[buf->tail++]  = v;
-            buf->head               = lsp_max(buf->head, buf->tail - buf->cap);
+            // Commit data to buffer
+            ssize_t written = out->write(s, loc->len);
+            if (written < 0)
+                return -written;
+            return (written == ssize_t(loc->len)) ? STATUS_OK : STATUS_NO_MEM;
         }
 
         status_t Compressor::emit_buffer_command(size_t bpos, const location_t *loc)
@@ -656,10 +619,19 @@ namespace lsp
             return (bits > 0) ? obs->writev(value, bits) : STATUS_OK;
         }
 
+        size_t Compressor::calc_repeats(const uint8_t *head, const uint8_t *tail)
+        {
+            uint8_t b       = *head;
+            ssize_t nrep    = 0;
+            for (const uint8_t *ptr=head + 1; (ptr < tail) && (*ptr == b); ++ptr)
+                ++nrep;
+
+            return nrep;
+        }
+
         status_t Compressor::compress()
         {
             status_t res;
-            location_t loc;
             IF_TRACE(
                 LSPString tmp;
             )
@@ -669,9 +641,12 @@ namespace lsp
             if ((res = obs.wrap(&sCommands)) != STATUS_OK)
                 return res;
 
-            buffer_t *buf = alloc_buffer(BUFFER_CAPACITY);
-            if (buf == NULL)
-                return STATUS_NO_MEM;
+            // Do main compression loop
+            buffer_t buf;
+            if ((res = buf.init(BUFFER_CAPACITY)) != STATUS_OK)
+                return res;
+
+            ssize_t offset = 0, length = 0, rep = 0;
 
             for (size_t i=0, n=vEntries.size(); i<n; ++i)
             {
@@ -685,216 +660,77 @@ namespace lsp
                 const uint8_t *tail = &head[r->length];
                 r->offset           = sCommands.size();
 
-                clear_buffer(buf);
-
-                size_t octets = 0;
-                size_t roctets = 0;
-                size_t replays = 0;
-                size_t rreplays = 0;
+                size_t octets   = 0;
+                size_t replays  = 0;
+                size_t repeats  = 0;
 
                 while (head < tail)
                 {
-                    ssize_t len     = lookup_buffer(&loc, buf, head, tail-head);
+                    length      = buf.lookup(&offset, head, tail-head);
 
-                    if (loc.len >= 2)
+                    if (length >= 2) // Prefer buffer over dictionary
                     {
-                        if (loc.repeat > 0)
-                        {
-                            // 111 - REPLAY WITH REPEAT
-                            if ((res = obs.writev(0x7, 3)) != STATUS_OK)
-                                break;
-                            // Offset
-                            if ((res = emit_uint(&obs, loc.offset, 5, 5)) != STATUS_OK)
-                                break;
-                            // Length
-                            if ((res = emit_uint(&obs, loc.len - 2, 0, 4)) != STATUS_OK)
-                                break;
-                            // Repeat
-                            if ((res = emit_uint(&obs, loc.repeat-1, 0, 4)) != STATUS_OK)
-                                break;
-                            ++ rreplays;
-                        }
-                        else
-                        {
-                            // 10 - REPLAY WITHOUT REPEAT
-                            if ((res = obs.writev(0x2, 2)) != STATUS_OK)
-                                break;
-                            // Offset
-                            if ((res = emit_uint(&obs, loc.offset, 5, 5)) != STATUS_OK)
-                                break;
-                            // Length
-                            if ((res = emit_uint(&obs, loc.len - 2, 0, 4)) != STATUS_OK)
-                                break;
-                            ++ replays;
-                        }
+                        rep         = calc_repeats(&head[length], tail);
 
-                        // Append to buffer and proceed
-                        append_buffer(buf, head, len);
-                        head           += len;
+                        // Offset
+                        if ((res = emit_uint(&obs, offset, 7, 7)) != STATUS_OK)
+                            break;
+                        // Length
+                        if ((res = emit_uint(&obs, length - 2, 5, 5)) != STATUS_OK)
+                            break;
+                        // Repeat
+                        if ((res = emit_uint(&obs, rep, 0, 4)) != STATUS_OK)
+                            break;
+                        ++ replays;
+                        if (rep)
+                            ++ repeats;
+
+                        buf.append(head, length);
+                        head           += length;
                     }
                     else
                     {
-                        uint8_t b   = *head;
+                        // OCTET
+                        rep         = calc_repeats(head, tail);
+                        length      = lsp_min(rep, 4) + 1;
 
-                        if (loc.repeat > 0)
-                        {
-                            // 110 - REPEATED OCTET
-                            if ((res = obs.writev(0x6, 3)) != STATUS_OK)
-                                break;
-
-                            // Character
-                            if ((res = obs.writev(b)) != STATUS_OK)
-                                break;
-
-                            // Repeat
-                            if ((res = emit_uint(&obs, loc.repeat - 1, 0, 4)) != STATUS_OK)
-                                break;
-
-                            append_buffer(buf, head, len);
-                            head           += len;
-
-                            ++ roctets;
-                        }
-                        else
-                        {
-                            // 0 - SINGLE OCTET
-                            if ((res = obs.writeb(false)) != STATUS_OK)
-                                break;
-
-                            // Character
-                            if ((res = obs.writev(b)) != STATUS_OK)
-                                break;
-
-                            // Append to buffer and proceed
-                            append_buffer(buf, b);
-                            head            ++;
-
-                            ++ octets;
-                        }
+                        // Offset
+                        if ((res = emit_uint(&obs, buf.size() + rep, 7, 7)) != STATUS_OK)
+                            break;
+                        // Value
+                        if ((res = obs.writev(*head)) != STATUS_OK)
+                            break;
+                        // Append to buffer and proceed
+                        buf.append(head, length);
+                        head           += length;
+                        ++ octets;
                     }
                 }
 
                 // Flush the bit sequence
                 if (res != STATUS_OK)
                     break;
-                if ((res = obs.flush()) != STATUS_OK)
-                    break;
 
                 // Compute number of bytes for compressed item
                 r->cbytes   = sCommands.size() - r->offset;
 
-                lsp_trace("  octets: %d, roctets: %d, replays: %d, rreplays: %d",
-                        int(octets), int(roctets), int(replays), int(rreplays));
+                lsp_trace("  octets: %d, replays: %d, repeats: %d",
+                        int(octets), int(replays), int(repeats));
                 lsp_trace("  original size: %d, compressed size: %d, ratio: %.2f",
                         r->length, r->cbytes, float(r->length) / float(r->cbytes));
             }
 
-            // Drop the temporary buffer
-            free_buffer(buf);
+            size_t csize = sCommands.size() + sBuffer.size();
 
             lsp_trace("  overall size: %d, compressed size: %d, ratio: %.2f",
-                    sData.size(), sCommands.size(), float(sData.size()) / float(sCommands.size()));
+                    sData.size(), csize, float(sData.size()) / float(csize));
 
             return res;
+        }
 
-            /*
-            // Pre-build buffer
-            for (size_t i=0, n=vEntries.size(); i<n; ++i)
-            {
-                raw_resource_t *r = vEntries.uget(i);
-                if ((r == NULL) || (r->type != RES_FILE))
-                    continue;
-
-                lsp_trace("  preprocessing entry: %s", r->name);
-                const uint8_t *head = sData.data();
-                head               += r->offset;
-                const uint8_t *tail = &head[r->length];
-//                uint8_t b;
-
-                while (head < tail)
-                {
-                    // Lookup for the dictionary word
-                    ssize_t len = lookup_word(head, tail-head);
-                    if (len < 0)
-                        return -len;
-                    else if (len == 0)
-                        len = 1;
-
-                    // Emit word to buffer
-                    if ((res = emit_to_buffer(head, len)) != STATUS_OK)
-                        return res;
-
-                    // Update pointer
-                    head       += len;
-
-                    // Skip repeted characters
-                    uint8_t b   = head[-1];
-                    while ((head < tail) && (b == *head))
-                        ++head;
-                }
-            }
-
-            // Build commands
-            for (size_t i=0, n=vEntries.size(); i<n; ++i)
-            {
-                raw_resource_t *r = vEntries.uget(i);
-                if ((r == NULL) || (r->type != RES_FILE))
-                    continue;
-
-                lsp_trace("  processing entry: %s", r->name);
-                const uint8_t *head = sData.data();
-                head               += r->offset;
-                const uint8_t *tail = &head[r->length];
-                r->offset           = sCommands.size();
-                size_t buf_pos      = 0;
-
-                while (head < tail)
-                {
-                    // Lookup for the dictionary word
-                    ssize_t len = lookup_buffer(&loc, head, tail-head);
-                    if (len > 0)
-                    {
-                        status_t res = emit_buffer_command(buf_pos, &loc);
-                        if (res != STATUS_OK)
-                            return res;
-
-                        // Update pointer
-                        head       += len;
-                        buf_pos     = loc.offset + len;
-                    }
-                    else
-                    {
-                        // TODO
-                        ++head;
-                    }
-                }
-
-                sCommands.flush();
-            }*/
-
-            //                lsp_trace("  compressing entry: %s", r->name);
-            //                const uint8_t *head = sData.data();
-            //                head               += r->offset;
-            //                const uint8_t *tail = &head[r->length];
-            //
-            //                while (head < tail)
-            //                {
-            //                    status_t res = lookup_buffer(&loc, head, tail - head);
-            //                    if (res != STATUS_OK)
-            //                        return res;
-            //
-            //                    #ifdef LSP_TRACE
-            //                        LSPString tmp;
-            //                        const uint8_t *buf = sBuffer.data();
-            //                        tmp.set_ascii(reinterpret_cast<const char *>(&buf[loc.offset]), loc.len);
-            //                        uint8_t ch = buf[loc.offset + loc.len - 1];
-            //                        for (size_t i=0; i<loc.repeat; ++i)
-            //                            tmp.append(ch);
-            //
-            //                        lsp_trace("  off=%d, len=%d, rep=%d, out=%s", );
-            //                    #endif /* LSP_TRACE */
-            //                }
-
+        status_t Compressor::flush()
+        {
+            return STATUS_OK;
         }
     }
 }

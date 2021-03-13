@@ -76,29 +76,22 @@ UTEST_BEGIN("runtime.resource", compressor)
 
         scan_directory(&path, &path, &c);
 
-        UTEST_ASSERT(path.fmt("%s/%s.dictionary", tempdir(), full_name()) > 0);
-        printf("Dumping dictionary to: %s\n", path.as_native());
-        UTEST_ASSERT(ofs.open(&path, io::File::FM_WRITE_NEW) == STATUS_OK);
-        UTEST_ASSERT(c.dump_dictionary(&ofs) == STATUS_OK);
-        UTEST_ASSERT(ofs.close() == STATUS_OK);
-
         c.compress();
 
-        size_t buf_sz = c.buffer_size() + c.commands_size();
+        size_t buf_sz = c.commands_size();
         size_t data_sz = c.data_size();
         double ratio = double(data_sz) / double(buf_sz);
 
-        printf("Buffer size: %d, command size: %d, data size: %d, ratio: %.2f\n",
-            int(c.buffer_size()),
+        printf("Command size: %d, data size: %d, ratio: %.2f\n",
             int(c.commands_size()),
             int(c.data_size()),
             ratio
         );
 
-        UTEST_ASSERT(path.fmt("%s/%s.buffer", tempdir(), full_name()) > 0);
-        printf("Dumping buffer to: %s\n", path.as_native());
+        UTEST_ASSERT(path.fmt("%s/%s.dictionary", tempdir(), full_name()) > 0);
+        printf("Dumping dictionary to: %s\n", path.as_native());
         UTEST_ASSERT(ofs.open(&path, io::File::FM_WRITE_NEW) == STATUS_OK);
-        ofs.write(c.buffer(), c.buffer_size());
+        UTEST_ASSERT(c.dump_dictionary(&ofs) == STATUS_OK);
         UTEST_ASSERT(ofs.close() == STATUS_OK);
 
         UTEST_ASSERT(path.fmt("%s/%s.commands", tempdir(), full_name()) > 0);
