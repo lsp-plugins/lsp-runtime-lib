@@ -27,6 +27,7 @@
 #include <lsp-plug.in/io/OutMemoryStream.h>
 #include <lsp-plug.in/io/IOutSequence.h>
 #include <lsp-plug.in/io/IOutStream.h>
+#include <lsp-plug.in/io/OutBitStream.h>
 #include <lsp-plug.in/lltl/darray.h>
 #include <lsp-plug.in/lltl/parray.h>
 
@@ -59,6 +60,14 @@ namespace lsp
                     size_t      repeat;     // Number of repeats
                 } location_t;
 
+                typedef struct buffer_t
+                {
+                    uint8_t    *data;       // Buffer data (2 x capacity)
+                    ssize_t     head;       // Head of the buffer
+                    ssize_t     tail;       // Buffer tail
+                    ssize_t     cap;        // Buffer capacity
+                } buffer_t;
+
             protected:
                 lltl::darray<raw_resource_t>    vEntries;
                 lltl::parray<node_t>            vNodes;         // List of nodes
@@ -79,7 +88,14 @@ namespace lsp
                 status_t            emit_to_buffer(const uint8_t *s, size_t len);
                 status_t            emit_buffer_command(size_t bpos, const location_t *loc);
                 ssize_t             lookup_word(const uint8_t *buf, size_t len);
-                ssize_t             lookup_buffer(location_t *out, const uint8_t *s, size_t len);
+
+                static ssize_t      lookup_buffer(location_t *out, const buffer_t *buf, const uint8_t *s, size_t avail);
+                static buffer_t    *alloc_buffer(size_t capacity);
+                static void         free_buffer(buffer_t *buf);
+                static void         clear_buffer(buffer_t *buf);
+                static void         append_buffer(buffer_t *buf, const uint8_t *v, ssize_t count);
+                static void         append_buffer(buffer_t *buf, uint8_t v);
+                static status_t     emit_uint(io::OutBitStream *obs, size_t value, size_t initial, size_t stepping);
 
             public:
                 explicit Compressor();

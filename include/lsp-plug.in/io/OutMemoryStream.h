@@ -80,6 +80,16 @@ namespace lsp
                  */
                 void            drop();
 
+                /** Reset the size of memory buffer
+                 *
+                 */
+                void            clear();
+
+                /** Reduce the buffer size to the specified value if it was greater
+                 * @return true if the size has been reduced
+                 */
+                bool            reduce(size_t size);
+
                 /**
                  * Reserve amount of data
                  * @param amount amount of bytes to reserve

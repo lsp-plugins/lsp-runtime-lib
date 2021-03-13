@@ -24,9 +24,23 @@
 #include <lsp-plug.in/stdlib/stdio.h>
 #include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/io/OutSequence.h>
+#include <lsp-plug.in/io/OutBitStream.h>
+#include <lsp-plug.in/common/bits.h>
+#include <lsp-plug.in/common/alloc.h>
+
+#define BUFFER_CAPACITY         0x8000
 
 namespace lsp
 {
+    enum compress_cmd_t
+    {
+        COMMAND_APPEND_7B,
+        COMMAND_APPEND_8B,
+
+        COMMAND_TOTAL,
+        COMMAND_MAX     = COMMAND_TOTAL - 1
+    };
+
     namespace resource
     {
         Compressor::Compressor()
@@ -161,6 +175,7 @@ namespace lsp
                     found->parent   = index;
                     found->offset   = 0;
                     found->length   = 0;
+                    found->cbytes   = 0;
                     found->name     = item.clone_utf8();
                     found->data     = NULL;
 
@@ -185,6 +200,7 @@ namespace lsp
                         found->parent   = index;
                         found->offset   = 0;
                         found->length   = 0;
+                        found->cbytes   = 0;
                         found->name     = item.clone_utf8();
                         found->data     = NULL;
 
@@ -469,28 +485,29 @@ namespace lsp
             return STATUS_OK;
         }
 
-        ssize_t Compressor::lookup_buffer(location_t *out, const uint8_t *s, size_t len)
+        ssize_t Compressor::lookup_buffer(location_t *out, const buffer_t *buf, const uint8_t *s, size_t avail)
         {
             out->offset     = -1;
             out->len        = 0;
             out->repeat     = 0;
 
-            const uint8_t *p    = sBuffer.data();
-            for (size_t i=0, n=sBuffer.size(); i<n; ++i)
+            const uint8_t *p    = &buf->data[buf->head];
+
+            for (size_t i=0, n=buf->tail - buf->head; i<n; ++i)
             {
                 // Find first character match
                 if (p[i] != *s)
                     continue;
 
                 size_t slen     = 1; // Sequence length
-                size_t count    = lsp_min(len, n - i);
+                size_t count    = lsp_min(avail, n - i);
                 for (size_t j=1; j<count; ++j, ++slen)
                     if (p[i+j] != s[j])
                         break;
 
                 // Compute the number of repetitions
                 size_t rpt      = 0;
-                for (size_t j = slen; j < len; ++j, ++rpt)
+                for (size_t j = slen; j < avail; ++j, ++rpt)
                     if (s[slen-1] != s[j])
                         break;
 
@@ -503,6 +520,74 @@ namespace lsp
             }
 
             return out->len + out->repeat;
+        }
+
+        Compressor::buffer_t *Compressor::alloc_buffer(size_t capacity)
+        {
+            size_t szbuf    = align_size(sizeof(buffer_t), DEFAULT_ALIGN);
+            size_t szdata   = align_size(capacity * 2, DEFAULT_ALIGN);
+
+            uint8_t *ptr    = static_cast<uint8_t *>(malloc(szbuf + szdata));
+            if (ptr == NULL)
+                return NULL;
+
+            buffer_t *buf   = reinterpret_cast<buffer_t *>(ptr);
+            buf->data       = &ptr[szbuf];
+            buf->head       = 0;
+            buf->tail       = 0;
+            buf->cap        = capacity;
+
+            return buf;
+        }
+
+        void Compressor::free_buffer(buffer_t *buf)
+        {
+            free(buf);
+        }
+
+        void Compressor::clear_buffer(buffer_t *buf)
+        {
+            buf->head       = 0;
+            buf->tail       = 0;
+        }
+
+        void Compressor::append_buffer(buffer_t *buf, const uint8_t *v, ssize_t count)
+        {
+            if (count >= buf->cap)
+            {
+                memcpy(buf->data, &v[count - buf->cap], buf->cap);
+                buf->head       = 0;
+                buf->tail       = buf->cap;
+            }
+
+            ssize_t avail   = ((buf->cap << 1) - buf->tail);
+            if (count < avail)
+            {
+                memcpy(&buf->data[buf->tail], v, count);
+                buf->tail      += count;
+                buf->head       = lsp_max(buf->head, buf->tail - buf->cap);
+            }
+            else
+            {
+                ssize_t head    = buf->tail + count - buf->cap;
+                memmove(buf->data, &buf->data[head], buf->tail - head);
+                memcpy(&buf->data[buf->tail - head], v, count);
+            }
+        }
+
+        void Compressor::append_buffer(buffer_t *buf, uint8_t v)
+        {
+            // Shift buffer if needed
+            if (buf->tail >= (buf->cap << 1))
+            {
+                memmove(buf->data, &buf->data[buf->cap], buf->cap);
+                buf->head  -= buf->cap;
+                buf->tail  -= buf->cap;
+            }
+
+            // Append byte
+            buf->data[buf->tail++]  = v;
+            buf->head               = lsp_max(buf->head, buf->tail - buf->cap);
         }
 
         status_t Compressor::emit_buffer_command(size_t bpos, const location_t *loc)
@@ -548,6 +633,29 @@ namespace lsp
             return (written == blen) ? STATUS_OK : STATUS_NO_MEM;
         }
 
+        status_t Compressor::emit_uint(io::OutBitStream *obs, size_t value, size_t initial, size_t stepping)
+        {
+            status_t res;
+            size_t bits     = initial;
+
+            while (true)
+            {
+                size_t max  = (1 << bits);
+                if (value < max)
+                    break;
+                if ((res = obs->writeb(true)) != STATUS_OK)
+                    return res;
+
+                value      -= max;
+                bits       += stepping;
+            }
+
+            if ((res = obs->writeb(false)) != STATUS_OK)
+                return res;
+
+            return (bits > 0) ? obs->writev(value, bits) : STATUS_OK;
+        }
+
         status_t Compressor::compress()
         {
             status_t res;
@@ -556,6 +664,131 @@ namespace lsp
                 LSPString tmp;
             )
 
+            // Wrap data with out bit stream
+            io::OutBitStream obs;
+            if ((res = obs.wrap(&sCommands)) != STATUS_OK)
+                return res;
+
+            buffer_t *buf = alloc_buffer(BUFFER_CAPACITY);
+            if (buf == NULL)
+                return STATUS_NO_MEM;
+
+            for (size_t i=0, n=vEntries.size(); i<n; ++i)
+            {
+                raw_resource_t *r = vEntries.uget(i);
+                if ((r == NULL) || (r->type != RES_FILE))
+                    continue;
+
+                lsp_trace("  compressing entry: %s", r->name);
+                const uint8_t *head = sData.data();
+                head               += r->offset;
+                const uint8_t *tail = &head[r->length];
+                r->offset           = sCommands.size();
+
+                clear_buffer(buf);
+
+                while (head < tail)
+                {
+                    ssize_t len     = lookup_buffer(&loc, buf, head, tail-head);
+
+                    if (loc.len >= 2)
+                    {
+                        // 1x - REPLAY
+                        if ((res = obs.writeb(true)) != STATUS_OK)
+                            break;
+
+                        if (loc.repeat > 0)
+                        {
+                            // 11 - REPLAY WITH REPEAT
+                            if ((res = obs.writeb(true)) != STATUS_OK)
+                                break;
+                            // Offset
+                            if ((res = emit_uint(&obs, loc.offset, 5, 5)) != STATUS_OK)
+                                break;
+                            // Length
+                            if ((res = emit_uint(&obs, loc.len - 2, 0, 4)) != STATUS_OK)
+                                break;
+                            // Repeat
+                            if ((res = emit_uint(&obs, loc.repeat-1, 0, 4)) != STATUS_OK)
+                                break;
+                        }
+                        else
+                        {
+                            // 10 - REPLAY
+                            if ((res = obs.writeb(false)) != STATUS_OK)
+                                break;
+                            // Offset
+                            if ((res = emit_uint(&obs, loc.offset, 5, 5)) != STATUS_OK)
+                                break;
+                            // Length
+                            if ((res = emit_uint(&obs, loc.len - 2, 0, 4)) != STATUS_OK)
+                                break;
+                        }
+
+                        // Append to buffer and proceed
+                        append_buffer(buf, head, len);
+                        head           += len;
+                    }
+                    else
+                    {
+                        uint8_t b   = *head;
+
+                        if (loc.repeat > 0)
+                        {
+                            // 01 - REPEATED OCTET
+                            if ((res = obs.writeb(true)) != STATUS_OK)
+                                break;
+
+                            // Character
+                            if ((res = obs.writev(b)) != STATUS_OK)
+                                break;
+
+                            // Repeat
+                            if ((res = emit_uint(&obs, loc.repeat - 1, 0, 4)) != STATUS_OK)
+                                break;
+
+                            append_buffer(buf, head, len);
+                            head           += len;
+                        }
+                        else
+                        {
+                            // 00 - SINGLE OCTET
+                            if ((res = obs.writeb(false)) != STATUS_OK)
+                                break;
+
+                            // Character
+                            if ((res = obs.writev(b)) != STATUS_OK)
+                                break;
+
+                            // Append to buffer and proceed
+                            append_buffer(buf, b);
+                            head            ++;
+                        }
+                    }
+                }
+
+                // Flush the bit sequence
+                if (res != STATUS_OK)
+                    break;
+                if ((res = obs.flush()) != STATUS_OK)
+                    break;
+
+                // Compute number of bytes for compressed item
+                r->cbytes   = sCommands.size() - r->offset;
+
+                lsp_trace("  original size: %d, compressed size: %d, ratio: %.2f",
+                        r->length, r->cbytes, float(r->length) / float(r->cbytes));
+            }
+
+            // Drop the temporary buffer
+            free_buffer(buf);
+
+            lsp_trace("  overall size: %d, compressed size: %d, ratio: %.2f",
+                    sData.size(), sCommands.size(), float(sData.size()) / float(sCommands.size()));
+
+            return res;
+
+            /*
             // Pre-build buffer
             for (size_t i=0, n=vEntries.size(); i<n; ++i)
             {
@@ -628,7 +861,7 @@ namespace lsp
                 }
 
                 sCommands.flush();
-            }
+            }*/
 
             //                lsp_trace("  compressing entry: %s", r->name);
             //                const uint8_t *head = sData.data();
@@ -653,7 +886,6 @@ namespace lsp
             //                    #endif /* LSP_TRACE */
             //                }
 
-            return STATUS_OK;
         }
     }
 }

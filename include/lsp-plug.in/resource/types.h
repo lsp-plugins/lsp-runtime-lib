@@ -55,6 +55,7 @@ namespace lsp
             const char             *name;                       // Name of resource
             ssize_t                 parent;                     // Index of parent resource (negative if none)
             size_t                  offset;                     // Offset of the resource
+            size_t                  cbytes;                     // Compressed bytes
             size_t                  length;                     // Length of the resource
             const char             *data;                       // Compressed/decompressed data
         } raw_resource_t;

@@ -232,7 +232,7 @@ namespace lsp
             size_t written      = 0;
             for ( ; written < count; ++written)
             {
-                status_t res = write(ptr[written], sizeof(uint8_t) * 8);
+                status_t res = writev(ptr[written], sizeof(uint8_t) * 8);
                 if (res != STATUS_OK)
                 {
                     set_error(res);
@@ -243,14 +243,14 @@ namespace lsp
             return written;
         }
 
-        ssize_t OutBitStream::bit_write(const void *buf, size_t bits)
+        ssize_t OutBitStream::writev(const void *buf, size_t bits)
         {
             const uint8_t *ptr  = reinterpret_cast<const uint8_t *>(buf);
             size_t written      = 0;
             while (written < bits)
             {
                 size_t to_write = lsp_min(sizeof(uint8_t) * 8, bits - written);
-                status_t res    = write(*(ptr++), to_write);
+                status_t res    = writev(*(ptr++), to_write);
                 if (res != STATUS_OK)
                 {
                     set_error(res);
@@ -325,7 +325,7 @@ namespace lsp
         }
 
 #ifdef ARCH_32BIT
-        status_t OutBitStream::write(uint32_t value, size_t bits)
+        status_t OutBitStream::writev(uint32_t value, size_t bits)
         {
             value  <<= BITSTREAM_BUFSZ - bits;
             while (bits > 0)
@@ -346,7 +346,7 @@ namespace lsp
         }
 #endif
 
-        status_t OutBitStream::write(uint64_t value, size_t bits)
+        status_t OutBitStream::writev(uint64_t value, size_t bits)
         {
             status_t res;
 

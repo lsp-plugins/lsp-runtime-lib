@@ -60,12 +60,12 @@ namespace lsp
 
                 status_t            wrap(FILE *fd, bool close);
                 status_t            wrap_native(fhandle_t fd, bool close);
-                status_t            wrap(File *fd, size_t flags);
-                status_t            wrap(IOutStream *os, size_t flags);
+                status_t            wrap(File *fd, size_t flags = 0);
+                status_t            wrap(IOutStream *os, size_t flags = 0);
 
             public:
                 virtual ssize_t     write(const void *buf, size_t count);
-                virtual ssize_t     bit_write(const void *buf, size_t bits);
+                virtual ssize_t     writev(const void *buf, size_t bits);
 
                 virtual status_t    flush();
                 virtual status_t    close();
@@ -73,22 +73,22 @@ namespace lsp
             public:
 
                 status_t            writeb(bool value);
-                inline status_t     write(bool value)                                           { return writeb(value);                 }
-                inline status_t     write(uint8_t value, size_t bits = sizeof(uint8_t)*8)       { return write(umword_t(value), bits);  }
-                inline status_t     write(int8_t value, size_t bits = sizeof(int8_t)*8)         { return write(umword_t(value), bits);  }
-                inline status_t     write(uint16_t value, size_t bits = sizeof(uint16_t)*8)     { return write(umword_t(value), bits);  }
-                inline status_t     write(int16_t value, size_t bits = sizeof(int16_t)*8)       { return write(umword_t(value), bits);  }
+                inline status_t     writev(bool value)                                          { return writeb(value);                 }
+                inline status_t     writev(uint8_t value, size_t bits = sizeof(uint8_t)*8)      { return writev(umword_t(value), bits);  }
+                inline status_t     writev(int8_t value, size_t bits = sizeof(int8_t)*8)        { return writev(umword_t(value), bits);  }
+                inline status_t     writev(uint16_t value, size_t bits = sizeof(uint16_t)*8)    { return writev(umword_t(value), bits);  }
+                inline status_t     writev(int16_t value, size_t bits = sizeof(int16_t)*8)      { return writev(umword_t(value), bits);  }
 
 #ifdef ARCH_64BIT
-                status_t            write(uint32_t value, size_t bits = sizeof(uint32_t)*8)     { return write(uint64_t(value), bits);  }
-                inline status_t     write(int32_t value, size_t bits = sizeof(int32_t)*8)       { return write(uint64_t(value), bits);  }
-                status_t            write(uint64_t value, size_t bits = sizeof(uint64_t)*8);
-                inline status_t     write(int64_t value, size_t bits = sizeof(int64_t)*8)       { return write(uint64_t(value), bits);  }
+                status_t            writev(uint32_t value, size_t bits = sizeof(uint32_t)*8)    { return writev(uint64_t(value), bits);  }
+                inline status_t     writev(int32_t value, size_t bits = sizeof(int32_t)*8)      { return writev(uint64_t(value), bits);  }
+                status_t            writev(uint64_t value, size_t bits = sizeof(uint64_t)*8);
+                inline status_t     writev(int64_t value, size_t bits = sizeof(int64_t)*8)      { return writev(uint64_t(value), bits);  }
 #else
-                status_t            write(uint32_t value, size_t bits = sizeof(uint32_t)*8);
-                inline status_t     write(int32_t value, size_t bits = sizeof(int32_t)*8)       { return write(uint32_t(value), bits);  }
-                status_t            write(uint64_t value, size_t bits = sizeof(uint64_t)*8);
-                inline status_t     write(int64_t value, size_t bits = sizeof(int64_t)*8)       { return write(uint64_t(value), bits);  }
+                status_t            writev(uint32_t value, size_t bits = sizeof(uint32_t)*8);
+                inline status_t     writev(int32_t value, size_t bits = sizeof(int32_t)*8)      { return writev(uint32_t(value), bits);  }
+                status_t            writev(uint64_t value, size_t bits = sizeof(uint64_t)*8);
+                inline status_t     writev(int64_t value, size_t bits = sizeof(int64_t)*8)      { return writev(uint64_t(value), bits);  }
 #endif /* ARCH_64BIT */
         };
     }

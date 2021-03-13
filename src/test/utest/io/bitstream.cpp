@@ -41,29 +41,29 @@ UTEST_BEGIN("runtime.io", bitstream)
 
         // Emit '9'
         UTEST_ASSERT(obs.writeb(true) == STATUS_OK);
-        UTEST_ASSERT(obs.write(false) == STATUS_OK);
-        UTEST_ASSERT(obs.write(false) == STATUS_OK);
+        UTEST_ASSERT(obs.writev(false) == STATUS_OK);
+        UTEST_ASSERT(obs.writev(false) == STATUS_OK);
         UTEST_ASSERT(obs.writeb(true) == STATUS_OK);
 
         // 1-byte write
-        UTEST_ASSERT(obs.write(uint8_t(0xce)) == STATUS_OK);                    // Emit 'ce'
-        UTEST_ASSERT(obs.write(uint8_t(0xa5), 4) == STATUS_OK);                 // Emit '5'
+        UTEST_ASSERT(obs.writev(uint8_t(0xce)) == STATUS_OK);                   // Emit 'ce'
+        UTEST_ASSERT(obs.writev(uint8_t(0xa5), 4) == STATUS_OK);                // Emit '5'
 
         // 2-byte write
-        UTEST_ASSERT(obs.write(uint16_t(0x1324)) == STATUS_OK);                 // Emit '1324'
-        UTEST_ASSERT(obs.write(uint16_t(0xfc4b), 12) == STATUS_OK);             // Emit 'c4b'
+        UTEST_ASSERT(obs.writev(uint16_t(0x1324)) == STATUS_OK);                // Emit '1324'
+        UTEST_ASSERT(obs.writev(uint16_t(0xfc4b), 12) == STATUS_OK);            // Emit 'c4b'
 
         // 4-byte write
-        UTEST_ASSERT(obs.write(uint32_t(0xa7cb329e)) == STATUS_OK);             // Emit 'a7cb329e'
-        UTEST_ASSERT(obs.write(uint32_t(0x5a8c3679), 28) == STATUS_OK);         // Emit 'a8c3679'
+        UTEST_ASSERT(obs.writev(uint32_t(0xa7cb329e)) == STATUS_OK);            // Emit 'a7cb329e'
+        UTEST_ASSERT(obs.writev(uint32_t(0x5a8c3679), 28) == STATUS_OK);        // Emit 'a8c3679'
 
         // 8-byte write
-        UTEST_ASSERT(obs.write(uint64_t(0xbf61cd168a7df102ULL)) == STATUS_OK);  // Emit 'bf61cd168a7df102'
-        UTEST_ASSERT(obs.write(uint64_t(0x3e561924d5993bf7), 60) == STATUS_OK); // Emit 'e561924d5993bf7'
+        UTEST_ASSERT(obs.writev(uint64_t(0xbf61cd168a7df102ULL)) == STATUS_OK); // Emit 'bf61cd168a7df102'
+        UTEST_ASSERT(obs.writev(uint64_t(0x3e561924d5993bf7), 60) == STATUS_OK);// Emit 'e561924d5993bf7'
 
         // Arrays
         UTEST_ASSERT(obs.write(&data[0], 8) == 8);                              // Emit '12cfa1cf1912126d'
-        UTEST_ASSERT(obs.bit_write(&data[8], 60) == 60);                        // Emit 'e58d0588f732798'
+        UTEST_ASSERT(obs.writev(&data[8], 60) == 60);                           // Emit 'e58d0588f732798'
 
         // Emit 'b'
         UTEST_ASSERT(obs.writeb(true) == STATUS_OK);
@@ -72,7 +72,7 @@ UTEST_BEGIN("runtime.io", bitstream)
         UTEST_ASSERT(obs.writeb(true) == STATUS_OK);
 
         UTEST_ASSERT(obs.flush() == STATUS_OK);                                 // Emit '0'
-        UTEST_ASSERT(obs.write(uint32_t(0x5ec9), 12) == STATUS_OK);             // Emit 'ec9'
+        UTEST_ASSERT(obs.writev(uint32_t(0x5ec9), 12) == STATUS_OK);            // Emit 'ec9'
 
         UTEST_ASSERT(obs.close() == STATUS_OK);                                 // Emit '0'
     }
