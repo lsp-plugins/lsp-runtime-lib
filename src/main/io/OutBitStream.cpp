@@ -232,10 +232,11 @@ namespace lsp
             if (pOS == NULL)
                 return -set_error(STATUS_CLOSED);
 
+            size_t written          = 0;
+
             #if defined(ARCH_X86)
                 // x86 allows unaligned access, write with machine words first
                 const umword_t *wptr    = reinterpret_cast<const umword_t *>(buf);
-                size_t written          = 0;
                 size_t blocks           = count & (~(sizeof(umword_t) - 1));
 
                 for ( ; written < blocks; written += sizeof(umword_t))
@@ -271,10 +272,11 @@ namespace lsp
             if (pOS == NULL)
                 return -set_error(STATUS_CLOSED);
 
+            size_t written          = 0;
+
             #if defined(ARCH_X86)
                 // x86 allows unaligned memory access, write with machine words first
                 const umword_t *wptr    = reinterpret_cast<const umword_t *>(buf);
-                size_t written          = 0;
                 size_t blocks           = bits & (~((sizeof(umword_t) << 3) - 1));
                 for ( ; written < blocks; written += sizeof(umword_t)*8)
                 {
