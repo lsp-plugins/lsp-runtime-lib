@@ -47,6 +47,7 @@ namespace lsp
         {
             public:
                 uint8_t    *data;       // Buffer data (2 x capacity)
+                uint32_t   *index;      // Index
                 ssize_t     head;       // Head of the buffer
                 ssize_t     tail;       // Buffer tail
                 ssize_t     cap;        // Buffer capacity

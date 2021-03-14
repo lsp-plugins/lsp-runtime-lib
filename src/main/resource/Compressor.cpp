@@ -283,6 +283,9 @@ namespace lsp
             r->length           = flength;
             nOffset            += flength;
 
+            lsp_trace("  compressed entry segment=%d, offset=%d length=%d",
+                    int(r->segment), int(r->offset), int(r->length));
+
             return r->length;
         }
 

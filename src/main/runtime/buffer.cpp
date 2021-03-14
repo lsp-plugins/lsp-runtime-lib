@@ -30,6 +30,7 @@ namespace lsp
         buffer_t::buffer_t()
         {
             data        = NULL;
+            index       = NULL;
             head        = 0;
             tail        = 0;
             cap         = 0;
@@ -42,11 +43,15 @@ namespace lsp
 
         status_t buffer_t::init(size_t capacity)
         {
-            uint8_t *ptr    = static_cast<uint8_t *>(realloc(data, capacity * 2));
+            size_t dbuf     = capacity * 2 * sizeof(uint8_t);
+            size_t ibuf     = capacity * 2 * sizeof(uint32_t);
+
+            uint8_t *ptr    = static_cast<uint8_t *>(realloc(data, dbuf + ibuf));
             if (ptr == NULL)
                 return STATUS_NO_MEM;
 
             data            = ptr;
+            index           = reinterpret_cast<uint32_t *>(&ptr[dbuf]);
             head            = 0;
             tail            = 0;
             cap             = capacity;
@@ -59,6 +64,7 @@ namespace lsp
             if (data != NULL)
                 free(data);
             data            = NULL;
+            index           = NULL;
             head            = 0;
             tail            = 0;
             cap             = 0;
@@ -70,7 +76,8 @@ namespace lsp
             ssize_t avail       = ((cap << 1) - tail);
             if (count < avail)
             {
-                memcpy(&data[tail], v, count);
+                memcpy(&data[tail], v, count * sizeof(uint8_t));
+                bzero(&index[tail], count * sizeof(uint32_t));
                 tail      += count;
                 head       = lsp_max(head, tail - cap);
             }
@@ -79,10 +86,15 @@ namespace lsp
                 ssize_t head    = tail + count - cap;
                 memmove(data, &data[head], tail - head);
                 memcpy(&data[tail - head], v, count);
+
+                memmove(index, &index[head], (tail - head) * sizeof(uint32_t));
+                bzero(&index[tail - head], count * sizeof(uint32_t));
             }
             else
             {
-                memcpy(data, &v[count - cap], cap);
+                memcpy(data, &v[count - cap], cap * sizeof(uint8_t));
+                bzero(index, cap * sizeof(uint32_t));
+
                 head       = 0;
                 tail       = cap;
             }
@@ -93,14 +105,17 @@ namespace lsp
             // Shift buffer if needed
             if (tail >= (cap << 1))
             {
-                memmove(data, &data[cap], cap);
+                memmove(data, &data[cap],   cap * sizeof(uint8_t));
+                memmove(index, &index[cap], cap * sizeof(uint32_t));
                 head  -= cap;
                 tail  -= cap;
             }
 
             // Append byte
-            data[tail++]  = v;
-            head          = lsp_max(head, tail - cap);
+            data[tail]      = v;        // Data byte
+            index[tail]     = 0;        // No index
+            ++tail;
+            head            = lsp_max(head, tail - cap);
         }
 
         size_t buffer_t::lookup(ssize_t *out, const void *src, size_t avail)
@@ -110,12 +125,24 @@ namespace lsp
 
             const uint8_t *s    = reinterpret_cast<const uint8_t *>(src);
             const uint8_t *p    = &data[head];
+            uint32_t *ix        = &index[head];
+            ssize_t ixp         = -1;
+            size_t di           = 0;
 
-            for (size_t i=0, n=tail - head; i<(n - len); ++i)
+            for (size_t i=0, n=tail - head; i<(n - len); i += di)
             {
                 // Find first character match
                 if (p[i] != *s)
+                {
+                    di          = 1;
                     continue;
+                }
+
+                // Symbol matched, update index it if needed
+                if ((ixp >= 0) && (!ix[ixp]))
+                    ix[ixp]     = i - ixp;
+                ixp = i;                            // Save index as previous match
+                di  = (ix[i]) ? ix[i] : 1;
 
                 // Quick test
                 if (len >= 3)
