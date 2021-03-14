@@ -387,7 +387,9 @@ namespace lsp
 
                 size_t avail    = lsp_min(bits, BITSTREAM_BUFSZ - nBits);
                 nBuffer         = (nBuffer << avail) | (value >> (BITSTREAM_BUFSZ - avail));
+                nBits          += avail;
                 bits           -= avail;
+                value         <<= avail;
             }
 
             return set_error(STATUS_OK);

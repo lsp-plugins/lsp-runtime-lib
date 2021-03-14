@@ -229,7 +229,7 @@ namespace lsp
             while (nread < bits)
             {
                 size_t to_read      = lsp_min(bits - nread, 8u);
-                ssize_t n           = bread(dst++, to_read);
+                ssize_t n           = readv(dst++, to_read);
                 if (n < 0)
                 {
                     if (nread > 0)
@@ -344,9 +344,9 @@ namespace lsp
 
             size_t nread    = 0;
             status_t res;
-            uint64_t v      = 0;
+            uint32_t v      = 0;
 
-            for ( ; nread < bits; ++nread)
+            while (nread < bits)
             {
                 // Fill buffer with new data
                 if ((res = fill()) != STATUS_OK)
@@ -361,6 +361,7 @@ namespace lsp
                 v                   = (v << to_read) | (nBuffer >> (BITSTREAM_BUFSZ - to_read));
                 nBuffer           <<= to_read;
                 nBits              -= to_read;
+                nread              += to_read;
             }
 
             *value          = v;
@@ -377,7 +378,7 @@ namespace lsp
             status_t res;
             uint64_t v      = 0;
 
-            for ( ; nread < bits; ++nread)
+            while (nread < bits)
             {
                 // Fill buffer with new data
                 if ((res = fill()) != STATUS_OK)
@@ -392,6 +393,7 @@ namespace lsp
                 v                   = (v << to_read) | (nBuffer >> (BITSTREAM_BUFSZ - to_read));
                 nBuffer           <<= to_read;
                 nBits              -= to_read;
+                nread              += to_read;
             }
 
             *value          = v;
