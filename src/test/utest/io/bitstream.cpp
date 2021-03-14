@@ -36,6 +36,8 @@ UTEST_BEGIN("runtime.io", bitstream)
         static const uint8_t data[] =
         {
             0x12, 0xcf, 0xa1, 0xcf, 0x19, 0x12, 0x12, 0x6d,
+            0x28, 0xa4, 0x51, 0x73, 0x15, 0xbf, 0xa7, 0xbd,
+            0xa8, 0xfd, 0xcf, 0xb2, 0xf1, 0xf1, 0xd0, 0x42,
             0xe5, 0x8d, 0x05, 0x88, 0xf7, 0x32, 0x79, 0xe8
         };
 
@@ -62,8 +64,8 @@ UTEST_BEGIN("runtime.io", bitstream)
         UTEST_ASSERT(obs.writev(uint64_t(0x3e561924d5993bf7), 60) == STATUS_OK);// Emit 'e561924d5993bf7'
 
         // Arrays
-        UTEST_ASSERT(obs.write(&data[0], 8) == 8);                              // Emit '12cfa1cf1912126d'
-        UTEST_ASSERT(obs.writev(&data[8], 60) == 60);                           // Emit 'e58d0588f732798'
+        UTEST_ASSERT(obs.write(&data[0], 9) == 9);                              // Emit '12cfa1cf1912126d28'
+        UTEST_ASSERT(obs.bwrite(&data[9], 180) == 180);                         // Emit 'a4517315bfa7bda8fdcfb2f1f1d042e58d0588f732798'
 
         // Emit 'b'
         UTEST_ASSERT(obs.writeb(true) == STATUS_OK);
@@ -82,7 +84,7 @@ UTEST_BEGIN("runtime.io", bitstream)
         io::OutMemoryStream oms;
 
         // Control sequence:
-        // 9ce51324c4ba7cb329ea8c3679bf61cd168a7df102e561924d5993bf712cfa1cf1912126de58d0588f732798
+        // 9ce51324c4ba7cb329ea8c3679bf61cd168a7df102e561924d5993bf712cfa1cf1912126d28a4517315bfa7bda8fdcfb2f1f1d042e58d0588f732798
 
         static const uint8_t check[] =
         {
@@ -95,7 +97,11 @@ UTEST_BEGIN("runtime.io", bitstream)
             0x4d, 0x59, 0x93, 0xbf,
             0x71, 0x2c, 0xfa, 0x1c,
             0xf1, 0x91, 0x21, 0x26,
-            0xde, 0x58, 0xd0, 0x58,
+            0xd2, 0x8a, 0x45, 0x17,
+            0x31, 0x5b, 0xfa, 0x7b,
+            0xda, 0x8f, 0xdc, 0xfb,
+            0x2f, 0x1f, 0x1d, 0x04,
+            0x2e, 0x58, 0xd0, 0x58,
             0x8f, 0x73, 0x27, 0x98,
             0xb0, 0xec, 0x90
         };

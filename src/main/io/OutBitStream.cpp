@@ -228,11 +228,33 @@ namespace lsp
 
         ssize_t OutBitStream::write(const void *buf, size_t count)
         {
-            const uint8_t *ptr  = reinterpret_cast<const uint8_t *>(buf);
-            size_t written      = 0;
+            if (pOS == NULL)
+                return -set_error(STATUS_CLOSED);
+
+            #if defined(ARCH_X86)
+                // x86 allows unaligned access, write with machine words first
+                const umword_t *wptr    = reinterpret_cast<const umword_t *>(buf);
+                size_t written          = 0;
+                size_t blocks           = count & (~(sizeof(umword_t) - 1));
+
+                for ( ; written < blocks; written += sizeof(umword_t))
+                {
+                    status_t res            = writev(BE_TO_CPU(*(wptr++)), sizeof(umword_t)*8);
+                    if (res != STATUS_OK)
+                    {
+                        set_error(res);
+                        return (written <= 0) ? -res : written;
+                    }
+                }
+
+                buf = wptr;
+            #endif /* ARCH_X86 */
+
+            // Write the rest data with bytes
+            const uint8_t *bptr     = reinterpret_cast<const uint8_t *>(buf);
             for ( ; written < count; ++written)
             {
-                status_t res = writev(ptr[written], sizeof(uint8_t) * 8);
+                status_t res = writev(*(bptr++), sizeof(uint8_t) * 8);
                 if (res != STATUS_OK)
                 {
                     set_error(res);
@@ -243,20 +265,41 @@ namespace lsp
             return written;
         }
 
-        ssize_t OutBitStream::writev(const void *buf, size_t bits)
+        ssize_t OutBitStream::bwrite(const void *buf, size_t bits)
         {
-            const uint8_t *ptr  = reinterpret_cast<const uint8_t *>(buf);
-            size_t written      = 0;
+            if (pOS == NULL)
+                return -set_error(STATUS_CLOSED);
+
+            #if defined(ARCH_X86)
+                // x86 allows unaligned memory access, write with machine words first
+                const umword_t *wptr    = reinterpret_cast<const umword_t *>(buf);
+                size_t written          = 0;
+                size_t blocks           = bits & (~((sizeof(umword_t) << 3) - 1));
+                for ( ; written < blocks; written += sizeof(umword_t)*8)
+                {
+                    status_t res            = writev(BE_TO_CPU(*(wptr++)), sizeof(umword_t)*8);
+                    if (res != STATUS_OK)
+                    {
+                        set_error(res);
+                        return (written <= 0) ? -res : written;
+                    }
+                }
+
+                buf                     = wptr;
+            #endif
+
+            // Write the rest data with bytes
+            const uint8_t *bptr     = reinterpret_cast<const uint8_t *>(buf);
             while (written < bits)
             {
-                size_t to_write = lsp_min(sizeof(uint8_t) * 8, bits - written);
-                status_t res    = writev(*(ptr++), to_write);
+                size_t to_write         = lsp_min(sizeof(uint8_t) * 8, bits - written);
+                status_t res            = writev(*(bptr++), to_write);
                 if (res != STATUS_OK)
                 {
                     set_error(res);
                     return (written <= 0) ? -res : written;
                 }
-                written        += to_write;
+                written                += to_write;
             }
 
             return written;
@@ -310,6 +353,8 @@ namespace lsp
         status_t OutBitStream::writeb(bool value)
         {
             status_t res;
+            if (pOS == NULL)
+                return set_error(STATUS_CLOSED);
 
             // Need to flush?
             if (nBits >= BITSTREAM_BUFSZ)
@@ -324,9 +369,12 @@ namespace lsp
             return set_error(STATUS_OK);
         }
 
-#ifdef ARCH_32BIT
         status_t OutBitStream::writev(uint32_t value, size_t bits)
         {
+            status_t res;
+            if (pOS == NULL)
+                return set_error(STATUS_CLOSED);
+
             value  <<= BITSTREAM_BUFSZ - bits;
             while (bits > 0)
             {
@@ -344,45 +392,31 @@ namespace lsp
 
             return set_error(STATUS_OK);
         }
-#endif
 
         status_t OutBitStream::writev(uint64_t value, size_t bits)
         {
             status_t res;
+            if (pOS == NULL)
+                return set_error(STATUS_CLOSED);
 
-            #ifdef ARCH_64BIT
-                value  <<= (BITSTREAM_BUFSZ - bits);
-                while (bits > 0)
+            value  <<= (BITSTREAM_BUFSZ - bits);
+            while (bits > 0)
+            {
+                // Need to flush?
+                if (nBits >= BITSTREAM_BUFSZ)
                 {
-                    // Need to flush?
-                    if (nBits >= BITSTREAM_BUFSZ)
-                    {
-                        if ((res = flush()) != STATUS_OK)
-                            return res;
-                    }
-
-                    size_t avail    = lsp_min(bits, BITSTREAM_BUFSZ - nBits);
-                    nBuffer         = (nBuffer << avail) | (value >> (BITSTREAM_BUFSZ - avail));
-                    nBits          += avail;
-                    bits           -= avail;
-                    value         <<= avail;
-                }
-
-                return set_error(STATUS_OK);
-
-            #else
-                uint32_t x;
-
-                if (bits > BITSTREAM_BUFSZ)
-                {
-                    x   = uint32_t(value >> BITSTREAM_BUFSZ);
-                    if ((res = write(x, bits - BITSTREAM_BUFSZ)) != STATUS_OK)
+                    if ((res = flush()) != STATUS_OK)
                         return res;
-                    bits    = BITSTREAM_BUFSZ;
                 }
 
-                return write(uint32_t(value), bits);
-            #endif
+                size_t avail    = lsp_min(bits, BITSTREAM_BUFSZ - nBits);
+                nBuffer         = (nBuffer << avail) | (value >> (BITSTREAM_BUFSZ - avail));
+                nBits          += avail;
+                bits           -= avail;
+                value         <<= avail;
+            }
+
+            return set_error(STATUS_OK);
         }
 
     }
