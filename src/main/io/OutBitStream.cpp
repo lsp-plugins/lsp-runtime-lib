@@ -24,6 +24,7 @@
 #include <lsp-plug.in/common/endian.h>
 
 #define BITSTREAM_BUFSZ     (sizeof(umword_t) * 8)
+#define BITSTREAM_BUFSZ32   (sizeof(uint32_t) * 8)
 
 namespace lsp
 {
@@ -375,7 +376,7 @@ namespace lsp
             if (pOS == NULL)
                 return set_error(STATUS_CLOSED);
 
-            value  <<= BITSTREAM_BUFSZ - bits;
+            value  <<= BITSTREAM_BUFSZ32 - bits;
             while (bits > 0)
             {
                 // Need to flush?
@@ -386,7 +387,7 @@ namespace lsp
                 }
 
                 size_t avail    = lsp_min(bits, BITSTREAM_BUFSZ - nBits);
-                nBuffer         = (nBuffer << avail) | (value >> (BITSTREAM_BUFSZ - avail));
+                nBuffer         = (nBuffer << avail) | (value >> (BITSTREAM_BUFSZ32 - avail));
                 nBits          += avail;
                 bits           -= avail;
                 value         <<= avail;
@@ -401,24 +402,38 @@ namespace lsp
             if (pOS == NULL)
                 return set_error(STATUS_CLOSED);
 
-            value  <<= (BITSTREAM_BUFSZ - bits);
-            while (bits > 0)
-            {
-                // Need to flush?
-                if (nBits >= BITSTREAM_BUFSZ)
+            #if defined(ARCH_64BIT)
+                value  <<= (BITSTREAM_BUFSZ - bits);
+                while (bits > 0)
                 {
-                    if ((res = flush()) != STATUS_OK)
-                        return res;
+                    // Need to flush?
+                    if (nBits >= BITSTREAM_BUFSZ)
+                    {
+                        if ((res = flush()) != STATUS_OK)
+                            return res;
+                    }
+
+                    size_t avail    = lsp_min(bits, BITSTREAM_BUFSZ - nBits);
+                    nBuffer         = (nBuffer << avail) | (value >> (BITSTREAM_BUFSZ - avail));
+                    nBits          += avail;
+                    bits           -= avail;
+                    value         <<= avail;
                 }
 
-                size_t avail    = lsp_min(bits, BITSTREAM_BUFSZ - nBits);
-                nBuffer         = (nBuffer << avail) | (value >> (BITSTREAM_BUFSZ - avail));
-                nBits          += avail;
-                bits           -= avail;
-                value         <<= avail;
-            }
+                return set_error(STATUS_OK);
 
-            return set_error(STATUS_OK);
+            #else
+                // Need to write high part?
+                if (bits > BITSTREAM_BUFSZ)
+                {
+                    if ((res = writev(uint32_t(value >> BITSTREAM_BUFSZ), bits - BITSTREAM_BUFSZ)) != STATUS_OK)
+                        return res;
+                    bits    = BITSTREAM_BUFSZ;
+                }
+
+                // Write low part
+                return writev(uint32_t(value), bits);
+            #endif
         }
 
     }

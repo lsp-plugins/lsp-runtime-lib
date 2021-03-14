@@ -55,7 +55,7 @@ namespace lsp
 
             protected:
                 status_t            alloc_entry(raw_resource_t **r, io::Path *path, resource_type_t type);
-                ssize_t             write_entry(raw_resource_t *r, io::IInStream *is);
+                wssize_t            write_entry(raw_resource_t *r, io::IInStream *is);
                 static size_t       calc_repeats(const uint8_t *head, const uint8_t *tail);
                 status_t            emit_uint(size_t value, size_t initial, size_t stepping);
                 static size_t       est_uint(size_t value, size_t initial, size_t stepping);

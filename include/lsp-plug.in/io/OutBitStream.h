@@ -74,13 +74,13 @@ namespace lsp
 
                 status_t            writeb(bool value);
                 inline status_t     writev(bool value)                                          { return writeb(value);                 }
-                inline status_t     writev(uint8_t value, size_t bits = sizeof(uint8_t)*8)      { return writev(umword_t(value), bits);  }
-                inline status_t     writev(int8_t value, size_t bits = sizeof(int8_t)*8)        { return writev(umword_t(value), bits);  }
-                inline status_t     writev(uint16_t value, size_t bits = sizeof(uint16_t)*8)    { return writev(umword_t(value), bits);  }
-                inline status_t     writev(int16_t value, size_t bits = sizeof(int16_t)*8)      { return writev(umword_t(value), bits);  }
+                inline status_t     writev(uint8_t value, size_t bits = sizeof(uint8_t)*8)      { return writev(uint32_t(value), bits);  }
+                inline status_t     writev(int8_t value, size_t bits = sizeof(int8_t)*8)        { return writev(uint32_t(value), bits);  }
+                inline status_t     writev(uint16_t value, size_t bits = sizeof(uint16_t)*8)    { return writev(uint32_t(value), bits);  }
+                inline status_t     writev(int16_t value, size_t bits = sizeof(int16_t)*8)      { return writev(uint32_t(value), bits);  }
 
                 status_t            writev(uint32_t value, size_t bits = sizeof(uint32_t)*8);
-                inline status_t     writev(int32_t value, size_t bits = sizeof(int32_t)*8)      { return writev(uint64_t(value), bits);  }
+                inline status_t     writev(int32_t value, size_t bits = sizeof(int32_t)*8)      { return writev(uint32_t(value), bits);  }
                 status_t            writev(uint64_t value, size_t bits = sizeof(uint64_t)*8);
                 inline status_t     writev(int64_t value, size_t bits = sizeof(int64_t)*8)      { return writev(uint64_t(value), bits);  }
         };
