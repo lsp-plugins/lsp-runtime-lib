@@ -48,8 +48,11 @@ namespace lsp
                 explicit ILoader();
                 virtual ~ILoader();
 
+            protected:
+                inline status_t             set_error(status_t error)   { return nError = error;        }
+
             public:
-                inline status_t             last_error() const      { return nError; }
+                inline status_t             last_error() const          { return nError;                }
 
                 virtual io::IInStream      *read_stream(const char *name);
                 virtual io::IInStream      *read_stream(const LSPString *name);

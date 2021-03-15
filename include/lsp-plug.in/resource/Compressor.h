@@ -51,7 +51,7 @@ namespace lsp
                 io::OutBitStream                sOut;           // Output bit stream
                 size_t                          nSegment;       // Start of data segment
                 size_t                          nOffset;        // Current offset in segment
-                buffer_t                        sBuffer;        // Buffer for caching
+                cbuffer_t                       sBuffer;        // Buffer for caching
 
             protected:
                 status_t            alloc_entry(raw_resource_t **r, io::Path *path, resource_type_t type);

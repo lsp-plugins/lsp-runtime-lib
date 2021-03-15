@@ -105,7 +105,7 @@ namespace lsp
             if (path->is_empty())
                 return STATUS_BAD_ARGUMENTS;
 
-            ssize_t         index   = -1;
+            ssize_t         index = -1, sindex = -1;
             LSPString       item;
             status_t        res;
 
@@ -125,6 +125,7 @@ namespace lsp
                     if (item.equals_utf8(ent->name))
                     {
                         found                   = ent;
+                        sindex                  = i;
                         break;
                     }
                 }
@@ -178,9 +179,11 @@ namespace lsp
                         if (found->name == NULL)
                             return STATUS_NO_MEM;
                     }
+                    else if (found->type != RES_DIR)
+                        return STATUS_BAD_TYPE; // Bad entry type
 
                     // Update position
-                    index       = vEntries.index_of(found);
+                    index       = sindex;
                 }
             }
         }
@@ -219,7 +222,7 @@ namespace lsp
                 rep         = calc_repeats(&head[length], tail);
 
                 // Estimate size of output
-                size_t est1 = (est_uint(sBuffer.size() + rep, 5, 5) + 8) * length;     // How many bits per octet
+                size_t est1 = (est_uint(sBuffer.size() + *head, 5, 5) + est_uint(rep, 0, 4)) * length;     // How many bits per octet
                 size_t est2 = (offset < 0) ? est1 + 1 :
                                 est_uint(offset, 5, 5) +
                                 est_uint(length - 1, 5, 5) +
@@ -227,6 +230,7 @@ namespace lsp
 
                 if (est1 > est2) // Prefer buffer over dictionary
                 {
+                    // REPLAY
                     // Offset
                     if ((res = emit_uint(offset, 5, 5)) != STATUS_OK)
                         break;
@@ -247,12 +251,11 @@ namespace lsp
                 {
                     // OCTET
                     length     += lsp_min(rep, 4);
-
-                    // Offset
-                    if ((res = emit_uint(sBuffer.size() + rep, 5, 5)) != STATUS_OK)
-                        break;
                     // Value
-                    if ((res = sOut.writev(*head)) != STATUS_OK)
+                    if ((res = emit_uint(sBuffer.size() + *head, 5, 5)) != STATUS_OK)
+                        break;
+                    // Repeat
+                    if ((res = emit_uint(rep, 0, 4)) != STATUS_OK)
                         break;
 
                     IF_TRACE(++octets);

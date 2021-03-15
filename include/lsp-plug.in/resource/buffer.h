@@ -43,7 +43,7 @@ namespace lsp
         /**
          * Compression buffer
          */
-        typedef struct buffer_t
+        typedef struct cbuffer_t
         {
             public:
                 uint8_t    *data;       // Buffer data (2 x capacity)
@@ -53,8 +53,8 @@ namespace lsp
                 ssize_t     cap;        // Buffer capacity
 
             public:
-                explicit buffer_t();
-                ~buffer_t();
+                explicit cbuffer_t();
+                ~cbuffer_t();
 
                 status_t        init(size_t capacity);
                 void            destroy();
@@ -66,7 +66,33 @@ namespace lsp
                 void            clear();
                 inline size_t   size() const { return tail - head; }
 
-        } buffer_t;
+        } cbuffer_t;
+
+        /**
+         * Decompression buffer
+         */
+        typedef struct dbuffer_t
+        {
+            public:
+                uint8_t    *data;       // Buffer data (2 x capacity)
+                ssize_t     head;       // Head of the buffer
+                ssize_t     tail;       // Buffer tail
+                ssize_t     cap;        // Buffer capacity
+
+            public:
+                explicit dbuffer_t();
+                ~dbuffer_t();
+
+                status_t        init(size_t capacity);
+                void            destroy();
+
+            public:
+                void            append(const void *src, ssize_t count);
+                void            append(uint8_t v);
+                void            clear();
+                inline size_t   size() const { return tail - head; }
+
+        } duffer_t;
     }
 }
 

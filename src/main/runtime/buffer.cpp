@@ -27,7 +27,7 @@ namespace lsp
 {
     namespace resource
     {
-        buffer_t::buffer_t()
+        cbuffer_t::cbuffer_t()
         {
             data        = NULL;
             index       = NULL;
@@ -36,12 +36,12 @@ namespace lsp
             cap         = 0;
         }
 
-        buffer_t::~buffer_t()
+        cbuffer_t::~cbuffer_t()
         {
             destroy();
         }
 
-        status_t buffer_t::init(size_t capacity)
+        status_t cbuffer_t::init(size_t capacity)
         {
             size_t dbuf     = capacity * 2 * sizeof(uint8_t);
             size_t ibuf     = capacity * 2 * sizeof(uint32_t);
@@ -59,7 +59,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        void buffer_t::destroy()
+        void cbuffer_t::destroy()
         {
             if (data != NULL)
                 free(data);
@@ -70,7 +70,7 @@ namespace lsp
             cap             = 0;
         }
 
-        void buffer_t::append(const void *src, ssize_t count)
+        void cbuffer_t::append(const void *src, ssize_t count)
         {
             const uint8_t *v    = reinterpret_cast<const uint8_t *>(src);
             ssize_t avail       = ((cap << 1) - tail);
@@ -100,7 +100,7 @@ namespace lsp
             }
         }
 
-        void buffer_t::append(uint8_t v)
+        void cbuffer_t::append(uint8_t v)
         {
             // Shift buffer if needed
             if (tail >= (cap << 1))
@@ -118,7 +118,7 @@ namespace lsp
             head            = lsp_max(head, tail - cap);
         }
 
-        size_t buffer_t::lookup(ssize_t *out, const void *src, size_t avail)
+        size_t cbuffer_t::lookup(ssize_t *out, const void *src, size_t avail)
         {
             ssize_t offset      = -1;
             size_t len          = 0;
@@ -176,7 +176,91 @@ namespace lsp
             return len;
         }
 
-        void buffer_t::clear()
+        void cbuffer_t::clear()
+        {
+            head            = 0;
+            tail            = 0;
+        }
+
+        dbuffer_t::dbuffer_t()
+        {
+            data        = NULL;
+            head        = 0;
+            tail        = 0;
+            cap         = 0;
+        }
+
+        dbuffer_t::~dbuffer_t()
+        {
+            destroy();
+        }
+
+        status_t dbuffer_t::init(size_t capacity)
+        {
+            size_t dbuf     = capacity * 2 * sizeof(uint8_t);
+            uint8_t *ptr    = static_cast<uint8_t *>(realloc(data, dbuf));
+            if (ptr == NULL)
+                return STATUS_NO_MEM;
+
+            data            = ptr;
+            head            = 0;
+            tail            = 0;
+            cap             = capacity;
+
+            return STATUS_OK;
+        }
+
+        void dbuffer_t::destroy()
+        {
+            if (data != NULL)
+                free(data);
+            data            = NULL;
+            head            = 0;
+            tail            = 0;
+            cap             = 0;
+        }
+
+        void dbuffer_t::append(const void *src, ssize_t count)
+        {
+            const uint8_t *v    = reinterpret_cast<const uint8_t *>(src);
+            ssize_t avail       = ((cap << 1) - tail);
+            if (count < avail)
+            {
+                memcpy(&data[tail], v, count * sizeof(uint8_t));
+                tail      += count;
+                head       = lsp_max(head, tail - cap);
+            }
+            else if (count < cap)
+            {
+                ssize_t head    = tail + count - cap;
+                memmove(data, &data[head], tail - head);
+                memcpy(&data[tail - head], v, count);
+            }
+            else
+            {
+                memcpy(data, &v[count - cap], cap * sizeof(uint8_t));
+                head       = 0;
+                tail       = cap;
+            }
+        }
+
+        void dbuffer_t::append(uint8_t v)
+        {
+            // Shift buffer if needed
+            if (tail >= (cap << 1))
+            {
+                memmove(data, &data[cap],   cap * sizeof(uint8_t));
+                head  -= cap;
+                tail  -= cap;
+            }
+
+            // Append byte
+            data[tail]      = v;        // Data byte
+            ++tail;
+            head            = lsp_max(head, tail - cap);
+        }
+
+        void dbuffer_t::clear()
         {
             head            = 0;
             tail            = 0;
