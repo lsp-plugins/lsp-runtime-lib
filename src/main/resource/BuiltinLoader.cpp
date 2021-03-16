@@ -47,7 +47,7 @@ namespace lsp
 
         status_t BuiltinLoader::init(
             const void *data, size_t data_size,
-            const raw_resource_t *const *catalog, size_t catalog_size,
+            const raw_resource_t *catalog, size_t catalog_size,
             size_t buf_size
         )
         {
@@ -81,7 +81,7 @@ namespace lsp
                 const raw_resource_t *found = NULL;
                 for (size_t i=0; i<nCatSize; ++i)
                 {
-                    const raw_resource_t *ent   = pCatalog[i];
+                    const raw_resource_t *ent   = &pCatalog[i];
                     if ((ent == NULL) || (ent->parent != index) || (ent->name == NULL))
                         continue;
                     if (item.equals_utf8(ent->name))
@@ -97,7 +97,7 @@ namespace lsp
                     return STATUS_NOT_FOUND;
 
                 // Last entry?
-                if (path->is_empty())
+                if (tmp.is_empty())
                 {
                     *out    = index;
                     return STATUS_OK;
@@ -120,7 +120,7 @@ namespace lsp
             }
 
             // Check type
-            const raw_resource_t *ent = pCatalog[index];
+            const raw_resource_t *ent = &pCatalog[index];
             if (ent->type != RES_FILE)
             {
                 set_error(STATUS_IS_DIRECTORY);
@@ -156,20 +156,27 @@ namespace lsp
         {
             ssize_t index = 0;
             lltl::darray<resource_t> xlist;
+            const raw_resource_t *ent;
 
-            // Find entry and check that it is of directory type
-            status_t res = find_entry(&index, path);
-            if (res != STATUS_OK)
-                return res;
+            // Root directory?
+            if ((path->is_empty()) || (path->equals(FILE_SEPARATOR_S)))
+                index = -1;
+            else
+            {
+                // Find entry and check that it is of directory type
+                status_t res = find_entry(&index, path);
+                if (res != STATUS_OK)
+                    return res;
 
-            const raw_resource_t *ent = pCatalog[index];
-            if (ent->type != RES_DIR)
-                return STATUS_NOT_DIRECTORY;
+                ent = &pCatalog[index];
+                if (ent->type != RES_DIR)
+                    return STATUS_NOT_DIRECTORY;
+            }
 
             // Now create list of nested items
             for (size_t i=0; i<nCatSize; ++i)
             {
-                ent = pCatalog[i];
+                ent = &pCatalog[i];
                 if ((ent == NULL) || (ent->parent != index) || (ent->name == NULL))
                     continue;
 
@@ -183,8 +190,9 @@ namespace lsp
             }
 
             // Return result
+            index = xlist.size();
             *list = xlist.release();
-            return STATUS_OK;
+            return index;
         }
     }
 }

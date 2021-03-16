@@ -20,17 +20,22 @@
  */
 
 #include <lsp-plug.in/test-fw/utest.h>
-#include <lsp-plug.in/resource/Compressor.h>
+#include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/io/Dir.h>
 #include <lsp-plug.in/io/InFileStream.h>
 #include <lsp-plug.in/io/OutFileStream.h>
+#include <lsp-plug.in/resource/Compressor.h>
+#include <lsp-plug.in/resource/Decompressor.h>
+#include <lsp-plug.in/resource/BuiltinLoader.h>
 
 using namespace lsp;
 
 #define BUFFER_SIZE     0x100000
 
 UTEST_BEGIN("runtime.resource", compressor)
+
+    UTEST_TIMELIMIT(30)
 
     void scan_directory(wsize_t *data_size, const io::Path *base, const io::Path *path, resource::Compressor *c)
     {
@@ -70,35 +75,110 @@ UTEST_BEGIN("runtime.resource", compressor)
         }
     }
 
-    UTEST_MAIN
+    void scan_resources(resource::BuiltinLoader *load, const io::Path *path, const io::Path *rel)
     {
-        io::Path path;
-        resource::Compressor c;
-        io::OutFileStream ofs;
-        wsize_t data_size = 0;
+        resource::resource_t *rlist = NULL;
+        io::Path file, child;
+        io::OutMemoryStream oms1, oms2;
+        io::InFileStream ifs;
+        io::IInStream *irs;
 
-        UTEST_ASSERT(path.fmt("%s/compressor", resources()) > 0);
-        printf("Resource directory: %s\n", path.as_native());
+        ssize_t items   = load->enumerate(rel, &rlist);
+        UTEST_ASSERT(items >= 0);
+        UTEST_ASSERT(rlist != NULL);
+
+        for (ssize_t i=0; i<items; ++i)
+        {
+            resource::resource_t *item = &rlist[i];
+
+            UTEST_ASSERT(child.set(rel, rlist->name) == STATUS_OK);
+            printf("  found entry: %s\n", child.as_native());
+
+            if (item->type == resource::RES_DIR)
+            {
+                scan_resources(load, path, &child);
+                continue;
+            }
+
+            // Decompress the item
+            oms1.clear();
+            UTEST_ASSERT((irs = load->read_stream(rel)) != NULL);
+            wssize_t sz1 = irs->sink(&oms1);
+            UTEST_ASSERT(sz1 >= 0);
+            UTEST_ASSERT(irs->close() == STATUS_OK);
+            UTEST_ASSERT(oms1.size() == size_t(sz1));
+            printf("  decompressed entry size: %ld bytes\n", long(sz1));
+
+            // Read the oridinal file
+            oms2.clear();
+            UTEST_ASSERT(file.set(path, &child) == STATUS_OK);
+            UTEST_ASSERT(ifs.open(&file) == STATUS_OK);
+            wssize_t sz2 = ifs.sink(&oms1);
+            UTEST_ASSERT(ifs.sink(&oms2) == STATUS_OK);
+            UTEST_ASSERT(oms2.size() == size_t(sz2));
+            printf("  original entry size: %ld bytes\n", long(sz2));
+
+            // Compare the data
+            UTEST_ASSERT(sz1 == sz2);
+            UTEST_ASSERT(memcmp(oms1.data(), oms2.data(), sz1) == 0);
+            oms1.drop();
+            oms2.drop();
+        }
+
+        // Free items
+        free(rlist);
+    }
+
+    void test_compress_data(const io::Path *path, resource::Compressor *c)
+    {
+        wsize_t data_size = 0;
+        io::Path tmp;
+        io::OutFileStream ofs;
 
         // Scan and compress directory
-        UTEST_ASSERT(c.init(BUFFER_SIZE) == STATUS_OK);
+        UTEST_ASSERT(c->init(BUFFER_SIZE) == STATUS_OK);
+        printf("Scanning source directory...\n");
+        scan_directory(&data_size, path, path, c);
 
-        scan_directory(&data_size, &path, &path, &c);
-
-        size_t buf_sz = c.commands_size();
+        size_t buf_sz = c->commands_size();
         double ratio = double(data_size) / double(buf_sz);
 
         printf("Command size: %d, data size: %d, ratio: %.2f\n",
-            int(c.commands_size()),
+            int(c->commands_size()),
             int(data_size),
             ratio
         );
 
-        UTEST_ASSERT(path.fmt("%s/%s.commands", tempdir(), full_name()) > 0);
-        printf("Dumping commands to: %s\n", path.as_native());
-        UTEST_ASSERT(ofs.open(&path, io::File::FM_WRITE_NEW) == STATUS_OK);
-        ofs.write(c.commands(), c.commands_size());
+        UTEST_ASSERT(tmp.fmt("%s/%s.commands", tempdir(), full_name()) > 0);
+        printf("Dumping commands to: %s\n", tmp.as_native());
+        UTEST_ASSERT(ofs.open(&tmp, io::File::FM_WRITE_NEW) == STATUS_OK);
+        ofs.write(c->commands(), c->commands_size());
         UTEST_ASSERT(ofs.close() == STATUS_OK);
+    }
+
+    void test_decompress_data(const io::Path *path, resource::Compressor *c)
+    {
+        resource::BuiltinLoader load;
+        io::Path rel;
+
+        UTEST_ASSERT(load.init(c->commands(), c->commands_size(), c->entries(), c->num_entires(), BUFFER_SIZE) == STATUS_OK);
+        printf("Scanning resource registry...\n");
+        scan_resources(&load, path, &rel);
+    }
+
+    UTEST_MAIN
+    {
+        io::Path path;
+        resource::Compressor c;
+
+        UTEST_ASSERT(path.fmt("%s/compressor", resources()) > 0);
+        printf("Resource directory: %s\n", path.as_native());
+
+        // Compress data
+        test_compress_data(&path, &c);
+
+        // Decompress data
+        test_decompress_data(&path, &c);
 
         UTEST_ASSERT(c.close() == STATUS_OK);
     }

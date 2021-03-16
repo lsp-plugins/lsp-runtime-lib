@@ -45,7 +45,7 @@ namespace lsp
             protected:
                 const uint8_t                  *pData;      // Compressed data
                 size_t                          nDataSize;  // Data size
-                const raw_resource_t *const    *pCatalog;   // Catalog
+                const raw_resource_t           *pCatalog;   // Catalog
                 size_t                          nCatSize;   // Catalog size
                 size_t                          nBufSize;   // Size of compression buffer
 
@@ -68,7 +68,7 @@ namespace lsp
                  * @return status of operation
                  */
                 status_t init(const void *data, size_t data_size,
-                              const raw_resource_t *const *catalog, size_t catalog_size,
+                              const raw_resource_t *catalog, size_t catalog_size,
                               size_t buf_size
                 );
 
