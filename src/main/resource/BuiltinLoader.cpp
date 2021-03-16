@@ -135,8 +135,15 @@ namespace lsp
                 return NULL;
             }
 
-            // Initialize decompressor
-            res = d->init(&pData[ent->segment], ent->offset, ent->length, nBufSize);
+            // Initialize decompressor and skip the desired amount of data to access the entry
+            res = d->init(&pData[ent->segment], ent->offset + ent->length, nBufSize);
+            if (res == STATUS_OK)
+            {
+                wssize_t skipped = d->skip(ent->offset);
+                if (skipped != ent->offset)
+                    res = (skipped < 0) ? -skipped : STATUS_CORRUPTED;
+            }
+
             if (res == STATUS_OK)
                 return d;
 

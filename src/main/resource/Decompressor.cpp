@@ -19,8 +19,11 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/io/InMemoryStream.h>
 #include <lsp-plug.in/resource/Decompressor.h>
+
+#define BUFFER_QUANTITY         0x1000
 
 namespace lsp
 {
@@ -28,18 +31,44 @@ namespace lsp
     {
         Decompressor::Decompressor()
         {
-            nOffset     = 0;
-            nFirst      = 0;
-            nLast       = 0;
-            nRep        = 0;
-            nByte       = 0;
+            sReplay.data    = NULL;
+            sReplay.off     = 0;
+            sReplay.size    = 0;
+            sReplay.cap     = 0;
+            sReplay.rep     = 0;
+
+            nOffset         = 0;
+            nLast           = 0;
         }
 
         Decompressor::~Decompressor()
         {
+            do_close();
         }
 
-        status_t Decompressor::init(const void *data, size_t first, size_t length, size_t buf_sz)
+        status_t Decompressor::do_close()
+        {
+            // Destroy compression buffer
+            sBuffer.destroy();
+
+            // Destroy replay buffer
+            if (sReplay.data != NULL)
+                free(sReplay.data);
+
+            // Clear values
+            sReplay.data    = NULL;
+            sReplay.off     = 0;
+            sReplay.size    = 0;
+            sReplay.cap     = 0;
+            sReplay.rep     = 0;
+
+            nOffset         = 0;
+            nLast           = 0;
+
+            return sIn.close();
+        }
+
+        status_t Decompressor::init(const void *data, size_t last, size_t buf_sz)
         {
             // Create buffer
             status_t res = sBuffer.init(buf_sz);
@@ -60,11 +89,13 @@ namespace lsp
             }
 
             // Update positions
-            nOffset     = 0;
-            nFirst      = first;
-            nLast       = first + length;
-            nRep        = 0;
-            nByte       = 0;
+            nOffset         = 0;
+            nLast           = last;
+
+            // Clear replay buffer
+            sReplay.off     = 0;
+            sReplay.size    = 0;
+            sReplay.cap     = 0;
 
             return res;
         }
@@ -95,80 +126,152 @@ namespace lsp
             return STATUS_OK;
         }
 
-        ssize_t Decompressor::read_internal()
+        status_t Decompressor::close()
         {
-            // TODO: implement this
+            return do_close();
+        }
 
-//            uint8_t *d      = reinterpret_cast<uint8_t *>(dst);
-//            size_t nread    = 0;
-//            status_t res    = STATUS_OK;
-//            size_t offset, length, rep;
-//
-//            while (nread < count)
-//            {
-//                // Check offset
-//                if (nOffset >= nLast)
-//                {
-//                    if (nread > 0)
-//                        break;
-//                    return -set_error(STATUS_EOF);
-//                }
-//
-//                // Repeat character?
-//                if (nRep > 0)
-//                {
-//                    if (nOffset >= nFirst)
-//                        d[nread++]  = nByte;
-//                    ++nOffset;
-//                    --nRep;
-//                    continue;
-//                }
-//
-//                // Read offset
-//                if ((res = read_uint(&offset, 5, 5)) != STATUS_OK)
-//                {
-//                    if (nread > 0)
-//                        break;
-//                    return -set_error(res);
-//                }
-//
-//                // Check type of event
-//                if (offset >= sBuffer.size())
-//                {
-//                    // OCTET
-//                    // Value
-//                    nByte       = offset - sBuffer.size();
-//
-//                    // Repeat
-//                    if ((res = read_uint(&rep, 0, 4)) != STATUS_OK)
-//                    {
-//                        if (nread > 0)
-//                            break;
-//                        return -set_error(res);
-//                    }
-//
-//                    // Append buffer
-//                    length      = 1 + lsp_max(rep, 4);
-//                    for (size_t i=0; i<length; ++i)
-//                    {
-//                        if ((res = sBuffer.append(nByte)) != STATUS_OK)
-//                            return -set_error(res);
-//                    }
-//
-//                }
-//                else
-//                {
-//                    //
-//                }
-//            }
-//
-//            return nread;
-            return -1;
+        status_t Decompressor::set_buf(size_t off, size_t count, size_t rep)
+        {
+            // Need to allocate data?
+            if ((sReplay.cap < count) || (sReplay.data == NULL))
+            {
+                size_t cap      = align_size(count, BUFFER_QUANTITY);
+                uint8_t *ptr    = reinterpret_cast<uint8_t *>(realloc(sReplay.data, cap));
+                if (ptr == NULL)
+                    return STATUS_NO_MEM;
+
+                sReplay.data    = ptr;
+                sReplay.cap     = cap;
+            }
+
+            // Copy data to replay buffer
+            memcpy(sReplay.data, &sBuffer.data[sBuffer.head + off], count);
+            sReplay.off     = 0;
+            sReplay.size    = count;
+            sReplay.rep     = rep;
+
+            return STATUS_OK;
+        }
+
+        status_t Decompressor::set_bufc(uint8_t c, size_t rep)
+        {
+            // Need to allocate data?
+            if ((sReplay.cap < 1) || (sReplay.data == NULL))
+            {
+                uint8_t *ptr    = reinterpret_cast<uint8_t *>(realloc(sReplay.data, BUFFER_QUANTITY));
+                if (ptr == NULL)
+                    return STATUS_NO_MEM;
+
+                sReplay.data    = ptr;
+                sReplay.cap     = BUFFER_QUANTITY;
+            }
+
+            // Copy data to replay buffer
+            sReplay.data[0] = c;
+            sReplay.off     = 0;
+            sReplay.size    = 1;
+            sReplay.rep     = rep;
+
+            return STATUS_OK;
+        }
+
+        size_t Decompressor::get_buf(uint8_t *dst, size_t count)
+        {
+            size_t nread = 0;
+
+            // Check for data available in buffer
+            size_t avail = sReplay.size - sReplay.off;
+            if (avail > 0)
+            {
+                avail           = lsp_min(avail, count);
+                memcpy(dst, &sReplay.data[sReplay.off], avail);
+                sReplay.off    += avail;
+                dst            += avail;
+                nread          += avail;
+
+                if (nread >= count)
+                    return nread;
+            }
+
+            // Now check if there are any repeats available
+            if (sReplay.rep > 0)
+            {
+                avail           = lsp_min(sReplay.rep, count - nread);
+                memset(dst, sReplay.data[sReplay.off-1], avail);
+                sReplay.rep    -= avail;
+                nread          += avail;
+            }
+
+            return nread;
+        }
+
+        ssize_t Decompressor::get_bufc()
+        {
+            if (sReplay.off < sReplay.size)
+                return sReplay.data[sReplay.off++];
+
+            if (sReplay.rep <= 0)
+                return -STATUS_EOF;
+
+            --sReplay.rep;
+            return sReplay.data[sReplay.off-1];
+        }
+
+        status_t Decompressor::fill_buf()
+        {
+            // Check that data is present in the buffer
+            if ((sReplay.off < sReplay.size) || (sReplay.rep > 0))
+                return STATUS_OK;
+
+            status_t res;
+            size_t offset, length, rep;
+
+            // Read offset
+            if ((res = read_uint(&offset, 5, 5)) != STATUS_OK)
+                return res;
+
+            if (offset < sBuffer.size())
+            {
+                // REPLAY
+                // Length
+                if ((res = read_uint(&length, 5, 5)) != STATUS_OK)
+                    return res;
+                // Repeat
+                if ((res = read_uint(&rep, 0, 4)) != STATUS_OK)
+                    return res;
+
+                // Fill replay buffer with data
+                length += 1;
+                if ((res = set_buf(offset, length, rep)) != STATUS_OK)
+                    return res;
+
+                // Append decompression buffer
+                sBuffer.append(sReplay.data, length);
+            }
+            else
+            {
+                // OCTET
+                uint8_t b   = offset - sBuffer.size();
+                length      = lsp_min(rep, 4u) + 1;
+
+                // Repeat
+                if ((res = read_uint(&rep, 0, 4)) != STATUS_OK)
+                    return res;
+                // Fill replay buffer with data
+                if ((res = set_bufc(b, rep)) != STATUS_OK)
+                    return res;
+                // Append decompression buffer
+                while (length--)
+                    sBuffer.append(b);
+            }
+
+            return STATUS_OK;
         }
 
         ssize_t Decompressor::read(void *dst, size_t count)
         {
-            ssize_t res;
+            status_t res;
             uint8_t *d      = reinterpret_cast<uint8_t *>(dst);
             size_t nread    = 0;
 
@@ -176,51 +279,55 @@ namespace lsp
             {
                 // Check offset
                 if (nOffset >= nLast)
+                {
+                    if (nread <= 0)
+                        return -set_error(STATUS_EOF);
                     break;
+                }
 
-                // Read byte
-                if ((res = read_internal()) < 0)
+                // Check if data has been read
+                size_t bufrd    = get_buf(&d[nread], count - nread);
+                if (bufrd > 0)
+                {
+                    nOffset        += bufrd;
+                    nread          += bufrd;
+                    continue;
+                }
+
+                // There is no data in the buffer, try to get new data
+                if ((res = fill_buf()) != STATUS_OK)
                 {
                     if (nread > 0)
                         break;
-                    set_error(-res);
-                    return res;
+                    set_error(res);
+                    return -res;
                 }
-
-                // Check if we can emit result
-                if ((nOffset++) >= nFirst)
-                    d[nread++]      = res;
             }
 
-            return (nread > 0) ? nread : -set_error(STATUS_EOF);
+            set_error(STATUS_OK);
+            return nread;
         }
 
         ssize_t Decompressor::read_byte()
         {
-            ssize_t res;
+            status_t res;
 
             if (nOffset >= nLast)
                 return -set_error(STATUS_EOF);
 
-            while (true)
+            do
             {
-                // Read byte
-                if ((res = read_internal()) < 0)
-                    break;
+                // Check if data has been read
+                ssize_t b       = get_bufc();
+                if (b >= 0)
+                {
+                    ++nOffset;
+                    return b;
+                }
+            } while ((res = fill_buf()) != STATUS_OK);
 
-                // Check if we can emit result
-                if ((nOffset++) >= nFirst)
-                    return res;
-            }
-
-            set_error(-res);
+            set_error(res);
             return res;
-        }
-
-        status_t Decompressor::close()
-        {
-            sBuffer.destroy();
-            return sIn.close();
         }
     }
 }

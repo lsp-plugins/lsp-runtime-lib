@@ -249,7 +249,7 @@ namespace lsp
             // Shift buffer if needed
             if (tail >= (cap << 1))
             {
-                memmove(data, &data[cap],   cap * sizeof(uint8_t));
+                memmove(data, &data[cap], cap * sizeof(uint8_t));
                 head  -= cap;
                 tail  -= cap;
             }
