@@ -75,13 +75,14 @@ UTEST_BEGIN("runtime.resource", compressor)
         }
     }
 
-    void scan_resources(resource::BuiltinLoader *load, const io::Path *path, const io::Path *rel)
+    void scan_resources(resource::BuiltinLoader *load, const io::Path *path, const io::Path *temp, const io::Path *rel)
     {
         resource::resource_t *rlist = NULL;
-        io::Path file, child;
+        io::Path file, child, out;
         io::OutMemoryStream oms1, oms2;
         io::InFileStream ifs;
         io::IInStream *irs;
+        io::OutFileStream ofs;
 
         ssize_t items   = load->enumerate(rel, &rlist);
         UTEST_ASSERT(items >= 0);
@@ -96,25 +97,35 @@ UTEST_BEGIN("runtime.resource", compressor)
 
             if (item->type == resource::RES_DIR)
             {
-                scan_resources(load, path, &child);
+                scan_resources(load, path, temp, &child);
                 continue;
             }
 
             // Decompress the item
             oms1.clear();
-            UTEST_ASSERT((irs = load->read_stream(rel)) != NULL);
+            UTEST_ASSERT((irs = load->read_stream(&child)) != NULL);
             wssize_t sz1 = irs->sink(&oms1);
             UTEST_ASSERT(sz1 >= 0);
             UTEST_ASSERT(irs->close() == STATUS_OK);
             UTEST_ASSERT(oms1.size() == size_t(sz1));
             printf("  decompressed entry size: %ld bytes\n", long(sz1));
 
+            // Save the decompressed entry
+            UTEST_ASSERT(out.set(temp, rel) == STATUS_OK);
+            UTEST_ASSERT(out.append_child(rlist->name) == STATUS_OK);
+            printf("  saving decompressed entry as: %s\n", out.as_native());
+            UTEST_ASSERT(out.mkparent(true) == STATUS_OK);
+            UTEST_ASSERT(ofs.open(&out, io::File::FM_WRITE_NEW) == STATUS_OK);
+            wssize_t osz = ofs.write(oms1.data(), oms1.size());
+            UTEST_ASSERT(osz == sz1);
+            UTEST_ASSERT(ofs.close() == STATUS_OK);
+
             // Read the oridinal file
             oms2.clear();
             UTEST_ASSERT(file.set(path, &child) == STATUS_OK);
             UTEST_ASSERT(ifs.open(&file) == STATUS_OK);
-            wssize_t sz2 = ifs.sink(&oms1);
-            UTEST_ASSERT(ifs.sink(&oms2) == STATUS_OK);
+            wssize_t sz2 = ifs.sink(&oms2);
+            UTEST_ASSERT(sz2 >= 0);
             UTEST_ASSERT(oms2.size() == size_t(sz2));
             printf("  original entry size: %ld bytes\n", long(sz2));
 
@@ -160,10 +171,12 @@ UTEST_BEGIN("runtime.resource", compressor)
     {
         resource::BuiltinLoader load;
         io::Path rel;
+        io::Path tmp;
 
+        UTEST_ASSERT(tmp.fmt("%s/utest-%s", tempdir(), full_name()) > 0);
         UTEST_ASSERT(load.init(c->commands(), c->commands_size(), c->entries(), c->num_entires(), BUFFER_SIZE) == STATUS_OK);
         printf("Scanning resource registry...\n");
-        scan_resources(&load, path, &rel);
+        scan_resources(&load, path, &tmp, &rel);
     }
 
     UTEST_MAIN

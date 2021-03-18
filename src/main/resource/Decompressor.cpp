@@ -252,12 +252,13 @@ namespace lsp
             else
             {
                 // OCTET
-                uint8_t b   = offset - sBuffer.size();
-                length      = lsp_min(rep, 4u) + 1;
-
                 // Repeat
                 if ((res = read_uint(&rep, 0, 4)) != STATUS_OK)
                     return res;
+
+                uint8_t b   = offset - sBuffer.size();
+                length      = lsp_min(rep, 4u) + 1;
+
                 // Fill replay buffer with data
                 if ((res = set_bufc(b, rep)) != STATUS_OK)
                     return res;
