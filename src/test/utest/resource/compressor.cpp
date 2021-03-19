@@ -141,23 +141,23 @@ UTEST_BEGIN("runtime.resource", compressor)
         free(rlist);
     }
 
-    void test_compress_data(const io::Path *path, resource::Compressor *c)
+    void test_compress_data(const io::Path *path, resource::Compressor *c, io::OutMemoryStream *os)
     {
         wsize_t data_size = 0;
         io::Path tmp;
         io::OutFileStream ofs;
 
         // Scan and compress directory
-        UTEST_ASSERT(c->init(BUFFER_SIZE) == STATUS_OK);
+        UTEST_ASSERT(c->init(BUFFER_SIZE, os) == STATUS_OK);
         printf("Scanning source directory...\n");
         scan_directory(&data_size, path, path, c);
         c->flush(); // Flush compressor if ther is some data
 
-        size_t buf_sz = c->data_size();
+        size_t buf_sz = os->size();
         double ratio = double(data_size) / double(buf_sz);
 
         printf("Command size: %d, data size: %d, ratio: %.2f\n",
-            int(c->data_size()),
+            int(os->size()),
             int(data_size),
             ratio
         );
@@ -165,18 +165,18 @@ UTEST_BEGIN("runtime.resource", compressor)
         UTEST_ASSERT(tmp.fmt("%s/%s.commands", tempdir(), full_name()) > 0);
         printf("Dumping commands to: %s\n", tmp.as_native());
         UTEST_ASSERT(ofs.open(&tmp, io::File::FM_WRITE_NEW) == STATUS_OK);
-        ofs.write(c->data(), c->data_size());
+        ofs.write(os->data(), os->size());
         UTEST_ASSERT(ofs.close() == STATUS_OK);
     }
 
-    void test_decompress_data(const io::Path *path, resource::Compressor *c)
+    void test_decompress_data(const io::Path *path, resource::Compressor *c, io::OutMemoryStream *os)
     {
         resource::BuiltinLoader load;
         io::Path rel;
         io::Path tmp;
 
         UTEST_ASSERT(tmp.fmt("%s/utest-%s", tempdir(), full_name()) > 0);
-        UTEST_ASSERT(load.init(c->data(), c->data_size(), c->entries(), c->num_entires(), BUFFER_SIZE) == STATUS_OK);
+        UTEST_ASSERT(load.init(os->data(), os->size(), c->entries(), c->num_entires(), BUFFER_SIZE) == STATUS_OK);
         printf("Scanning resource registry...\n");
         scan_resources(&load, path, &tmp, &rel);
     }
@@ -185,17 +185,20 @@ UTEST_BEGIN("runtime.resource", compressor)
     {
         io::Path path;
         resource::Compressor c;
+        io::OutMemoryStream oms;
 
         UTEST_ASSERT(path.fmt("%s/compressor", resources()) > 0);
         printf("Resource directory: %s\n", path.as_native());
 
         // Compress data
-        test_compress_data(&path, &c);
+        test_compress_data(&path, &c, &oms);
 
         // Decompress data
-        test_decompress_data(&path, &c);
+        test_decompress_data(&path, &c, &oms);
 
         UTEST_ASSERT(c.close() == STATUS_OK);
+        oms.drop();
+        UTEST_ASSERT(oms.close() == STATUS_OK);
     }
 
 UTEST_END

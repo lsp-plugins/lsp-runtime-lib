@@ -31,6 +31,7 @@
 #include <lsp-plug.in/lltl/parray.h>
 #include <lsp-plug.in/resource/ILoader.h>
 #include <lsp-plug.in/resource/buffer.h>
+#include <lsp-plug.in/resource/OutProxyStream.h>
 
 namespace lsp
 {
@@ -47,7 +48,7 @@ namespace lsp
             protected:
                 lltl::darray<raw_resource_t>    vEntries;
                 io::OutMemoryStream             sTemp;          // Temporary buffer
-                io::OutMemoryStream             sData;          // Data buffer
+                OutProxyStream                  sOS;            // Output stream
                 io::OutBitStream                sOut;           // Output bit stream
                 size_t                          nSegment;       // Start of data segment
                 size_t                          nOffset;        // Current offset in segment
@@ -74,15 +75,23 @@ namespace lsp
                 /**
                  * Initialize compressor
                  * @param buf_size buffer size
+                 * @param os output stream
+                 * @param flags flags
                  * @return status of operation
                  */
-                status_t                init(size_t buf_size);
+                status_t                init(size_t buf_size, io::IOutStream *os, size_t flags = WRAP_NONE);
 
             public:
-                inline const void      *data() const            { return sData.data();                                      }
+                /**
+                 * Get all resource entries
+                 * @return all resource entries
+                 */
                 inline const raw_resource_t *entries() const    { return vEntries.array();                                  }
 
-                inline size_t           data_size() const       { return sData.size();                                      }
+                /**
+                 * Get number of resource entries
+                 * @return number of resource entries
+                 */
                 inline size_t           num_entires() const     { return vEntries.size();                                   }
 
                 /**

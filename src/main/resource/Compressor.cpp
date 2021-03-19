@@ -19,7 +19,6 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <lsp-plug.in/resource/Compressor.h>
 #include <lsp-plug.in/stdlib/string.h>
 #include <lsp-plug.in/stdlib/stdio.h>
 #include <lsp-plug.in/common/debug.h>
@@ -27,6 +26,8 @@
 #include <lsp-plug.in/io/OutBitStream.h>
 #include <lsp-plug.in/common/bits.h>
 #include <lsp-plug.in/common/alloc.h>
+#include <lsp-plug.in/resource/Compressor.h>
+#include <lsp-plug.in/resource/OutProxyStream.h>
 
 namespace lsp
 {
@@ -71,20 +72,19 @@ namespace lsp
 
             // Drop buffer data
             sTemp.drop();
-            sData.drop();
 
             status_t res    = sTemp.close();
             status_t res2   = sOut.close();
             if (res == STATUS_OK)
                 res         = res2;
-            res2            = sData.close();
+            res2            = sOS.close();
             if (res == STATUS_OK)
                 res         = res2;
 
             return res;
         }
 
-        status_t Compressor::init(size_t buf_size)
+        status_t Compressor::init(size_t buf_size, io::IOutStream *os, size_t flags)
         {
             status_t res;
 
@@ -94,7 +94,10 @@ namespace lsp
             if ((res = sBuffer.init(buf_size)) != STATUS_OK)
                 return res;
 
-            if ((res = sOut.wrap(&sData)) != STATUS_OK)
+            if ((res = sOS.wrap(os, flags)) != STATUS_OK)
+                return res;
+
+            if ((res = sOut.wrap(&sOS)) != STATUS_OK)
                 return res;
 
             return STATUS_OK;
@@ -205,10 +208,10 @@ namespace lsp
             ssize_t offset = 0, length = 0, rep = 0, append = 0;
 
             IF_TRACE(
-                ssize_t coffset = sData.size();
-                size_t octets   = 0;
-                size_t replays  = 0;
-                size_t repeats  = 0;
+                wssize_t coffset    = sOS.position();
+                size_t octets       = 0;
+                size_t replays      = 0;
+                size_t repeats      = 0;
             )
 
             while (head < tail)
@@ -276,7 +279,7 @@ namespace lsp
 
             // Output stats
             IF_TRACE(
-                size_t cbytes   = sData.size() - coffset;
+                size_t cbytes   = sOS.position() - coffset;
 
                 lsp_trace("  octets: %d, replays: %d, repeats: %d",
                         int(octets), int(replays), int(repeats));
@@ -422,7 +425,7 @@ namespace lsp
             if (res != STATUS_OK)
                 return res;
 
-            nSegment        = sData.size();
+            nSegment        = sOS.position();
             nOffset         = 0;
 
             return STATUS_OK;
