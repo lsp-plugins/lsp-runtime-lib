@@ -10,7 +10,7 @@
 * Added io::Path::get_first, io::Path::remove_first, io::Path::pop_first, io::Path::pop_last methods.
 * Added io::OutBitStream class for manipulating output bit streams.
 * Added io::InBitStream class for manipulating input bit streams.
-* Added io::Path::clone method for cloning paths.
+* Added io::Path::clone, io::Path::compare_to and io::Path::hash methods for collection purposes.
 * Added argument check for NULL for lspc::File class methods.
 * Fixed character set encoding bugs for several systems that have limited libiconv.
 * Added clear() and reduce() methods for io::OutMemoryStream.

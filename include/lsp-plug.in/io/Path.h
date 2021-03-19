@@ -25,6 +25,7 @@
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/common/status.h>
+#include <lsp-plug.in/lltl/types.h>
 #include <stdarg.h>
 
 namespace lsp
@@ -68,7 +69,7 @@ namespace lsp
                 explicit Path();
                 ~Path();
                 
-                Path           *clone();
+                Path           *clone() const;
 
             public:
                 status_t        set_native(const char *path, const char *charset = NULL);
@@ -224,6 +225,10 @@ namespace lsp
                 status_t        rename(const io::Path *dst) const;
 
             public:
+                inline size_t   hash() const                                { return sPath.hash();  }
+                inline size_t   compare_to(const io::Path *dst) const       { return sPath.compare_to(&dst->sPath);  }
+
+            public:
                 static bool     is_dot(const LSPString *path);
                 static bool     is_dot(const io::Path *path);
                 static bool     is_dot(const char *path);
@@ -239,6 +244,45 @@ namespace lsp
                 static bool     valid_file_name(const LSPString *fname);
                 static bool     valid_path_name(const LSPString *fname);
         };
+    }
+
+    // LLTL specialization for Path class
+    namespace lltl
+    {
+        template <>
+            struct hash_spec<io::Path>: public hash_iface
+            {
+                static size_t hash_func(const void *ptr, size_t size);
+
+                explicit hash_spec()
+                {
+                    hash        = hash_func;
+                }
+            };
+
+        template <>
+            struct compare_spec<io::Path>: public compare_iface
+            {
+                static ssize_t cmp_func(const void *a, const void *b, size_t size);
+
+                explicit compare_spec()
+                {
+                    compare     = cmp_func;
+                }
+            };
+
+        template <>
+            struct allocator_spec<io::Path>: public allocator_iface
+            {
+                static void *clone_func(const void *src, size_t size);
+                static void free_func(void *ptr);
+
+                explicit allocator_spec()
+                {
+                    clone       = clone_func;
+                    free        = free_func;
+                }
+            };
     }
 } /* namespace lsp */
 

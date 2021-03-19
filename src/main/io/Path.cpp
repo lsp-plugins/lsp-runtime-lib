@@ -54,7 +54,7 @@ namespace lsp
 #endif /* PLATFORM_WINDOWS */
         }
 
-        Path *Path::clone()
+        Path *Path::clone() const
         {
             Path *res = new Path();
 
@@ -1924,6 +1924,31 @@ namespace lsp
             sPath.swap(&tmp);
 
             return STATUS_OK;
+        }
+    }
+
+    namespace lltl
+    {
+        size_t hash_spec<io::Path>::hash_func(const void *ptr, size_t size)
+        {
+            return (static_cast<const io::Path *>(ptr))->hash();
+        }
+
+        ssize_t compare_spec<io::Path>::cmp_func(const void *a, const void *b, size_t size)
+        {
+            const io::Path *sa = static_cast<const io::Path *>(a);
+            const io::Path *sb = static_cast<const io::Path *>(b);
+            return sa->compare_to(sb);
+        }
+
+        void *allocator_spec<io::Path>::clone_func(const void *src, size_t size)
+        {
+            return (static_cast<const io::Path *>(src))->clone();
+        }
+
+        void allocator_spec<io::Path>::free_func(void *ptr)
+        {
+            delete (static_cast<io::Path *>(ptr));
         }
     }
 } /* namespace lsp */
