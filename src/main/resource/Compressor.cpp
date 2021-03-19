@@ -202,7 +202,7 @@ namespace lsp
             status_t res;
             const uint8_t *head = sData.data();
             const uint8_t *tail = &head[flength];
-            ssize_t offset = 0, length = 0, rep = 0;
+            ssize_t offset = 0, length = 0, rep = 0, append = 0;
 
             IF_TRACE(
                 ssize_t coffset = sCommands.size();
@@ -220,6 +220,7 @@ namespace lsp
 
                 // Calc number of repeats
                 rep         = calc_repeats(&head[length], tail);
+                append      = length + lsp_min(rep, 4);
 
                 // Estimate size of output
                 size_t est1 = (est_uint(sBuffer.size() + *head, 5, 5) + est_uint(rep, 0, 4)) * length;     // How many bits per octet
@@ -241,6 +242,10 @@ namespace lsp
                     if ((res = emit_uint(rep, 0, 4)) != STATUS_OK)
                         break;
 
+                    // Append data to buffer
+                    sBuffer.append(head, append);
+                    head           += length + rep;
+
                     IF_TRACE(
                         ++ replays;
                         if (rep)
@@ -250,7 +255,6 @@ namespace lsp
                 else
                 {
                     // OCTET
-                    length     += lsp_min(rep, 4);
                     // Value
                     if ((res = emit_uint(sBuffer.size() + *head, 5, 5)) != STATUS_OK)
                         break;
@@ -258,12 +262,12 @@ namespace lsp
                     if ((res = emit_uint(rep, 0, 4)) != STATUS_OK)
                         break;
 
+                    // Append data to buffer
+                    sBuffer.append(head, append);
+                    head           += append;
+
                     IF_TRACE(++octets);
                 }
-
-                // Append data to buffer
-                sBuffer.append(head, length);
-                head           += length;
             }
 
             // Flush the bit sequence

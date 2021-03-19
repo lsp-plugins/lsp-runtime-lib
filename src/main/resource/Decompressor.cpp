@@ -225,7 +225,8 @@ namespace lsp
                 return STATUS_OK;
 
             status_t res;
-            size_t offset, length, rep;
+            size_t offset, length, rep, append;
+            uint8_t b;
 
             // Read offset
             if ((res = read_uint(&offset, 5, 5)) != STATUS_OK)
@@ -247,6 +248,8 @@ namespace lsp
                     return res;
 
                 // Append decompression buffer
+                b           = sReplay.data[length - 1];
+                append      = lsp_min(rep, 4u);
                 sBuffer.append(sReplay.data, length);
             }
             else
@@ -256,16 +259,17 @@ namespace lsp
                 if ((res = read_uint(&rep, 0, 4)) != STATUS_OK)
                     return res;
 
-                uint8_t b   = offset - sBuffer.size();
-                length      = lsp_min(rep, 4u) + 1;
+                b           = offset - sBuffer.size();
+                append      = lsp_min(rep, 4u) + 1;
 
                 // Fill replay buffer with data
                 if ((res = set_bufc(b, rep)) != STATUS_OK)
                     return res;
-                // Append decompression buffer
-                while (length--)
-                    sBuffer.append(b);
             }
+
+            // Append decompression buffer
+            while (append--)
+                sBuffer.append(b);
 
             return STATUS_OK;
         }

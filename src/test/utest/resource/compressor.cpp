@@ -92,7 +92,7 @@ UTEST_BEGIN("runtime.resource", compressor)
         {
             resource::resource_t *item = &rlist[i];
 
-            UTEST_ASSERT(child.set(rel, rlist->name) == STATUS_OK);
+            UTEST_ASSERT(child.set(rel, item->name) == STATUS_OK);
             printf("  found entry: %s\n", child.as_native());
 
             if (item->type == resource::RES_DIR)
@@ -112,22 +112,23 @@ UTEST_BEGIN("runtime.resource", compressor)
 
             // Save the decompressed entry
             UTEST_ASSERT(out.set(temp, rel) == STATUS_OK);
-            UTEST_ASSERT(out.append_child(rlist->name) == STATUS_OK);
-            printf("  saving decompressed entry as: %s\n", out.as_native());
+            UTEST_ASSERT(out.append_child(item->name) == STATUS_OK);
+            printf("    saving decompressed entry as: %s\n", out.as_native());
             UTEST_ASSERT(out.mkparent(true) == STATUS_OK);
             UTEST_ASSERT(ofs.open(&out, io::File::FM_WRITE_NEW) == STATUS_OK);
             wssize_t osz = ofs.write(oms1.data(), oms1.size());
             UTEST_ASSERT(osz == sz1);
             UTEST_ASSERT(ofs.close() == STATUS_OK);
 
-            // Read the oridinal file
+            // Read the original file
             oms2.clear();
             UTEST_ASSERT(file.set(path, &child) == STATUS_OK);
             UTEST_ASSERT(ifs.open(&file) == STATUS_OK);
             wssize_t sz2 = ifs.sink(&oms2);
+            UTEST_ASSERT(ifs.close() == STATUS_OK);
             UTEST_ASSERT(sz2 >= 0);
             UTEST_ASSERT(oms2.size() == size_t(sz2));
-            printf("  original entry size: %ld bytes\n", long(sz2));
+            printf("    original entry size: %ld bytes\n", long(sz2));
 
             // Compare the data
             UTEST_ASSERT(sz1 == sz2);
@@ -150,6 +151,7 @@ UTEST_BEGIN("runtime.resource", compressor)
         UTEST_ASSERT(c->init(BUFFER_SIZE) == STATUS_OK);
         printf("Scanning source directory...\n");
         scan_directory(&data_size, path, path, c);
+        c->flush(); // Flush compressor if ther is some data
 
         size_t buf_sz = c->commands_size();
         double ratio = double(data_size) / double(buf_sz);
