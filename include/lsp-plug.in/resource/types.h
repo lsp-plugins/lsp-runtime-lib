@@ -57,7 +57,6 @@ namespace lsp
             ssize_t                 segment;                    // The start of segment
             ssize_t                 offset;                     // Offset of the resource
             size_t                  length;                     // Length of the resource
-            const char             *data;                       // Compressed/decompressed data
         } raw_resource_t;
 
         /**

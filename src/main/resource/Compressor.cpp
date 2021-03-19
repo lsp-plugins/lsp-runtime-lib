@@ -152,7 +152,6 @@ namespace lsp
                     found->offset   = -1;
                     found->length   = -1;
                     found->name     = item.clone_utf8();
-                    found->data     = NULL;
 
                     if (found->name == NULL)
                         return STATUS_NO_MEM;
@@ -177,7 +176,6 @@ namespace lsp
                         found->offset   = -1;
                         found->length   = -1;
                         found->name     = item.clone_utf8();
-                        found->data     = NULL;
 
                         if (found->name == NULL)
                             return STATUS_NO_MEM;
