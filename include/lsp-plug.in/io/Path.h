@@ -68,6 +68,8 @@ namespace lsp
                 explicit Path();
                 ~Path();
                 
+                Path           *clone();
+
             public:
                 status_t        set_native(const char *path, const char *charset = NULL);
                 status_t        set(const char *path);

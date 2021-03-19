@@ -54,6 +54,17 @@ namespace lsp
 #endif /* PLATFORM_WINDOWS */
         }
 
+        Path *Path::clone()
+        {
+            Path *res = new Path();
+
+            if ((res != NULL) && (res->set(this) == STATUS_OK))
+                return res;
+
+            delete res;
+            return NULL;
+        }
+
         status_t Path::set_native(const char *path, const char *charset)
         {
             if (path == NULL)
