@@ -70,14 +70,14 @@ namespace lsp
             vEntries.flush();
 
             // Drop buffer data
+            sTemp.drop();
             sData.drop();
-            sCommands.drop();
 
-            status_t res    = sData.close();
+            status_t res    = sTemp.close();
             status_t res2   = sOut.close();
             if (res == STATUS_OK)
                 res         = res2;
-            res2            = sCommands.close();
+            res2            = sData.close();
             if (res == STATUS_OK)
                 res         = res2;
 
@@ -94,7 +94,7 @@ namespace lsp
             if ((res = sBuffer.init(buf_size)) != STATUS_OK)
                 return res;
 
-            if ((res = sOut.wrap(&sCommands)) != STATUS_OK)
+            if ((res = sOut.wrap(&sData)) != STATUS_OK)
                 return res;
 
             return STATUS_OK;
@@ -194,18 +194,18 @@ namespace lsp
                 return -STATUS_BAD_STATE;
 
             // Clear data
-            sData.clear();
-            wssize_t flength    = is->sink(&sData);
+            sTemp.clear();
+            wssize_t flength    = is->sink(&sTemp);
             if (flength < 0)
                 return flength;
 
             status_t res;
-            const uint8_t *head = sData.data();
+            const uint8_t *head = sTemp.data();
             const uint8_t *tail = &head[flength];
             ssize_t offset = 0, length = 0, rep = 0, append = 0;
 
             IF_TRACE(
-                ssize_t coffset = sCommands.size();
+                ssize_t coffset = sData.size();
                 size_t octets   = 0;
                 size_t replays  = 0;
                 size_t repeats  = 0;
@@ -276,7 +276,7 @@ namespace lsp
 
             // Output stats
             IF_TRACE(
-                size_t cbytes   = sCommands.size() - coffset;
+                size_t cbytes   = sData.size() - coffset;
 
                 lsp_trace("  octets: %d, replays: %d, repeats: %d",
                         int(octets), int(replays), int(repeats));
@@ -422,7 +422,7 @@ namespace lsp
             if (res != STATUS_OK)
                 return res;
 
-            nSegment        = sCommands.size();
+            nSegment        = sData.size();
             nOffset         = 0;
 
             return STATUS_OK;

@@ -46,8 +46,8 @@ namespace lsp
 
             protected:
                 lltl::darray<raw_resource_t>    vEntries;
+                io::OutMemoryStream             sTemp;          // Temporary buffer
                 io::OutMemoryStream             sData;          // Data buffer
-                io::OutMemoryStream             sCommands;
                 io::OutBitStream                sOut;           // Output bit stream
                 size_t                          nSegment;       // Start of data segment
                 size_t                          nOffset;        // Current offset in segment
@@ -80,11 +80,9 @@ namespace lsp
 
             public:
                 inline const void      *data() const            { return sData.data();                                      }
-                inline const void      *commands() const        { return sCommands.data();                                  }
                 inline const raw_resource_t *entries() const    { return vEntries.array();                                  }
 
                 inline size_t           data_size() const       { return sData.size();                                      }
-                inline size_t           commands_size() const   { return sCommands.size();                                  }
                 inline size_t           num_entires() const     { return vEntries.size();                                   }
 
                 /**

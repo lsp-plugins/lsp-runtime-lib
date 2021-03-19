@@ -153,11 +153,11 @@ UTEST_BEGIN("runtime.resource", compressor)
         scan_directory(&data_size, path, path, c);
         c->flush(); // Flush compressor if ther is some data
 
-        size_t buf_sz = c->commands_size();
+        size_t buf_sz = c->data_size();
         double ratio = double(data_size) / double(buf_sz);
 
         printf("Command size: %d, data size: %d, ratio: %.2f\n",
-            int(c->commands_size()),
+            int(c->data_size()),
             int(data_size),
             ratio
         );
@@ -165,7 +165,7 @@ UTEST_BEGIN("runtime.resource", compressor)
         UTEST_ASSERT(tmp.fmt("%s/%s.commands", tempdir(), full_name()) > 0);
         printf("Dumping commands to: %s\n", tmp.as_native());
         UTEST_ASSERT(ofs.open(&tmp, io::File::FM_WRITE_NEW) == STATUS_OK);
-        ofs.write(c->commands(), c->commands_size());
+        ofs.write(c->data(), c->data_size());
         UTEST_ASSERT(ofs.close() == STATUS_OK);
     }
 
@@ -176,7 +176,7 @@ UTEST_BEGIN("runtime.resource", compressor)
         io::Path tmp;
 
         UTEST_ASSERT(tmp.fmt("%s/utest-%s", tempdir(), full_name()) > 0);
-        UTEST_ASSERT(load.init(c->commands(), c->commands_size(), c->entries(), c->num_entires(), BUFFER_SIZE) == STATUS_OK);
+        UTEST_ASSERT(load.init(c->data(), c->data_size(), c->entries(), c->num_entires(), BUFFER_SIZE) == STATUS_OK);
         printf("Scanning resource registry...\n");
         scan_resources(&load, path, &tmp, &rel);
     }
