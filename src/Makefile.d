@@ -44,6 +44,14 @@ $(LSP_RUNTIME_LIB_BIN)/main/runtime/buffer.o: main/runtime/buffer.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/buffer.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h
+$(LSP_RUNTIME_LIB_BIN)/main/resource/OutProxyStream.o: \
+ main/resource/OutProxyStream.cpp \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/OutProxyStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutStream.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h
 $(LSP_RUNTIME_LIB_BIN)/main/resource/ILoader.o: main/resource/ILoader.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
@@ -121,37 +129,38 @@ $(LSP_RUNTIME_LIB_BIN)/main/resource/Decompressor.o: \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/buffer.h
 $(LSP_RUNTIME_LIB_BIN)/main/resource/Compressor.o: \
  main/resource/Compressor.cpp \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/Compressor.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutMemoryStream.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutStream.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutSequence.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutSequence.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/charset.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutBitStream.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/File.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/CharsetEncoder.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutSequence.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutBitStream.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/bits.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/arch/x86/bits.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/Compressor.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutMemoryStream.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/darray.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/ILoader.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/types.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/buffer.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutSequence.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/charset.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/CharsetEncoder.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/bits.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/arch/x86/bits.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/OutProxyStream.h
 $(LSP_RUNTIME_LIB_BIN)/main/resource/BuiltinLoader.o: \
  main/resource/BuiltinLoader.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/darray.h \
@@ -2001,6 +2010,7 @@ $(LSP_RUNTIME_LIB_BIN)/test/utest/resource/compressor.o: \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/types.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/buffer.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/OutProxyStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/Decompressor.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InBitStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/BuiltinLoader.h
