@@ -107,6 +107,7 @@ UTEST_BEGIN("runtime.resource", compressor)
             wssize_t sz1 = irs->sink(&oms1);
             UTEST_ASSERT(sz1 >= 0);
             UTEST_ASSERT(irs->close() == STATUS_OK);
+            delete irs;
             UTEST_ASSERT(oms1.size() == size_t(sz1));
             printf("  decompressed entry size: %ld bytes\n", long(sz1));
 
