@@ -167,6 +167,7 @@ namespace lsp
                     if (found == NULL)
                     {
                         // Allocate item
+                        sindex          = vEntries.size();
                         if ((found = vEntries.add()) == NULL)
                             return STATUS_NO_MEM;
 
