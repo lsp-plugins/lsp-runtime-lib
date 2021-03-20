@@ -426,6 +426,7 @@ namespace lsp
 
             nSegment        = sOS.position();
             nOffset         = 0;
+            sBuffer.clear();    // Clear state of the buffer
 
             return STATUS_OK;
         }
