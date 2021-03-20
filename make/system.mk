@@ -209,6 +209,7 @@ TEST                       := 0
 COMMON_VARS = \
 	PLATFORM \
 	ARCHITECTURE \
+	ARCHITECTURE_CFLAGS \
 	LIBRARY_EXT \
 	LIBRARY_PREFIX \
 	STATICLIB_EXT \
@@ -229,6 +230,7 @@ COMMON_VARS = \
 sysvars:
 	@echo "List of available system variables:"
 	@echo "  ARCHITECTURE              target architecture to perform build"
+	@echo "  ARCHITECTURE_CFLAGS       compiler flags to specify architecture"
 	@echo "  BINDIR                    location of the binaries"
 	@echo "  DEBUG                     build with debug options"
 	@echo "  EXECUTABLE_EXT            file extension for executable files"
