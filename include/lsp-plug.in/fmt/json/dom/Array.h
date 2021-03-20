@@ -47,7 +47,13 @@ namespace lsp
                 Array &assign(const Node *src)          { copy_ref(src); return *this;  }
 
             public:
-                virtual bool valid() const;
+                virtual bool        valid() const;
+
+                virtual status_t    create();
+
+                static Array       *allocate();
+
+                static Array        build();
 
             public:
                 size_t      size() const;
@@ -55,10 +61,14 @@ namespace lsp
 
                 Node        get(size_t index);
 
-                status_t    add(Node *node);
-                status_t    append(Node *node);
-                status_t    prepend(Node *node);
-                status_t    insert(size_t index, Node *node);
+                status_t    add(const Node *node);
+                status_t    add(const Node &node);
+                status_t    append(const Node *node);
+                status_t    append(const Node &node);
+                status_t    prepend(const Node *node);
+                status_t    prepend(const Node &node);
+                status_t    insert(size_t index, const Node *node);
+                status_t    insert(size_t index, const Node &node);
                 status_t    remove(size_t index);
                 status_t    remove_n(size_t index, size_t count);
         };

@@ -36,6 +36,22 @@ $(LSP_RUNTIME_LIB_BIN)/main/runtime/Color.o: main/runtime/Color.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h
+$(LSP_RUNTIME_LIB_BIN)/main/runtime/buffer.o: main/runtime/buffer.cpp \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/buffer.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h
+$(LSP_RUNTIME_LIB_BIN)/main/resource/OutProxyStream.o: \
+ main/resource/OutProxyStream.cpp \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/OutProxyStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutStream.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h
 $(LSP_RUNTIME_LIB_BIN)/main/resource/ILoader.o: main/resource/ILoader.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
@@ -91,6 +107,83 @@ $(LSP_RUNTIME_LIB_BIN)/main/resource/DirLoader.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h
+$(LSP_RUNTIME_LIB_BIN)/main/resource/Decompressor.o: \
+ main/resource/Decompressor.cpp \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InMemoryStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/Decompressor.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InBitStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/File.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/buffer.h
+$(LSP_RUNTIME_LIB_BIN)/main/resource/Compressor.o: \
+ main/resource/Compressor.cpp \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutSequence.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/charset.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/File.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/CharsetEncoder.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutSequence.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutBitStream.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/bits.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/arch/x86/bits.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/Compressor.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutMemoryStream.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/darray.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/ILoader.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/types.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/buffer.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/OutProxyStream.h
+$(LSP_RUNTIME_LIB_BIN)/main/resource/BuiltinLoader.o: \
+ main/resource/BuiltinLoader.cpp \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/darray.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/BuiltinLoader.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/types.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/ILoader.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/Decompressor.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InBitStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/File.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/buffer.h
 $(LSP_RUNTIME_LIB_BIN)/main/protocol/osc/pattern.o: \
  main/protocol/osc/pattern.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
@@ -482,6 +575,24 @@ $(LSP_RUNTIME_LIB_BIN)/main/io/OutFileStream.o: main/io/OutFileStream.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/NativeFile.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutFileStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutStream.h
+$(LSP_RUNTIME_LIB_BIN)/main/io/OutBitStream.o: main/io/OutBitStream.cpp \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutBitStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutStream.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/File.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutFileStream.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/endian.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/arch/x86/endian.h
 $(LSP_RUNTIME_LIB_BIN)/main/io/NativeFile.o: main/io/NativeFile.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/NativeFile.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
@@ -587,6 +698,24 @@ $(LSP_RUNTIME_LIB_BIN)/main/io/InFileStream.o: main/io/InFileStream.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/StdioFile.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InFileStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h
+$(LSP_RUNTIME_LIB_BIN)/main/io/InBitStream.o: main/io/InBitStream.cpp \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/endian.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/arch/x86/endian.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InBitStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/File.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InFileStream.h
 $(LSP_RUNTIME_LIB_BIN)/main/io/IInStream.o: main/io/IInStream.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
@@ -618,6 +747,7 @@ $(LSP_RUNTIME_LIB_BIN)/main/io/File.o: main/io/File.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/NativeFile.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h
 $(LSP_RUNTIME_LIB_BIN)/main/io/Dir.o: main/io/Dir.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Dir.h \
@@ -1017,6 +1147,16 @@ $(LSP_RUNTIME_LIB_BIN)/main/fmt/json/Tokenizer.o: \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/token.h
+$(LSP_RUNTIME_LIB_BIN)/main/fmt/json/token.o: main/fmt/json/token.cpp \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/token.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h
 $(LSP_RUNTIME_LIB_BIN)/main/fmt/json/Serializer.o: \
  main/fmt/json/Serializer.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/File.h \
@@ -1086,14 +1226,44 @@ $(LSP_RUNTIME_LIB_BIN)/main/fmt/json/dom.o: main/fmt/json/dom.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/pphash.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Integer.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Double.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Boolean.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/String.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Array.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Object.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutSequence.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/Parser.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/Tokenizer.h \
- $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/darray.h
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/darray.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/Serializer.h
+$(LSP_RUNTIME_LIB_BIN)/main/fmt/json/dom/String.o: \
+ main/fmt/json/dom/String.cpp \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/String.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Node.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/pphash.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Integer.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Double.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Boolean.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Array.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Object.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InStringSequence.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/expr/Tokenizer.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/expr/token.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/expr/types.h
 $(LSP_RUNTIME_LIB_BIN)/main/fmt/json/dom/Object.o: \
  main/fmt/json/dom/Object.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Object.h \
@@ -1109,6 +1279,11 @@ $(LSP_RUNTIME_LIB_BIN)/main/fmt/json/dom/Object.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/pphash.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Integer.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Double.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Boolean.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/String.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Array.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InStringSequence.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/expr/Tokenizer.h \
@@ -1128,6 +1303,12 @@ $(LSP_RUNTIME_LIB_BIN)/main/fmt/json/dom/Node.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/pphash.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Integer.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Double.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Boolean.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/String.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Array.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Object.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InStringSequence.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/expr/Tokenizer.h \
@@ -1147,6 +1328,11 @@ $(LSP_RUNTIME_LIB_BIN)/main/fmt/json/dom/Integer.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/pphash.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Double.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Boolean.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/String.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Array.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Object.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InStringSequence.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/expr/Tokenizer.h \
@@ -1167,6 +1353,11 @@ $(LSP_RUNTIME_LIB_BIN)/main/fmt/json/dom/Double.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/pphash.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Integer.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Boolean.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/String.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Array.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Object.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InStringSequence.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/expr/Tokenizer.h \
@@ -1187,6 +1378,11 @@ $(LSP_RUNTIME_LIB_BIN)/main/fmt/json/dom/Boolean.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/pphash.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Integer.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Double.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/String.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Array.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Object.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InStringSequence.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/expr/Tokenizer.h \
@@ -1207,6 +1403,11 @@ $(LSP_RUNTIME_LIB_BIN)/main/fmt/json/dom/Array.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/pphash.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Integer.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Double.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Boolean.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/String.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Object.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InStringSequence.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/expr/Tokenizer.h \
@@ -1772,6 +1973,47 @@ $(LSP_RUNTIME_LIB_BIN)/test/utest/resource/dirloader.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h
+$(LSP_RUNTIME_LIB_BIN)/test/utest/resource/compressor.o: \
+ test/utest/resource/compressor.cpp \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/utest.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/test.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/env.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/main/config.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/types.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/main/dynarray.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Dir.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/File.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InFileStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutFileStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/Compressor.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutMemoryStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutSequence.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutBitStream.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/darray.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/ILoader.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/types.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/buffer.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/OutProxyStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/Decompressor.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InBitStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/BuiltinLoader.h
 $(LSP_RUNTIME_LIB_BIN)/test/utest/protocol/osc.o: \
  test/utest/protocol/osc.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/endian.h \
@@ -2112,6 +2354,7 @@ $(LSP_RUNTIME_LIB_BIN)/test/utest/io/file.o: test/utest/io/file.cpp \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/main/config.h \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/types.h \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/main/dynarray.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/ByteBuffer.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/StdioFile.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
@@ -2197,6 +2440,33 @@ $(LSP_RUNTIME_LIB_BIN)/test/utest/io/charset.o: test/utest/io/charset.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/charset.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h
+$(LSP_RUNTIME_LIB_BIN)/test/utest/io/bitstream.o: \
+ test/utest/io/bitstream.cpp \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/utest.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/test.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/env.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/main/config.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/types.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/main/dynarray.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InBitStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/File.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InMemoryStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutBitStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutMemoryStream.h
 $(LSP_RUNTIME_LIB_BIN)/test/utest/i18n/json_dictionary.o: \
  test/utest/i18n/json_dictionary.cpp \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/utest.h \
@@ -2520,6 +2790,41 @@ $(LSP_RUNTIME_LIB_BIN)/test/utest/fmt/json/parser.o: \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/darray.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/math.h
+$(LSP_RUNTIME_LIB_BIN)/test/utest/fmt/json/dom.o: \
+ test/utest/fmt/json/dom.cpp \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/utest.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/test.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/env.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/main/config.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/types.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/main/dynarray.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/helpers.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/token.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Node.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/pphash.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Integer.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Double.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Boolean.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/String.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Array.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/json/dom/Object.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutSequence.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutStream.h
 $(LSP_RUNTIME_LIB_BIN)/test/utest/fmt/java.o: test/utest/fmt/java.cpp \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/utest.h \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/version.h \

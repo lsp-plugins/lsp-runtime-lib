@@ -29,6 +29,8 @@
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/stdlib/stdio.h>
 
+#define IO_FILE_DEFAULT_BUF_SIZE        0x1000
+
 namespace lsp
 {
     namespace io
@@ -279,6 +281,38 @@ namespace lsp
                 static status_t rename(const char *from, const Path *to);
                 static status_t rename(const LSPString *from, const Path *to);
                 static status_t rename(const Path *from, const Path *to);
+
+                /**
+                 * Copy the file.
+                 * @param from source file path
+                 * @param to destination file path
+                 * @param io_buf_size the size of the IO buffer
+                 * @return number of bytes copied or negative error code
+                 */
+                static wssize_t copy(const char *from, const char *to, size_t io_buf_size = IO_FILE_DEFAULT_BUF_SIZE);
+                static wssize_t copy(const LSPString *from, const char *to, size_t io_buf_size = IO_FILE_DEFAULT_BUF_SIZE);
+                static wssize_t copy(const Path *from, const char *to, size_t io_buf_size = IO_FILE_DEFAULT_BUF_SIZE);
+
+                static wssize_t copy(const char *from, const LSPString *to, size_t io_buf_size = IO_FILE_DEFAULT_BUF_SIZE);
+                static wssize_t copy(const LSPString *from, const LSPString *to, size_t io_buf_size = IO_FILE_DEFAULT_BUF_SIZE);
+                static wssize_t copy(const Path *from, const LSPString *to, size_t io_buf_size = IO_FILE_DEFAULT_BUF_SIZE);
+
+                static wssize_t copy(const char *from, const Path *to, size_t io_buf_size = IO_FILE_DEFAULT_BUF_SIZE);
+                static wssize_t copy(const LSPString *from, const Path *to, size_t io_buf_size = IO_FILE_DEFAULT_BUF_SIZE);
+                static wssize_t copy(const Path *from, const Path *to, size_t io_buf_size = IO_FILE_DEFAULT_BUF_SIZE);
+
+                /**
+                 * Create parent directory
+                 * @param path path to the directory
+                 * @return status of operation
+                 */
+                static status_t mkparent(const char *path);
+                static status_t mkparent(const LSPString *path);
+                static status_t mkparent(const io::Path *path);
+
+                static status_t mkparent(const char *path, bool recursive);
+                static status_t mkparent(const LSPString *path, bool recursive);
+                static status_t mkparent(const io::Path *path, bool recursive);
         };
     
     } /* namespace io */

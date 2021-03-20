@@ -102,6 +102,24 @@ namespace lsp
             nPosition   = 0;
         }
 
+        void OutMemoryStream::clear()
+        {
+            nSize       = 0;
+            nPosition   = 0;
+        }
+
+        bool OutMemoryStream::reduce(size_t size)
+        {
+            if (nSize <= size)
+                return false;
+
+            nSize       = size;
+            if (nPosition > size)
+                nPosition   = size;
+
+            return true;
+        }
+
         status_t OutMemoryStream::reserve(size_t amount)
         {
             if (amount <= nCapacity)

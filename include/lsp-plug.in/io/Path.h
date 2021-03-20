@@ -25,6 +25,7 @@
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/common/status.h>
+#include <lsp-plug.in/lltl/types.h>
 #include <stdarg.h>
 
 namespace lsp
@@ -68,6 +69,8 @@ namespace lsp
                 explicit Path();
                 ~Path();
                 
+                Path           *clone() const;
+
             public:
                 status_t        set_native(const char *path, const char *charset = NULL);
                 status_t        set(const char *path);
@@ -99,6 +102,18 @@ namespace lsp
                 status_t        get_last(LSPString *path) const;
                 status_t        get_last(Path *path) const;
 
+                status_t        pop_last(char *path, size_t maxlen);
+                status_t        pop_last(LSPString *path);
+                status_t        pop_last(Path *path);
+
+                status_t        get_first(char *path, size_t maxlen) const;
+                status_t        get_first(LSPString *path) const;
+                status_t        get_first(Path *path) const;
+
+                status_t        pop_first(char *path, size_t maxlen);
+                status_t        pop_first(LSPString *path);
+                status_t        pop_first(Path *path);
+
                 status_t        get_ext(char *path, size_t maxlen) const;
                 status_t        get_ext(LSPString *path) const;
                 status_t        get_ext(Path *path) const;
@@ -128,9 +143,14 @@ namespace lsp
                 status_t        append(const Path *path);
 
                 status_t        remove_last();
-                status_t        remove_last(char *path, size_t maxlen);
-                status_t        remove_last(LSPString *path);
-                status_t        remove_last(Path *path);
+                status_t        remove_last(char *path, size_t maxlen) const;
+                status_t        remove_last(LSPString *path) const;
+                status_t        remove_last(Path *path) const;
+
+                status_t        remove_first();
+                status_t        remove_first(char *path, size_t maxlen) const;
+                status_t        remove_first(LSPString *path) const;
+                status_t        remove_first(Path *path) const;
 
                 status_t        remove_base(const char *path);
                 status_t        remove_base(const LSPString *path);
@@ -196,11 +216,17 @@ namespace lsp
                 bool            is_socket() const;
                 status_t        mkdir() const;
                 status_t        mkdir(bool recursive) const;
+                status_t        mkparent() const;
+                status_t        mkparent(bool recursive) const;
                 status_t        remove() const;
 
                 status_t        rename(const char *dst) const;
                 status_t        rename(const LSPString *dst) const;
                 status_t        rename(const io::Path *dst) const;
+
+            public:
+                inline size_t   hash() const                                { return sPath.hash();  }
+                inline size_t   compare_to(const io::Path *dst) const       { return sPath.compare_to(&dst->sPath);  }
 
             public:
                 static bool     is_dot(const LSPString *path);
@@ -218,6 +244,45 @@ namespace lsp
                 static bool     valid_file_name(const LSPString *fname);
                 static bool     valid_path_name(const LSPString *fname);
         };
+    }
+
+    // LLTL specialization for Path class
+    namespace lltl
+    {
+        template <>
+            struct hash_spec<io::Path>: public hash_iface
+            {
+                static size_t hash_func(const void *ptr, size_t size);
+
+                explicit hash_spec()
+                {
+                    hash        = hash_func;
+                }
+            };
+
+        template <>
+            struct compare_spec<io::Path>: public compare_iface
+            {
+                static ssize_t cmp_func(const void *a, const void *b, size_t size);
+
+                explicit compare_spec()
+                {
+                    compare     = cmp_func;
+                }
+            };
+
+        template <>
+            struct allocator_spec<io::Path>: public allocator_iface
+            {
+                static void *clone_func(const void *src, size_t size);
+                static void free_func(void *ptr);
+
+                explicit allocator_spec()
+                {
+                    clone       = clone_func;
+                    free        = free_func;
+                }
+            };
     }
 } /* namespace lsp */
 

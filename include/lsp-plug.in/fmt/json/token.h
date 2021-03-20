@@ -112,7 +112,15 @@ namespace lsp
             size_t          padding;            // Number of characters for identation
             bool            separator;          // Add space separator after colons and commas in objects
             bool            multiline;          // Use newline characters (multiline output)
+            const char     *fmt_double;         // Double value format, "%f" by default
         } serial_flags_t;
+
+        /**
+         * Initialize default serialization flags
+         *
+         * @param dst object to initialize
+         */
+        void init_serial_flags(serial_flags_t *dst);
     }
 }
 

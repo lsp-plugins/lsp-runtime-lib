@@ -141,6 +141,7 @@ namespace lsp
                 ssize_t nread = read(buf, buf_size);
                 if (nread < 0)
                 {
+                    ::free(buf);
                     if (nread == -STATUS_EOF)
                     {
                         set_error(STATUS_OK);
@@ -159,6 +160,7 @@ namespace lsp
                     ssize_t nwritten = os->write(&buf[off], nread-off);
                     if (nwritten < 0)
                     {
+                        ::free(buf);
                         set_error(-nwritten);
                         return nwritten;
                     }

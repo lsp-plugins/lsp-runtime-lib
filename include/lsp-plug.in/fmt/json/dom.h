@@ -27,6 +27,8 @@
 #include <lsp-plug.in/fmt/json/dom/Node.h>
 #include <lsp-plug.in/fmt/json/dom/Integer.h>
 #include <lsp-plug.in/fmt/json/dom/Double.h>
+#include <lsp-plug.in/fmt/json/dom/Boolean.h>
+#include <lsp-plug.in/fmt/json/dom/String.h>
 #include <lsp-plug.in/fmt/json/dom/Array.h>
 #include <lsp-plug.in/fmt/json/dom/Object.h>
 
@@ -34,6 +36,8 @@
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/io/IInSequence.h>
 #include <lsp-plug.in/io/IInStream.h>
+#include <lsp-plug.in/io/IOutSequence.h>
+#include <lsp-plug.in/io/IOutStream.h>
 
 namespace lsp
 {
@@ -52,7 +56,16 @@ namespace lsp
 
         status_t    dom_parse(io::IInStream *is, Node *node, json_version_t version, size_t flags = 0, const char *charset = NULL);
         status_t    dom_parse(const LSPString *data, Node *node, json_version_t version);
+        status_t    dom_parse(const char *data, Node *node, json_version_t version, size_t flags = 0, const char *charset = NULL);
         status_t    dom_parse(io::IInSequence *is, Node *node, json_version_t version, size_t flags = 0);
+
+        status_t    dom_save(const char *path, const Node *node, const serial_flags_t *settings = NULL, const char *charset = NULL);
+        status_t    dom_save(const LSPString *path, const Node *node, const serial_flags_t *settings = NULL, const char *charset = NULL);
+        status_t    dom_save(const io::Path *path, const Node *node, const serial_flags_t *settings = NULL, const char *charset = NULL);
+
+        status_t    dom_write(io::IOutStream *os, const Node *node, const serial_flags_t *settings = NULL, size_t flags = 0, const char *charset = NULL);
+        status_t    dom_write(LSPString *data, const Node *node, const serial_flags_t *settings = NULL);
+        status_t    dom_write(io::IOutSequence *os, const Node *node, const serial_flags_t *settings = NULL, size_t flags = 0);
     }
 }
 

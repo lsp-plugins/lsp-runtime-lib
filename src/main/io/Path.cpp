@@ -54,6 +54,17 @@ namespace lsp
 #endif /* PLATFORM_WINDOWS */
         }
 
+        Path *Path::clone() const
+        {
+            Path *res = new Path();
+
+            if ((res != NULL) && (res->set(this) == STATUS_OK))
+                return res;
+
+            delete res;
+            return NULL;
+        }
+
         status_t Path::set_native(const char *path, const char *charset)
         {
             if (path == NULL)
@@ -325,6 +336,173 @@ namespace lsp
             return (path != NULL) ? get_last(&path->sPath) : STATUS_BAD_ARGUMENTS;
         }
 
+        status_t Path::pop_last(char *path, size_t maxlen)
+        {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            ssize_t idx = sPath.rindex_of(FILE_SEPARATOR_C);
+            idx     = (idx < 0) ? 0 : idx + 1;
+
+            const char *utf8 = sPath.get_utf8(idx);
+            if (utf8 == NULL)
+                return STATUS_NO_MEM;
+
+            size_t len = ::strlen(utf8);
+            if (len >= maxlen)
+                return STATUS_TOO_BIG;
+
+            ::memcpy(path, utf8, len + 1);
+            sPath.set_length((idx > 0) ? idx - 1 : 0);
+
+            return STATUS_OK;
+        }
+
+        status_t Path::pop_last(LSPString *path)
+        {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            ssize_t idx = sPath.rindex_of(FILE_SEPARATOR_C);
+            idx     = (idx < 0) ? 0 : idx + 1;
+
+            if (!path->set(&sPath, idx))
+                return STATUS_NO_MEM;
+            sPath.set_length((idx > 0) ? idx - 1 : 0);
+
+            return STATUS_OK;
+        }
+
+        status_t Path::pop_last(Path *path)
+        {
+            return (path != NULL) ? pop_last(&path->sPath) : STATUS_BAD_ARGUMENTS;
+        }
+
+        status_t Path::get_first(char *path, size_t maxlen) const
+        {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            ssize_t idx         = sPath.index_of(FILE_SEPARATOR_C);
+            if (idx < 0)
+            {
+                if (sPath.is_empty())
+                    return STATUS_NOT_FOUND;
+                idx         = sPath.length();
+            }
+            else if (is_absolute())
+                idx        += 1;
+
+            const char *utf8    = sPath.get_utf8(0, idx);
+            if (utf8 == NULL)
+                return STATUS_NO_MEM;
+
+            size_t len = ::strlen(utf8);
+            if (len >= maxlen)
+                return STATUS_TOO_BIG;
+
+            ::memcpy(path, utf8, len + 1);
+            return STATUS_OK;
+        }
+
+        status_t Path::get_first(LSPString *path) const
+        {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            ssize_t idx         = sPath.index_of(FILE_SEPARATOR_C);
+            if (idx < 0)
+            {
+                if (sPath.is_empty())
+                    return STATUS_NOT_FOUND;
+                idx         = sPath.length();
+            }
+            else if (is_absolute())
+                idx        += 1;
+
+            return (path->set(&sPath, 0, idx)) ? STATUS_OK : STATUS_NO_MEM;
+        }
+
+        status_t Path::get_first(Path *path) const
+        {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            ssize_t idx         = sPath.index_of(FILE_SEPARATOR_C);
+            if (idx < 0)
+                return STATUS_NOT_FOUND;
+            if (is_absolute())
+                ++idx;
+
+            return path->sPath.set(&sPath, 0, idx);
+        }
+
+        status_t Path::pop_first(char *path, size_t maxlen)
+        {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            size_t tail;
+            ssize_t idx         = sPath.index_of(FILE_SEPARATOR_C);
+            if (idx < 0)
+            {
+                if (sPath.is_empty())
+                    return STATUS_NOT_FOUND;
+                tail        = sPath.length();
+                idx         = tail;
+            }
+            else
+            {
+                tail        = (is_absolute()) ? idx + 1 : idx;
+                idx        += 1;
+            }
+
+            const char *utf8    = sPath.get_utf8(0, tail);
+            if (utf8 == NULL)
+                return STATUS_NO_MEM;
+
+            size_t len = ::strlen(utf8);
+            if (len >= maxlen)
+                return STATUS_TOO_BIG;
+
+            ::memcpy(path, utf8, len + 1);
+            sPath.remove(0, idx);
+
+            return STATUS_OK;
+        }
+
+        status_t Path::pop_first(LSPString *path)
+        {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            size_t tail;
+            ssize_t idx         = sPath.index_of(FILE_SEPARATOR_C);
+            if (idx < 0)
+            {
+                if (sPath.is_empty())
+                    return STATUS_NOT_FOUND;
+                tail        = sPath.length();
+                idx         = tail;
+            }
+            else
+            {
+                tail        = (is_absolute()) ? idx + 1 : idx;
+                idx        += 1;
+            }
+
+            if (!path->set(&sPath, 0, tail))
+                return STATUS_NO_MEM;
+
+            sPath.remove(0, idx);
+            return STATUS_OK;
+        }
+
+        status_t Path::pop_first(Path *path)
+        {
+            return (path != NULL) ? pop_first(&path->sPath) : STATUS_BAD_ARGUMENTS;
+        }
+
         status_t Path::get_ext(char *path, size_t maxlen) const
         {
             if (path == NULL)
@@ -446,7 +624,6 @@ namespace lsp
         {
             return (path != NULL) ? get_noext(&path->sPath) : STATUS_BAD_ARGUMENTS;
         }
-
 
         status_t Path::get_parent(char *path, size_t maxlen) const
         {
@@ -716,7 +893,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t Path::remove_last(char *path, size_t maxlen)
+        status_t Path::remove_last(char *path, size_t maxlen) const
         {
             Path tmp;
             status_t res = tmp.set(&this->sPath);
@@ -727,7 +904,7 @@ namespace lsp
             return res;
         }
 
-        status_t Path::remove_last(LSPString *path)
+        status_t Path::remove_last(LSPString *path) const
         {
             Path tmp;
             status_t res = tmp.set(&this->sPath);
@@ -738,12 +915,60 @@ namespace lsp
             return res;
         }
 
-        status_t Path::remove_last(Path *path)
+        status_t Path::remove_last(Path *path) const
         {
             Path tmp;
             status_t res = tmp.set(&this->sPath);
             if (res == STATUS_OK)
                 res         = tmp.remove_last();
+            if (res == STATUS_OK)
+                res         = tmp.get(path);
+            return res;
+        }
+
+        status_t Path::remove_first()
+        {
+            ssize_t idx     = sPath.index_of(FILE_SEPARATOR_C);
+            if (is_relative())
+            {
+                if (idx < 0)
+                    idx             = 0;
+                return (sPath.remove(0, idx + 1)) ? STATUS_OK : STATUS_NO_MEM;
+            }
+            else if (idx < 0)
+                return STATUS_NOT_FOUND;
+
+            return (sPath.remove(0, idx + 1)) ? STATUS_OK : STATUS_NO_MEM;
+        }
+
+        status_t Path::remove_first(char *path, size_t maxlen) const
+        {
+            Path tmp;
+            status_t res = tmp.set(&this->sPath);
+            if (res == STATUS_OK)
+                res         = tmp.remove_first();
+            if (res == STATUS_OK)
+                res         = tmp.get(path, maxlen);
+            return res;
+        }
+
+        status_t Path::remove_first(LSPString *path) const
+        {
+            Path tmp;
+            status_t res = tmp.set(&this->sPath);
+            if (res == STATUS_OK)
+                res         = tmp.remove_first();
+            if (res == STATUS_OK)
+                res         = tmp.get(path);
+            return res;
+        }
+
+        status_t Path::remove_first(Path *path) const
+        {
+            Path tmp;
+            status_t res = tmp.set(&this->sPath);
+            if (res == STATUS_OK)
+                res         = tmp.remove_first();
             if (res == STATUS_OK)
                 res         = tmp.get(path);
             return res;
@@ -1217,6 +1442,30 @@ namespace lsp
             return Dir::create(&sPath);
         }
 
+        status_t Path::mkparent() const
+        {
+            io::Path tmp;
+            status_t res;
+            if ((res = tmp.set(this)) != STATUS_OK)
+                return res;
+            if ((res = tmp.remove_last()) != STATUS_OK)
+                return res;
+
+            return tmp.mkdir();
+        }
+
+        status_t Path::mkparent(bool recursive) const
+        {
+            io::Path tmp;
+            status_t res;
+            if ((res = tmp.set(this)) != STATUS_OK)
+                return res;
+            if ((res = tmp.remove_last()) != STATUS_OK)
+                return res;
+
+            return tmp.mkdir(recursive);
+        }
+
         status_t Path::remove() const
         {
             status_t res = File::remove(&sPath);
@@ -1675,6 +1924,31 @@ namespace lsp
             sPath.swap(&tmp);
 
             return STATUS_OK;
+        }
+    }
+
+    namespace lltl
+    {
+        size_t hash_spec<io::Path>::hash_func(const void *ptr, size_t size)
+        {
+            return (static_cast<const io::Path *>(ptr))->hash();
+        }
+
+        ssize_t compare_spec<io::Path>::cmp_func(const void *a, const void *b, size_t size)
+        {
+            const io::Path *sa = static_cast<const io::Path *>(a);
+            const io::Path *sb = static_cast<const io::Path *>(b);
+            return sa->compare_to(sb);
+        }
+
+        void *allocator_spec<io::Path>::clone_func(const void *src, size_t size)
+        {
+            return (static_cast<const io::Path *>(src))->clone();
+        }
+
+        void allocator_spec<io::Path>::free_func(void *ptr)
+        {
+            delete (static_cast<io::Path *>(ptr));
         }
     }
 } /* namespace lsp */

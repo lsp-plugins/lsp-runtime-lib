@@ -33,6 +33,13 @@ namespace lsp
 {
     namespace json
     {
+        class Array;
+        class Boolean;
+        class Double;
+        class Integer;
+        class Object;
+        class String;
+
         /**
          * Generalized JSON node
          */
@@ -98,9 +105,9 @@ namespace lsp
                 Node(node_t *node);
 
             public:
-                inline Node()                               { pNode = NULL;                                                 }
-                inline Node(const Node &src)                { copy_ref(&src);                                               }
-                inline Node(const Node *src)                { copy_ref(src);                                                }
+                inline Node()                               { pNode = NULL;                 }
+                Node(const Node &src);
+                Node(const Node *src);
                 virtual ~Node();
 
             public:
@@ -119,15 +126,39 @@ namespace lsp
                 inline bool is_object() const       { return (pNode != NULL) && (pNode->type == JN_OBJECT);         }
                 inline bool is_array() const        { return (pNode != NULL) && (pNode->type == JN_ARRAY);          }
                 inline node_type_t type() const     { return (pNode != NULL) ? pNode->type : JN_NULL;               }
+                const char        *stype() const;
                 bool of_type(const Node *src) const;
                 bool of_type(const Node &src) const;
                 bool of_type(node_type_t type) const;
 
             public:
-                virtual bool valid() const          { return true;                                                  }
+                Integer             as_int() const;
+                Double              as_double() const;
+                Boolean             as_bool() const;
+                String              as_string() const;
+                Array               as_array() const;
+                Object              as_object() const;
+
+            public:
+                virtual bool        valid() const   { return true;                                                  }
+
+                virtual status_t    create();
+
+                static Node         build();
+
+                static Node        *allocate();
+
+                inline void         undef()         { undef_node(pNode);                                            }
+                inline void         set_null()      { undef_node(pNode);                                            }
         };
     }
 }
 
+#include <lsp-plug.in/fmt/json/dom/Integer.h>
+#include <lsp-plug.in/fmt/json/dom/Double.h>
+#include <lsp-plug.in/fmt/json/dom/Boolean.h>
+#include <lsp-plug.in/fmt/json/dom/String.h>
+#include <lsp-plug.in/fmt/json/dom/Array.h>
+#include <lsp-plug.in/fmt/json/dom/Object.h>
 
 #endif /* LSP_PLUG_IN_FMT_JSON_DOM_NODE_H_ */

@@ -60,6 +60,9 @@ namespace lsp
     
         status_t File::open(const char *path)
         {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
             LSPString fpath;
             if (!fpath.set_utf8(path))
                 return STATUS_NO_MEM;
@@ -68,6 +71,9 @@ namespace lsp
 
         status_t File::open(const io::Path *path)
         {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
             LSPString fpath;
             status_t res = path->get(&fpath);
             if (res == STATUS_OK)
@@ -77,11 +83,12 @@ namespace lsp
     
         status_t File::open(const LSPString *path)
         {
-            root_header_t hdr;
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
-            else if (pFile != NULL)
+            if (pFile != NULL)
                 return STATUS_BAD_STATE;
+
+            root_header_t hdr;
 
     #if defined(PLATFORM_WINDOWS)
             fhandle_t fd = CreateFileW(
@@ -134,6 +141,9 @@ namespace lsp
 
         status_t File::create(const char *path)
         {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
             LSPString fpath;
             if (!fpath.set_utf8(path))
                 return STATUS_NO_MEM;
@@ -142,6 +152,9 @@ namespace lsp
 
         status_t File::create(const io::Path *path)
         {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
             LSPString fpath;
             status_t res = path->get(&fpath);
             if (res == STATUS_OK)
@@ -153,7 +166,7 @@ namespace lsp
         {
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
-            else if (pFile != NULL)
+            if (pFile != NULL)
                 return STATUS_BAD_STATE;
 
     #if defined(PLATFORM_WINDOWS)

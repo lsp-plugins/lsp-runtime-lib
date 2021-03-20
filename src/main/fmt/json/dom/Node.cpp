@@ -29,9 +29,21 @@ namespace lsp
     {
         Node::Node(node_t *node)
         {
+            pNode       = node;
             if (node != NULL)
                 node->refs++;
-            pNode       = node;
+        }
+
+        Node::Node(const Node &src)
+        {
+            pNode       = NULL;
+            copy_ref(&src);
+        }
+
+        Node::Node(const Node *src)
+        {
+            pNode       = NULL;
+            copy_ref(src);
         }
 
         Node::~Node()
@@ -41,6 +53,41 @@ namespace lsp
                 release_ref(pNode);
                 pNode = NULL;
             }
+        }
+
+        status_t Node::create()
+        {
+            node_t *node    = new node_t();
+            if (node == NULL)
+                return STATUS_NO_MEM;
+
+            node->refs      = 1;
+            node->type      = JN_NULL;
+            node->pData     = NULL;
+
+            release_ref(pNode);
+            pNode           = node;
+
+            return STATUS_OK;
+        }
+
+        Node Node::build()
+        {
+            Node res;
+            res.create();
+            return res;
+        }
+
+        Node *Node::allocate()
+        {
+            Node *res = new Node();
+            if (res == NULL)
+                return NULL;
+            else if (res->create() == STATUS_OK)
+                return res;
+
+            delete res;
+            return NULL;
         }
 
         void Node::copy_ref(const Node *src)
@@ -54,9 +101,7 @@ namespace lsp
             node_t *ref = src->make_ref();
 
             // Release self reference and replace with new one
-            if (pNode != NULL)
-                release_ref(pNode);
-
+            release_ref(pNode);
             pNode       = ref;
         }
 
@@ -73,6 +118,9 @@ namespace lsp
                 return NULL;
 
             pNode->refs = 2; // self and exported
+            pNode->type = JN_NULL;
+            pNode->pData= NULL;
+
             return pNode;
         }
 
@@ -142,6 +190,9 @@ namespace lsp
                     break;
                 }
             }
+
+            // Clear type
+            node->type  = JN_NULL;
         }
 
         Node::node_t *Node::clear_node(node_t *node)
@@ -526,6 +577,54 @@ namespace lsp
             pNode->pObject  = tmp;
 
             return STATUS_OK;
+        }
+
+        Integer Node::as_int() const
+        {
+            return Integer(this);
+        }
+
+        Double Node::as_double() const
+        {
+            return Double(this);
+        }
+
+        Boolean Node::as_bool() const
+        {
+            return Boolean(this);
+        }
+
+        String Node::as_string() const
+        {
+            return String(this);
+        }
+
+        Array Node::as_array() const
+        {
+            return Array(this);
+        }
+
+        Object Node::as_object() const
+        {
+            return Object(this);
+        }
+
+        const char *Node::stype() const
+        {
+            size_t type = (pNode == NULL) ? JN_NULL : pNode->type;
+            switch (type)
+            {
+                case JN_NULL:   return "NULL";
+                case JN_INT:    return "INT";
+                case JN_DOUBLE: return "DOUBLE";
+                case JN_BOOL:   return "BOOL";
+                case JN_STRING: return "STRING";
+                case JN_ARRAY:  return "ARRAY";
+                case JN_OBJECT: return "OBJECT";
+                default: break;
+            }
+
+            return "UNKNOWN (corrupted)";
         }
     }
 }

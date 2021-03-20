@@ -47,7 +47,13 @@ namespace lsp
                 Object &assign(const Node *src)         { copy_ref(src); return *this;  }
 
             public:
-                virtual bool valid() const;
+                virtual bool        valid() const;
+
+                virtual status_t    create();
+
+                static Object      *allocate();
+
+                static Object       build();
 
             public:
                 size_t      size() const;
@@ -62,8 +68,11 @@ namespace lsp
                 status_t    remove(const char *field);
                 status_t    remove(const LSPString *field);
 
-                status_t    set(const char *field, Node *node);
-                status_t    set(const LSPString *field, Node *node);
+                status_t    set(const char *field, const Node *node);
+                status_t    set(const LSPString *field, const Node *node);
+
+                status_t    set(const char *field, const Node &node);
+                status_t    set(const LSPString *field, const Node &node);
 
                 status_t    fields(lltl::parray<LSPString> *list);
         };

@@ -33,6 +33,46 @@ namespace lsp
             return is_array();
         }
 
+        status_t Array::create()
+        {
+            node_t *node    = new node_t();
+            if (node == NULL)
+                return STATUS_NO_MEM;
+
+            node->refs      = 1;
+            node->type      = JN_ARRAY;
+            node->pArray    = new lltl::parray<node_t>();
+            if (node->pArray == NULL)
+            {
+                delete node;
+                return STATUS_NO_MEM;
+            }
+
+            release_ref(pNode);
+            pNode           = node;
+
+            return STATUS_OK;
+        }
+
+        Array *Array::allocate()
+        {
+            Array *res = new Array();
+            if (res == NULL)
+                return NULL;
+            else if (res->create() == STATUS_OK)
+                return res;
+
+            delete res;
+            return NULL;
+        }
+
+        Array Array::build()
+        {
+            Array res;
+            res.create();
+            return res;
+        }
+
         size_t Array::size() const
         {
             return (is_array()) ? pNode->pArray->size() : 0;
@@ -52,7 +92,7 @@ namespace lsp
             return Node(node);
         }
 
-        status_t Array::add(Node *node)
+        status_t Array::add(const Node *node)
         {
             if (!is_array())
                 return STATUS_BAD_TYPE;
@@ -70,7 +110,12 @@ namespace lsp
             return STATUS_NO_MEM;
         }
 
-        status_t Array::append(Node *node)
+        status_t Array::add(const Node &node)
+        {
+            return add(&node);
+        }
+
+        status_t Array::append(const Node *node)
         {
             if (!is_array())
                 return STATUS_BAD_TYPE;
@@ -88,7 +133,12 @@ namespace lsp
             return STATUS_NO_MEM;
         }
 
-        status_t Array::prepend(Node *node)
+        status_t Array::append(const Node &node)
+        {
+            return append(&node);
+        }
+
+        status_t Array::prepend(const Node *node)
         {
             if (!is_array())
                 return STATUS_BAD_TYPE;
@@ -106,7 +156,12 @@ namespace lsp
             return STATUS_NO_MEM;
         }
 
-        status_t Array::insert(size_t index, Node *node)
+        status_t Array::prepend(const Node &node)
+        {
+            return prepend(&node);
+        }
+
+        status_t Array::insert(size_t index, const Node *node)
         {
             if (!is_array())
                 return STATUS_BAD_TYPE;
@@ -122,6 +177,11 @@ namespace lsp
 
             release_ref(ref);
             return STATUS_NO_MEM;
+        }
+
+        status_t Array::insert(size_t index, const Node &node)
+        {
+            return insert(index, &node);
         }
 
         status_t Array::remove(size_t index)
