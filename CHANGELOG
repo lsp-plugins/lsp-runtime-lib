@@ -4,6 +4,7 @@
 
 === 0.5.9 ===
 - Several fixes for resource compressor.
+- Removed fdatasync() call for io::NativeFile::flush method.
 
 === 0.5.8 ===
 * Added support of DOM parsing and serializing for JSON files.
