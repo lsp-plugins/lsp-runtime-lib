@@ -19,8 +19,8 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 #include <lsp-plug.in/runtime/system.h>
+#include <lsp-plug.in/io/Dir.h>
 
 #ifdef PLATFORM_WINDOWS
     #include <winbase.h>
@@ -403,6 +403,16 @@ namespace lsp
             return path->set("/tmp");
         }
 #endif /* PLATFORM_WINDOWS */
+
+        status_t get_current_dir(LSPString *path)
+        {
+            return io::Dir::get_current(path);
+        }
+
+        status_t get_current_dir(io::Path *path)
+        {
+            return io::Dir::get_current(path);
+        }
     }
 }
 

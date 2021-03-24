@@ -164,6 +164,20 @@ namespace lsp
          * @return status of operation
          */
         status_t get_temporary_dir(io::Path *path);
+
+        /**
+         * Get current directiory
+         * @param path path to store current directory
+         * @return status of operation
+         */
+        status_t get_current_dir(LSPString *path);
+
+        /**
+         * Get current directiory
+         * @param path path to store current directory
+         * @return status of operation
+         */
+        status_t get_current_dir(io::Path *path);
     }
 }
 
