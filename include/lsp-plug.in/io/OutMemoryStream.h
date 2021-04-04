@@ -100,6 +100,8 @@ namespace lsp
             public:
                 virtual ssize_t     write(const void *buf, size_t count);
 
+                virtual ssize_t     writeb(int v);
+
                 virtual wssize_t    seek(wsize_t position);
 
                 virtual status_t    flush();

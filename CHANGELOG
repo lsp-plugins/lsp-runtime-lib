@@ -6,6 +6,7 @@
 - Several fixes for resource compressor.
 - Removed fdatasync() call for io::NativeFile::flush method.
 - Added system::get_current_dir() function.
+- Added  support of IOutStream::writeb() function.
 
 === 0.5.8 ===
 * Added support of DOM parsing and serializing for JSON files.

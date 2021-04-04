@@ -65,9 +65,16 @@ namespace lsp
                  *
                  * @param buf buffer to write
                  * @param count number of bytes
-                 * @return number of bytes actually written
+                 * @return number of bytes actually written or negative error code
                  */
                 virtual ssize_t     write(const void *buf, size_t count);
+
+                /**
+                 * Write a single byte to underlying storage
+                 * @param b byte to write
+                 * @return number of bytes actually written or negative error code
+                 */
+                virtual ssize_t     writeb(int v);
 
                 /** Seek the stream to the specified position from the beginning
                  *

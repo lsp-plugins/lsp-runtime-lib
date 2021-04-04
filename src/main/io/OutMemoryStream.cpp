@@ -68,6 +68,16 @@ namespace lsp
             return count;
         }
 
+        ssize_t OutMemoryStream::writeb(int v)
+        {
+            status_t res    = reserve(nPosition + 1);
+            if (res != STATUS_OK)
+                return -res;
+
+            pData[nPosition++]  = v;
+            return 1;
+        }
+
         wssize_t OutMemoryStream::seek(wsize_t position)
         {
             if (position > nSize)
