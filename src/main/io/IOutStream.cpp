@@ -50,7 +50,7 @@ namespace lsp
         ssize_t IOutStream::writeb(int v)
         {
             uint8_t b = v;
-            return write(&v, 1);
+            return write(&b, 1);
         }
 
         wssize_t IOutStream::seek(wsize_t position)
