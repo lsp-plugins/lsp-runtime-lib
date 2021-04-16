@@ -21,10 +21,12 @@
 
 #include <lsp-plug.in/runtime/system.h>
 #include <lsp-plug.in/io/Dir.h>
+#include <lsp-plug.in/ipc/Process.h>
 
 #ifdef PLATFORM_WINDOWS
     #include <winbase.h>
     #include <sysinfoapi.h>
+    #include <shellapi.h>
 #else
     #include <stdlib.h>
     #include <errno.h>
@@ -412,6 +414,41 @@ namespace lsp
         status_t get_current_dir(io::Path *path)
         {
             return io::Dir::get_current(path);
+        }
+
+        status_t follow_url(const char *url)
+        {
+            LSPString turl;
+            if (!turl.set_utf8(url))
+                return STATUS_NO_MEM;
+            return follow_url(&turl);
+        }
+
+        status_t follow_url(const LSPString *url)
+        {
+        #ifdef PLATFORM_WINDOWS
+            ::ShellExecuteW(
+                NULL,               // Not associated with window
+                L"open",            // Open hyperlink
+                url->get_utf16(),   // The file to execute
+                NULL,               // Parameters
+                NULL,               // Directory
+                SW_SHOWNORMAL       // Show command
+            );
+        #else
+            status_t res;
+            ipc::Process p;
+
+            if ((res = p.set_command("xdg-open")) != STATUS_OK)
+                return STATUS_OK;
+            if ((res = p.add_arg(url)) != STATUS_OK)
+                return STATUS_OK;
+            if ((res = p.launch()) != STATUS_OK)
+                return STATUS_OK;
+            p.wait();
+        #endif /* PLATFORM_WINDOWS */
+
+            return STATUS_OK;
         }
     }
 }
