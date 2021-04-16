@@ -8,6 +8,7 @@
 - Added system::get_current_dir() function.
 - Added support of IOutStream::writeb() function.
 - Added system::follow_url() functions to follow the specified URL.
+- Fixed IDictionary::lookup() behaviour related to dictionaries.
 
 === 0.5.8 ===
 * Added support of DOM parsing and serializing for JSON files.
