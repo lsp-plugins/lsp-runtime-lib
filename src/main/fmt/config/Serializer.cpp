@@ -159,10 +159,10 @@ namespace lsp
 
                 switch (flags & SF_PREC_MASK)
                 {
-                    case SF_PREC_SHORT: fmt = "%.2f db"; break;
-                    case SF_PREC_LONG: fmt = "%.10f db"; break;
+                    case SF_PREC_SHORT: fmt = "%.1f db"; break;
+                    case SF_PREC_LONG: fmt = "%.4f db"; break;
                     case SF_PREC_SCI: fmt = "%e db"; break;
-                    default: fmt = "%.5f db"; break;
+                    default: fmt = "%.2f db"; break;
                 }
             }
             else
