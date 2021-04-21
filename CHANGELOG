@@ -9,6 +9,7 @@
 - Added support of IOutStream::writeb() function.
 - Added system::follow_url() functions to follow the specified URL.
 - Fixed IDictionary::lookup() behaviour related to dictionaries.
+- Added boolean parameter output support to the config::Serializer class.
 
 === 0.5.8 ===
 * Added support of DOM parsing and serializing for JSON files.

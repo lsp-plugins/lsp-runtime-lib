@@ -201,6 +201,29 @@ namespace lsp
             return res;
         }
 
+        status_t Serializer::write_bool(bool v, size_t flags)
+        {
+            status_t res;
+
+            // Write value
+            if (flags & SF_QUOTED)
+            {
+                if ((res = pOut->write('\"')) != STATUS_OK)
+                    return res;
+                if ((res = pOut->write_ascii((v) ? "true" : "false")) != STATUS_OK)
+                    return res;
+                res = pOut->write_ascii("\"\n");
+            }
+            else
+            {
+                if ((res = pOut->write_ascii((v) ? "true" : "false")) != STATUS_OK)
+                    return res;
+                res = pOut->write('\n');
+            }
+
+            return res;
+        }
+
         status_t Serializer::open(const char *path, const char *charset)
         {
             if (pOut != NULL)
@@ -476,6 +499,7 @@ namespace lsp
                 case SF_TYPE_U64:   return write_u64(key, v->u64, flags);
                 case SF_TYPE_F32:   return write_f32(key, v->f32, flags);
                 case SF_TYPE_F64:   return write_f64(key, v->f64, flags);
+                case SF_TYPE_BOOL:  return write_bool(key, v->bval, flags);
                 case SF_TYPE_STR:   return write_string(key, v->str, flags);
                 case SF_TYPE_BLOB:  return write_blob(key, &v->blob, flags);
                 default: break;
@@ -617,7 +641,6 @@ namespace lsp
             return write_f64(&tmp, value, flags);
         }
 
-
         status_t Serializer::write_f64(const LSPString *key, double value, size_t flags)
         {
             if (pOut == NULL)
@@ -633,6 +656,31 @@ namespace lsp
             }
 
             return write_float(value, flags);
+        }
+
+        status_t Serializer::write_bool(const char *key, bool value, size_t flags)
+        {
+            LSPString tmp;
+            if (!tmp.set_utf8(key))
+                return STATUS_NO_MEM;
+            return write_bool(&tmp, value, flags);
+        }
+
+        status_t Serializer::write_bool(const LSPString *key, bool value, size_t flags)
+        {
+            if (pOut == NULL)
+                return STATUS_CLOSED;
+            status_t res = write_key(key);
+            if (res != STATUS_OK)
+                return res;
+
+            if (flags & SF_TYPE_SET)
+            {
+                if ((res = pOut->write_ascii("bool:")) != STATUS_OK)
+                    return res;
+            }
+
+            return write_bool(value, flags);
         }
 
         status_t Serializer::write_string(const LSPString *key, const LSPString *v, size_t flags)

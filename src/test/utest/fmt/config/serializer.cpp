@@ -58,7 +58,12 @@ UTEST_BEGIN("runtime.fmt.config", serializer)
                 "key12 = str:\"   text with # sign and \\\"quotes\\\"   \"\n"
                 "/the/valid/key = value\n"
                 "key13 = blob:\"text/plain:10:1234567890\"\n"
-                "key14 = blob:\":5:abcde\"\n";
+                "key14 = blob:\":5:abcde\"\n"
+                "key15 = true\n"
+                "key16 = \"false\"\n"
+                "key17 = bool:true\n"
+                "key18 = bool:\"false\"\n"
+                ;
 
         UTEST_ASSERT(s.wrap(&out) == STATUS_OK);
 
@@ -106,6 +111,15 @@ UTEST_BEGIN("runtime.fmt.config", serializer)
         v.blob.ctype    = NULL;
         v.blob.data     = const_cast<char *>("abcde");
         UTEST_ASSERT(s.write("key14", &v, SF_TYPE_BLOB) == STATUS_OK);
+
+        v.bval          = true;
+        UTEST_ASSERT(s.write("key15", &v, SF_TYPE_BOOL) == STATUS_OK);
+        v.bval          = false;
+        UTEST_ASSERT(s.write("key16", &v, SF_TYPE_BOOL | SF_QUOTED) == STATUS_OK);
+        v.bval          = true;
+        UTEST_ASSERT(s.write("key17", &v, SF_TYPE_BOOL | SF_TYPE_SET) == STATUS_OK);
+        v.bval          = false;
+        UTEST_ASSERT(s.write("key18", &v, SF_TYPE_BOOL | SF_TYPE_SET | SF_QUOTED) == STATUS_OK);
 
         UTEST_ASSERT(s.close() == STATUS_OK);
 
