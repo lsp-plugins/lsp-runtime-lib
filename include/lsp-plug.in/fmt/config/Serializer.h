@@ -54,6 +54,7 @@ namespace lsp
                 status_t    write_uint(uint64_t v, size_t flags);
                 status_t    write_int(int64_t v, size_t flags);
                 status_t    write_float(double v, size_t flags);
+                status_t    write_bool(bool v, size_t flags);
 
             public:
                 explicit Serializer();
@@ -207,6 +208,16 @@ namespace lsp
                  */
                 status_t    write_f64(const LSPString *key, double value, size_t flags);
                 status_t    write_f64(const char *key, double value, size_t flags);
+
+                /**
+                 * Write boolean value to the output stream
+                 * @param key key
+                 * @param v value
+                 * @param flags value flags
+                 * @return status of operation
+                 */
+                status_t    write_bool(const LSPString *key, bool value, size_t flags);
+                status_t    write_bool(const char *key, bool value, size_t flags);
 
                 /**
                  * Write text string

@@ -9,7 +9,14 @@ $(LSP_RUNTIME_LIB_BIN)/main/runtime/system.o: main/runtime/system.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Dir.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/File.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/ipc/Process.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutStream.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h
 $(LSP_RUNTIME_LIB_BIN)/main/runtime/LSPString.o: \
  main/runtime/LSPString.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \

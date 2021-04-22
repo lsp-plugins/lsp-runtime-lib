@@ -190,8 +190,6 @@ namespace lsp
                 {
                     if (node->pDict == NULL)
                         return STATUS_NOT_FOUND;
-                    if ((node->bRoot) && (idx < 0))
-                        return STATUS_NOT_FOUND;
                     dict = node->pDict;
                     break;
                 }

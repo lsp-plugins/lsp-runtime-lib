@@ -150,7 +150,7 @@ namespace lsp
                     found->parent   = index;
                     found->segment  = -1;
                     found->offset   = -1;
-                    found->length   = -1;
+                    found->length   = 0;
                     found->name     = item.clone_utf8();
 
                     if (found->name == NULL)
@@ -167,6 +167,7 @@ namespace lsp
                     if (found == NULL)
                     {
                         // Allocate item
+                        sindex          = vEntries.size();
                         if ((found = vEntries.add()) == NULL)
                             return STATUS_NO_MEM;
 
@@ -174,7 +175,7 @@ namespace lsp
                         found->parent   = index;
                         found->segment  = -1;
                         found->offset   = -1;
-                        found->length   = -1;
+                        found->length   = 0;
                         found->name     = item.clone_utf8();
 
                         if (found->name == NULL)
@@ -425,6 +426,7 @@ namespace lsp
 
             nSegment        = sOS.position();
             nOffset         = 0;
+            sBuffer.clear();    // Clear state of the buffer
 
             return STATUS_OK;
         }

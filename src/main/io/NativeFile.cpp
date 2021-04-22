@@ -610,8 +610,9 @@ namespace lsp
                 if (!FlushFileBuffers(hFD))
                     return set_error(STATUS_IO_ERROR);
             #else
-                if (fdatasync(hFD) != 0)
-                    return set_error(STATUS_IO_ERROR);
+// Not required
+//                if (fdatasync(hFD) != 0)
+//                    return set_error(STATUS_IO_ERROR);
             #endif  /* PLATFORM_WINDOWS */
 
             return set_error(STATUS_OK);

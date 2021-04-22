@@ -47,6 +47,12 @@ namespace lsp
             return - set_error(STATUS_NOT_IMPLEMENTED);
         }
 
+        ssize_t IOutStream::writeb(int v)
+        {
+            uint8_t b = v;
+            return write(&b, 1);
+        }
+
         wssize_t IOutStream::seek(wsize_t position)
         {
             return - set_error(STATUS_NOT_IMPLEMENTED);

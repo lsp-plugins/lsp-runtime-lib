@@ -40,8 +40,9 @@ namespace lsp
             SF_TYPE_U64     = 0x04,     //!< SF_TYPE_U64 Parameter is of uint64 type
             SF_TYPE_F32     = 0x05,     //!< SF_TYPE_F32 Parameter is of float type
             SF_TYPE_F64     = 0x06,     //!< SF_TYPE_F64 Parameter is of double type
-            SF_TYPE_STR     = 0x07,     //!< SF_TYPE_STR Parameter is of string type
-            SF_TYPE_BLOB    = 0x08,     //!< SF_TYPE_BLOB Parameter is of blob type
+            SF_TYPE_BOOL    = 0x07,     //!< SF_TYPE_BOOL Parameter is of boolean type
+            SF_TYPE_STR     = 0x08,     //!< SF_TYPE_STR Parameter is of string type
+            SF_TYPE_BLOB    = 0x09,     //!< SF_TYPE_BLOB Parameter is of blob type
 
             SF_TYPE_MASK    = 0x0f,     //!< SF_TYPE_MASK Data type mask
 
@@ -75,6 +76,7 @@ namespace lsp
             uint64_t        u64;
             float           f32;
             double          f64;
+            bool            bval;   // Boolean value
             char           *str;    // UTF-8 string value (for string)
             blob_t          blob;   // BLOB data
         } value_t;
