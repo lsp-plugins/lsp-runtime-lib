@@ -47,6 +47,7 @@ namespace lsp
             { "i64:", SF_TYPE_I64 },
             { "u64:", SF_TYPE_U64 },
             { "f64:", SF_TYPE_F64 },
+            { "bool:", SF_TYPE_BOOL },
             { "str:", SF_TYPE_STR },
             { "blob:", SF_TYPE_BLOB },
             { NULL, 0 }
@@ -520,6 +521,7 @@ namespace lsp
                     case SF_TYPE_I64: res = parse_int64(&sValue, &tmp.v.i64); break;
                     case SF_TYPE_U64: res = parse_uint64(&sValue, &tmp.v.u64); break;
                     case SF_TYPE_F64: res = parse_double(&sValue, &tmp.v.f64, &nFlags); break;
+                    case SF_TYPE_BOOL: res = parse_bool(&sValue, &tmp.v.bval); break;
                     case SF_TYPE_STR:
                         if ((tmp.v.str = sValue.clone_utf8()) == NULL)
                             res     = STATUS_NO_MEM;
@@ -543,6 +545,14 @@ namespace lsp
             {
                 if (sValue.index_of('.') < 0)
                 {
+                    // Try to parse as boolean
+                    if ((res = parse_bool(&sValue, &tmp.v.bval)) == STATUS_OK)
+                    {
+                        tmp.flags     = nFlags | SF_TYPE_BOOL;
+                        sParam.swap(&tmp);
+                        return STATUS_OK;
+                    }
+
                     // Try to parse as integer
                     if ((res = parse_int32(&sValue, &tmp.v.i32)) == STATUS_OK)
                     {
@@ -768,6 +778,26 @@ namespace lsp
             *dst        = value;
             *flags     |= xf;
             return STATUS_OK;
+        }
+
+        status_t PullParser::parse_bool(const LSPString *str, bool *dst)
+        {
+            if (str->length() <= 0)
+                return STATUS_BAD_FORMAT;
+
+            // Parse boolean value
+            if (str->equals_ascii_nocase("true"))
+            {
+                *dst    = true;
+                return STATUS_OK;
+            }
+            else if (str->equals_ascii_nocase("false"))
+            {
+                *dst    = false;
+                return STATUS_OK;
+            }
+
+            return STATUS_BAD_FORMAT;
         }
 
         status_t PullParser::parse_blob(const LSPString *str, blob_t *dst)

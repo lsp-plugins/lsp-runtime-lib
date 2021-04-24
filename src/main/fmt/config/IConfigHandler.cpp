@@ -57,6 +57,7 @@ namespace lsp
                 case SF_TYPE_U64: return handle_u64(&param->name, param->v.u64, param->flags);
                 case SF_TYPE_F32: return handle_f32(&param->name, param->v.f32, param->flags);
                 case SF_TYPE_F64: return handle_f64(&param->name, param->v.f64, param->flags);
+                case SF_TYPE_BOOL: return handle_bool(&param->name, param->v.bval, param->flags);
                 case SF_TYPE_BLOB: return handle_blob(&param->name, &param->v.blob, param->flags);
                 case SF_TYPE_STR:
                 {
@@ -104,6 +105,11 @@ namespace lsp
         }
 
         status_t IConfigHandler::handle_string(const LSPString *name, const LSPString *value, size_t flags)
+        {
+            return STATUS_OK;
+        }
+
+        status_t IConfigHandler::handle_bool(const LSPString *name, bool value, size_t flags)
         {
             return STATUS_OK;
         }
