@@ -41,6 +41,7 @@ namespace lsp
         {
             private:
                 BuiltinLoader & operator = (const BuiltinLoader & );
+                BuiltinLoader (const BuiltinLoader &);
 
             protected:
                 const uint8_t                  *pData;      // Compressed data

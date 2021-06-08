@@ -31,6 +31,10 @@ namespace lsp
     {
         class OutProxyStream: public io::IOutStream
         {
+            private:
+                OutProxyStream & operator = (const OutProxyStream &);
+                OutProxyStream(const OutProxyStream &);
+
             protected:
                 io::IOutStream *pOS;
                 wssize_t        nPosition;

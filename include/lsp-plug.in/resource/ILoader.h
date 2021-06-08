@@ -40,6 +40,7 @@ namespace lsp
         {
             private:
                 ILoader & operator      = (const ILoader &);
+                ILoader(const ILoader &);
 
             protected:
                 status_t            nError;
