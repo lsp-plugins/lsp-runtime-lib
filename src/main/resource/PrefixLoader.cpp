@@ -128,7 +128,7 @@ namespace lsp
                 return set_error(STATUS_NO_MEM);
             }
 
-            return STATUS_OK;
+            return set_error(STATUS_OK);
         }
 
         status_t PrefixLoader::add_prefix(const LSPString *prefix, ILoader *loader)
@@ -152,7 +152,7 @@ namespace lsp
                 return set_error(STATUS_NO_MEM);
             }
 
-            return STATUS_OK;
+            return set_error(STATUS_OK);
         }
 
         status_t PrefixLoader::add_prefix(const io::Path *prefix, ILoader *loader)
@@ -176,7 +176,7 @@ namespace lsp
                 return set_error(STATUS_NO_MEM);
             }
 
-            return STATUS_OK;
+            return set_error(STATUS_OK);
         }
 
         io::IInStream *PrefixLoader::read_stream(const char *name)
@@ -184,7 +184,11 @@ namespace lsp
             LSPString tmp;
             ILoader *ldr = lookup_prefix(&tmp, name);
             if (ldr != NULL)
-                return ldr->read_stream(&tmp);
+            {
+                io::IInStream *ret = ldr->read_stream(&tmp);
+                set_error(ldr->last_error());
+                return ret;
+            }
 
             return (last_error() == STATUS_OK) ? ILoader::read_stream(name) : NULL;
         }
@@ -194,7 +198,11 @@ namespace lsp
             LSPString tmp;
             ILoader *ldr = lookup_prefix(&tmp, name);
             if (ldr != NULL)
-                return ldr->read_stream(&tmp);
+            {
+                io::IInStream *ret = ldr->read_stream(&tmp);
+                set_error(ldr->last_error());
+                return ret;
+            }
 
             return (last_error() == STATUS_OK) ? ILoader::read_stream(name) : NULL;
         }
@@ -204,7 +212,11 @@ namespace lsp
             LSPString tmp;
             ILoader *ldr = lookup_prefix(&tmp, name);
             if (ldr != NULL)
-                return ldr->read_stream(&tmp);
+            {
+                io::IInStream *ret = ldr->read_stream(&tmp);
+                set_error(ldr->last_error());
+                return ret;
+            }
 
             return (last_error() == STATUS_OK) ? ILoader::read_stream(name) : NULL;
         }
@@ -214,7 +226,11 @@ namespace lsp
             LSPString tmp;
             ILoader *ldr = lookup_prefix(&tmp, name);
             if (ldr != NULL)
-                return ldr->read_sequence(&tmp, charset);
+            {
+                io::IInSequence *ret = ldr->read_sequence(&tmp, charset);
+                set_error(ldr->last_error());
+                return ret;
+            }
 
             return (last_error() == STATUS_OK) ? ILoader::read_sequence(name, charset) : NULL;
         }
@@ -224,7 +240,11 @@ namespace lsp
             LSPString tmp;
             ILoader *ldr = lookup_prefix(&tmp, name);
             if (ldr != NULL)
-                return ldr->read_sequence(&tmp, charset);
+            {
+                io::IInSequence *ret = ldr->read_sequence(&tmp, charset);
+                set_error(ldr->last_error());
+                return ret;
+            }
 
             return (last_error() == STATUS_OK) ? ILoader::read_sequence(name, charset) : NULL;
         }
@@ -234,7 +254,11 @@ namespace lsp
             LSPString tmp;
             ILoader *ldr = lookup_prefix(&tmp, name);
             if (ldr != NULL)
-                return ldr->read_sequence(&tmp, charset);
+            {
+                io::IInSequence *ret = ldr->read_sequence(&tmp, charset);
+                set_error(ldr->last_error());
+                return ret;
+            }
 
             return (last_error() == STATUS_OK) ? ILoader::read_sequence(name, charset) : NULL;
         }
@@ -244,7 +268,11 @@ namespace lsp
             LSPString tmp;
             ILoader *ldr = lookup_prefix(&tmp, path);
             if (ldr != NULL)
-                return ldr->enumerate(&tmp, list);
+            {
+                ssize_t ret = ldr->enumerate(&tmp, list);
+                set_error(ldr->last_error());
+                return ret;
+            }
 
             return (last_error() == STATUS_OK) ? ILoader::enumerate(path, list) : -last_error();
         }
@@ -254,7 +282,11 @@ namespace lsp
             LSPString tmp;
             ILoader *ldr = lookup_prefix(&tmp, path);
             if (ldr != NULL)
-                return ldr->enumerate(&tmp, list);
+            {
+                ssize_t ret = ldr->enumerate(&tmp, list);
+                set_error(ldr->last_error());
+                return ret;
+            }
 
             return (last_error() == STATUS_OK) ? ILoader::enumerate(path, list) : -last_error();
         }
@@ -264,7 +296,11 @@ namespace lsp
             LSPString tmp;
             ILoader *ldr = lookup_prefix(&tmp, path);
             if (ldr != NULL)
-                return ldr->enumerate(&tmp, list);
+            {
+                ssize_t ret = ldr->enumerate(&tmp, list);
+                set_error(ldr->last_error());
+                return ret;
+            }
 
             return (last_error() == STATUS_OK) ? ILoader::enumerate(path, list) : -last_error();
         }
