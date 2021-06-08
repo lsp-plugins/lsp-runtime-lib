@@ -56,7 +56,7 @@ namespace lsp
                 ILoader                    *lookup_prefix(LSPString *dst, const io::Path *path);
 
             public:
-                explicit PrefixLoader(ILoader *dfl);
+                explicit PrefixLoader(ILoader *dfl = NULL);
                 virtual ~PrefixLoader();
 
             public:
