@@ -5,6 +5,7 @@
 === 0.5.10 ===
 - Added support of boolean parameters by the configuration parser.
 - Added resource::PrefixLoader resource loader implementation.
+- Added supplementary methods to the configuration parameters.
 
 === 0.5.9 ===
 * Several fixes for resource compressor.
