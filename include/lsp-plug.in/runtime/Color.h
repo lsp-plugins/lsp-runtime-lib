@@ -28,6 +28,14 @@
 
 namespace lsp
 {
+    /**
+     * Color class. Represents an object that allows to work with different color models.
+     * Supported color models:
+     *   - RGB (red, green, blue components)
+     *   - HSL (hue, saturation, lightness components)
+     *   - Alpha channel
+     * All components are normalzed within the [0.0f .. 1.0f] range
+     */
     class Color
     {
         protected:
@@ -46,107 +54,81 @@ namespace lsp
             void            calc_hsl() const;
 
         protected:
-            inline Color(float r, float g, float b, size_t mask): R(r), G(g), B(b), H(0), S(0), L(0), nMask(mask), A(0) {};
-
             void            check_rgb() const;
             void            check_hsl() const;
 
-            static status_t parse(float *dst, size_t n, char prefix, const char *src, size_t len);
-            static ssize_t  format(char *dst, size_t len, size_t tolerance, const float *v, char prefix, bool alpha);
+            static status_t     parse(float *dst, size_t n, char prefix, const char *src, size_t len);
+            static ssize_t      format(char *dst, size_t len, size_t tolerance, const float *v, char prefix, bool alpha);
+            static inline float clamp(float x);
 
         public:
-            inline Color(): R(0), G(0), B(0), H(0), S(0), L(0), nMask(M_RGB), A(0) {};
-            inline Color(float r, float g, float b): R(r), G(g), B(b), H(0), S(0), L(0), nMask(M_RGB), A(0) {};
-            inline Color(float r, float g, float b, float a): R(r), G(g), B(b), H(0), S(0), L(0), nMask(M_RGB), A(a) {};
-            inline Color(const Color &src): R(src.R), G(src.G), B(src.B), H(src.H), S(src.S), L(src.L), nMask(src.nMask), A(src.A) {};
-            inline Color(const Color &src, float a): R(src.R), G(src.G), B(src.B), H(src.H), S(src.S), L(src.L), nMask(src.nMask), A(a) {};
-            inline Color(const Color *src): R(src->R), G(src->G), B(src->B), H(src->H), S(src->S), L(src->L), nMask(src->nMask), A(src->A) {};
-            inline Color(const Color *src, float a): R(src->R), G(src->G), B(src->B), H(src->H), S(src->S), L(src->L), nMask(src->nMask), A(a) {};
+            Color();
+            explicit Color(const Color &src);
+            explicit Color(const Color *src);
             explicit Color(uint32_t rgb);
-            explicit Color(uint32_t rgb, float a);
+            Color(float r, float g, float b);
+            Color(float r, float g, float b, float a);
+            Color(const Color &src, float a);
+            Color(const Color *src, float a);
+            Color(uint32_t rgb, float a);
 
+        public:
             inline float    red() const        { check_rgb(); return R; }
             inline float    green() const      { check_rgb(); return G; }
             inline float    blue() const       { check_rgb(); return B; }
-            inline float    alpha() const      { return A;              }
-
-            inline void     red(float r)        { check_rgb(); R = r; nMask = M_RGB; };
-            inline void     green(float g)      { check_rgb(); G = g; nMask = M_RGB; };
-            inline void     blue(float b)       { check_rgb(); B = b; nMask = M_RGB; };
-            inline void     alpha(float a)      { A = a; };
-
-            inline void     get_rgb(float &r, float &g, float &b) const { check_rgb(); r = R; g = G; b = B; }
-            inline void     get_rgba(float &r, float &g, float &b, float &a) const { check_rgb(); r = R; g = G; b = B; a = A; }
-
-            inline void     set_rgb(float r, float g, float b)
-            {
-                nMask = M_RGB;
-                R = r;
-                G = g;
-                B = b;
-            }
-
-            inline void     set_rgba(float r, float g, float b, float a)
-            {
-                nMask = M_RGB;
-                R = r;
-                G = g;
-                B = b;
-                A = a;
-            }
-
             inline float    hue() const        { check_hsl(); return H; }
             inline float    saturation() const { check_hsl(); return S; }
             inline float    lightness() const  { check_hsl(); return L; }
+            inline float    alpha() const      { return A;              }
 
-            inline void     hue(float h)        { check_hsl(); H = h; nMask = M_HSL;  };
-            inline void     saturation(float s) { check_hsl(); S = s; nMask = M_HSL;  };
-            inline void     lightness(float l)  { check_hsl(); L = l; nMask = M_HSL;  };
+            Color          &red(float r);
+            Color          &green(float g);
+            Color          &blue(float b);
+            Color          &hue(float h);
+            Color          &saturation(float s);
+            Color          &lightness(float l);
+            Color          &alpha(float a);
 
-            inline void     get_hsl(float &h, float &s, float &l) const { check_hsl(); h = H; s = S; l = L; }
-            inline void     get_hsla(float &h, float &s, float &l, float &a) const { check_hsl(); h = H; s = S; l = L; a = A; }
+            const Color    &get_rgb(float &r, float &g, float &b) const;
+            const Color    &get_rgba(float &r, float &g, float &b, float &a) const;
+            const Color    &get_hsl(float &h, float &s, float &l) const;
+            const Color    &get_hsla(float &h, float &s, float &l, float &a) const;
 
-            inline void     set_hsl(float h, float s, float l)
-            {
-                nMask   = M_HSL;
-                H = h;
-                S = s;
-                L = l;
-            }
-            inline void     set_hsla(float h, float s, float l, float a)
-            {
-                nMask   = M_HSL;
-                H = h;
-                S = s;
-                L = l;
-                A = a;
-            }
+            Color          &get_rgb(float &r, float &g, float &b);
+            Color          &get_rgba(float &r, float &g, float &b, float &a);
+            Color          &get_hsl(float &h, float &s, float &l);
+            Color          &get_hsla(float &h, float &s, float &l, float &a);
 
-            void            blend(const Color &c, float alpha);
-            void            blend(float r, float g, float b, float alpha);
-            void            darken(float amount);
-            void            lighten(float amount);
-            void            blend(const Color &c1, const Color &c2, float alpha);
+            Color          &set_rgb(float r, float g, float b);
+            Color          &set_rgba(float r, float g, float b, float a);
+            Color          &set_hsl(float h, float s, float l);
+            Color          &set_hsla(float h, float s, float l, float a);
 
-            void            copy(const Color &c);
-            void            copy(const Color *c);
+            Color          &blend(const Color &c, float alpha);
+            Color          &blend(float r, float g, float b, float alpha);
+            Color          &darken(float amount);
+            Color          &lighten(float amount);
+            Color          &blend(const Color &c1, const Color &c2, float alpha);
 
-            void            copy(const Color &c, float a);
-            void            copy(const Color *c, float a);
+            Color          &copy(const Color &c);
+            Color          &copy(const Color *c);
+            Color          &copy(const Color &c, float a);
+            Color          &copy(const Color *c, float a);
 
             uint32_t        rgb24() const;
             uint32_t        hsl24() const;
             uint32_t        rgba32() const;
             uint32_t        hsla32() const;
 
+            // Checking active color model
             inline bool     is_rgb() const      { return nMask & M_RGB; }
             inline bool     is_hsl() const      { return nMask & M_HSL; }
 
             // Setting
-            void            set_rgb24(uint32_t v);
-            void            set_rgba32(uint32_t v);
-            void            set_hsl24(uint32_t v);
-            void            set_hsla32(uint32_t v);
+            Color          &set_rgb24(uint32_t v);
+            Color          &set_rgba32(uint32_t v);
+            Color          &set_hsl24(uint32_t v);
+            Color          &set_hsla32(uint32_t v);
 
             // Formatting
             ssize_t         format_rgb(char *dst, size_t len, size_t tolerance = 2) const;
