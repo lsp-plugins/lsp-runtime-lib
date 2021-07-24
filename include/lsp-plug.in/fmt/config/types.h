@@ -88,6 +88,7 @@ namespace lsp
         {
             private:
                 param_t &operator = (const param_t &);
+                param_t (const param_t &);
 
             public:
                 LSPString   name;           // Name of parameter
