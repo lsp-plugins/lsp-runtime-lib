@@ -127,12 +127,12 @@ namespace lsp
                 status_t        get_parent(Path *path) const;
 
                 status_t        set_parent(const char *path);
-                status_t        set_parent(LSPString *path);
-                status_t        set_parent(Path *path);
+                status_t        set_parent(const LSPString *path);
+                status_t        set_parent(const Path *path);
 
                 status_t        concat(const char *path);
-                status_t        concat(LSPString *path);
-                status_t        concat(Path *path);
+                status_t        concat(const LSPString *path);
+                status_t        concat(const Path *path);
 
                 status_t        append_child(const char *path);
                 status_t        append_child(const LSPString *path);
