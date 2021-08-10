@@ -7,6 +7,7 @@
 - Added resource::PrefixLoader resource loader implementation.
 - Added supplementary methods to the configuration parameters.
 - Refactored the lsp::Color class: less inline code, more flexible methods.
+- Fixed bug in fmt::obj::PushParser class behaviour.
 
 === 0.5.9 ===
 * Several fixes for resource compressor.

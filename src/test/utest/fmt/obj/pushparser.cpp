@@ -81,9 +81,25 @@ UTEST_BEGIN("runtime.fmt.obj", pushparser)
     {
         protected:
             LSPString &data;
+            ssize_t vx_id;
+            ssize_t vp_id;
+            ssize_t vn_id;
+            ssize_t vt_id;
+            ssize_t f_id;
+            ssize_t p_id;
+            ssize_t l_id;
 
         public:
-            explicit Handler(LSPString &out) : data(out) {}
+            explicit Handler(LSPString &out) : data(out)
+            {
+                vx_id   = 0;
+                vp_id   = 0;
+                vn_id   = 0;
+                vt_id   = 0;
+                f_id    = 0;
+                p_id    = 0;
+                l_id    = 0;
+            }
 
             virtual status_t begin_object(const char *name)
             {
@@ -112,25 +128,25 @@ UTEST_BEGIN("runtime.fmt.obj", pushparser)
             virtual ssize_t add_vertex(float x, float y, float z, float w)
             {
                 data.fmt_append_utf8("V %d %d %d %d\n", int(x), int(y), int(z), int(w));
-                return STATUS_OK;
+                return vx_id++;
             }
 
             virtual ssize_t add_param_vertex(float x, float y, float z, float w)
             {
                 data.fmt_append_utf8("VP %d %d %d %d\n", int(x), int(y), int(z), int(w));
-                return STATUS_OK;
+                return vp_id++;
             }
 
             virtual ssize_t add_normal(float nx, float ny, float nz, float nw)
             {
                 data.fmt_append_utf8("VN %d %d %d %d\n", int(nx), int(ny), int(nz), int(nw));
-                return STATUS_OK;
+                return vn_id++;
             }
 
             virtual ssize_t add_texture_vertex(float u, float v, float w)
             {
                 data.fmt_append_utf8("VT %d %d %d\n", int(u), int(v), int(w));
-                return STATUS_OK;
+                return vt_id++;
             }
 
             virtual status_t add_face(const index_t *vv, const index_t *vn, const index_t *vt, size_t n)
@@ -140,7 +156,7 @@ UTEST_BEGIN("runtime.fmt.obj", pushparser)
                     data.fmt_append_utf8(" %d/%d/%d", vv[i], vn[i], vt[i]);
                 data.append('\n');
 
-                return STATUS_OK;
+                return f_id++;
             }
 
             virtual status_t add_points(const index_t *vv, size_t n)
@@ -150,7 +166,7 @@ UTEST_BEGIN("runtime.fmt.obj", pushparser)
                     data.fmt_append_utf8(" %d", vv[i]);
                 data.append('\n');
 
-                return STATUS_OK;
+                return p_id++;
             }
 
             virtual status_t add_line(const index_t *vv, const index_t *vt, size_t n)
@@ -160,7 +176,7 @@ UTEST_BEGIN("runtime.fmt.obj", pushparser)
                     data.fmt_append_utf8(" %d/%d", vv[i], vt[i]);
                 data.append('\n');
 
-                return STATUS_OK;
+                return l_id++;
             }
     };
 
