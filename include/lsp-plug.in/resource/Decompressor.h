@@ -35,6 +35,7 @@ namespace lsp
         {
             private:
                 Decompressor &operator = (const Decompressor &);
+                Decompressor(const Decompressor &);
 
             protected:
                 typedef struct cbuf_t

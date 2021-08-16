@@ -55,6 +55,10 @@ UTEST_BEGIN("runtime.fmt.config", pullparser)
             "key13 = string \\\"with other\\\" escapes \n"
             "key14 = string \\# not comment \n"
             "key15 = \n"
+            "key16 = true \n"
+            "key17 = false \n"
+            "key18 = bool:true \n"
+            "key19 = bool:false \n"
             "/tree/arg1 = str:\"value\" \n";
 
         PullParser p;
@@ -172,6 +176,34 @@ UTEST_BEGIN("runtime.fmt.config", pullparser)
         UTEST_ASSERT(pp->name.equals_ascii("key15"));
         UTEST_ASSERT(pp->flags == SF_TYPE_STR);
         UTEST_ASSERT(::strcmp(pp->v.str, "") == 0);
+
+        // key16
+        UTEST_ASSERT(p.next() == STATUS_OK);
+        UTEST_ASSERT((pp = p.current()) != NULL);
+        UTEST_ASSERT(pp->name.equals_ascii("key16"));
+        UTEST_ASSERT(pp->flags == SF_TYPE_BOOL);
+        UTEST_ASSERT(pp->v.bval == true);
+
+        // key17
+        UTEST_ASSERT(p.next() == STATUS_OK);
+        UTEST_ASSERT((pp = p.current()) != NULL);
+        UTEST_ASSERT(pp->name.equals_ascii("key17"));
+        UTEST_ASSERT(pp->flags == SF_TYPE_BOOL);
+        UTEST_ASSERT(pp->v.bval == false);
+
+        // key18
+        UTEST_ASSERT(p.next() == STATUS_OK);
+        UTEST_ASSERT((pp = p.current()) != NULL);
+        UTEST_ASSERT(pp->name.equals_ascii("key18"));
+        UTEST_ASSERT(pp->flags == (SF_TYPE_SET | SF_TYPE_BOOL));
+        UTEST_ASSERT(pp->v.bval == true);
+
+        // key19
+        UTEST_ASSERT(p.next() == STATUS_OK);
+        UTEST_ASSERT((pp = p.current()) != NULL);
+        UTEST_ASSERT(pp->name.equals_ascii("key19"));
+        UTEST_ASSERT(pp->flags == (SF_TYPE_SET | SF_TYPE_BOOL));
+        UTEST_ASSERT(pp->v.bval == false);
 
         // /tree/arg1
         UTEST_ASSERT(p.next() == STATUS_OK);

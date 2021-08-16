@@ -50,6 +50,10 @@ namespace lsp
         "key13 = string \\\"with other\\\" escapes \n"
         "key14 = string \\# not comment \n"
         "key15 = \n"
+        "key16 = true \n"
+        "key17 = false \n"
+        "key18 = bool:true \n"
+        "key19 = bool:false \n"
         "/tree/arg1 = str:\"value\" \n";
 
     static const char *output =
@@ -69,6 +73,10 @@ namespace lsp
         "key13=str[]:string \"with other\" escapes\n"
         "key14=str[]:string # not comment\n"
         "key15=str[]:\n"
+        "key16=bool[]:true\n"
+        "key17=bool[]:false\n"
+        "key18=bool[t]:true\n"
+        "key19=bool[t]:false\n"
         "/tree/arg1=str[qt]:value\n"
         "end\n";
 }
@@ -174,6 +182,15 @@ UTEST_BEGIN("runtime.fmt.config", pushparser)
                 dump_flags(f, flags);
                 pStr->fmt_append_utf8("%s=str[%s]:%s\n", name->get_utf8(), f, value->get_utf8());
                 pTest->printf("%s=str[%s]:%s\n", name->get_utf8(), f, value->get_utf8());
+                return STATUS_OK;
+            }
+
+            virtual status_t handle_bool(const LSPString *name, bool value, size_t flags)
+            {
+                char f[0x10];
+                dump_flags(f, flags);
+                pStr->fmt_append_utf8("%s=bool[%s]:%s\n", name->get_utf8(), f, (value) ? "true" : "false");
+                pTest->printf("%s=str[%s]:%s\n", name->get_utf8(), f, (value) ? "true" : "false");
                 return STATUS_OK;
             }
 

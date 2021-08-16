@@ -700,7 +700,7 @@ namespace lsp
             return (success) ? STATUS_OK : STATUS_NO_MEM;
         }
 
-        status_t Path::set_parent(LSPString *path)
+        status_t Path::set_parent(const LSPString *path)
         {
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
@@ -724,7 +724,7 @@ namespace lsp
             return (success) ? STATUS_OK : STATUS_NO_MEM;
         }
 
-        status_t Path::set_parent(Path *path)
+        status_t Path::set_parent(const Path *path)
         {
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
@@ -758,7 +758,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t Path::concat(LSPString *path)
+        status_t Path::concat(const LSPString *path)
         {
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
@@ -768,7 +768,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t Path::concat(Path *path)
+        status_t Path::concat(const Path *path)
         {
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;

@@ -21,7 +21,8 @@
 
 #include <lsp-plug.in/fmt/config/types.h>
 #include <lsp-plug.in/stdlib/string.h>
-#include <stdlib.h>
+#include <lsp-plug.in/stdlib/stdlib.h>
+#include <lsp-plug.in/stdlib/math.h>
 
 namespace lsp
 {
@@ -57,6 +58,7 @@ namespace lsp
                 case SF_TYPE_U64:
                 case SF_TYPE_F32:
                 case SF_TYPE_F64:
+                case SF_TYPE_BOOL:
                     tmp.v           = src->v;
                     break;
                 case SF_TYPE_STR:
@@ -125,6 +127,251 @@ namespace lsp
             }
 
             flags = SF_TYPE_NONE;
+        }
+
+        bool param_t::is_int() const
+        {
+            switch (flags & SF_TYPE_MASK)
+            {
+                case SF_TYPE_I32:
+                case SF_TYPE_U32:
+                case SF_TYPE_I64:
+                case SF_TYPE_U64:
+                    return true;
+                default:
+                    break;
+            }
+            return false;
+        }
+
+        bool param_t::is_signed() const
+        {
+            switch (flags & SF_TYPE_MASK)
+            {
+                case SF_TYPE_I32:
+                case SF_TYPE_I64:
+                case SF_TYPE_F32:
+                case SF_TYPE_F64:
+                    return true;
+                default:
+                    break;
+            }
+            return false;
+        }
+
+        bool param_t::is_unsigned() const
+        {
+            switch (flags & SF_TYPE_MASK)
+            {
+                case SF_TYPE_U32:
+                case SF_TYPE_U64:
+                    return true;
+                default:
+                    break;
+            }
+            return false;
+        }
+
+        bool param_t::is_float() const
+        {
+            switch (flags & SF_TYPE_MASK)
+            {
+                case SF_TYPE_F32:
+                case SF_TYPE_F64:
+                    return true;
+                default:
+                    break;
+            }
+            return false;
+        }
+
+        bool param_t::is_numeric() const
+        {
+            switch (flags & SF_TYPE_MASK)
+            {
+                case SF_TYPE_I32:
+                case SF_TYPE_U32:
+                case SF_TYPE_I64:
+                case SF_TYPE_U64:
+                case SF_TYPE_F32:
+                case SF_TYPE_F64:
+                    return true;
+                default:
+                    break;
+            }
+            return false;
+        }
+
+        bool param_t::is_simple() const
+        {
+            switch (flags & SF_TYPE_MASK)
+            {
+                case SF_TYPE_I32:
+                case SF_TYPE_U32:
+                case SF_TYPE_I64:
+                case SF_TYPE_U64:
+                case SF_TYPE_F32:
+                case SF_TYPE_F64:
+                case SF_TYPE_BOOL:
+                    return true;
+                default:
+                    break;
+            }
+            return false;
+        }
+
+        // Type conversion
+        int32_t param_t::to_i32() const
+        {
+            switch (flags & SF_TYPE_MASK)
+            {
+                case SF_TYPE_I32:   return v.i32;
+                case SF_TYPE_U32:   return v.u32;
+                case SF_TYPE_I64:   return v.i64;
+                case SF_TYPE_U64:   return v.u64;
+                case SF_TYPE_F32:   return v.f32;
+                case SF_TYPE_F64:   return v.f64;
+                case SF_TYPE_BOOL:  return (v.bval) ? 1 : 0;
+                default:
+                    break;
+            }
+            return 0;
+        }
+
+        uint32_t param_t::to_u32() const
+        {
+            switch (flags & SF_TYPE_MASK)
+            {
+                case SF_TYPE_I32:   return v.i32;
+                case SF_TYPE_U32:   return v.u32;
+                case SF_TYPE_I64:   return v.i64;
+                case SF_TYPE_U64:   return v.u64;
+                case SF_TYPE_F32:   return v.f32;
+                case SF_TYPE_F64:   return v.f64;
+                case SF_TYPE_BOOL:  return (v.bval) ? 1 : 0;
+                default:
+                    break;
+            }
+            return 0;
+        }
+
+        int64_t param_t::to_i64() const
+        {
+            switch (flags & SF_TYPE_MASK)
+            {
+                case SF_TYPE_I32:   return v.i32;
+                case SF_TYPE_U32:   return v.u32;
+                case SF_TYPE_I64:   return v.i64;
+                case SF_TYPE_U64:   return v.u64;
+                case SF_TYPE_F32:   return v.f32;
+                case SF_TYPE_F64:   return v.f64;
+                case SF_TYPE_BOOL:  return (v.bval) ? 1 : 0;
+                default:
+                    break;
+            }
+            return 0;
+        }
+
+        uint64_t param_t::to_u64() const
+        {
+            switch (flags & SF_TYPE_MASK)
+            {
+                case SF_TYPE_I32:   return v.i32;
+                case SF_TYPE_U32:   return v.u32;
+                case SF_TYPE_I64:   return v.i64;
+                case SF_TYPE_U64:   return v.u64;
+                case SF_TYPE_F32:   return v.f32;
+                case SF_TYPE_F64:   return v.f64;
+                case SF_TYPE_BOOL:  return (v.bval) ? 1 : 0;
+                default:
+                    break;
+            }
+            return 0;
+        }
+
+        ssize_t param_t::to_int() const
+        {
+            switch (flags & SF_TYPE_MASK)
+            {
+                case SF_TYPE_I32:   return v.i32;
+                case SF_TYPE_U32:   return v.u32;
+                case SF_TYPE_I64:   return v.i64;
+                case SF_TYPE_U64:   return v.u64;
+                case SF_TYPE_F32:   return v.f32;
+                case SF_TYPE_F64:   return v.f64;
+                case SF_TYPE_BOOL:  return (v.bval) ? 1 : 0;
+                default:
+                    break;
+            }
+            return 0;
+        }
+
+        size_t param_t::to_uint() const
+        {
+            switch (flags & SF_TYPE_MASK)
+            {
+                case SF_TYPE_I32:   return v.i32;
+                case SF_TYPE_U32:   return v.u32;
+                case SF_TYPE_I64:   return v.i64;
+                case SF_TYPE_U64:   return v.u64;
+                case SF_TYPE_F32:   return v.f32;
+                case SF_TYPE_F64:   return v.f64;
+                case SF_TYPE_BOOL:  return (v.bval) ? 1 : 0;
+                default:
+                    break;
+            }
+            return 0;
+        }
+
+        float param_t::to_f32() const
+        {
+            switch (flags & SF_TYPE_MASK)
+            {
+                case SF_TYPE_I32:   return v.i32;
+                case SF_TYPE_U32:   return v.u32;
+                case SF_TYPE_I64:   return v.i64;
+                case SF_TYPE_U64:   return v.u64;
+                case SF_TYPE_F32:   return v.f32;
+                case SF_TYPE_F64:   return v.f64;
+                case SF_TYPE_BOOL:  return (v.bval) ? 1.0f : 0.0f;
+                default:
+                    break;
+            }
+            return 0.0f;
+        }
+
+        double param_t::to_f64() const
+        {
+            switch (flags & SF_TYPE_MASK)
+            {
+                case SF_TYPE_I32:   return v.i32;
+                case SF_TYPE_U32:   return v.u32;
+                case SF_TYPE_I64:   return v.i64;
+                case SF_TYPE_U64:   return v.u64;
+                case SF_TYPE_F32:   return v.f32;
+                case SF_TYPE_F64:   return v.f64;
+                case SF_TYPE_BOOL:  return (v.bval) ? 1.0 : 0.0;
+                default:
+                    break;
+            }
+            return 0.0;
+        }
+
+        bool param_t::to_bool() const
+        {
+            switch (flags & SF_TYPE_MASK)
+            {
+                case SF_TYPE_I32:   return v.i32;
+                case SF_TYPE_U32:   return v.u32;
+                case SF_TYPE_I64:   return v.i64;
+                case SF_TYPE_U64:   return v.u64;
+                case SF_TYPE_F32:   return fabs(v.f32) > 0.5f;
+                case SF_TYPE_F64:   return abs(v.f64) > 0.5f;
+                case SF_TYPE_BOOL:  return v.bval;
+                default:
+                    break;
+            }
+            return 0;
         }
     }
 }

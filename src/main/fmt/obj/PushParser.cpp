@@ -151,38 +151,38 @@ namespace lsp
                         break;
 
                     case EV_VERTEX:
-                        if ((res = handler->add_vertex(ev->vertex.x, ev->vertex.y, ev->vertex.z, ev->vertex.w)) != STATUS_OK)
-                            return res;
+                        if ((res = handler->add_vertex(ev->vertex.x, ev->vertex.y, ev->vertex.z, ev->vertex.w)) < 0)
+                            return -res;
                         break;
 
                     case EV_PVERTEX:
-                        if ((res = handler->add_param_vertex(ev->vertex.x, ev->vertex.y, ev->vertex.z, ev->vertex.w)) != STATUS_OK)
-                            return res;
+                        if ((res = handler->add_param_vertex(ev->vertex.x, ev->vertex.y, ev->vertex.z, ev->vertex.w)) < 0)
+                            return -res;
                         break;
 
                     case EV_NORMAL:
-                        if ((res = handler->add_normal(ev->normal.dx, ev->normal.dy, ev->normal.dz, ev->normal.dw)) != STATUS_OK)
-                            return res;
+                        if ((res = handler->add_normal(ev->normal.dx, ev->normal.dy, ev->normal.dz, ev->normal.dw)) < 0)
+                            return -res;
                         break;
 
                     case EV_TEXCOORD:
-                        if ((res = handler->add_texture_vertex(ev->texcoord.u, ev->texcoord.v, ev->texcoord.w)) != STATUS_OK)
-                            return res;
+                        if ((res = handler->add_texture_vertex(ev->texcoord.u, ev->texcoord.v, ev->texcoord.w)) < 0)
+                            return -res;
                         break;
 
                     case EV_FACE:
-                        if ((res = handler->add_face(ev->ivertex.array(), ev->inormal.array(), ev->itexcoord.array(), ev->ivertex.size())) != STATUS_OK)
-                            return res;
+                        if ((res = handler->add_face(ev->ivertex.array(), ev->inormal.array(), ev->itexcoord.array(), ev->ivertex.size())) < 0)
+                            return -res;
                         break;
 
                     case EV_LINE:
-                        if ((res = handler->add_line(ev->ivertex.array(), ev->itexcoord.array(), ev->ivertex.size())) != STATUS_OK)
-                            return res;
+                        if ((res = handler->add_line(ev->ivertex.array(), ev->itexcoord.array(), ev->ivertex.size())) < 0)
+                            return -res;
                         break;
 
                     case EV_POINT:
-                        if ((res = handler->add_points(ev->ivertex.array(), ev->ivertex.size())) != STATUS_OK)
-                            return res;
+                        if ((res = handler->add_points(ev->ivertex.array(), ev->ivertex.size())) < 0)
+                            return -res;
                         break;
 
                     default:

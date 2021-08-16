@@ -51,6 +51,24 @@ $(LSP_RUNTIME_LIB_BIN)/main/runtime/buffer.o: main/runtime/buffer.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/buffer.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h
+$(LSP_RUNTIME_LIB_BIN)/main/resource/PrefixLoader.o: \
+ main/resource/PrefixLoader.cpp \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/PrefixLoader.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/ILoader.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h
 $(LSP_RUNTIME_LIB_BIN)/main/resource/OutProxyStream.o: \
  main/resource/OutProxyStream.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/OutProxyStream.h \
@@ -174,10 +192,10 @@ $(LSP_RUNTIME_LIB_BIN)/main/resource/BuiltinLoader.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/BuiltinLoader.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/BuiltinLoader.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
@@ -1630,7 +1648,9 @@ $(LSP_RUNTIME_LIB_BIN)/main/fmt/config/types.o: main/fmt/config/types.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
- $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/math.h
 $(LSP_RUNTIME_LIB_BIN)/main/fmt/config/Serializer.o: \
  main/fmt/config/Serializer.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/config/Serializer.h \
@@ -1826,10 +1846,10 @@ $(LSP_RUNTIME_LIB_BIN)/main/expr/Parameters.o: main/expr/Parameters.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/expr/Resolver.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/expr/types.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/expr/Resolver.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/expr/types.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \

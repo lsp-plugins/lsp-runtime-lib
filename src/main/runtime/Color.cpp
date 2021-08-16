@@ -73,57 +73,207 @@ namespace lsp
         return off;
     }
 
-    Color::Color(uint32_t rgb)
+    inline float Color::clamp(float x)
     {
+        return lsp_limit(x, 0.0f, 1.0f);
+    }
+
+    Color::Color()
+    {
+        R       = 0.0f;
+        G       = 0.0f;
+        B       = 0.0f;
         H       = 0.0f;
         S       = 0.0f;
         L       = 0.0f;
+        nMask   = M_RGB;
+        A       = 0.0f;
+    }
+
+    Color::Color(float r, float g, float b)
+    {
+        set_rgb(r, g, b);
+        H       = 0.0f;
+        S       = 0.0f;
+        L       = 0.0f;
+        A       = 0.0f;
+    }
+
+    Color::Color(float r, float g, float b, float a)
+    {
+        set_rgba(r, g, b, a);
+        H       = 0.0f;
+        S       = 0.0f;
+        L       = 0.0f;
+    }
+
+    Color::Color(const Color &src)
+    {
+        R       = src.R;
+        G       = src.G;
+        B       = src.B;
+        H       = src.H;
+        S       = src.S;
+        L       = src.L;
+        nMask   = src.nMask;
+        A       = src.A;
+    }
+
+    Color::Color(const Color &src, float a)
+    {
+        R       = src.R;
+        G       = src.G;
+        B       = src.B;
+        H       = src.H;
+        S       = src.S;
+        L       = src.L;
+        nMask   = src.nMask;
+        A       = clamp(a);
+    }
+
+    Color::Color(const Color *src)
+    {
+        R       = src->R;
+        G       = src->G;
+        B       = src->B;
+        H       = src->H;
+        S       = src->S;
+        L       = src->L;
+        nMask   = src->nMask;
+        A       = src->A;
+    }
+
+    Color::Color(const Color *src, float a)
+    {
+        R       = src->R;
+        G       = src->G;
+        B       = src->B;
+        H       = src->H;
+        S       = src->S;
+        L       = src->L;
+        nMask   = src->nMask;
+        A       = clamp(a);
+    }
+
+    Color::Color(uint32_t rgb)
+    {
         set_rgb24(rgb);
+        H       = 0.0f;
+        S       = 0.0f;
+        L       = 0.0f;
     }
 
     Color::Color(uint32_t rgb, float a)
     {
+        set_rgb24(rgb);
         H       = 0.0f;
         S       = 0.0f;
         L       = 0.0f;
-        set_rgb24(rgb);
         A       = a;
     }
 
-    void Color::set_rgb24(uint32_t v)
+    Color &Color::red(float r)
+    {
+        check_rgb();
+        R       = clamp(r);
+        nMask   = M_RGB;
+
+        return *this;
+    }
+
+    Color &Color::green(float g)
+    {
+        check_rgb();
+        G       = clamp(g);
+        nMask   = M_RGB;
+
+        return *this;
+    }
+
+    Color &Color::blue(float b)
+    {
+        check_rgb();
+        B       = clamp(b);
+        nMask   = M_RGB;
+
+        return *this;
+    }
+
+    Color &Color::hue(float h)
+    {
+        check_hsl();
+        H       = clamp(h);
+        nMask   = M_HSL;
+
+        return *this;
+    }
+
+    Color &Color::saturation(float s)
+    {
+        check_hsl();
+        S       = clamp(s);
+        nMask   = M_HSL;
+
+        return *this;
+    }
+
+    Color &Color::lightness(float l)
+    {
+        check_hsl();
+        L       = clamp(l);
+        nMask   = M_HSL;
+
+        return *this;
+    }
+
+    Color &Color::alpha(float a)
+    {
+        A = a;
+        return *this;
+    }
+
+    Color &Color::set_rgb24(uint32_t v)
     {
         R       = ((v >> 16) & 0xff) / 255.0f;
         G       = ((v >> 8) & 0xff) / 255.0f;
         B       = (v & 0xff) / 255.0f;
         A       = 0.0f;
         nMask   = M_RGB;
+
+        return *this;
     }
 
-    void Color::set_rgba32(uint32_t v)
+    Color &Color::set_rgba32(uint32_t v)
     {
         R       = ((v >> 16) & 0xff) / 255.0f;
         G       = ((v >> 8) & 0xff) / 255.0f;
         B       = (v & 0xff) / 255.0f;
         A       = ((v >> 24) & 0xff) / 255.0f;
         nMask   = M_RGB;
+
+        return *this;
     }
 
-    void Color::set_hsl24(uint32_t v)
+    Color &Color::set_hsl24(uint32_t v)
     {
         H       = ((v >> 16) & 0xff) / 255.0f;
         S       = ((v >> 8) & 0xff) / 255.0f;
         L       = (v & 0xff) / 255.0f;
         A       = 0.0f;
         nMask   = M_HSL;
+
+        return *this;
     }
 
-    void Color::set_hsla32(uint32_t v)
+    Color &Color::set_hsla32(uint32_t v)
     {
         H       = ((v >> 16) & 0xff) / 255.0f;
         S       = ((v >> 8) & 0xff) / 255.0f;
         L       = (v & 0xff) / 255.0f;
         A       = ((v >> 24) & 0xff) / 255.0f;
         nMask   = M_HSL;
+
+        return *this;
     }
 
     void Color::calc_rgb() const
@@ -227,59 +377,192 @@ namespace lsp
         nMask |= M_HSL;
     };
 
-    void Color::blend(const Color &c, float alpha)
+    Color &Color::set_rgb(float r, float g, float b)
+    {
+        nMask   = M_RGB;
+        R       = clamp(r);
+        G       = clamp(g);
+        B       = clamp(b);
+
+        return *this;
+    }
+
+    Color &Color::set_rgba(float r, float g, float b, float a)
+    {
+        nMask   = M_RGB;
+        R       = clamp(r);
+        G       = clamp(g);
+        B       = clamp(b);
+        A       = clamp(a);
+
+        return *this;
+    }
+
+    Color &Color::set_hsl(float h, float s, float l)
+    {
+        nMask   = M_HSL;
+        H       = clamp(h);
+        S       = clamp(s);
+        L       = clamp(l);
+
+        return *this;
+    }
+
+    Color &Color::set_hsla(float h, float s, float l, float a)
+    {
+        nMask   = M_HSL;
+        H       = clamp(h);
+        S       = clamp(s);
+        L       = clamp(l);
+        A       = clamp(a);
+
+        return *this;
+    }
+
+    const Color &Color::get_rgb(float &r, float &g, float &b) const
+    {
+        check_rgb();
+        r       = R;
+        g       = G;
+        b       = B;
+
+        return *this;
+    }
+
+    const Color &Color::get_rgba(float &r, float &g, float &b, float &a) const
+    {
+        check_rgb();
+        r       = R;
+        g       = G;
+        b       = B;
+        a       = A;
+
+        return *this;
+    }
+
+    const Color &Color::get_hsl(float &h, float &s, float &l) const
+    {
+        check_hsl();
+        h       = H;
+        s       = S;
+        l       = L;
+
+        return *this;
+    }
+
+    const Color &Color::get_hsla(float &h, float &s, float &l, float &a) const
+    {
+        check_hsl();
+        h       = H;
+        s       = S;
+        l       = L;
+        a       = A;
+
+        return *this;
+    }
+
+    Color &Color::get_rgb(float &r, float &g, float &b)
+    {
+        check_rgb();
+        r       = R;
+        g       = G;
+        b       = B;
+
+        return *this;
+    }
+
+    Color &Color::get_rgba(float &r, float &g, float &b, float &a)
+    {
+        check_rgb();
+        r       = R;
+        g       = G;
+        b       = B;
+        a       = A;
+
+        return *this;
+    }
+
+    Color &Color::get_hsl(float &h, float &s, float &l)
+    {
+        check_hsl();
+        h       = H;
+        s       = S;
+        l       = L;
+
+        return *this;
+    }
+
+    Color &Color::get_hsla(float &h, float &s, float &l, float &a)
+    {
+        check_hsl();
+        h       = H;
+        s       = S;
+        l       = L;
+        a       = A;
+
+        return *this;
+    }
+
+
+    Color &Color::blend(const Color &c, float alpha)
     {
         float r1, g1, b1, r2, g2, b2;
         get_rgb(r1, g1, b1);
         c.get_rgb(r2, g2, b2);
         set_rgb(r2 + (r1 - r2) * alpha, g2 + (g1 - g2) * alpha, b2 + (b1 - b2) * alpha);
+
+        return *this;
     }
 
-    void Color::blend(float r, float g, float b, float alpha)
+    Color &Color::blend(float r, float g, float b, float alpha)
     {
         float r1, g1, b1;
         get_rgb(r1, g1, b1);
         set_rgb(r + (r1 - r) * alpha, g + (g1 - g) * alpha, b + (b1 - b) * alpha);
+
+        return *this;
     }
 
-    void Color::blend(const Color &c1, const Color &c2, float alpha)
+    Color &Color::blend(const Color &c1, const Color &c2, float alpha)
     {
         float r1, g1, b1, r2, g2, b2;
         c1.get_rgb(r1, g1, b1);
         c2.get_rgb(r2, g2, b2);
         set_rgb(r2 + (r1 - r2) * alpha, g2 + (g1 - g2) * alpha, b2 + (b1 - b2) * alpha);
+
+        return *this;
     }
 
-    void Color::darken(float amount)
+    Color &Color::darken(float amount)
     {
         float r, g, b;
         get_rgb(r, g, b);
 
         float a = 1.0 - amount;
         set_rgb(r * a, g * a, b * a);
+
+        return *this;
     }
 
-    void Color::lighten(float amount)
+    Color &Color::lighten(float amount)
     {
         float r, g, b;
         get_rgb(r, g, b);
 
         float a = 1.0 - amount;
         set_rgb(r + (1.0 - r) * a, g + (1.0 - g) * a, b + (1.0 - b) * a);
+
+        return *this;
     }
 
     void Color::scale_lightness(float amount)
     {
         check_hsl();
-        L *= amount;
-        if (L < 0.0f)
-            L = 0.0f;
-        else if (L > 1.0f)
-            L = 1.0f;
+        L = clamp(amount * L);
         nMask = M_HSL;
     }
 
-    void Color::copy(const Color &c)
+    Color &Color::copy(const Color &c)
     {
         R       = c.R;
         G       = c.G;
@@ -288,10 +571,12 @@ namespace lsp
         S       = c.S;
         L       = c.L;
         A       = c.A;
-        nMask   = c.nMask & (M_RGB | M_HSL);
+        nMask   = c.nMask;
+
+        return *this;
     }
 
-    void Color::copy(const Color *c)
+    Color &Color::copy(const Color *c)
     {
         R       = c->R;
         G       = c->G;
@@ -300,10 +585,12 @@ namespace lsp
         S       = c->S;
         L       = c->L;
         A       = c->A;
-        nMask   = c->nMask & (M_RGB | M_HSL);
+        nMask   = c->nMask;
+
+        return *this;
     }
 
-    void Color::copy(const Color &c, float a)
+    Color &Color::copy(const Color &c, float a)
     {
         R       = c.R;
         G       = c.G;
@@ -311,11 +598,13 @@ namespace lsp
         H       = c.H;
         S       = c.S;
         L       = c.L;
-        A       = a;
-        nMask   = c.nMask & (M_RGB | M_HSL);
+        A       = clamp(a);
+        nMask   = c.nMask;
+
+        return *this;
     }
 
-    void Color::copy(const Color *c, float a)
+    Color &Color::copy(const Color *c, float a)
     {
         R       = c->R;
         G       = c->G;
@@ -323,8 +612,10 @@ namespace lsp
         H       = c->H;
         S       = c->S;
         L       = c->L;
-        A       = a;
-        nMask   = c->nMask & (M_RGB | M_HSL);
+        A       = clamp(a);
+        nMask   = c->nMask;
+
+        return *this;
     }
 
     ssize_t Color::format(char *dst, size_t len, size_t tolerance, const float *v, char prefix, bool alpha)

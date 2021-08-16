@@ -38,6 +38,7 @@ namespace lsp
         {
             private:
                 Environment &operator = (const Environment &);
+                Environment(const Environment &);
 
             protected:
                 lltl::pphash<LSPString, LSPString>  vEnv;

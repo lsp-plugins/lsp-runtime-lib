@@ -88,6 +88,7 @@ namespace lsp
         {
             private:
                 param_t &operator = (const param_t &);
+                param_t (const param_t &);
 
             public:
                 LSPString   name;           // Name of parameter
@@ -107,6 +108,51 @@ namespace lsp
                 inline void     swap(param_t &dst)          { swap(&dst); };
 
                 void            clear();
+
+            public:
+                // Type checking methods
+                inline bool     is_i32() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_I32; }
+                inline bool     is_u32() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_U32; }
+                inline bool     is_i64() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_I64; }
+                inline bool     is_u64() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_U64; }
+                inline bool     is_f32() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_F32; }
+                inline bool     is_f64() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_F64; }
+                inline bool     is_bool() const             { return (flags & SF_TYPE_MASK) == SF_TYPE_BOOL; }
+                inline bool     is_str() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_STR; }
+                inline bool     is_string() const           { return (flags & SF_TYPE_MASK) == SF_TYPE_STR; }
+                inline bool     is_blob() const             { return (flags & SF_TYPE_MASK) == SF_TYPE_BLOB; }
+
+                bool            is_int() const;
+                bool            is_signed() const;
+                bool            is_unsigned() const;
+                bool            is_float() const;
+                bool            is_numeric() const;
+                bool            is_simple() const;
+
+                // Precision check
+                inline bool     is_prec_normal() const      { return (flags & SF_PREC_MASK) == SF_PREC_NORMAL;  }
+                inline bool     is_prec_short() const       { return (flags & SF_PREC_MASK) == SF_PREC_SHORT;   }
+                inline bool     is_prec_long() const        { return (flags & SF_PREC_MASK) == SF_PREC_LONG;    }
+                inline bool     is_prec_sci() const         { return (flags & SF_PREC_MASK) == SF_PREC_SCI;     }
+
+                // Miscellaneous checks
+                inline bool     is_quoted() const           { return (flags & SF_QUOTED);                       }
+                inline bool     is_type_set() const         { return (flags & SF_TYPE_SET);                     }
+                inline bool     has_comment() const         { return (flags & SF_COMMENT);                      }
+                inline bool     is_decibel() const          { return (flags & SF_DECIBELS);                     }
+
+                // Type conversion
+                int32_t         to_i32() const;
+                uint32_t        to_u32() const;
+                int64_t         to_i64() const;
+                uint64_t        to_u64() const;
+                ssize_t         to_int() const;
+                size_t          to_uint() const;
+                float           to_f32() const;
+                double          to_f64() const;
+                inline float    to_float() const            { return to_f32();                                  }
+                inline double   to_double() const           { return to_f64();                                  }
+                bool            to_bool() const;
         } param_t;
     }
 }

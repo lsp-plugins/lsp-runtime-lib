@@ -44,6 +44,7 @@ namespace lsp
         {
             private:
                 Compressor & operator = (const Compressor &);
+                Compressor (const Compressor &);
 
             protected:
                 lltl::darray<raw_resource_t>    vEntries;

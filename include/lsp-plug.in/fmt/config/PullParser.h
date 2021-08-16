@@ -65,6 +65,7 @@ namespace lsp
                 static status_t     parse_int64(const LSPString *str, int64_t *dst);
                 static status_t     parse_uint64(const LSPString *str, uint64_t *dst);
                 static status_t     parse_double(const LSPString *str, double *dst, size_t *flags);
+                static status_t     parse_bool(const LSPString *str, bool *dst);
                 static status_t     parse_blob(const LSPString *str, blob_t *dst);
 
             public:

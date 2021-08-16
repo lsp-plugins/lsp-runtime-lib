@@ -33,6 +33,7 @@ namespace lsp
         {
             private:
                 DirLoader & operator = (const DirLoader & );
+                DirLoader(const DirLoader &);
 
             protected:
                 io::Path        sPath;

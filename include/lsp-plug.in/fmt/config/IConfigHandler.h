@@ -77,7 +77,10 @@ namespace lsp
 
                 virtual status_t handle_string(const LSPString *name, const LSPString *value, size_t flags);
 
+                virtual status_t handle_bool(const LSPString *name, bool value, size_t flags);
+
                 virtual status_t handle_blob(const LSPString *name, const blob_t *value, size_t flags);
+
         };
     
     } /* namespace config */
