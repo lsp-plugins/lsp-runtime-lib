@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 0.5.11 ===
+- Improved expr::format functions: extended format specifiers.
 
 === 0.5.10 ===
 * Added support of boolean parameters by the configuration parser.
