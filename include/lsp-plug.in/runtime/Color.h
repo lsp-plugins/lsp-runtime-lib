@@ -45,18 +45,26 @@ namespace lsp
                 M_HSL           = 1 << 1
             };
 
-            mutable float   R, G, B;
-            mutable float   H, S, L;
-            mutable size_t  nMask;
-            mutable float   A;
+            typedef struct rgb_t
+            {
+                float   R, G, B;
+            } rgb_t;
 
-            void            calc_rgb() const;
-            void            calc_hsl() const;
+            typedef struct hsl_t
+            {
+                float   H, S, L;
+            } hsl_t;
 
         protected:
-            void            check_rgb() const;
-            void            check_hsl() const;
+            mutable rgb_t   rgb;
+            mutable hsl_t   hsl;
+            mutable size_t  mask;
+            mutable float   A;
 
+            rgb_t          &calc_rgb() const;
+            hsl_t          &calc_hsl() const;
+
+        protected:
             static status_t     parse(float *dst, size_t n, char prefix, const char *src, size_t len);
             static ssize_t      format(char *dst, size_t len, size_t tolerance, const float *v, char prefix, bool alpha);
             static inline float clamp(float x);
@@ -73,13 +81,16 @@ namespace lsp
             Color(uint32_t rgb, float a);
 
         public:
-            inline float    red() const        { check_rgb(); return R; }
-            inline float    green() const      { check_rgb(); return G; }
-            inline float    blue() const       { check_rgb(); return B; }
-            inline float    hue() const        { check_hsl(); return H; }
-            inline float    saturation() const { check_hsl(); return S; }
-            inline float    lightness() const  { check_hsl(); return L; }
-            inline float    alpha() const      { return A;              }
+            inline float    red() const             { return calc_rgb().R;   }
+            inline float    green() const           { return calc_rgb().G;   }
+            inline float    blue() const            { return calc_rgb().B;   }
+            inline float    hue() const             { return calc_hsl().H;   }
+            inline float    saturation() const      { return calc_hsl().S;   }
+            inline float    lightness() const       { return calc_hsl().L;   }
+            inline float    hsl_hue() const         { return calc_hsl().H;   }
+            inline float    hsl_saturation() const  { return calc_hsl().S;   }
+            inline float    hsl_lightness() const   { return calc_hsl().L;   }
+            inline float    alpha() const           { return A;              }
 
             Color          &red(float r);
             Color          &green(float g);
@@ -87,6 +98,9 @@ namespace lsp
             Color          &hue(float h);
             Color          &saturation(float s);
             Color          &lightness(float l);
+            Color          &hsl_hue(float h);
+            Color          &hsl_saturation(float s);
+            Color          &hsl_lightness(float l);
             Color          &alpha(float a);
 
             const Color    &get_rgb(float &r, float &g, float &b) const;
@@ -121,8 +135,8 @@ namespace lsp
             uint32_t        hsla32() const;
 
             // Checking active color model
-            inline bool     is_rgb() const      { return nMask & M_RGB; }
-            inline bool     is_hsl() const      { return nMask & M_HSL; }
+            inline bool     is_rgb() const      { return mask & M_RGB; }
+            inline bool     is_hsl() const      { return mask & M_HSL; }
 
             // Setting
             Color          &set_rgb24(uint32_t v);

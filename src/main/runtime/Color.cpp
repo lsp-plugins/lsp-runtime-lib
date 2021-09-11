@@ -80,149 +80,142 @@ namespace lsp
 
     Color::Color()
     {
-        R       = 0.0f;
-        G       = 0.0f;
-        B       = 0.0f;
-        H       = 0.0f;
-        S       = 0.0f;
-        L       = 0.0f;
-        nMask   = M_RGB;
+        rgb.R   = 0.0f;
+        rgb.G   = 0.0f;
+        rgb.B   = 0.0f;
+        hsl.H   = 0.0f;
+        hsl.S   = 0.0f;
+        hsl.L   = 0.0f;
+        mask    = M_RGB;
         A       = 0.0f;
     }
 
     Color::Color(float r, float g, float b)
     {
         set_rgb(r, g, b);
-        H       = 0.0f;
-        S       = 0.0f;
-        L       = 0.0f;
+        hsl.H   = 0.0f;
+        hsl.S   = 0.0f;
+        hsl.L   = 0.0f;
         A       = 0.0f;
     }
 
     Color::Color(float r, float g, float b, float a)
     {
         set_rgba(r, g, b, a);
-        H       = 0.0f;
-        S       = 0.0f;
-        L       = 0.0f;
+        hsl.H   = 0.0f;
+        hsl.S   = 0.0f;
+        hsl.L   = 0.0f;
     }
 
     Color::Color(const Color &src)
     {
-        R       = src.R;
-        G       = src.G;
-        B       = src.B;
-        H       = src.H;
-        S       = src.S;
-        L       = src.L;
-        nMask   = src.nMask;
+        rgb     = src.rgb;
+        hsl     = src.hsl;
+        mask    = src.mask;
         A       = src.A;
     }
 
     Color::Color(const Color &src, float a)
     {
-        R       = src.R;
-        G       = src.G;
-        B       = src.B;
-        H       = src.H;
-        S       = src.S;
-        L       = src.L;
-        nMask   = src.nMask;
+        rgb     = src.rgb;
+        hsl     = src.hsl;
+        mask    = src.mask;
         A       = clamp(a);
     }
 
     Color::Color(const Color *src)
     {
-        R       = src->R;
-        G       = src->G;
-        B       = src->B;
-        H       = src->H;
-        S       = src->S;
-        L       = src->L;
-        nMask   = src->nMask;
+        rgb     = src->rgb;
+        hsl     = src->hsl;
+        mask    = src->mask;
         A       = src->A;
     }
 
     Color::Color(const Color *src, float a)
     {
-        R       = src->R;
-        G       = src->G;
-        B       = src->B;
-        H       = src->H;
-        S       = src->S;
-        L       = src->L;
-        nMask   = src->nMask;
+        rgb     = src->rgb;
+        hsl     = src->hsl;
+        mask    = src->mask;
         A       = clamp(a);
     }
 
     Color::Color(uint32_t rgb)
     {
         set_rgb24(rgb);
-        H       = 0.0f;
-        S       = 0.0f;
-        L       = 0.0f;
+        hsl.H   = 0.0f;
+        hsl.S   = 0.0f;
+        hsl.L   = 0.0f;
     }
 
     Color::Color(uint32_t rgb, float a)
     {
         set_rgb24(rgb);
-        H       = 0.0f;
-        S       = 0.0f;
-        L       = 0.0f;
+        hsl.H   = 0.0f;
+        hsl.S   = 0.0f;
+        hsl.L   = 0.0f;
         A       = a;
     }
 
     Color &Color::red(float r)
     {
-        check_rgb();
-        R       = clamp(r);
-        nMask   = M_RGB;
-
+        calc_rgb().R    = clamp(r);
+        mask            = M_RGB;
         return *this;
     }
 
     Color &Color::green(float g)
     {
-        check_rgb();
-        G       = clamp(g);
-        nMask   = M_RGB;
-
+        calc_rgb().G    = clamp(g);
+        mask            = M_RGB;
         return *this;
     }
 
     Color &Color::blue(float b)
     {
-        check_rgb();
-        B       = clamp(b);
-        nMask   = M_RGB;
-
+        calc_rgb().B    = clamp(b);
+        mask            = M_RGB;
         return *this;
     }
 
     Color &Color::hue(float h)
     {
-        check_hsl();
-        H       = clamp(h);
-        nMask   = M_HSL;
-
+        calc_hsl().H    = clamp(h);
+        mask            = M_HSL;
         return *this;
     }
 
     Color &Color::saturation(float s)
     {
-        check_hsl();
-        S       = clamp(s);
-        nMask   = M_HSL;
-
+        calc_hsl().S    = clamp(s);
+        mask            = M_HSL;
         return *this;
     }
 
     Color &Color::lightness(float l)
     {
-        check_hsl();
-        L       = clamp(l);
-        nMask   = M_HSL;
+        calc_hsl().L    = clamp(l);
+        mask            = M_HSL;
+        return *this;
+    }
 
+    Color &Color::hsl_hue(float h)
+    {
+        calc_hsl().H    = clamp(h);
+        mask            = M_HSL;
+        return *this;
+    }
+
+    Color &Color::hsl_saturation(float s)
+    {
+        calc_hsl().S    = clamp(s);
+        mask            = M_HSL;
+        return *this;
+    }
+
+    Color &Color::hsl_lightness(float l)
+    {
+        calc_hsl().L    = clamp(l);
+        mask            = M_HSL;
         return *this;
     }
 
@@ -234,62 +227,62 @@ namespace lsp
 
     Color &Color::set_rgb24(uint32_t v)
     {
-        R       = ((v >> 16) & 0xff) / 255.0f;
-        G       = ((v >> 8) & 0xff) / 255.0f;
-        B       = (v & 0xff) / 255.0f;
+        rgb.R   = ((v >> 16) & 0xff) / 255.0f;
+        rgb.G   = ((v >> 8) & 0xff) / 255.0f;
+        rgb.B   = (v & 0xff) / 255.0f;
         A       = 0.0f;
-        nMask   = M_RGB;
+        mask    = M_RGB;
 
         return *this;
     }
 
     Color &Color::set_rgba32(uint32_t v)
     {
-        R       = ((v >> 16) & 0xff) / 255.0f;
-        G       = ((v >> 8) & 0xff) / 255.0f;
-        B       = (v & 0xff) / 255.0f;
+        rgb.R   = ((v >> 16) & 0xff) / 255.0f;
+        rgb.G   = ((v >> 8) & 0xff) / 255.0f;
+        rgb.B   = (v & 0xff) / 255.0f;
         A       = ((v >> 24) & 0xff) / 255.0f;
-        nMask   = M_RGB;
+        mask    = M_RGB;
 
         return *this;
     }
 
     Color &Color::set_hsl24(uint32_t v)
     {
-        H       = ((v >> 16) & 0xff) / 255.0f;
-        S       = ((v >> 8) & 0xff) / 255.0f;
-        L       = (v & 0xff) / 255.0f;
+        hsl.H   = ((v >> 16) & 0xff) / 255.0f;
+        hsl.S   = ((v >> 8) & 0xff) / 255.0f;
+        hsl.L   = (v & 0xff) / 255.0f;
         A       = 0.0f;
-        nMask   = M_HSL;
+        mask    = M_HSL;
 
         return *this;
     }
 
     Color &Color::set_hsla32(uint32_t v)
     {
-        H       = ((v >> 16) & 0xff) / 255.0f;
-        S       = ((v >> 8) & 0xff) / 255.0f;
-        L       = (v & 0xff) / 255.0f;
+        hsl.H   = ((v >> 16) & 0xff) / 255.0f;
+        hsl.S   = ((v >> 8) & 0xff) / 255.0f;
+        hsl.L   = (v & 0xff) / 255.0f;
         A       = ((v >> 24) & 0xff) / 255.0f;
-        nMask   = M_HSL;
+        mask    = M_HSL;
 
         return *this;
     }
 
-    void Color::calc_rgb() const
+    Color::rgb_t &Color::calc_rgb() const
     {
-        if (nMask & M_RGB)
-            return;
+        if (mask & M_RGB)
+            return rgb;
 
-        if (S > 0.0f)
+        if (hsl.S > 0.0f)
         {
-            float Q     = (L < 0.5f) ? L * (1.0f + S) : L + S - L*S;
-            float P     = L + L - Q; // 2.0 * L - Q
+            float Q     = (hsl.L < 0.5f) ? hsl.L * (1.0f + hsl.S) : hsl.L + hsl.S - hsl.L*hsl.S;
+            float P     = hsl.L + hsl.L - Q; // 2.0 * L - Q
             float D     = 6.0f * (Q - P);
 
-            float TR    = H + HSL_RGB_1_3;
-            float TG    = H;
-            float TB    = H - HSL_RGB_1_3;
+            float TR    = hsl.H + HSL_RGB_1_3;
+            float TG    = hsl.H;
+            float TB    = hsl.H - HSL_RGB_1_3;
 
             if (TR > 1.0f)
                 TR  -= 1.0f;
@@ -297,102 +290,90 @@ namespace lsp
                 TB  += 1.0f;
 
             if (TR < 0.5f)
-                R       = (TR < HSL_RGB_1_6) ? P + D * TR : Q;
+                rgb.R       = (TR < HSL_RGB_1_6) ? P + D * TR : Q;
             else
-                R       = (TR < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TR) : P;
+                rgb.R       = (TR < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TR) : P;
 
             if (TG < 0.5f)
-                G       = (TG < HSL_RGB_1_6) ? P + D * TG : Q;
+                rgb.G       = (TG < HSL_RGB_1_6) ? P + D * TG : Q;
             else
-                G       = (TG < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TG) : P;
+                rgb.G       = (TG < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TG) : P;
 
             if (TB < 0.5f)
-                B       = (TB < HSL_RGB_1_6) ? P + D * TB : Q;
+                rgb.B       = (TB < HSL_RGB_1_6) ? P + D * TB : Q;
             else
-                B       = (TB < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TB) : P;
+                rgb.B       = (TB < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TB) : P;
         }
         else
         {
-            R = L;
-            G = L;
-            B = L;
+            rgb.R   = hsl.L;
+            rgb.G   = hsl.L;
+            rgb.B   = hsl.L;
         }
 
-        nMask |= M_RGB;
+        mask |= M_RGB;
+        return rgb;
     }
 
-    void Color::calc_hsl() const
+    Color::hsl_t &Color::calc_hsl() const
     {
-        if (nMask & M_HSL)
-            return;
+        if (mask & M_HSL)
+            return hsl;
 
-        float cmax = (R < G) ? ((B < G) ? G : B) : ((B < R) ? R : B);
-        float cmin = (R < G) ? ((B < R) ? B : R) : ((B < G) ? B : G);
+        // At this moment we can convert color to HSL only from RGB
+        calc_rgb();
+
+        float cmax = (rgb.R < rgb.G) ? ((rgb.B < rgb.G) ? rgb.G : rgb.B) : ((rgb.B < rgb.R) ? rgb.R : rgb.B);
+        float cmin = (rgb.R < rgb.G) ? ((rgb.B < rgb.R) ? rgb.B : rgb.R) : ((rgb.B < rgb.G) ? rgb.B : rgb.G);
         float d = cmax - cmin;
 
-        H = 0.0f;
-        S = 0.0f;
-        L = 0.5f * (cmax + cmin);
+        hsl.H   = 0.0f;
+        hsl.S   = 0.0f;
+        hsl.L   = 0.5f * (cmax + cmin);
 
         // Calculate hue
-        if (R == cmax)
+        if (rgb.R == cmax)
         {
-            H = (G - B) / d;
-            if (G < B)
-                H += 6.0f;
+            hsl.H = (rgb.G - rgb.B) / d;
+            if (rgb.G < rgb.B)
+                hsl.H += 6.0f;
         }
-        else if (G == cmax)
-            H = (B - R) / d + 2.0f;
-        else if (B == cmax)
-            H = (R - G) / d + 4.0f;
+        else if (rgb.G == cmax)
+            hsl.H = (rgb.B - rgb.R) / d + 2.0f;
+        else if (rgb.B == cmax)
+            hsl.H = (rgb.R - rgb.G) / d + 4.0f;
 
         // Calculate saturation
-        if (L <= 0.5f)
-            S = (L <= 0.0f) ? 0.0f : d / L;
-        else if (L > 0.5f)
-            S = (L < 1.0f) ? d / (1.0f - L) : 0.0f;
+        if (hsl.L <= 0.5f)
+            hsl.S = (hsl.L <= 0.0f) ? 0.0f : d / hsl.L;
+        else if (hsl.L > 0.5f)
+            hsl.S = (hsl.L < 1.0f) ? d / (1.0f - hsl.L) : 0.0f;
 
         // Normalize hue
-        H  /= 6.0f;
-        S  *= 0.5f;
+        hsl.H  /= 6.0f;
+        hsl.S  *= 0.5f;
 
-        nMask |= M_HSL;
+        mask |= M_HSL;
+
+        return hsl;
     }
-
-    void Color::check_rgb() const
-    {
-        if (nMask & M_RGB)
-            return;
-
-        calc_rgb();
-        nMask |= M_RGB;
-    };
-
-    void Color::check_hsl() const
-    {
-        if (nMask & M_HSL)
-            return;
-
-        calc_hsl();
-        nMask |= M_HSL;
-    };
 
     Color &Color::set_rgb(float r, float g, float b)
     {
-        nMask   = M_RGB;
-        R       = clamp(r);
-        G       = clamp(g);
-        B       = clamp(b);
+        mask    = M_RGB;
+        rgb.R   = clamp(r);
+        rgb.G   = clamp(g);
+        rgb.B   = clamp(b);
 
         return *this;
     }
 
     Color &Color::set_rgba(float r, float g, float b, float a)
     {
-        nMask   = M_RGB;
-        R       = clamp(r);
-        G       = clamp(g);
-        B       = clamp(b);
+        mask    = M_RGB;
+        rgb.R   = clamp(r);
+        rgb.G   = clamp(g);
+        rgb.B   = clamp(b);
         A       = clamp(a);
 
         return *this;
@@ -400,20 +381,20 @@ namespace lsp
 
     Color &Color::set_hsl(float h, float s, float l)
     {
-        nMask   = M_HSL;
-        H       = clamp(h);
-        S       = clamp(s);
-        L       = clamp(l);
+        mask    = M_HSL;
+        hsl.H   = clamp(h);
+        hsl.S   = clamp(s);
+        hsl.L   = clamp(l);
 
         return *this;
     }
 
     Color &Color::set_hsla(float h, float s, float l, float a)
     {
-        nMask   = M_HSL;
-        H       = clamp(h);
-        S       = clamp(s);
-        L       = clamp(l);
+        mask    = M_HSL;
+        hsl.H   = clamp(h);
+        hsl.S   = clamp(s);
+        hsl.L   = clamp(l);
         A       = clamp(a);
 
         return *this;
@@ -421,20 +402,20 @@ namespace lsp
 
     const Color &Color::get_rgb(float &r, float &g, float &b) const
     {
-        check_rgb();
-        r       = R;
-        g       = G;
-        b       = B;
+        calc_rgb();
+        r       = rgb.R;
+        g       = rgb.G;
+        b       = rgb.B;
 
         return *this;
     }
 
     const Color &Color::get_rgba(float &r, float &g, float &b, float &a) const
     {
-        check_rgb();
-        r       = R;
-        g       = G;
-        b       = B;
+        calc_rgb();
+        r       = rgb.R;
+        g       = rgb.G;
+        b       = rgb.B;
         a       = A;
 
         return *this;
@@ -442,20 +423,20 @@ namespace lsp
 
     const Color &Color::get_hsl(float &h, float &s, float &l) const
     {
-        check_hsl();
-        h       = H;
-        s       = S;
-        l       = L;
+        calc_hsl();
+        h       = hsl.H;
+        s       = hsl.S;
+        l       = hsl.L;
 
         return *this;
     }
 
     const Color &Color::get_hsla(float &h, float &s, float &l, float &a) const
     {
-        check_hsl();
-        h       = H;
-        s       = S;
-        l       = L;
+        calc_hsl();
+        h       = hsl.H;
+        s       = hsl.S;
+        l       = hsl.L;
         a       = A;
 
         return *this;
@@ -463,20 +444,20 @@ namespace lsp
 
     Color &Color::get_rgb(float &r, float &g, float &b)
     {
-        check_rgb();
-        r       = R;
-        g       = G;
-        b       = B;
+        calc_rgb();
+        r       = rgb.R;
+        g       = rgb.G;
+        b       = rgb.B;
 
         return *this;
     }
 
     Color &Color::get_rgba(float &r, float &g, float &b, float &a)
     {
-        check_rgb();
-        r       = R;
-        g       = G;
-        b       = B;
+        calc_rgb();
+        r       = rgb.R;
+        g       = rgb.G;
+        b       = rgb.B;
         a       = A;
 
         return *this;
@@ -484,20 +465,20 @@ namespace lsp
 
     Color &Color::get_hsl(float &h, float &s, float &l)
     {
-        check_hsl();
-        h       = H;
-        s       = S;
-        l       = L;
+        calc_hsl();
+        h       = hsl.H;
+        s       = hsl.S;
+        l       = hsl.L;
 
         return *this;
     }
 
     Color &Color::get_hsla(float &h, float &s, float &l, float &a)
     {
-        check_hsl();
-        h       = H;
-        s       = S;
-        l       = L;
+        calc_hsl();
+        h       = hsl.H;
+        s       = hsl.S;
+        l       = hsl.L;
         a       = A;
 
         return *this;
@@ -557,63 +538,46 @@ namespace lsp
 
     void Color::scale_lightness(float amount)
     {
-        check_hsl();
-        L = clamp(amount * L);
-        nMask = M_HSL;
+        calc_hsl().L    = clamp(amount * hsl.L);
+        mask    = M_HSL;
     }
 
     Color &Color::copy(const Color &c)
     {
-        R       = c.R;
-        G       = c.G;
-        B       = c.B;
-        H       = c.H;
-        S       = c.S;
-        L       = c.L;
+        rgb     = c.rgb;
+        hsl     = c.hsl;
         A       = c.A;
-        nMask   = c.nMask;
+        mask    = c.mask;
 
         return *this;
     }
 
     Color &Color::copy(const Color *c)
     {
-        R       = c->R;
-        G       = c->G;
-        B       = c->B;
-        H       = c->H;
-        S       = c->S;
-        L       = c->L;
+        rgb     = c->rgb;
+        hsl     = c->hsl;
         A       = c->A;
-        nMask   = c->nMask;
+        mask    = c->mask;
 
         return *this;
     }
 
     Color &Color::copy(const Color &c, float a)
     {
-        R       = c.R;
-        G       = c.G;
-        B       = c.B;
-        H       = c.H;
-        S       = c.S;
-        L       = c.L;
+        rgb     = c.rgb;
+        hsl     = c.hsl;
         A       = clamp(a);
-        nMask   = c.nMask;
+        mask    = c.mask;
 
         return *this;
     }
 
     Color &Color::copy(const Color *c, float a)
     {
-        R       = c->R;
-        G       = c->G;
-        B       = c->B;
-        H       = c->H;
-        S       = c->S;
-        L       = c->L;
+        rgb     = c->rgb;
+        hsl     = c->hsl;
         A       = clamp(a);
-        nMask   = c->nMask;
+        mask    = c->mask;
 
         return *this;
     }
@@ -851,52 +815,48 @@ namespace lsp
 
     uint32_t Color::rgb24() const
     {
-        check_rgb();
+        calc_rgb();
         return
-            (uint32_t(R * 0xff + 0.25f) << 16) |
-            (uint32_t(G * 0xff + 0.25f) << 8) |
-            (uint32_t(B * 0xff + 0.25f) << 0);
+            (uint32_t(rgb.R * 0xff + 0.25f) << 16) |
+            (uint32_t(rgb.G * 0xff + 0.25f) << 8) |
+            (uint32_t(rgb.B * 0xff + 0.25f) << 0);
     }
 
     uint32_t Color::rgba32() const
     {
-        check_rgb();
+        calc_rgb();
         return
             (uint32_t(A * 0xff + 0.25f) << 24) |
-            (uint32_t(R * 0xff + 0.25f) << 16) |
-            (uint32_t(G * 0xff + 0.25f) << 8) |
-            (uint32_t(B * 0xff + 0.25f) << 0);
+            (uint32_t(rgb.R * 0xff + 0.25f) << 16) |
+            (uint32_t(rgb.G * 0xff + 0.25f) << 8) |
+            (uint32_t(rgb.B * 0xff + 0.25f) << 0);
     }
 
     uint32_t Color::hsl24() const
     {
-        check_hsl();
+        calc_hsl();
         return
-            (uint32_t(H * 0xff + 0.25f) << 16) |
-            (uint32_t(S * 0xff + 0.25f) << 8) |
-            (uint32_t(L * 0xff + 0.25f) << 0);
+            (uint32_t(hsl.H * 0xff + 0.25f) << 16) |
+            (uint32_t(hsl.S * 0xff + 0.25f) << 8) |
+            (uint32_t(hsl.L * 0xff + 0.25f) << 0);
     }
 
     uint32_t Color::hsla32() const
     {
-        check_rgb();
+        calc_hsl();
         return
             (uint32_t(A * 0xff + 0.25f) << 24) |
-            (uint32_t(H * 0xff + 0.25f) << 16) |
-            (uint32_t(S * 0xff + 0.25f) << 8) |
-            (uint32_t(L * 0xff + 0.25f) << 0);
+            (uint32_t(hsl.H * 0xff + 0.25f) << 16) |
+            (uint32_t(hsl.S * 0xff + 0.25f) << 8) |
+            (uint32_t(hsl.L * 0xff + 0.25f) << 0);
     }
 
     void Color::swap(Color *c)
     {
-        lsp::swap(R, c->R);
-        lsp::swap(G, c->G);
-        lsp::swap(B, c->B);
-        lsp::swap(H, c->H);
-        lsp::swap(S, c->S);
-        lsp::swap(L, c->L);
+        lsp::swap(rgb, c->rgb);
+        lsp::swap(hsl, c->hsl);
         lsp::swap(A, c->A);
-        lsp::swap(nMask, c->nMask);
+        lsp::swap(mask, c->mask);
     }
 
 } /* namespace lsp */
