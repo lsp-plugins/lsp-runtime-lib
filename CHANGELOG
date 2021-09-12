@@ -4,6 +4,9 @@
 
 === 0.5.11 ===
 - Improved expr::format functions: extended format specifiers.
+- Refactoring of the lsp::Color utility class interface.
+- Added support of XYZ color scheme by the lsp::Color utility class.
+- Added support of function-look color parsing by the lsp::Color utility class.
 
 === 0.5.10 ===
 * Added support of boolean parameters by the configuration parser.

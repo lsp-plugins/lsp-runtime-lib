@@ -22,6 +22,11 @@
 #include <lsp-plug.in/runtime/Color.h>
 #include <lsp-plug.in/stdlib/string.h>
 #include <lsp-plug.in/stdlib/stdio.h>
+#include <lsp-plug.in/stdlib/math.h>
+
+#include <ctype.h>
+#include <locale.h>
+#include <errno.h>
 
 namespace lsp
 {
@@ -29,27 +34,64 @@ namespace lsp
     static const float HSL_RGB_1_6          = 1.0f / 6.0f;
     static const float HSL_RGB_2_3          = 2.0f / 3.0f;
 
-    static size_t skip_space(const char *ptr, size_t off, size_t len)
+    static const char *skip_whitespace(const char *src, const char *end)
     {
-        for (; off < len; ++off)
+        for ( ; src < end; ++src)
         {
-            char c = ptr[off];
-            if (c == '\0')
-                return len;
-
-            switch (c)
+            switch (*src)
             {
-                case ' ':
                 case '\n':
                 case '\t':
                 case '\r':
+                case ' ':
                     break;
+                case '\0':
+                    return end;
                 default:
-                    return off;
+                    return src;
             }
         }
-        return off;
+
+        return src;
     }
+
+    static const char *match_prefix(const char *src, const char *end, const char *prefix)
+    {
+        for ( ; src < end; ++src)
+        {
+            if (*prefix == '\0')
+                return src;
+            if (tolower(*src) != *(prefix++))
+                return end;
+        }
+        return src;
+    }
+
+    static const char *match_char(const char *src, const char *end, char ch)
+    {
+        if (src < end)
+            return (src[0] == ch) ? &src[1] : end;
+        return end;
+    }
+
+    static const char *match_chars(const char *src, const char *end, const char *allowed)
+    {
+        for ( ; src < end; ++src)
+        {
+            char c = *src;
+            if (c == '\0')
+                return src;
+
+            // Lookup list of allowed characters
+            for (const char *ck = allowed; *ck != '\0'; ++ck)
+            {
+                if (*ck == c)
+                    return src;
+            }
+        }
+        return src;
+    }
+
 
     static size_t hex_char(char c)
     {
@@ -62,15 +104,14 @@ namespace lsp
         return 0xff;
     }
 
-    static size_t skip_hex(const char *ptr, size_t off, size_t len)
+    static const char *skip_hex(const char *ptr, const char *end)
     {
-        for (; off < len; ++off)
+        for ( ; ptr < end; ++ptr)
         {
-            char c = ptr[off];
-            if (hex_char(c) >= 16)
-                return off;
+            if (hex_char(*ptr) >= 16)
+                return ptr;
         }
-        return off;
+        return end;
     }
 
     inline float Color::clamp(float x)
@@ -86,6 +127,9 @@ namespace lsp
         hsl.H   = 0.0f;
         hsl.S   = 0.0f;
         hsl.L   = 0.0f;
+        xyz.X   = 0.0f;
+        xyz.Y   = 0.0f;
+        xyz.Z   = 0.0f;
         mask    = M_RGB;
         A       = 0.0f;
     }
@@ -96,6 +140,9 @@ namespace lsp
         hsl.H   = 0.0f;
         hsl.S   = 0.0f;
         hsl.L   = 0.0f;
+        xyz.X   = 0.0f;
+        xyz.Y   = 0.0f;
+        xyz.Z   = 0.0f;
         A       = 0.0f;
     }
 
@@ -105,12 +152,16 @@ namespace lsp
         hsl.H   = 0.0f;
         hsl.S   = 0.0f;
         hsl.L   = 0.0f;
+        xyz.X   = 0.0f;
+        xyz.Y   = 0.0f;
+        xyz.Z   = 0.0f;
     }
 
     Color::Color(const Color &src)
     {
         rgb     = src.rgb;
         hsl     = src.hsl;
+        xyz     = src.xyz;
         mask    = src.mask;
         A       = src.A;
     }
@@ -119,6 +170,7 @@ namespace lsp
     {
         rgb     = src.rgb;
         hsl     = src.hsl;
+        xyz     = src.xyz;
         mask    = src.mask;
         A       = clamp(a);
     }
@@ -127,6 +179,7 @@ namespace lsp
     {
         rgb     = src->rgb;
         hsl     = src->hsl;
+        xyz     = src->xyz;
         mask    = src->mask;
         A       = src->A;
     }
@@ -135,6 +188,7 @@ namespace lsp
     {
         rgb     = src->rgb;
         hsl     = src->hsl;
+        xyz     = src->xyz;
         mask    = src->mask;
         A       = clamp(a);
     }
@@ -274,42 +328,61 @@ namespace lsp
         if (mask & M_RGB)
             return rgb;
 
-        if (hsl.S > 0.0f)
+        if (mask & M_HSL)
         {
-            float Q     = (hsl.L < 0.5f) ? hsl.L * (1.0f + hsl.S) : hsl.L + hsl.S - hsl.L*hsl.S;
-            float P     = hsl.L + hsl.L - Q; // 2.0 * L - Q
-            float D     = 6.0f * (Q - P);
+            // Convert HSL to RGB
+            if (hsl.S > 0.0f)
+            {
+                float Q     = (hsl.L < 0.5f) ? hsl.L * (1.0f + hsl.S) : hsl.L + hsl.S - hsl.L*hsl.S;
+                float P     = hsl.L + hsl.L - Q; // 2.0 * L - Q
+                float D     = 6.0f * (Q - P);
 
-            float TR    = hsl.H + HSL_RGB_1_3;
-            float TG    = hsl.H;
-            float TB    = hsl.H - HSL_RGB_1_3;
+                float TR    = hsl.H + HSL_RGB_1_3;
+                float TG    = hsl.H;
+                float TB    = hsl.H - HSL_RGB_1_3;
 
-            if (TR > 1.0f)
-                TR  -= 1.0f;
-            if (TB < 0.0f)
-                TB  += 1.0f;
+                if (TR > 1.0f)
+                    TR  -= 1.0f;
+                if (TB < 0.0f)
+                    TB  += 1.0f;
 
-            if (TR < 0.5f)
-                rgb.R       = (TR < HSL_RGB_1_6) ? P + D * TR : Q;
+                if (TR < 0.5f)
+                    rgb.R       = (TR < HSL_RGB_1_6) ? P + D * TR : Q;
+                else
+                    rgb.R       = (TR < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TR) : P;
+
+                if (TG < 0.5f)
+                    rgb.G       = (TG < HSL_RGB_1_6) ? P + D * TG : Q;
+                else
+                    rgb.G       = (TG < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TG) : P;
+
+                if (TB < 0.5f)
+                    rgb.B       = (TB < HSL_RGB_1_6) ? P + D * TB : Q;
+                else
+                    rgb.B       = (TB < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TB) : P;
+            }
             else
-                rgb.R       = (TR < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TR) : P;
-
-            if (TG < 0.5f)
-                rgb.G       = (TG < HSL_RGB_1_6) ? P + D * TG : Q;
-            else
-                rgb.G       = (TG < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TG) : P;
-
-            if (TB < 0.5f)
-                rgb.B       = (TB < HSL_RGB_1_6) ? P + D * TB : Q;
-            else
-                rgb.B       = (TB < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TB) : P;
+            {
+                rgb.R   = hsl.L;
+                rgb.G   = hsl.L;
+                rgb.B   = hsl.L;
+            }
         }
-        else
+        else // mask & M_XYZ
         {
-            rgb.R   = hsl.L;
-            rgb.G   = hsl.L;
-            rgb.B   = hsl.L;
-        }
+            // Convert XYZ to RGB
+            float r = 0.01f * (xyz.X *  3.2406f + xyz.Y * -1.5372f + xyz.Z * -0.4986f);
+            float g = 0.01f * (xyz.X * -0.9689f + xyz.Y *  1.8758f + xyz.Z *  0.0415f);
+            float b = 0.01f * (xyz.X *  0.0557f + xyz.Y * -0.2040f + xyz.Z *  1.0570f);
+
+            r       = (r > 0.0031308f) ? 1.055f * (powf(r, 1.0f / 2.4f)) - 0.055f : 12.92f * r;
+            g       = (g > 0.0031308f) ? 1.055f * (powf(g, 1.0f / 2.4f)) - 0.055f : 12.92f * g;
+            b       = (b > 0.0031308f) ? 1.055f * (powf(b, 1.0f / 2.4f)) - 0.055f : 12.92f * b;
+
+            rgb.R   = clamp(r);
+            rgb.G   = clamp(g);
+            rgb.B   = clamp(b);
+        } // else
 
         mask |= M_RGB;
         return rgb;
@@ -356,6 +429,25 @@ namespace lsp
         mask |= M_HSL;
 
         return hsl;
+    }
+
+    Color::xyz_t &Color::calc_xyz() const
+    {
+        if (mask & M_XYZ)
+            return xyz;
+
+        // At this moment we can convert color to XYZ only from RGB
+        calc_rgb();
+
+        float r     = (rgb.R > 0.04045f) ? powf((rgb.R + 0.055f) / 1.055f, 2.4f) : rgb.R / 12.92f;
+        float g     = (rgb.G > 0.04045f) ? powf((rgb.G + 0.055f) / 1.055f, 2.4f) : rgb.G / 12.92f;
+        float b     = (rgb.B > 0.04045f) ? powf((rgb.B + 0.055f) / 1.055f, 2.4f) : rgb.B / 12.92f;
+
+        xyz.X       = 100.0f * (r * 0.4124f + g * 0.3576f + b * 0.1805f);
+        xyz.Y       = 100.0f * (r * 0.2126f + g * 0.7152f + b * 0.0722f);
+        xyz.Z       = 100.0f * (r * 0.0193f + g * 0.1192f + b * 0.9505f);
+
+        return xyz;
     }
 
     Color &Color::set_rgb(float r, float g, float b)
@@ -546,6 +638,7 @@ namespace lsp
     {
         rgb     = c.rgb;
         hsl     = c.hsl;
+        xyz     = c.xyz;
         A       = c.A;
         mask    = c.mask;
 
@@ -556,6 +649,7 @@ namespace lsp
     {
         rgb     = c->rgb;
         hsl     = c->hsl;
+        xyz     = c->xyz;
         A       = c->A;
         mask    = c->mask;
 
@@ -566,6 +660,7 @@ namespace lsp
     {
         rgb     = c.rgb;
         hsl     = c.hsl;
+        xyz     = c.xyz;
         A       = clamp(a);
         mask    = c.mask;
 
@@ -576,6 +671,7 @@ namespace lsp
     {
         rgb     = c->rgb;
         hsl     = c->hsl;
+        xyz     = c->xyz;
         A       = clamp(a);
         mask    = c->mask;
 
@@ -683,42 +779,125 @@ namespace lsp
         return format(dst, len, tolerance, v, '@', true);
     }
 
-    status_t Color::parse(float *dst, size_t n, char prefix, const char *src, size_t len)
+    status_t Color::parse_hex(float *dst, size_t n, char prefix, const char *src, size_t len)
     {
         if (src == NULL)
             return STATUS_BAD_ARGUMENTS;
 
-        size_t off = skip_space(src, 0, len);
-        if (off >= len)
+        const char *end = &src[len];
+
+        src = skip_whitespace(src, end);
+        if (src == end)
             return STATUS_NO_DATA;
-        if (src[off] != prefix)
+        if (*(src++) != prefix)
             return STATUS_BAD_FORMAT;
-        if ((++off) >= len)
+        if (src >= end)
             return STATUS_BAD_FORMAT;
 
-        size_t off2 = skip_hex(src, off, len);
-        size_t off3 = skip_space(src, off2, len);
-        if (off3 < len)
+        const char *hex  = skip_hex(src, end);
+        const char *tail = skip_whitespace(hex, end);
+        if (tail != end)
             return STATUS_BAD_FORMAT;
-        len     = off2 - off;
+        size_t hex_len   = hex - src;
 
         // Determine the length of each component
-        if (len % n)
+        if (hex_len % n)
             return STATUS_BAD_FORMAT;
-        len /= n;
-        if ((len <= 0) || (len > 4))
+        hex_len /= n;
+        if ((hex_len <= 0) || (hex_len > 4))
             return STATUS_BAD_FORMAT;
-        float norm = 1.0f / ((0x1 << (len << 2)) - 1);
+        float norm = 1.0f / ((0x1 << (hex_len << 2)) - 1);
 
         // Read components
         while (n--)
         {
             int v       = 0;
-            for (size_t i=0; i<len; ++i, ++off)
-                v   = (v << 4) | hex_char(src[off]);
+            for (size_t i=0; i<hex_len; ++i, ++src)
+                v   = (v << 4) | hex_char(*src);
 
             *(dst++)    = v * norm;
         }
+
+        return STATUS_OK;
+    }
+
+    status_t Color::parse_numeric(float *dst, size_t nmin, size_t nmax, const char *prefix, const char *src, size_t len)
+    {
+        // Save and update locale
+        char *saved = ::setlocale(LC_NUMERIC, NULL);
+        if (saved != NULL)
+        {
+            size_t len = ::strlen(saved) + 1;
+            char *saved_copy = static_cast<char *>(alloca(len));
+            ::memcpy(saved_copy, saved, len);
+            saved       = saved_copy;
+        }
+        ::setlocale(LC_NUMERIC, "C");
+
+        status_t res = parse_cnumeric(dst, nmin, nmax, prefix, src, len);
+
+        if (saved != NULL)
+            ::setlocale(LC_NUMERIC, saved);
+
+        return res;
+    }
+
+    status_t Color::parse_cnumeric(float *dst, size_t nmin, size_t nmax, const char *prefix, const char *src, size_t len)
+    {
+        const char *end = &src[len];
+
+        // Parse beginning of statement
+        if ((src = skip_whitespace(src, end)) == end)       // whitespace
+            return STATUS_NO_DATA;
+        if ((src = match_prefix(src, end, prefix)) == end)  // prefix
+            return STATUS_BAD_FORMAT;
+        if ((src = skip_whitespace(src, end)) == end)       // whitespace
+            return STATUS_BAD_FORMAT;
+        if ((src = match_char(src, end, '(')) == end)       // (
+            return STATUS_BAD_FORMAT;
+
+        // Main loop: parse digits
+        size_t count = 0;
+        while (src < end)
+        {
+            // Skip whitespace
+            if ((src = skip_whitespace(src, end)) == end)
+                return STATUS_BAD_FORMAT;
+
+            // Find next delimiting character
+            const char *next = match_chars(src, end, ",) \t\r\n");
+            if (next == end)
+                return STATUS_BAD_FORMAT;
+
+            // Overflow of number of max possible values?
+            if (count >= nmax)
+                return STATUS_BAD_FORMAT;
+
+            // Parse floating-point value
+            char *eptr = NULL;
+            errno = 0;
+            dst[count++] = strtof(src, &eptr);
+            if ((errno != 0) || (eptr != next) || (eptr == src))
+                return STATUS_BAD_FORMAT;
+
+            // Move parse position
+            src     = skip_whitespace(next, end);
+            if (src == end)
+                return STATUS_BAD_FORMAT;
+            char c = *(src++);
+            if (c == ')')
+                break;
+            else if (c != ',')
+                return STATUS_BAD_FORMAT;
+        }
+
+        // Check that we parsed at least nmin floating-point values
+        if (count < nmin)
+            return STATUS_BAD_FORMAT;
+
+        // Parse end of statement
+        if ((src = skip_whitespace(src, end)) != end)       // end-of-line
+            return STATUS_BAD_FORMAT;
 
         return STATUS_OK;
     }
@@ -728,11 +907,12 @@ namespace lsp
         if (src == NULL)
             return STATUS_BAD_ARGUMENTS;
 
-        size_t off = skip_space(src, 0, len);
-        if (off >= len)
+        const char *end = &src[len];
+        src = skip_whitespace(src, end);
+        if (src >= end)
             return STATUS_NO_DATA;
 
-        return (src[off] == '@') ? parse_hsla(&src[off], len - off) : parse_rgba(&src[off], len - off);
+        return (*src == '@') ? parse_hsla(src, end - src) : parse_rgba(src, end - src);
     }
 
     status_t Color::parse3(const char *src, size_t len)
@@ -740,17 +920,18 @@ namespace lsp
         if (src == NULL)
             return STATUS_BAD_ARGUMENTS;
 
-        size_t off = skip_space(src, 0, len);
-        if (off >= len)
+        const char *end = &src[len];
+        src = skip_whitespace(src, end);
+        if (src >= end)
             return STATUS_NO_DATA;
 
-        return (src[off] == '@') ? parse_hsl(&src[off], len - off) : parse_rgb(&src[off], len - off);
+        return (*src == '@') ? parse_hsl(src, end - src) : parse_rgb(src, end - src);
     }
 
     status_t Color::parse_rgba(const char *src, size_t len)
     {
         float v[4];
-        status_t res = parse(v, 4, '#', src, len);
+        status_t res = parse_hex(v, 4, '#', src, len);
         if (res == STATUS_OK)
             set_rgba(v[1], v[2], v[3], v[0]);
         return res;
@@ -759,7 +940,7 @@ namespace lsp
     status_t Color::parse_hsla(const char *src, size_t len)
     {
         float v[4];
-        status_t res = parse(v, 4, '@', src, len);
+        status_t res = parse_hex(v, 4, '@', src, len);
         if (res == STATUS_OK)
             set_hsla(v[1], v[2], v[3], v[0]);
         return res;
@@ -768,7 +949,7 @@ namespace lsp
     status_t Color::parse_rgb(const char *src, size_t len)
     {
         float v[3];
-        status_t res = parse(v, 3, '#', src, len);
+        status_t res = parse_hex(v, 3, '#', src, len);
         if (res == STATUS_OK)
             set_rgba(v[0], v[1], v[2], 0.0f);
         return res;
@@ -777,9 +958,49 @@ namespace lsp
     status_t Color::parse_hsl(const char *src, size_t len)
     {
         float v[3];
-        status_t res = parse(v, 3, '@', src, len);
+        status_t res = parse_hex(v, 3, '@', src, len);
         if (res == STATUS_OK)
             set_hsla(v[0], v[1], v[2], 0.0f);
+        return res;
+    }
+
+    status_t Color::parse(const char *src, size_t len)
+    {
+        status_t res;
+        float v[4];
+        if ((res = parse4(src, len)) == STATUS_OK)
+            return res;
+        if ((res = parse3(src, len)) == STATUS_OK)
+            return res;
+
+        // Save and update locale
+        char *saved = ::setlocale(LC_NUMERIC, NULL);
+        if (saved != NULL)
+        {
+            size_t len = ::strlen(saved) + 1;
+            char *saved_copy = static_cast<char *>(alloca(len));
+            ::memcpy(saved_copy, saved, len);
+            saved       = saved_copy;
+        }
+        ::setlocale(LC_NUMERIC, "C");
+
+        // Try to parse different expressions
+        if ((res = parse_cnumeric(v, 3, 3, "rgb", src, len)) == STATUS_OK)
+            set_rgba(v[0], v[1], v[2], 0.0f);
+        else if ((res = parse_cnumeric(v, 4, 4, "rgba", src, len)) == STATUS_OK)
+            set_rgba(v[0], v[1], v[2], v[3]);
+        else if ((res = parse_cnumeric(v, 3, 3, "hsl", src, len)) == STATUS_OK)
+            set_hsla(v[0] / 360.0f, v[1] * 0.01f, v[2] * 0.005f, 0.0f);
+        else if ((res = parse_cnumeric(v, 4, 4, "hsla", src, len)) == STATUS_OK)
+            set_hsla(v[0] / 360.0f, v[1] * 0.01f, v[2] * 0.005f, v[3]);
+        else if ((res = parse_cnumeric(v, 3, 3, "xyz", src, len)) == STATUS_OK)
+            set_xyza(v[0], v[1], v[2], 0.0f);
+        else if ((res = parse_cnumeric(v, 4, 4, "xyza", src, len)) == STATUS_OK)
+            set_xyza(v[0], v[1], v[2], v[3]);
+
+        if (saved != NULL)
+            ::setlocale(LC_NUMERIC, saved);
+
         return res;
     }
 
@@ -811,6 +1032,11 @@ namespace lsp
     status_t Color::parse3(const char *src)
     {
         return (src != NULL) ? parse3(src, ::strlen(src)) : STATUS_BAD_ARGUMENTS;
+    }
+
+    status_t Color::parse(const char *src)
+    {
+        return (src != NULL) ? parse(src, ::strlen(src)) : STATUS_BAD_ARGUMENTS;
     }
 
     uint32_t Color::rgb24() const
@@ -857,6 +1083,88 @@ namespace lsp
         lsp::swap(hsl, c->hsl);
         lsp::swap(A, c->A);
         lsp::swap(mask, c->mask);
+    }
+
+    const Color &Color::get_xyz(float &x, float &y, float &z) const
+    {
+        calc_xyz();
+        x   = xyz.X;
+        y   = xyz.Y;
+        z   = xyz.Z;
+
+        return *this;
+    }
+
+    Color &Color::get_xyz(float &x, float &y, float &z)
+    {
+        calc_xyz();
+        x   = xyz.X;
+        y   = xyz.Y;
+        z   = xyz.Z;
+
+        return *this;
+    }
+
+    const Color &Color::get_xyza(float &x, float &y, float &z, float &a) const
+    {
+        calc_xyz();
+        x   = xyz.X;
+        y   = xyz.Y;
+        z   = xyz.Z;
+        a   = A;
+
+        return *this;
+    }
+
+    Color &Color::get_xyza(float &x, float &y, float &z, float &a)
+    {
+        calc_xyz();
+        x   = xyz.X;
+        y   = xyz.Y;
+        z   = xyz.Z;
+        a   = A;
+
+        return *this;
+    }
+
+    Color &Color::xyz_x(float x)
+    {
+        calc_xyz().X    = x;
+        mask    = M_XYZ;
+        return *this;
+    }
+
+    Color &Color::xyz_y(float y)
+    {
+        calc_xyz().Y    = y;
+        mask    = M_XYZ;
+        return *this;
+    }
+
+    Color &Color::xyz_z(float z)
+    {
+        calc_xyz().Z    = z;
+        mask    = M_XYZ;
+        return *this;
+    }
+
+    Color &Color::set_xyz(float x, float y, float z)
+    {
+        xyz.X   = lsp_limit(x, 0.0f, 100.0f);
+        xyz.Y   = lsp_limit(y, 0.0f, 100.0f);
+        xyz.Z   = lsp_limit(z, 0.0f, 110.0f);
+        mask    = M_XYZ;
+        return *this;
+    }
+
+    Color &Color::set_xyza(float x, float y, float z, float a)
+    {
+        xyz.X   = lsp_limit(x, 0.0f, 100.0f);
+        xyz.Y   = lsp_limit(y, 0.0f, 100.0f);
+        xyz.Z   = lsp_limit(z, 0.0f, 110.0f);
+        A       = a;
+        mask    = M_XYZ;
+        return *this;
     }
 
 } /* namespace lsp */
