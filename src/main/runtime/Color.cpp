@@ -630,7 +630,8 @@ namespace lsp
 
     void Color::scale_lightness(float amount)
     {
-        calc_hsl().L    = clamp(amount * hsl.L);
+        calc_hsl();
+        hsl.L   = clamp(amount * hsl.L);
         mask    = M_HSL;
     }
 
