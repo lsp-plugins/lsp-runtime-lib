@@ -7,6 +7,7 @@
 - Refactoring of the lsp::Color utility class interface.
 - Added support of XYZ color space by the lsp::Color utility class.
 - Added support of CIE LAB D65 color space by the lsp::Color utility class.
+- Added support of CIE LCH D65 color space by the lsp::Color utility class.
 - Added support of function-look color parsing by the lsp::Color utility class.
 
 === 0.5.10 ===

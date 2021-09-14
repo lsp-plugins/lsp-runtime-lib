@@ -45,6 +45,7 @@ namespace lsp
                 M_HSL           = 1 << 1,   // Hue/Saturation/Lightness components
                 M_XYZ           = 1 << 2,   // CIE XYZ components
                 M_LAB           = 1 << 3,   // CIE LAB D65 standard components
+                M_LCH           = 1 << 4,   // CIE LCH D65 standard components
             };
 
             typedef struct rgb_t
@@ -67,11 +68,17 @@ namespace lsp
                 float   L, A, B;
             } lab_t;
 
+            typedef struct lch_t
+            {
+                float   L, C, H;
+            } lch_t;
+
         protected:
             mutable rgb_t   rgb;
             mutable hsl_t   hsl;
             mutable xyz_t   xyz;
             mutable lab_t   lab;
+            mutable lch_t   lch;
             mutable size_t  mask;
             mutable float   A;
 
@@ -79,10 +86,12 @@ namespace lsp
             hsl_t          &calc_hsl() const;
             xyz_t          &calc_xyz() const;
             lab_t          &calc_lab() const;
+            lch_t          &calc_lch() const;
 
             bool            hsl_to_rgb() const;
             bool            xyz_to_rgb() const;
             bool            lab_to_xyz() const;
+            bool            lch_to_lab() const;
 
         protected:
             static status_t     parse_hex(float *dst, size_t n, char prefix, const char *src, size_t len);
@@ -229,9 +238,9 @@ namespace lsp
             Color          &set_xyz(float x, float y, float z);
             Color          &set_xyza(float x, float y, float z, float a);
 
-        // CIE LAB-related functions
+        // CIE LAB-related functions (D65 standard)
         public:
-            // Check that HSL data is currently present without need of implicit conversion
+            // Check that LAB data is currently present without need of implicit conversion
             inline bool     is_lab() const          { return mask & M_LAB;      }
 
             // Get color components
@@ -251,6 +260,29 @@ namespace lsp
 
             Color          &set_lab(float l, float a, float b);
             Color          &set_laba(float l, float a, float b, float alpha);
+
+        // CIE LCH-related functions (D65 standard)
+        public:
+            // Check that LCH data is currently present without need of implicit conversion
+            inline bool     is_lch() const          { return mask & M_LCH;      }
+
+            // Get color components
+            inline float    lch_l() const           { return calc_lch().L;      }
+            inline float    lch_c() const           { return calc_lch().C;      }
+            inline float    lch_h() const           { return calc_lch().H;      }
+
+            const Color    &get_lch(float &l, float &c, float &h) const;
+            Color          &get_lch(float &l, float &c, float &h);
+            const Color    &get_lcha(float &l, float &c, float &h, float &alpha) const;
+            Color          &get_lcha(float &l, float &c, float &h, float &alpha);
+
+            // Update color components
+            Color          &lch_l(float l);
+            Color          &lch_c(float c);
+            Color          &lch_h(float h);
+
+            Color          &set_lch(float l, float c, float h);
+            Color          &set_lcha(float l, float c, float h, float alpha);
 
         // Alpha-blending channel
         public:

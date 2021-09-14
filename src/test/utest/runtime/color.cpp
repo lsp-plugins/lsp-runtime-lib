@@ -209,6 +209,32 @@ UTEST_BEGIN("runtime.runtime", color)
         UTEST_ASSERT(c.is_xyz());
         UTEST_ASSERT(match4(c.xyz_x(), c.xyz_y(), c.xyz_z(), c.alpha(), 20.5f, 30.0f, 10.1f, 0.7f));
 
+        // Match LAB parse
+        UTEST_ASSERT(parse(c, "lab(11.0, 21.0, 31.5)") == STATUS_OK);
+        UTEST_ASSERT(c.is_lab());
+        UTEST_ASSERT(match4(c.lab_l(), c.lab_a(), c.lab_b(), c.alpha(), 11.0f, 21.0f, 31.5f, 0.0f));
+
+        UTEST_ASSERT(parse(c, "LABA(21.5, 31.0, 11.1, 0.8)") == STATUS_OK);
+        UTEST_ASSERT(c.is_lab());
+        UTEST_ASSERT(match4(c.lab_l(), c.lab_a(), c.lab_b(), c.alpha(), 21.5f, 31.0f, 11.1f, 0.8f));
+
+        // Match LCH parse
+        UTEST_ASSERT(parse(c, "hcl(90.0, 50.0, 51.0)") == STATUS_OK);
+        UTEST_ASSERT(c.is_lch());
+        UTEST_ASSERT(match4(c.lch_h(), c.lch_c(), c.lch_l(), c.alpha(), 90.0f, 50.0f, 51.0f, 0.0f));
+
+        UTEST_ASSERT(parse(c, "LCH(50.5, 51.5, 90.5)") == STATUS_OK);
+        UTEST_ASSERT(c.is_lch());
+        UTEST_ASSERT(match4(c.lch_h(), c.lch_c(), c.lch_l(), c.alpha(), 90.5f, 51.5f, 50.5f, 0.0f));
+
+        UTEST_ASSERT(parse(c, "HCLA(270.0, 52.0, 12.0, 0.5)") == STATUS_OK);
+        UTEST_ASSERT(c.is_lch());
+        UTEST_ASSERT(match4(c.lch_h(), c.lch_c(), c.lch_l(), c.alpha(), 270.0f, 52.0f, 12.0f, 0.5f));
+
+        UTEST_ASSERT(parse(c, "lcha(52.5, 12.5, 270.5, 0.6)") == STATUS_OK);
+        UTEST_ASSERT(c.is_lch());
+        UTEST_ASSERT(match4(c.lch_h(), c.lch_c(), c.lch_l(), c.alpha(), 270.5f, 12.5f, 52.5f, 0.6f));
+
         // Invalid parses
         UTEST_ASSERT(parse(c, "blablabla(1, 2, 3)") == STATUS_BAD_FORMAT);
         UTEST_ASSERT(parse(c, "rgb(1)") == STATUS_BAD_FORMAT);

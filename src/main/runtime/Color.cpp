@@ -133,6 +133,9 @@ namespace lsp
         lab.L   = 0.0f;
         lab.A   = 0.0f;
         lab.B   = 0.0f;
+        lch.L   = 0.0f;
+        lch.C   = 0.0f;
+        lch.H   = 0.0f;
         mask    = M_RGB;
         A       = 0.0f;
     }
@@ -149,6 +152,9 @@ namespace lsp
         lab.L   = 0.0f;
         lab.A   = 0.0f;
         lab.B   = 0.0f;
+        lch.L   = 0.0f;
+        lch.C   = 0.0f;
+        lch.H   = 0.0f;
         A       = 0.0f;
     }
 
@@ -164,6 +170,9 @@ namespace lsp
         lab.L   = 0.0f;
         lab.A   = 0.0f;
         lab.B   = 0.0f;
+        lch.L   = 0.0f;
+        lch.C   = 0.0f;
+        lch.H   = 0.0f;
     }
 
     Color::Color(const Color &src)
@@ -172,6 +181,7 @@ namespace lsp
         hsl     = src.hsl;
         xyz     = src.xyz;
         lab     = src.lab;
+        lch     = src.lch;
         mask    = src.mask;
         A       = src.A;
     }
@@ -182,6 +192,7 @@ namespace lsp
         hsl     = src.hsl;
         xyz     = src.xyz;
         lab     = src.lab;
+        lch     = src.lch;
         mask    = src.mask;
         A       = clamp(a);
     }
@@ -192,6 +203,7 @@ namespace lsp
         hsl     = src->hsl;
         xyz     = src->xyz;
         lab     = src->lab;
+        lch     = src->lch;
         mask    = src->mask;
         A       = src->A;
     }
@@ -202,6 +214,7 @@ namespace lsp
         hsl     = src->hsl;
         xyz     = src->xyz;
         lab     = src->lab;
+        lch     = src->lch;
         mask    = src->mask;
         A       = clamp(a);
     }
@@ -215,6 +228,9 @@ namespace lsp
         lab.L   = 0.0f;
         lab.A   = 0.0f;
         lab.B   = 0.0f;
+        lch.L   = 0.0f;
+        lch.C   = 0.0f;
+        lch.H   = 0.0f;
     }
 
     Color::Color(uint32_t rgb, float a)
@@ -226,7 +242,71 @@ namespace lsp
         lab.L   = 0.0f;
         lab.A   = 0.0f;
         lab.B   = 0.0f;
+        lch.L   = 0.0f;
+        lch.C   = 0.0f;
+        lch.H   = 0.0f;
         A       = a;
+    }
+
+    Color &Color::copy(const Color &c)
+    {
+        rgb     = c.rgb;
+        hsl     = c.hsl;
+        xyz     = c.xyz;
+        lab     = c.lab;
+        A       = c.A;
+        mask    = c.mask;
+
+        return *this;
+    }
+
+    Color &Color::copy(const Color *c)
+    {
+        rgb     = c->rgb;
+        hsl     = c->hsl;
+        xyz     = c->xyz;
+        lab     = c->lab;
+        lch     = c->lch;
+        A       = c->A;
+        mask    = c->mask;
+
+        return *this;
+    }
+
+    Color &Color::copy(const Color &c, float a)
+    {
+        rgb     = c.rgb;
+        hsl     = c.hsl;
+        xyz     = c.xyz;
+        lab     = c.lab;
+        lch     = c.lch;
+        A       = clamp(a);
+        mask    = c.mask;
+
+        return *this;
+    }
+
+    Color &Color::copy(const Color *c, float a)
+    {
+        rgb     = c->rgb;
+        hsl     = c->hsl;
+        xyz     = c->xyz;
+        lab     = c->lab;
+        lch     = c->lch;
+        A       = clamp(a);
+        mask    = c->mask;
+
+        return *this;
+    }
+
+    void Color::swap(Color *c)
+    {
+        lsp::swap(rgb, c->rgb);
+        lsp::swap(hsl, c->hsl);
+        lsp::swap(lab, c->lab);
+        lsp::swap(lch, c->lch);
+        lsp::swap(A, c->A);
+        lsp::swap(mask, c->mask);
     }
 
     Color &Color::red(float r)
@@ -439,6 +519,20 @@ namespace lsp
         return true;
     }
 
+    bool Color::lch_to_lab() const
+    {
+        if (!(mask & M_LCH))
+            return false;
+
+        lab.L       = lch.L;
+        lab.A       = cosf(lch.H * (M_PI / 180.0f)) * lch.C;
+        lab.B       = sinf(lch.H * (M_PI / 180.0f)) * lch.C;
+
+        mask       |= M_LAB;
+
+        return true;
+    }
+
     Color::rgb_t &Color::calc_rgb() const
     {
         // Check if RGB is present
@@ -458,6 +552,16 @@ namespace lsp
         {
             if (xyz_to_rgb())
                 return rgb;
+        }
+
+        // Try to convert LCH -> LAB -> XYZ -> RGB
+        if (lch_to_lab())
+        {
+            if (lab_to_xyz())
+            {
+                if (xyz_to_rgb())
+                    return rgb;
+            }
         }
 
         // Fallback case
@@ -549,6 +653,25 @@ namespace lsp
         lab.B       = 200.0f * (y - z);
 
         return lab;
+    }
+
+    Color::lch_t &Color::calc_lch() const
+    {
+        if (mask & M_LCH)
+            return lch;
+
+        // At this moment we can convert color to LCH only from LAB
+        calc_lab();
+
+        float h     = atan2f(lab.B, lab.A) * (180.0f / M_PI);
+        if (h < 0)
+            h          += 360.0f;
+
+        lch.L       = lab.L;
+        lch.C       = sqrtf(lab.A * lab.A + lab.B * lab.B);
+        lch.H       = h;
+
+        return lch;
     }
 
     Color &Color::set_rgb(float r, float g, float b)
@@ -734,63 +857,6 @@ namespace lsp
         calc_hsl();
         hsl.L   = clamp(amount * hsl.L);
         mask    = M_HSL;
-    }
-
-    Color &Color::copy(const Color &c)
-    {
-        rgb     = c.rgb;
-        hsl     = c.hsl;
-        xyz     = c.xyz;
-        lab     = c.lab;
-        A       = c.A;
-        mask    = c.mask;
-
-        return *this;
-    }
-
-    Color &Color::copy(const Color *c)
-    {
-        rgb     = c->rgb;
-        hsl     = c->hsl;
-        xyz     = c->xyz;
-        lab     = c->lab;
-        A       = c->A;
-        mask    = c->mask;
-
-        return *this;
-    }
-
-    Color &Color::copy(const Color &c, float a)
-    {
-        rgb     = c.rgb;
-        hsl     = c.hsl;
-        xyz     = c.xyz;
-        lab     = c.lab;
-        A       = clamp(a);
-        mask    = c.mask;
-
-        return *this;
-    }
-
-    Color &Color::copy(const Color *c, float a)
-    {
-        rgb     = c->rgb;
-        hsl     = c->hsl;
-        xyz     = c->xyz;
-        lab     = c->lab;
-        A       = clamp(a);
-        mask    = c->mask;
-
-        return *this;
-    }
-
-    void Color::swap(Color *c)
-    {
-        lsp::swap(rgb, c->rgb);
-        lsp::swap(hsl, c->hsl);
-        lsp::swap(lab, c->lab);
-        lsp::swap(A, c->A);
-        lsp::swap(mask, c->mask);
     }
 
     ssize_t Color::format(char *dst, size_t len, size_t tolerance, const float *v, char prefix, bool alpha)
@@ -1116,6 +1182,15 @@ namespace lsp
             set_laba(v[0], v[1], v[2], 0.0f);
         else if ((res = parse_cnumeric(v, 4, 4, "laba", src, len)) == STATUS_OK)
             set_laba(v[0], v[1], v[2], v[3]);
+        else if ((res = parse_cnumeric(v, 3, 3, "lch", src, len)) == STATUS_OK)
+            set_lcha(v[0], v[1], v[2], 0.0f);
+        else if ((res = parse_cnumeric(v, 4, 4, "lcha", src, len)) == STATUS_OK)
+            set_lcha(v[0], v[1], v[2], v[3]);
+        else if ((res = parse_cnumeric(v, 3, 3, "hcl", src, len)) == STATUS_OK)
+            set_lcha(v[2], v[1], v[0], 0.0f);
+        else if ((res = parse_cnumeric(v, 4, 4, "hcla", src, len)) == STATUS_OK)
+            set_lcha(v[2], v[1], v[0], v[3]);
+
 
         if (saved != NULL)
             ::setlocale(LC_NUMERIC, saved);
@@ -1353,6 +1428,85 @@ namespace lsp
         lab.B   = b;
         A       = alpha;
         mask    = M_LAB;
+        return *this;
+    }
+
+    // Check that LCH data is currently present without need of implicit conversion
+    const Color &Color::get_lch(float &l, float &c, float &h) const
+    {
+        calc_lch();
+        l       = lch.L;
+        c       = lch.C;
+        h       = lch.H;
+        return *this;
+    }
+
+    Color &Color::get_lch(float &l, float &c, float &h)
+    {
+        calc_lch();
+        l       = lch.L;
+        c       = lch.C;
+        h       = lch.H;
+        return *this;
+    }
+
+    const Color &Color::get_lcha(float &l, float &c, float &h, float &alpha) const
+    {
+        calc_lch();
+        l       = lch.L;
+        c       = lch.C;
+        h       = lch.H;
+        alpha   = A;
+        return *this;
+    }
+
+    Color &Color::get_lcha(float &l, float &c, float &h, float &alpha)
+    {
+        calc_lch();
+        l       = lch.L;
+        c       = lch.C;
+        h       = lch.H;
+        alpha   = A;
+        return *this;
+    }
+
+    Color &Color::lch_l(float l)
+    {
+        calc_lch().L    = l;
+        mask            = M_LCH;
+        return *this;
+    }
+
+    Color &Color::lch_c(float c)
+    {
+        calc_lch().C    = c;
+        mask            = M_LCH;
+        return *this;
+    }
+
+    Color &Color::lch_h(float h)
+    {
+        calc_lch().H    = h;
+        mask            = M_LCH;
+        return *this;
+    }
+
+    Color &Color::set_lch(float l, float c, float h)
+    {
+        lch.L   = l;
+        lch.C   = c;
+        lch.H   = h;
+        mask    = M_LCH;
+        return *this;
+    }
+
+    Color &Color::set_lcha(float l, float c, float h, float alpha)
+    {
+        lch.L   = l;
+        lch.C   = c;
+        lch.H   = h;
+        A       = alpha;
+        mask    = M_LCH;
         return *this;
     }
 
