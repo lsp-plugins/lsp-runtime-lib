@@ -279,7 +279,7 @@ UTEST_BEGIN("runtime.runtime", color)
         // Perform RGB -> XYZ conversion
         UTEST_ASSERT(c1.parse3(value) == STATUS_OK);
         printf("  col = %s\n", value);
-        printf("  chk = (%f, %f, %f)\n", x, y, z);
+        printf("  chk = xyz(%f, %f, %f)\n", x, y, z);
 
         cx[0] = c1.xyz_x();
         cy[0] = c1.xyz_y();
@@ -345,6 +345,81 @@ UTEST_BEGIN("runtime.runtime", color)
         UTEST_ASSERT(test_rgb2xyz("#00ccff",  39.64287f,  50.40573f, 102.24762f ));
     }
 
+    bool test_rgb2lab(const char *value, float l, float a, float b)
+    {
+        Color c1, c2, c3;
+        char buf1[32], buf2[32];
+        float cl[2], ca[2], cb[2];
+
+        // Perform RGB -> XYZ conversion
+        UTEST_ASSERT(c1.parse3(value) == STATUS_OK);
+        printf("  col = %s\n", value);
+        printf("  chk = lab(%f, %f, %f)\n", l, a, b);
+
+        cl[0] = c1.lab_l();
+        ca[0] = c1.lab_a();
+        cb[0] = c1.lab_b();
+        c1.get_lab(cl[1], ca[1], cb[1]);
+
+        printf("  lab = (%f, %f, %f)\n", cl[0], ca[0], cb[0]);
+        if ((cl[0] != cl[1]) || (ca[0] != ca[1]) || (cb[0] != cb[1]))
+            return false;
+        if ((!float_equals_adaptive(l, cl[0], 1e-4f)) ||
+            (!float_equals_adaptive(a, ca[0], 1e-4f)) ||
+            (!float_equals_adaptive(b, cb[0], 1e-4f)))
+            return false;
+
+        // Perform XYZ -> RGB conversion
+        c2.lab_l(l);
+        c2.lab_a(a);
+        c2.lab_b(b);
+        c2.format_rgb(buf1, sizeof(buf1), 2);
+        printf("  rgb = %s\n", buf1);
+
+        c3.set_lab(l, a, b);
+        c3.format_rgb(buf2, sizeof(buf2), 2);
+        if (strcmp(buf1, buf2) != 0)
+            return false;
+
+        // Check components
+        uint32_t v1 = c1.rgb24(), v2 = c2.rgb24();
+
+        return
+            check_component(v1 & 0xff, v2 & 0xff, 1) &&
+            check_component((v1 >> 8) & 0xff, (v2 >> 8) & 0xff, 1) &&
+            check_component((v1 >> 16) & 0xff, (v2 >> 16) & 0xff, 1);
+    }
+
+    void test_convert_lab()
+    {
+        printf("Testing RGB <-> LAB conversion...\n");
+
+        UTEST_ASSERT(test_rgb2lab("#000000", 0.0f, 0.0f, 0.0f));
+
+        UTEST_ASSERT(test_rgb2lab("#ff0000",   53.2329f,   80.1094f,   67.2201f ));
+        UTEST_ASSERT(test_rgb2lab("#00ff00",   87.7370f,  -86.1846f,   83.1812f ));
+        UTEST_ASSERT(test_rgb2lab("#0000ff",   32.3026f,   79.1967f, -107.8637f ));
+        UTEST_ASSERT(test_rgb2lab("#ffff00",   97.1382f,  -21.5559f,   94.4825f ));
+        UTEST_ASSERT(test_rgb2lab("#ff00ff",   60.3199f,   98.2542f,  -60.8430f ));
+        UTEST_ASSERT(test_rgb2lab("#00ffff",   91.1165f,  -48.0796f,  -14.1381f ));
+        UTEST_ASSERT(test_rgb2lab("#ffffff",  100.0000f,    0.0052f,   -0.0104f ));
+
+        UTEST_ASSERT(test_rgb2lab("#880000",   27.3920f,   50.2088f,   40.4310f ));
+        UTEST_ASSERT(test_rgb2lab("#008800",   49.0176f,  -54.0165f,   52.1341f ));
+        UTEST_ASSERT(test_rgb2lab("#000088",   14.2738f,   49.6368f,  -67.6039f ));
+        UTEST_ASSERT(test_rgb2lab("#888800",   54.9098f,  -13.5103f,   59.2172f ));
+        UTEST_ASSERT(test_rgb2lab("#880088",   31.8338f,   61.5812f,  -38.1336f ));
+        UTEST_ASSERT(test_rgb2lab("#008888",   51.1357f,  -30.1341f,   -8.8611f ));
+        UTEST_ASSERT(test_rgb2lab("#888888",   56.7034f,    0.0033f,   -0.0065f ));
+
+        UTEST_ASSERT(test_rgb2lab("#ffcc00",   84.1973f,    3.6799f,   85.2229f ));
+        UTEST_ASSERT(test_rgb2lab("#ff00cc",   57.6742f,   91.7417f,  -36.3256f ));
+        UTEST_ASSERT(test_rgb2lab("#00ffcc",   89.8034f,  -61.6198f,   10.3716f ));
+        UTEST_ASSERT(test_rgb2lab("#ccff00",   93.6055f,  -41.9481f,   90.2777f ));
+        UTEST_ASSERT(test_rgb2lab("#cc00ff",   51.9020f,   91.0125f,  -74.8496f ));
+        UTEST_ASSERT(test_rgb2lab("#00ccff",   76.3176f,  -24.3449f,  -36.6835f ));
+    }
+
     UTEST_MAIN
     {
         test_parse_rgb();
@@ -355,6 +430,7 @@ UTEST_BEGIN("runtime.runtime", color)
 
         test_convert_hsl();
         test_convert_xyz();
+        test_convert_lab();
     }
 
 UTEST_END
