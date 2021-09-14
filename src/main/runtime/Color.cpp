@@ -130,6 +130,9 @@ namespace lsp
         xyz.X   = 0.0f;
         xyz.Y   = 0.0f;
         xyz.Z   = 0.0f;
+        lab.L   = 0.0f;
+        lab.A   = 0.0f;
+        lab.B   = 0.0f;
         mask    = M_RGB;
         A       = 0.0f;
     }
@@ -143,6 +146,9 @@ namespace lsp
         xyz.X   = 0.0f;
         xyz.Y   = 0.0f;
         xyz.Z   = 0.0f;
+        lab.L   = 0.0f;
+        lab.A   = 0.0f;
+        lab.B   = 0.0f;
         A       = 0.0f;
     }
 
@@ -155,6 +161,9 @@ namespace lsp
         xyz.X   = 0.0f;
         xyz.Y   = 0.0f;
         xyz.Z   = 0.0f;
+        lab.L   = 0.0f;
+        lab.A   = 0.0f;
+        lab.B   = 0.0f;
     }
 
     Color::Color(const Color &src)
@@ -162,6 +171,7 @@ namespace lsp
         rgb     = src.rgb;
         hsl     = src.hsl;
         xyz     = src.xyz;
+        lab     = src.lab;
         mask    = src.mask;
         A       = src.A;
     }
@@ -171,6 +181,7 @@ namespace lsp
         rgb     = src.rgb;
         hsl     = src.hsl;
         xyz     = src.xyz;
+        lab     = src.lab;
         mask    = src.mask;
         A       = clamp(a);
     }
@@ -180,6 +191,7 @@ namespace lsp
         rgb     = src->rgb;
         hsl     = src->hsl;
         xyz     = src->xyz;
+        lab     = src->lab;
         mask    = src->mask;
         A       = src->A;
     }
@@ -189,6 +201,7 @@ namespace lsp
         rgb     = src->rgb;
         hsl     = src->hsl;
         xyz     = src->xyz;
+        lab     = src->lab;
         mask    = src->mask;
         A       = clamp(a);
     }
@@ -199,6 +212,9 @@ namespace lsp
         hsl.H   = 0.0f;
         hsl.S   = 0.0f;
         hsl.L   = 0.0f;
+        lab.L   = 0.0f;
+        lab.A   = 0.0f;
+        lab.B   = 0.0f;
     }
 
     Color::Color(uint32_t rgb, float a)
@@ -207,6 +223,9 @@ namespace lsp
         hsl.H   = 0.0f;
         hsl.S   = 0.0f;
         hsl.L   = 0.0f;
+        lab.L   = 0.0f;
+        lab.A   = 0.0f;
+        lab.B   = 0.0f;
         A       = a;
     }
 
@@ -323,68 +342,127 @@ namespace lsp
         return *this;
     }
 
+    bool Color::hsl_to_rgb() const
+    {
+        if (!(mask & M_HSL))
+            return false;
+
+        // Convert HSL to RGB
+        if (hsl.S > 0.0f)
+        {
+            float Q     = (hsl.L < 0.5f) ? hsl.L * (1.0f + hsl.S) : hsl.L + hsl.S - hsl.L*hsl.S;
+            float P     = hsl.L + hsl.L - Q; // 2.0 * L - Q
+            float D     = 6.0f * (Q - P);
+
+            float TR    = hsl.H + HSL_RGB_1_3;
+            float TG    = hsl.H;
+            float TB    = hsl.H - HSL_RGB_1_3;
+
+            if (TR > 1.0f)
+                TR  -= 1.0f;
+            if (TB < 0.0f)
+                TB  += 1.0f;
+
+            if (TR < 0.5f)
+                rgb.R       = (TR < HSL_RGB_1_6) ? P + D * TR : Q;
+            else
+                rgb.R       = (TR < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TR) : P;
+
+            if (TG < 0.5f)
+                rgb.G       = (TG < HSL_RGB_1_6) ? P + D * TG : Q;
+            else
+                rgb.G       = (TG < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TG) : P;
+
+            if (TB < 0.5f)
+                rgb.B       = (TB < HSL_RGB_1_6) ? P + D * TB : Q;
+            else
+                rgb.B       = (TB < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TB) : P;
+        }
+        else
+        {
+            rgb.R       = hsl.L;
+            rgb.G       = hsl.L;
+            rgb.B       = hsl.L;
+        }
+
+        mask       |= M_RGB;
+
+        return true;
+    }
+
+    bool Color::xyz_to_rgb() const
+    {
+        if (!(mask & M_XYZ))
+            return false;
+
+        // Convert XYZ to RGB
+        float r     = 0.01f * (xyz.X *  3.2406f + xyz.Y * -1.5372f + xyz.Z * -0.4986f);
+        float g     = 0.01f * (xyz.X * -0.9689f + xyz.Y *  1.8758f + xyz.Z *  0.0415f);
+        float b     = 0.01f * (xyz.X *  0.0557f + xyz.Y * -0.2040f + xyz.Z *  1.0570f);
+
+        r           = (r > 0.0031308f) ? 1.055f * (powf(r, 1.0f / 2.4f)) - 0.055f : 12.92f * r;
+        g           = (g > 0.0031308f) ? 1.055f * (powf(g, 1.0f / 2.4f)) - 0.055f : 12.92f * g;
+        b           = (b > 0.0031308f) ? 1.055f * (powf(b, 1.0f / 2.4f)) - 0.055f : 12.92f * b;
+
+        rgb.R       = clamp(r);
+        rgb.G       = clamp(g);
+        rgb.B       = clamp(b);
+
+        mask       |= M_RGB;
+
+        return true;
+    }
+
+    bool Color::lab_to_xyz() const
+    {
+        if (!(mask & M_LAB))
+            return false;
+
+        float y     = (lab.L / 116.0f ) + 16.0f / 116.0f;
+        float x     = (lab.A / 500.0f ) + y;
+        float z     = (lab.B / -200.0f) + y;
+
+        float y3    = y*y*y;
+        float x3    = x*x*x;
+        float z3    = z*z*z;
+
+        y           = (y3 > 0.008856f) ? y3 : (y - 16.0f / 116.0f) / 7.787f;
+        x           = (x3 > 0.008856f) ? x3 : (x - 16.0f / 116.0f) / 7.787f;
+        z           = (z3 > 0.008856f) ? z3 : (z - 16.0f / 116.0f) / 7.787f;
+
+        xyz.X       = x * 95.047f;
+        xyz.Y       = y * 100.0f;
+        xyz.Z       = z * 108.883f;
+
+        mask       |= M_XYZ;
+
+        return true;
+    }
+
     Color::rgb_t &Color::calc_rgb() const
     {
+        // Check if RGB is present
         if (mask & M_RGB)
             return rgb;
 
-        if (mask & M_HSL)
+        // Try to convert HSL -> RGB
+        if (hsl_to_rgb())
+            return rgb;
+
+        // Try to convert XYZ -> RGB
+        if (xyz_to_rgb())
+            return rgb;
+
+        // Try to convert LAB -> XYZ -> RGB
+        if (lab_to_xyz())
         {
-            // Convert HSL to RGB
-            if (hsl.S > 0.0f)
-            {
-                float Q     = (hsl.L < 0.5f) ? hsl.L * (1.0f + hsl.S) : hsl.L + hsl.S - hsl.L*hsl.S;
-                float P     = hsl.L + hsl.L - Q; // 2.0 * L - Q
-                float D     = 6.0f * (Q - P);
-
-                float TR    = hsl.H + HSL_RGB_1_3;
-                float TG    = hsl.H;
-                float TB    = hsl.H - HSL_RGB_1_3;
-
-                if (TR > 1.0f)
-                    TR  -= 1.0f;
-                if (TB < 0.0f)
-                    TB  += 1.0f;
-
-                if (TR < 0.5f)
-                    rgb.R       = (TR < HSL_RGB_1_6) ? P + D * TR : Q;
-                else
-                    rgb.R       = (TR < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TR) : P;
-
-                if (TG < 0.5f)
-                    rgb.G       = (TG < HSL_RGB_1_6) ? P + D * TG : Q;
-                else
-                    rgb.G       = (TG < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TG) : P;
-
-                if (TB < 0.5f)
-                    rgb.B       = (TB < HSL_RGB_1_6) ? P + D * TB : Q;
-                else
-                    rgb.B       = (TB < HSL_RGB_2_3) ? P + D * (HSL_RGB_2_3 -  TB) : P;
-            }
-            else
-            {
-                rgb.R   = hsl.L;
-                rgb.G   = hsl.L;
-                rgb.B   = hsl.L;
-            }
+            if (xyz_to_rgb())
+                return rgb;
         }
-        else // mask & M_XYZ
-        {
-            // Convert XYZ to RGB
-            float r = 0.01f * (xyz.X *  3.2406f + xyz.Y * -1.5372f + xyz.Z * -0.4986f);
-            float g = 0.01f * (xyz.X * -0.9689f + xyz.Y *  1.8758f + xyz.Z *  0.0415f);
-            float b = 0.01f * (xyz.X *  0.0557f + xyz.Y * -0.2040f + xyz.Z *  1.0570f);
 
-            r       = (r > 0.0031308f) ? 1.055f * (powf(r, 1.0f / 2.4f)) - 0.055f : 12.92f * r;
-            g       = (g > 0.0031308f) ? 1.055f * (powf(g, 1.0f / 2.4f)) - 0.055f : 12.92f * g;
-            b       = (b > 0.0031308f) ? 1.055f * (powf(b, 1.0f / 2.4f)) - 0.055f : 12.92f * b;
-
-            rgb.R   = clamp(r);
-            rgb.G   = clamp(g);
-            rgb.B   = clamp(b);
-        } // else
-
+        // Fallback case
         mask |= M_RGB;
+
         return rgb;
     }
 
@@ -448,6 +526,29 @@ namespace lsp
         xyz.Z       = 100.0f * (r * 0.0193f + g * 0.1192f + b * 0.9505f);
 
         return xyz;
+    }
+
+    Color::lab_t &Color::calc_lab() const
+    {
+        if (mask & M_LAB)
+            return lab;
+
+        // At this moment we can convert color to LAB only from XYZ
+        calc_xyz();
+
+        float x     = xyz.X / 95.047f;
+        float y     = xyz.Y / 100.0f;
+        float z     = xyz.Z / 108.883f;
+
+        x           = (x > 0.008856f) ? powf(x, 1.0f / 3.0f) : (7.787f * x) + (16.0f / 116.0f);
+        y           = (y > 0.008856f) ? powf(y, 1.0f / 3.0f) : (7.787f * y) + (16.0f / 116.0f);
+        z           = (z > 0.008856f) ? powf(z, 1.0f / 3.0f) : (7.787f * z) + (16.0f / 116.0f);
+
+        lab.L       = (116.0f * y) - 16.0f;
+        lab.A       = 500.0f * (x - y);
+        lab.B       = 200.0f * (y - z);
+
+        return lab;
     }
 
     Color &Color::set_rgb(float r, float g, float b)
@@ -640,6 +741,7 @@ namespace lsp
         rgb     = c.rgb;
         hsl     = c.hsl;
         xyz     = c.xyz;
+        lab     = c.lab;
         A       = c.A;
         mask    = c.mask;
 
@@ -651,6 +753,7 @@ namespace lsp
         rgb     = c->rgb;
         hsl     = c->hsl;
         xyz     = c->xyz;
+        lab     = c->lab;
         A       = c->A;
         mask    = c->mask;
 
@@ -662,6 +765,7 @@ namespace lsp
         rgb     = c.rgb;
         hsl     = c.hsl;
         xyz     = c.xyz;
+        lab     = c.lab;
         A       = clamp(a);
         mask    = c.mask;
 
@@ -673,10 +777,20 @@ namespace lsp
         rgb     = c->rgb;
         hsl     = c->hsl;
         xyz     = c->xyz;
+        lab     = c->lab;
         A       = clamp(a);
         mask    = c->mask;
 
         return *this;
+    }
+
+    void Color::swap(Color *c)
+    {
+        lsp::swap(rgb, c->rgb);
+        lsp::swap(hsl, c->hsl);
+        lsp::swap(lab, c->lab);
+        lsp::swap(A, c->A);
+        lsp::swap(mask, c->mask);
     }
 
     ssize_t Color::format(char *dst, size_t len, size_t tolerance, const float *v, char prefix, bool alpha)
@@ -998,6 +1112,10 @@ namespace lsp
             set_xyza(v[0], v[1], v[2], 0.0f);
         else if ((res = parse_cnumeric(v, 4, 4, "xyza", src, len)) == STATUS_OK)
             set_xyza(v[0], v[1], v[2], v[3]);
+        else if ((res = parse_cnumeric(v, 3, 3, "lab", src, len)) == STATUS_OK)
+            set_laba(v[0], v[1], v[2], 0.0f);
+        else if ((res = parse_cnumeric(v, 4, 4, "laba", src, len)) == STATUS_OK)
+            set_laba(v[0], v[1], v[2], v[3]);
 
         if (saved != NULL)
             ::setlocale(LC_NUMERIC, saved);
@@ -1076,14 +1194,6 @@ namespace lsp
             (uint32_t(hsl.H * 0xff + 0.25f) << 16) |
             (uint32_t(hsl.S * 0xff + 0.25f) << 8) |
             (uint32_t(hsl.L * 0xff + 0.25f) << 0);
-    }
-
-    void Color::swap(Color *c)
-    {
-        lsp::swap(rgb, c->rgb);
-        lsp::swap(hsl, c->hsl);
-        lsp::swap(A, c->A);
-        lsp::swap(mask, c->mask);
     }
 
     const Color &Color::get_xyz(float &x, float &y, float &z) const
@@ -1165,6 +1275,84 @@ namespace lsp
         xyz.Z   = lsp_limit(z, 0.0f, 110.0f);
         A       = a;
         mask    = M_XYZ;
+        return *this;
+    }
+
+    const Color &Color::get_lab(float &l, float &a, float &b) const
+    {
+        calc_lab();
+        l       = lab.L;
+        a       = lab.A;
+        b       = lab.B;
+        return *this;
+    }
+
+    Color &Color::get_lab(float &l, float &a, float &b)
+    {
+        calc_lab();
+        l       = lab.L;
+        a       = lab.A;
+        b       = lab.B;
+        return *this;
+    }
+
+    const Color &Color::get_laba(float &l, float &a, float &b, float &alpha) const
+    {
+        calc_lab();
+        l       = lab.L;
+        a       = lab.A;
+        b       = lab.B;
+        alpha   = A;
+        return *this;
+    }
+
+    Color &Color::get_laba(float &l, float &a, float &b, float &alpha)
+    {
+        calc_lab();
+        l       = lab.L;
+        a       = lab.A;
+        b       = lab.B;
+        alpha   = A;
+        return *this;
+    }
+
+    Color &Color::lab_l(float l)
+    {
+        calc_lab().L    = l;
+        mask            = M_LAB;
+        return *this;
+    }
+
+    Color &Color::lab_a(float a)
+    {
+        calc_lab().A    = a;
+        mask            = M_LAB;
+        return *this;
+    }
+
+    Color &Color::lab_b(float b)
+    {
+        calc_lab().B    = b;
+        mask            = M_LAB;
+        return *this;
+    }
+
+    Color &Color::set_lab(float l, float a, float b)
+    {
+        lab.L   = l;
+        lab.A   = a;
+        lab.B   = b;
+        mask    = M_LAB;
+        return *this;
+    }
+
+    Color &Color::set_laba(float l, float a, float b, float alpha)
+    {
+        lab.L   = l;
+        lab.A   = a;
+        lab.B   = b;
+        A       = alpha;
+        mask    = M_LAB;
         return *this;
     }
 

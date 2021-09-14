@@ -41,9 +41,10 @@ namespace lsp
         protected:
             enum mask_t
             {
-                M_RGB           = 1 << 0,
-                M_HSL           = 1 << 1,
-                M_XYZ           = 1 << 2
+                M_RGB           = 1 << 0,   // Standard RGB color components
+                M_HSL           = 1 << 1,   // Hue/Saturation/Lightness components
+                M_XYZ           = 1 << 2,   // CIE XYZ components
+                M_LAB           = 1 << 3,   // CIE LAB D65 standard components
             };
 
             typedef struct rgb_t
@@ -61,16 +62,27 @@ namespace lsp
                 float   X, Y, Z;
             } xyz_t;
 
+            typedef struct lab_t
+            {
+                float   L, A, B;
+            } lab_t;
+
         protected:
             mutable rgb_t   rgb;
             mutable hsl_t   hsl;
             mutable xyz_t   xyz;
+            mutable lab_t   lab;
             mutable size_t  mask;
             mutable float   A;
 
             rgb_t          &calc_rgb() const;
             hsl_t          &calc_hsl() const;
             xyz_t          &calc_xyz() const;
+            lab_t          &calc_lab() const;
+
+            bool            hsl_to_rgb() const;
+            bool            xyz_to_rgb() const;
+            bool            lab_to_xyz() const;
 
         protected:
             static status_t     parse_hex(float *dst, size_t n, char prefix, const char *src, size_t len);
@@ -194,9 +206,9 @@ namespace lsp
             status_t        parse_hsla(const LSPString *src, size_t len)    { return parse_hsla(src->get_utf8(0, len));     }
             status_t        parse_hsla(const LSPString *src)                { return parse_hsla(src->get_utf8());           }
 
-        // XYZ-related functions
+        // CIE XYZ-related functions (D65 standard)
         public:
-            // Check that HSL data is currently present without need of implicit conversion
+            // Check that XYZ data is currently present without need of implicit conversion
             inline bool     is_xyz() const          { return mask & M_XYZ;      }
 
             // Get color components
@@ -216,6 +228,29 @@ namespace lsp
 
             Color          &set_xyz(float x, float y, float z);
             Color          &set_xyza(float x, float y, float z, float a);
+
+        // CIE LAB-related functions
+        public:
+            // Check that HSL data is currently present without need of implicit conversion
+            inline bool     is_lab() const          { return mask & M_LAB;      }
+
+            // Get color components
+            inline float    lab_l() const           { return calc_lab().L;      }
+            inline float    lab_a() const           { return calc_lab().A;      }
+            inline float    lab_b() const           { return calc_lab().B;      }
+
+            const Color    &get_lab(float &l, float &a, float &b) const;
+            Color          &get_lab(float &l, float &a, float &b);
+            const Color    &get_laba(float &l, float &a, float &b, float &alpha) const;
+            Color          &get_laba(float &l, float &a, float &b, float &alpha);
+
+            // Update color components
+            Color          &lab_l(float l);
+            Color          &lab_a(float a);
+            Color          &lab_b(float b);
+
+            Color          &set_lab(float l, float a, float b);
+            Color          &set_laba(float l, float a, float b, float alpha);
 
         // Alpha-blending channel
         public:
