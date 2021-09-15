@@ -1198,6 +1198,98 @@ namespace lsp
         return res;
     }
 
+    ssize_t Color::format3(char *dst, size_t len)
+    {
+        // Save and update locale
+        char *saved = ::setlocale(LC_NUMERIC, NULL);
+        if (saved != NULL)
+        {
+            size_t len = ::strlen(saved) + 1;
+            char *saved_copy = static_cast<char *>(alloca(len));
+            ::memcpy(saved_copy, saved, len);
+            saved       = saved_copy;
+        }
+        ::setlocale(LC_NUMERIC, "C");
+
+        ssize_t res = 0;
+        if (is_rgb())
+            res = snprintf(dst, len, "rgb(%.4f, %.4f, %.4f)", rgb.R, rgb.G, rgb.B);
+        else if (is_hsl())
+            res = snprintf(dst, len, "hsl(%.4f, %.4f, %.4f)", hsl.H * 360.0f, hsl.S, hsl.L * 200.0f);
+        else if (is_lch())
+            res = snprintf(dst, len, "hcl(%.4f, %.4f, %.4f)", lch.H, lch.C, lch.L);
+        else if (is_lab())
+            res = snprintf(dst, len, "lab(%.4f, %.4f, %.4f)", lab.L, lab.A, lab.B);
+        else if (is_xyz())
+            res = snprintf(dst, len, "xyz(%.4f, %.4f, %.4f)", xyz.X, xyz.Y, xyz.Z);
+        else
+            res = snprintf(dst, len, "rgb(%.4f, %.4f, %.4f)", rgb.R, rgb.G, rgb.B);
+
+        if (saved != NULL)
+            ::setlocale(LC_NUMERIC, saved);
+
+        return res;
+    }
+
+    ssize_t Color::format4(char *dst, size_t len)
+    {
+        // Save and update locale
+        char *saved = ::setlocale(LC_NUMERIC, NULL);
+        if (saved != NULL)
+        {
+            size_t len = ::strlen(saved) + 1;
+            char *saved_copy = static_cast<char *>(alloca(len));
+            ::memcpy(saved_copy, saved, len);
+            saved       = saved_copy;
+        }
+        ::setlocale(LC_NUMERIC, "C");
+
+        ssize_t res = 0;
+        if (is_rgb())
+            res = snprintf(dst, len, "rgba(%.4f, %.4f, %.4f, %.4f)", rgb.R, rgb.G, rgb.B, A);
+        else if (is_hsl())
+            res = snprintf(dst, len, "hsla(%.4f, %.4f, %.4f, %.4f)", hsl.H * 360.0f, hsl.S, hsl.L * 200.0f, A);
+        else if (is_lch())
+            res = snprintf(dst, len, "hcla(%.4f, %.4f, %.4f, %.4f)", lch.H, lch.C, lch.L, A);
+        else if (is_lab())
+            res = snprintf(dst, len, "laba(%.4f, %.4f, %.4f, %.4f)", lab.L, lab.A, lab.B, A);
+        else if (is_xyz())
+            res = snprintf(dst, len, "xyza(%.4f, %.4f, %.4f, %.4f)", xyz.X, xyz.Y, xyz.Z, A);
+        else
+            res = snprintf(dst, len, "rgba(%.4f, %.4f, %.4f, %.4f)", rgb.R, rgb.G, rgb.B, A);
+
+        if (saved != NULL)
+            ::setlocale(LC_NUMERIC, saved);
+
+        return res;
+    }
+
+    ssize_t Color::format3(LSPString *dst, size_t len)
+    {
+        if (dst == NULL)
+            return -STATUS_BAD_ARGUMENTS;
+
+        char buf[64];
+        ssize_t res = format3(buf, sizeof(buf) / sizeof(char));
+        if (res < 0)
+            return res;
+
+        return (dst->set_ascii(buf, res)) ? res : -STATUS_NO_MEM;
+    }
+
+    ssize_t Color::format4(LSPString *dst, size_t len)
+    {
+        if (dst == NULL)
+            return -STATUS_BAD_ARGUMENTS;
+
+        char buf[64];
+        ssize_t res = format3(buf, sizeof(buf) / sizeof(char));
+        if (res < 0)
+            return res;
+
+        return (dst->set_ascii(buf, res)) ? res : -STATUS_NO_MEM;
+    }
+
     status_t Color::parse_rgba(const char *src)
     {
         return (src != NULL) ? parse_rgba(src, ::strlen(src)) : STATUS_BAD_ARGUMENTS;
@@ -1501,6 +1593,84 @@ namespace lsp
     }
 
     Color &Color::set_lcha(float l, float c, float h, float alpha)
+    {
+        lch.L   = l;
+        lch.C   = c;
+        lch.H   = h;
+        A       = alpha;
+        mask    = M_LCH;
+        return *this;
+    }
+
+    const Color &Color::get_hcl(float &h, float &c, float &l) const
+    {
+        calc_lch();
+        l       = lch.L;
+        c       = lch.C;
+        h       = lch.H;
+        return *this;
+    }
+
+    Color &Color::get_hcl(float &h, float &c, float &l)
+    {
+        calc_lch();
+        l       = lch.L;
+        c       = lch.C;
+        h       = lch.H;
+        return *this;
+    }
+
+    const Color &Color::get_hcla(float &h, float &c, float &l, float &alpha) const
+    {
+        calc_lch();
+        l       = lch.L;
+        c       = lch.C;
+        h       = lch.H;
+        alpha   = A;
+        return *this;
+    }
+
+    Color &Color::get_hcla(float &h, float &c, float &l, float &alpha)
+    {
+        calc_lch();
+        l       = lch.L;
+        c       = lch.C;
+        h       = lch.H;
+        alpha   = A;
+        return *this;
+    }
+
+    Color &Color::hcl_l(float l)
+    {
+        calc_lch().L    = l;
+        mask            = M_LCH;
+        return *this;
+    }
+
+    Color &Color::hcl_c(float c)
+    {
+        calc_lch().C    = c;
+        mask            = M_LCH;
+        return *this;
+    }
+
+    Color &Color::hcl_h(float h)
+    {
+        calc_lch().H    = h;
+        mask            = M_LCH;
+        return *this;
+    }
+
+    Color &Color::set_hcl(float h, float c, float l)
+    {
+        lch.L   = l;
+        lch.C   = c;
+        lch.H   = h;
+        mask    = M_LCH;
+        return *this;
+    }
+
+    Color &Color::set_hcla(float h, float c, float l, float alpha)
     {
         lch.L   = l;
         lch.C   = c;

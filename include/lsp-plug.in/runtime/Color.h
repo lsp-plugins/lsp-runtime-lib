@@ -265,24 +265,37 @@ namespace lsp
         public:
             // Check that LCH data is currently present without need of implicit conversion
             inline bool     is_lch() const          { return mask & M_LCH;      }
+            inline bool     is_hcl() const          { return mask & M_LCH;      }
 
             // Get color components
             inline float    lch_l() const           { return calc_lch().L;      }
             inline float    lch_c() const           { return calc_lch().C;      }
             inline float    lch_h() const           { return calc_lch().H;      }
+            inline float    hcl_l() const           { return calc_lch().L;      }
+            inline float    hcl_c() const           { return calc_lch().C;      }
+            inline float    hcl_h() const           { return calc_lch().H;      }
 
             const Color    &get_lch(float &l, float &c, float &h) const;
             Color          &get_lch(float &l, float &c, float &h);
             const Color    &get_lcha(float &l, float &c, float &h, float &alpha) const;
             Color          &get_lcha(float &l, float &c, float &h, float &alpha);
+            const Color    &get_hcl(float &h, float &c, float &l) const;
+            Color          &get_hcl(float &h, float &c, float &l);
+            const Color    &get_hcla(float &h, float &c, float &l, float &alpha) const;
+            Color          &get_hcla(float &h, float &c, float &l, float &alpha);
 
             // Update color components
             Color          &lch_l(float l);
             Color          &lch_c(float c);
             Color          &lch_h(float h);
+            Color          &hcl_l(float l);
+            Color          &hcl_c(float c);
+            Color          &hcl_h(float h);
 
             Color          &set_lch(float l, float c, float h);
             Color          &set_lcha(float l, float c, float h, float alpha);
+            Color          &set_hcl(float h, float c, float l);
+            Color          &set_hcla(float h, float c, float l, float alpha);
 
         // Alpha-blending channel
         public:
@@ -304,6 +317,12 @@ namespace lsp
             inline status_t parse3(const LSPString *src)                    { return parse3(src->get_utf8());               }
             inline status_t parse4(const LSPString *src, size_t len)        { return parse4(src->get_utf8(0, len));         }
             inline status_t parse4(const LSPString *src)                    { return parse4(src->get_utf8());               }
+
+            // Formatting data
+            ssize_t         format3(char *dst, size_t len);
+            ssize_t         format3(LSPString *dst, size_t len);
+            ssize_t         format4(char *dst, size_t len);
+            ssize_t         format4(LSPString *dst, size_t len);
 
         // Miscellaneous effects
         public:
