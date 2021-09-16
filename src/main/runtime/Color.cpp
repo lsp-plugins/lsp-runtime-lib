@@ -854,9 +854,9 @@ namespace lsp
 
     void Color::scale_lightness(float amount)
     {
-        calc_hsl();
-        hsl.L   = clamp(amount * hsl.L);
-        mask    = M_HSL;
+        calc_lch();
+        lch.L   = lsp_limit(amount * lch.L, 0.0f, 100.0f);
+        mask    = M_LCH;
     }
 
     ssize_t Color::format(char *dst, size_t len, size_t tolerance, const float *v, char prefix, bool alpha)
