@@ -9,7 +9,7 @@
 - Added support of CIE LAB D65 color space by the lsp::Color utility class.
 - Added support of CIE LCH D65 color space by the lsp::Color utility class.
 - Added support of function-look color parsing by the lsp::Color utility class.
-- Color::scale_lightness now uses LCH color scheme instead of HSL.
+- Color::scale_lightness renamed to Color::scale_hsl_lightness, added Color::scale_lch_luminance.
 
 === 0.5.10 ===
 * Added support of boolean parameters by the configuration parser.

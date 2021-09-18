@@ -152,7 +152,9 @@ namespace lsp
 
             // Formatting
             ssize_t         format_rgb(char *dst, size_t len, size_t tolerance = 2) const;
+            ssize_t         format_rgb(LSPString *dst, size_t tolerance = 2) const;
             ssize_t         format_rgba(char *dst, size_t len, size_t tolerance = 2) const;
+            ssize_t         format_rgba(LSPString *dst, size_t tolerance = 2) const;
 
             // Parsing
             status_t        parse_rgb(const char *src, size_t len);
@@ -202,7 +204,9 @@ namespace lsp
 
             // Formatting
             ssize_t         format_hsl(char *dst, size_t len, size_t tolerance = 2) const;
+            ssize_t         format_hsl(LSPString *dst, size_t tolerance = 2) const;
             ssize_t         format_hsla(char *dst, size_t len, size_t tolerance = 2) const;
+            ssize_t         format_hsla(LSPString *dst, size_t tolerance = 2) const;
 
             // Parsing
             status_t        parse_hsl(const char *src, size_t len);
@@ -319,10 +323,10 @@ namespace lsp
             inline status_t parse4(const LSPString *src)                    { return parse4(src->get_utf8());               }
 
             // Formatting data
-            ssize_t         format3(char *dst, size_t len);
-            ssize_t         format3(LSPString *dst, size_t len);
-            ssize_t         format4(char *dst, size_t len);
-            ssize_t         format4(LSPString *dst, size_t len);
+            ssize_t         format3(char *dst, size_t len) const;
+            ssize_t         format3(LSPString *dst) const;
+            ssize_t         format4(char *dst, size_t len) const;
+            ssize_t         format4(LSPString *dst) const;
 
         // Miscellaneous effects
         public:
@@ -331,7 +335,8 @@ namespace lsp
             Color          &darken(float amount);
             Color          &lighten(float amount);
             Color          &blend(const Color &c1, const Color &c2, float alpha);
-            void            scale_lightness(float amount);
+            void            scale_hsl_lightness(float amount);
+            void            scale_lch_luminance(float amount);
     };
 
 } /* namespace lsp */

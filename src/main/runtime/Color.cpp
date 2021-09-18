@@ -852,7 +852,14 @@ namespace lsp
         return *this;
     }
 
-    void Color::scale_lightness(float amount)
+    void Color::scale_hsl_lightness(float amount)
+    {
+        calc_hsl();
+        hsl.L   = clamp(amount * hsl.L);
+        mask    = M_HSL;
+    }
+
+    void Color::scale_lch_luminance(float amount)
     {
         calc_lch();
         lch.L   = lsp_limit(amount * lch.L, 0.0f, 100.0f);
@@ -958,6 +965,42 @@ namespace lsp
         float v[4];
         get_hsla(v[0], v[1], v[2], v[3]);
         return format(dst, len, tolerance, v, '@', true);
+    }
+
+    ssize_t Color::format_rgb(LSPString *dst, size_t tolerance) const
+    {
+        char tmp[32];
+        ssize_t res = format_rgb(tmp, sizeof(tmp), tolerance);
+        if (res < 0)
+            return res;
+        return (dst->set_ascii(tmp)) ? res : -STATUS_NO_MEM;
+    }
+
+    ssize_t Color::format_rgba(LSPString *dst, size_t tolerance) const
+    {
+        char tmp[32];
+        ssize_t res = format_rgba(tmp, sizeof(tmp), tolerance);
+        if (res < 0)
+            return res;
+        return (dst->set_ascii(tmp)) ? res : -STATUS_NO_MEM;
+    }
+
+    ssize_t Color::format_hsl(LSPString *dst, size_t tolerance) const
+    {
+        char tmp[32];
+        ssize_t res = format_hsl(tmp, sizeof(tmp), tolerance);
+        if (res < 0)
+            return res;
+        return (dst->set_ascii(tmp)) ? res : -STATUS_NO_MEM;
+    }
+
+    ssize_t Color::format_hsla(LSPString *dst, size_t tolerance) const
+    {
+        char tmp[32];
+        ssize_t res = format_hsla(tmp, sizeof(tmp), tolerance);
+        if (res < 0)
+            return res;
+        return (dst->set_ascii(tmp)) ? res : -STATUS_NO_MEM;
     }
 
     status_t Color::parse_hex(float *dst, size_t n, char prefix, const char *src, size_t len)
@@ -1198,7 +1241,7 @@ namespace lsp
         return res;
     }
 
-    ssize_t Color::format3(char *dst, size_t len)
+    ssize_t Color::format3(char *dst, size_t len) const
     {
         // Save and update locale
         char *saved = ::setlocale(LC_NUMERIC, NULL);
@@ -1215,7 +1258,7 @@ namespace lsp
         if (is_rgb())
             res = snprintf(dst, len, "rgb(%.4f, %.4f, %.4f)", rgb.R, rgb.G, rgb.B);
         else if (is_hsl())
-            res = snprintf(dst, len, "hsl(%.4f, %.4f, %.4f)", hsl.H * 360.0f, hsl.S, hsl.L * 200.0f);
+            res = snprintf(dst, len, "hsl(%.4f, %.4f, %.4f)", hsl.H * 360.0f, hsl.S * 100.0f, hsl.L * 200.0f);
         else if (is_lch())
             res = snprintf(dst, len, "hcl(%.4f, %.4f, %.4f)", lch.H, lch.C, lch.L);
         else if (is_lab())
@@ -1231,7 +1274,7 @@ namespace lsp
         return res;
     }
 
-    ssize_t Color::format4(char *dst, size_t len)
+    ssize_t Color::format4(char *dst, size_t len) const
     {
         // Save and update locale
         char *saved = ::setlocale(LC_NUMERIC, NULL);
@@ -1248,7 +1291,7 @@ namespace lsp
         if (is_rgb())
             res = snprintf(dst, len, "rgba(%.4f, %.4f, %.4f, %.4f)", rgb.R, rgb.G, rgb.B, A);
         else if (is_hsl())
-            res = snprintf(dst, len, "hsla(%.4f, %.4f, %.4f, %.4f)", hsl.H * 360.0f, hsl.S, hsl.L * 200.0f, A);
+            res = snprintf(dst, len, "hsla(%.4f, %.4f, %.4f, %.4f)", hsl.H * 360.0f, hsl.S * 100.0f, hsl.L * 200.0f, A);
         else if (is_lch())
             res = snprintf(dst, len, "hcla(%.4f, %.4f, %.4f, %.4f)", lch.H, lch.C, lch.L, A);
         else if (is_lab())
@@ -1264,7 +1307,7 @@ namespace lsp
         return res;
     }
 
-    ssize_t Color::format3(LSPString *dst, size_t len)
+    ssize_t Color::format3(LSPString *dst) const
     {
         if (dst == NULL)
             return -STATUS_BAD_ARGUMENTS;
@@ -1277,7 +1320,7 @@ namespace lsp
         return (dst->set_ascii(buf, res)) ? res : -STATUS_NO_MEM;
     }
 
-    ssize_t Color::format4(LSPString *dst, size_t len)
+    ssize_t Color::format4(LSPString *dst) const
     {
         if (dst == NULL)
             return -STATUS_BAD_ARGUMENTS;
