@@ -446,6 +446,84 @@ UTEST_BEGIN("runtime.runtime", color)
         UTEST_ASSERT(test_rgb2lab("#00ccff",   76.3176f,  -24.3449f,  -36.6835f ));
     }
 
+    bool test_rgb2cmyk(const char *value, float c, float m, float y, float k)
+    {
+        Color c1, c2, c3;
+        char buf1[32], buf2[32];
+        float cc[2], cm[2], cy[2], ck[2];
+
+        // Perform RGB -> XYZ conversion
+        UTEST_ASSERT(c1.parse3(value) == STATUS_OK);
+        printf("  col  = %s\n", value);
+        printf("  chk  = cmyk(%f, %f, %f, %f)\n", c, m, y, k);
+
+        cc[0] = c1.cyan();
+        cm[0] = c1.magenta();
+        cy[0] = c1.yellow();
+        ck[0] = c1.black();
+        c1.get_cmyk(cc[1], cm[1], cy[1], ck[1]);
+
+        printf("  cmyk = (%f, %f, %f, %f)\n", cc[0], cm[0], cy[0], ck[0]);
+        if ((cc[0] != cc[1]) || (cm[0] != cm[1]) || (cy[0] != cy[1]) || (ck[0] != ck[1]))
+            return false;
+        if ((!float_equals_adaptive(c, cc[0], 1e-4f)) ||
+            (!float_equals_adaptive(m, cm[0], 1e-4f)) ||
+            (!float_equals_adaptive(y, cy[0], 1e-4f)) ||
+            (!float_equals_adaptive(k, ck[0], 1e-4f)))
+            return false;
+
+        // Perform XYZ -> RGB conversion
+        c2.cyan(c);
+        c2.magenta(m);
+        c2.yellow(y);
+        c2.black(k);
+        c2.format_rgb(buf1, sizeof(buf1), 2);
+        printf("  rgb  = %s\n", buf1);
+
+        c3.set_cmyk(c, m, y, k);
+        c3.format_rgb(buf2, sizeof(buf2), 2);
+        if (strcmp(buf1, buf2) != 0)
+            return false;
+
+        // Check components
+        uint32_t v1 = c1.rgb24(), v2 = c2.rgb24();
+
+        return
+            check_component(v1 & 0xff, v2 & 0xff, 1) &&
+            check_component((v1 >> 8) & 0xff, (v2 >> 8) & 0xff, 1) &&
+            check_component((v1 >> 16) & 0xff, (v2 >> 16) & 0xff, 1);
+    }
+
+    void test_convert_cmyk()
+    {
+        printf("Testing RGB <-> CMYK conversion...\n");
+
+        UTEST_ASSERT(test_rgb2cmyk("#000000", 0.0f, 0.0f, 0.0f, 1.0f));
+
+        UTEST_ASSERT(test_rgb2cmyk("#ff0000", 0.000000f, 1.000000f, 1.000000f, 0.000000f ));
+        UTEST_ASSERT(test_rgb2cmyk("#00ff00", 1.000000f, 0.000000f, 1.000000f, 0.000000f ));
+        UTEST_ASSERT(test_rgb2cmyk("#0000ff", 1.000000f, 1.000000f, 0.000000f, 0.000000f ));
+        UTEST_ASSERT(test_rgb2cmyk("#ffff00", 0.000000f, 0.000000f, 1.000000f, 0.000000f ));
+        UTEST_ASSERT(test_rgb2cmyk("#ff00ff", 0.000000f, 1.000000f, 0.000000f, 0.000000f ));
+        UTEST_ASSERT(test_rgb2cmyk("#00ffff", 1.000000f, 0.000000f, 0.000000f, 0.000000f ));
+        UTEST_ASSERT(test_rgb2cmyk("#ffffff", 0.000000f, 0.000000f, 0.000000f, 0.000000f ));
+
+        UTEST_ASSERT(test_rgb2cmyk("#880000", 0.000000f, 1.000000f, 1.000000f, 0.466667f ));
+        UTEST_ASSERT(test_rgb2cmyk("#008800", 1.000000f, 0.000000f, 1.000000f, 0.466667f ));
+        UTEST_ASSERT(test_rgb2cmyk("#000088", 1.000000f, 1.000000f, 0.000000f, 0.466667f ));
+        UTEST_ASSERT(test_rgb2cmyk("#888800", 0.000000f, 0.000000f, 1.000000f, 0.466667f ));
+        UTEST_ASSERT(test_rgb2cmyk("#880088", 0.000000f, 1.000000f, 0.000000f, 0.466667f ));
+        UTEST_ASSERT(test_rgb2cmyk("#008888", 1.000000f, 0.000000f, 0.000000f, 0.466667f ));
+        UTEST_ASSERT(test_rgb2cmyk("#888888", 0.000000f, 0.000000f, 0.000000f, 0.466667f ));
+
+        UTEST_ASSERT(test_rgb2cmyk("#ffcc00", 0.000000f, 0.200000f, 1.000000f, 0.000000f ));
+        UTEST_ASSERT(test_rgb2cmyk("#ff00cc", 0.000000f, 1.000000f, 0.200000f, 0.000000f ));
+        UTEST_ASSERT(test_rgb2cmyk("#00ffcc", 1.000000f, 0.000000f, 0.200000f, 0.000000f ));
+        UTEST_ASSERT(test_rgb2cmyk("#ccff00", 0.200000f, 0.000000f, 1.000000f, 0.000000f ));
+        UTEST_ASSERT(test_rgb2cmyk("#cc00ff", 0.200000f, 1.000000f, 0.000000f, 0.000000f ));
+        UTEST_ASSERT(test_rgb2cmyk("#00ccff", 1.000000f, 0.200000f, 0.000000f, 0.000000f ));
+    }
+
     UTEST_MAIN
     {
         test_parse_rgb();
@@ -457,6 +535,7 @@ UTEST_BEGIN("runtime.runtime", color)
         test_convert_hsl();
         test_convert_xyz();
         test_convert_lab();
+        test_convert_cmyk();
     }
 
 UTEST_END

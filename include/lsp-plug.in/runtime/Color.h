@@ -46,6 +46,7 @@ namespace lsp
                 M_XYZ           = 1 << 2,   // CIE XYZ components
                 M_LAB           = 1 << 3,   // CIE LAB D65 standard components
                 M_LCH           = 1 << 4,   // CIE LCH D65 standard components
+                M_CMYK          = 1 << 5,   // CMYK color space
             };
 
             typedef struct rgb_t
@@ -73,12 +74,18 @@ namespace lsp
                 float   L, C, H;
             } lch_t;
 
+            typedef struct cmyk_t
+            {
+                float   C, M, Y, K;
+            } cmyk_t;
+
         protected:
             mutable rgb_t   rgb;
             mutable hsl_t   hsl;
             mutable xyz_t   xyz;
             mutable lab_t   lab;
             mutable lch_t   lch;
+            mutable cmyk_t  cmyk;
             mutable size_t  mask;
             mutable float   A;
 
@@ -87,11 +94,13 @@ namespace lsp
             xyz_t          &calc_xyz() const;
             lab_t          &calc_lab() const;
             lch_t          &calc_lch() const;
+            cmyk_t         &calc_cmyk() const;
 
             bool            hsl_to_rgb() const;
             bool            xyz_to_rgb() const;
             bool            lab_to_xyz() const;
             bool            lch_to_lab() const;
+            bool            cmyk_to_rgb() const;
 
         protected:
             static status_t     parse_hex(float *dst, size_t n, char prefix, const char *src, size_t len);
@@ -300,6 +309,28 @@ namespace lsp
             Color          &set_lcha(float l, float c, float h, float alpha);
             Color          &set_hcl(float h, float c, float l);
             Color          &set_hcla(float h, float c, float l, float alpha);
+
+        // CMYK color space
+        public:
+            inline bool     is_cmyk() const         { return mask & M_CMYK;     }
+            inline float    cyan() const            { return calc_cmyk().C;     }
+            inline float    magenta() const         { return calc_cmyk().M;     }
+            inline float    yellow() const          { return calc_cmyk().Y;     }
+            inline float    black() const           { return calc_cmyk().K;     }
+
+            const Color    &get_cmyk(float &c, float &m, float &y, float &k) const;
+            Color          &get_cmyk(float &c, float &m, float &y, float &k);
+            const Color    &get_cmyka(float &c, float &m, float &y, float &k, float &alpha) const;
+            Color          &get_cmyka(float &c, float &m, float &y, float &k, float &alpha);
+
+            // Update color components
+            Color          &cyan(float c);
+            Color          &magenta(float m);
+            Color          &yellow(float y);
+            Color          &black(float k);
+
+            Color          &set_cmyk(float c, float m, float y, float k);
+            Color          &set_cmyka(float c, float m, float y, float k, float alpha);
 
         // Alpha-blending channel
         public:

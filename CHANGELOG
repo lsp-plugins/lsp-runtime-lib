@@ -8,6 +8,7 @@
 - Added support of XYZ color space by the lsp::Color utility class.
 - Added support of CIE LAB D65 color space by the lsp::Color utility class.
 - Added support of CIE LCH D65 color space by the lsp::Color utility class.
+- Added support of CMYK color space by the lsp::Color utility class.
 - Added support of function-look color parsing by the lsp::Color utility class.
 - Color::scale_lightness renamed to Color::scale_hsl_lightness, added Color::scale_lch_luminance.
 

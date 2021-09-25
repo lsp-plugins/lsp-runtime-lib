@@ -136,6 +136,10 @@ namespace lsp
         lch.L   = 0.0f;
         lch.C   = 0.0f;
         lch.H   = 0.0f;
+        cmyk.C  = 0.0f;
+        cmyk.M  = 0.0f;
+        cmyk.Y  = 0.0f;
+        cmyk.K  = 0.0f;
         mask    = M_RGB;
         A       = 0.0f;
     }
@@ -155,6 +159,10 @@ namespace lsp
         lch.L   = 0.0f;
         lch.C   = 0.0f;
         lch.H   = 0.0f;
+        cmyk.C  = 0.0f;
+        cmyk.M  = 0.0f;
+        cmyk.Y  = 0.0f;
+        cmyk.K  = 0.0f;
         A       = 0.0f;
     }
 
@@ -173,6 +181,10 @@ namespace lsp
         lch.L   = 0.0f;
         lch.C   = 0.0f;
         lch.H   = 0.0f;
+        cmyk.C  = 0.0f;
+        cmyk.M  = 0.0f;
+        cmyk.Y  = 0.0f;
+        cmyk.K  = 0.0f;
     }
 
     Color::Color(const Color &src)
@@ -182,6 +194,7 @@ namespace lsp
         xyz     = src.xyz;
         lab     = src.lab;
         lch     = src.lch;
+        cmyk    = src.cmyk;
         mask    = src.mask;
         A       = src.A;
     }
@@ -193,6 +206,7 @@ namespace lsp
         xyz     = src.xyz;
         lab     = src.lab;
         lch     = src.lch;
+        cmyk    = src.cmyk;
         mask    = src.mask;
         A       = clamp(a);
     }
@@ -204,6 +218,7 @@ namespace lsp
         xyz     = src->xyz;
         lab     = src->lab;
         lch     = src->lch;
+        cmyk    = src->cmyk;
         mask    = src->mask;
         A       = src->A;
     }
@@ -215,6 +230,7 @@ namespace lsp
         xyz     = src->xyz;
         lab     = src->lab;
         lch     = src->lch;
+        cmyk    = src->cmyk;
         mask    = src->mask;
         A       = clamp(a);
     }
@@ -231,6 +247,10 @@ namespace lsp
         lch.L   = 0.0f;
         lch.C   = 0.0f;
         lch.H   = 0.0f;
+        cmyk.C  = 0.0f;
+        cmyk.M  = 0.0f;
+        cmyk.Y  = 0.0f;
+        cmyk.K  = 0.0f;
     }
 
     Color::Color(uint32_t rgb, float a)
@@ -245,6 +265,10 @@ namespace lsp
         lch.L   = 0.0f;
         lch.C   = 0.0f;
         lch.H   = 0.0f;
+        cmyk.C  = 0.0f;
+        cmyk.M  = 0.0f;
+        cmyk.Y  = 0.0f;
+        cmyk.K  = 0.0f;
         A       = a;
     }
 
@@ -254,6 +278,7 @@ namespace lsp
         hsl     = c.hsl;
         xyz     = c.xyz;
         lab     = c.lab;
+        cmyk    = c.cmyk;
         A       = c.A;
         mask    = c.mask;
 
@@ -267,6 +292,7 @@ namespace lsp
         xyz     = c->xyz;
         lab     = c->lab;
         lch     = c->lch;
+        cmyk    = c->cmyk;
         A       = c->A;
         mask    = c->mask;
 
@@ -280,6 +306,7 @@ namespace lsp
         xyz     = c.xyz;
         lab     = c.lab;
         lch     = c.lch;
+        cmyk    = c.cmyk;
         A       = clamp(a);
         mask    = c.mask;
 
@@ -293,6 +320,7 @@ namespace lsp
         xyz     = c->xyz;
         lab     = c->lab;
         lch     = c->lch;
+        cmyk    = c->cmyk;
         A       = clamp(a);
         mask    = c->mask;
 
@@ -305,6 +333,7 @@ namespace lsp
         lsp::swap(hsl, c->hsl);
         lsp::swap(lab, c->lab);
         lsp::swap(lch, c->lch);
+        lsp::swap(cmyk, c->cmyk);
         lsp::swap(A, c->A);
         lsp::swap(mask, c->mask);
     }
@@ -533,6 +562,21 @@ namespace lsp
         return true;
     }
 
+    bool Color::cmyk_to_rgb() const
+    {
+        if (!(mask & M_CMYK))
+            return false;
+
+        float k1    = 1.0f - cmyk.K;
+        rgb.R       = k1 - cmyk.C * k1;
+        rgb.G       = k1 - cmyk.M * k1;
+        rgb.B       = k1 - cmyk.Y * k1;
+
+        mask       |= M_CMYK;
+
+        return true;
+    }
+
     Color::rgb_t &Color::calc_rgb() const
     {
         // Check if RGB is present
@@ -563,6 +607,10 @@ namespace lsp
                     return rgb;
             }
         }
+
+        // Try to convert CMYK -> RGB
+        if (cmyk_to_rgb())
+            return rgb;
 
         // Fallback case
         mask |= M_RGB;
@@ -605,10 +653,10 @@ namespace lsp
             hsl.S = (hsl.L < 1.0f) ? d / (1.0f - hsl.L) : 0.0f;
 
         // Normalize hue
-        hsl.H  /= 6.0f;
-        hsl.S  *= 0.5f;
+        hsl.H      /= 6.0f;
+        hsl.S      *= 0.5f;
 
-        mask |= M_HSL;
+        mask       |= M_HSL;
 
         return hsl;
     }
@@ -628,6 +676,8 @@ namespace lsp
         xyz.X       = 100.0f * (r * 0.4124f + g * 0.3576f + b * 0.1805f);
         xyz.Y       = 100.0f * (r * 0.2126f + g * 0.7152f + b * 0.0722f);
         xyz.Z       = 100.0f * (r * 0.0193f + g * 0.1192f + b * 0.9505f);
+
+        mask       |= M_XYZ;
 
         return xyz;
     }
@@ -652,6 +702,8 @@ namespace lsp
         lab.A       = 500.0f * (x - y);
         lab.B       = 200.0f * (y - z);
 
+        mask       |= M_LAB;
+
         return lab;
     }
 
@@ -671,7 +723,39 @@ namespace lsp
         lch.C       = sqrtf(lab.A * lab.A + lab.B * lab.B);
         lch.H       = h;
 
+        mask       |= M_LCH;
+
         return lch;
+    }
+
+    Color::cmyk_t &Color::calc_cmyk() const
+    {
+        if (mask & M_CMYK)
+            return cmyk;
+
+        float C = 1.0f - rgb.R;
+        float M = 1.0f - rgb.G;
+        float Y = 1.0f - rgb.B;
+
+        cmyk.K  = lsp_min(C, M, Y);
+        if (cmyk.K >= 1.0f)
+        {
+            cmyk.C  = 0.0f;
+            cmyk.M  = 0.0f;
+            cmyk.Y  = 0.0f;
+        }
+        else
+        {
+            float rk    = 1.0f / (1.0f - cmyk.K);
+
+            cmyk.C  = (C - cmyk.K) * rk;
+            cmyk.M  = (M - cmyk.K) * rk;
+            cmyk.Y  = (Y - cmyk.K) * rk;
+        }
+
+        mask       |= M_CMYK;
+
+        return cmyk;
     }
 
     Color &Color::set_rgb(float r, float g, float b)
@@ -1191,7 +1275,7 @@ namespace lsp
     status_t Color::parse(const char *src, size_t len)
     {
         status_t res;
-        float v[4];
+        float v[5];
         if ((res = parse4(src, len)) == STATUS_OK)
             return res;
         if ((res = parse3(src, len)) == STATUS_OK)
@@ -1233,6 +1317,10 @@ namespace lsp
             set_lcha(v[2], v[1], v[0], 0.0f);
         else if ((res = parse_cnumeric(v, 4, 4, "hcla", src, len)) == STATUS_OK)
             set_lcha(v[2], v[1], v[0], v[3]);
+        else if ((res = parse_cnumeric(v, 4, 4, "cmyk", src, len)) == STATUS_OK)
+            set_cmyk(v[0], v[1], v[2], v[3]);
+        else if ((res = parse_cnumeric(v, 5, 5, "cmyka", src, len)) == STATUS_OK)
+            set_cmyka(v[0], v[1], v[2], v[3], v[4]);
 
 
         if (saved != NULL)
@@ -1265,6 +1353,8 @@ namespace lsp
             res = snprintf(dst, len, "lab(%.4f, %.4f, %.4f)", lab.L, lab.A, lab.B);
         else if (is_xyz())
             res = snprintf(dst, len, "xyz(%.4f, %.4f, %.4f)", xyz.X, xyz.Y, xyz.Z);
+        else if (is_cmyk())
+            res = snprintf(dst, len, "cmyk(%.4f, %.4f, %.4f, %.4f)", cmyk.C, cmyk.M, cmyk.Y, cmyk.K);
         else
             res = snprintf(dst, len, "rgb(%.4f, %.4f, %.4f)", rgb.R, rgb.G, rgb.B);
 
@@ -1298,6 +1388,8 @@ namespace lsp
             res = snprintf(dst, len, "laba(%.4f, %.4f, %.4f, %.4f)", lab.L, lab.A, lab.B, A);
         else if (is_xyz())
             res = snprintf(dst, len, "xyza(%.4f, %.4f, %.4f, %.4f)", xyz.X, xyz.Y, xyz.Z, A);
+        else if (is_cmyk())
+            res = snprintf(dst, len, "cmyka(%.4f, %.4f, %.4f, %.4f, %.4f)", cmyk.C, cmyk.M, cmyk.Y, cmyk.K, A);
         else
             res = snprintf(dst, len, "rgba(%.4f, %.4f, %.4f, %.4f)", rgb.R, rgb.G, rgb.B, A);
 
@@ -1432,7 +1524,7 @@ namespace lsp
         x   = xyz.X;
         y   = xyz.Y;
         z   = xyz.Z;
-        a   = A;
+        a   = clamp(A);
 
         return *this;
     }
@@ -1443,7 +1535,7 @@ namespace lsp
         x   = xyz.X;
         y   = xyz.Y;
         z   = xyz.Z;
-        a   = A;
+        a   = clamp(A);
 
         return *this;
     }
@@ -1483,7 +1575,7 @@ namespace lsp
         xyz.X   = lsp_limit(x, 0.0f, 100.0f);
         xyz.Y   = lsp_limit(y, 0.0f, 100.0f);
         xyz.Z   = lsp_limit(z, 0.0f, 110.0f);
-        A       = a;
+        A       = clamp(a);
         mask    = M_XYZ;
         return *this;
     }
@@ -1512,7 +1604,7 @@ namespace lsp
         l       = lab.L;
         a       = lab.A;
         b       = lab.B;
-        alpha   = A;
+        alpha   = clamp(A);
         return *this;
     }
 
@@ -1522,7 +1614,7 @@ namespace lsp
         l       = lab.L;
         a       = lab.A;
         b       = lab.B;
-        alpha   = A;
+        alpha   = clamp(A);
         return *this;
     }
 
@@ -1561,7 +1653,7 @@ namespace lsp
         lab.L   = l;
         lab.A   = a;
         lab.B   = b;
-        A       = alpha;
+        A       = clamp(alpha);
         mask    = M_LAB;
         return *this;
     }
@@ -1640,7 +1732,7 @@ namespace lsp
         lch.L   = l;
         lch.C   = c;
         lch.H   = h;
-        A       = alpha;
+        A       = clamp(alpha);
         mask    = M_LCH;
         return *this;
     }
@@ -1669,7 +1761,7 @@ namespace lsp
         l       = lch.L;
         c       = lch.C;
         h       = lch.H;
-        alpha   = A;
+        alpha   = clamp(A);
         return *this;
     }
 
@@ -1679,7 +1771,7 @@ namespace lsp
         l       = lch.L;
         c       = lch.C;
         h       = lch.H;
-        alpha   = A;
+        alpha   = clamp(A);
         return *this;
     }
 
@@ -1720,6 +1812,97 @@ namespace lsp
         lch.H   = h;
         A       = alpha;
         mask    = M_LCH;
+        return *this;
+    }
+
+    const Color &Color::get_cmyk(float &c, float &m, float &y, float &k) const
+    {
+        calc_cmyk();
+        c       = cmyk.C;
+        m       = cmyk.M;
+        y       = cmyk.Y;
+        k       = cmyk.K;
+        return *this;
+    }
+
+    Color &Color::get_cmyk(float &c, float &m, float &y, float &k)
+    {
+        calc_cmyk();
+        c       = cmyk.C;
+        m       = cmyk.M;
+        y       = cmyk.Y;
+        k       = cmyk.K;
+        return *this;
+    }
+
+    const Color &Color::get_cmyka(float &c, float &m, float &y, float &k, float &alpha) const
+    {
+        calc_cmyk();
+        c       = cmyk.C;
+        m       = cmyk.M;
+        y       = cmyk.Y;
+        k       = cmyk.K;
+        alpha   = clamp(A);
+        return *this;
+    }
+
+    Color &Color::get_cmyka(float &c, float &m, float &y, float &k, float &alpha)
+    {
+        calc_cmyk();
+        c       = cmyk.C;
+        m       = cmyk.M;
+        y       = cmyk.Y;
+        k       = cmyk.K;
+        alpha   = clamp(A);
+        return *this;
+    }
+
+    Color &Color::cyan(float c)
+    {
+        calc_cmyk().C   = clamp(c);
+        mask            = M_CMYK;
+        return *this;
+    }
+
+    Color &Color::magenta(float m)
+    {
+        calc_cmyk().M   = clamp(m);
+        mask            = M_CMYK;
+        return *this;
+    }
+
+    Color &Color::yellow(float y)
+    {
+        calc_cmyk().Y   = clamp(y);
+        mask            = M_CMYK;
+        return *this;
+    }
+
+    Color &Color::black(float k)
+    {
+        calc_cmyk().K   = clamp(k);
+        mask            = M_CMYK;
+        return *this;
+    }
+
+    Color &Color::set_cmyk(float c, float m, float y, float k)
+    {
+        cmyk.C          = clamp(c);
+        cmyk.M          = clamp(m);
+        cmyk.Y          = clamp(y);
+        cmyk.K          = clamp(k);
+        mask            = M_CMYK;
+        return *this;
+    }
+
+    Color &Color::set_cmyka(float c, float m, float y, float k, float alpha)
+    {
+        cmyk.C          = clamp(c);
+        cmyk.M          = clamp(m);
+        cmyk.Y          = clamp(y);
+        cmyk.K          = clamp(k);
+        A               = clamp(alpha);
+        mask            = M_CMYK;
         return *this;
     }
 
