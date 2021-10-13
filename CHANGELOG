@@ -12,6 +12,7 @@
 - Added support of function-look color parsing by the lsp::Color utility class.
 - Color::scale_lightness renamed to Color::scale_hsl_lightness, added Color::scale_lch_luminance.
 - The fields of system::time_t structure are now of signed type.
+- Added overloaded implementation of Serializer::write_blob function.
 
 === 0.5.10 ===
 * Added support of boolean parameters by the configuration parser.
