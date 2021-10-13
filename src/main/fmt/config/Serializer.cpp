@@ -762,5 +762,13 @@ namespace lsp
             return res;
         }
 
+        status_t Serializer::write_blob(const char *key, const blob_t *v, size_t flags)
+        {
+            LSPString tmp;
+            if (!tmp.set_utf8(key))
+                return STATUS_NO_MEM;
+            return write_blob(&tmp, v, flags);
+        }
+
     } /* namespace config */
 } /* namespace lsp */
