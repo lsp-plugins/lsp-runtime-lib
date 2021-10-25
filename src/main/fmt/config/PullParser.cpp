@@ -699,7 +699,6 @@ namespace lsp
                     ((end[1] == 'b') || (end[1] == 'B')))
                 {
                     xf     |= SF_DECIBELS;
-                    value   = expf(value * M_LN10 * 0.05f);
                     end    += 2;
                 }
                 // Skip spaces
@@ -757,7 +756,6 @@ namespace lsp
                     ((end[1] == 'b') || (end[1] == 'B')))
                 {
                     xf     |= SF_DECIBELS;
-                    value   = exp(value * M_LN10 * 0.05);
                     end    += 2;
                 }
                 // Skip spaces
