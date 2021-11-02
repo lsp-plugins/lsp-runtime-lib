@@ -60,6 +60,12 @@ namespace lsp
                 virtual ~PrefixLoader();
 
             public:
+                /**
+                 * Associate some loader with prefix, loader will be automatically destroyed on destruction
+                 * @param prefix prefix to use
+                 * @param loader loader to associate
+                 * @return status of operation
+                 */
                 status_t                    add_prefix(const char *prefix, ILoader *loader);
                 status_t                    add_prefix(const LSPString *prefix, ILoader *loader);
                 status_t                    add_prefix(const io::Path *prefix, ILoader *loader);
