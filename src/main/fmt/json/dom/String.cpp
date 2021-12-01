@@ -177,7 +177,7 @@ namespace lsp
             if (dst == NULL)
                 return STATUS_BAD_ARGUMENTS;
             if (pNode == NULL)
-                return 0;
+                return STATUS_OK;
 
             switch (pNode->type)
             {
