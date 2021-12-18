@@ -14,7 +14,6 @@
 - The fields of system::time_t structure are now of signed type.
 - Added overloaded implementation of Serializer::write_blob function.
 - fmt::config now delegates db parameter conversion to caller code.
-- Added lsp::StaticInitializer, lsp::StaticFinalizer and lsp::StaticManager classes for static data.
 
 === 0.5.10 ===
 * Added support of boolean parameters by the configuration parser.
