@@ -1348,7 +1348,7 @@ namespace lsp
         {
             fattr_t attr;
             status_t res = File::sym_stat(&sPath, &attr);
-            return (res == STATUS_OK) && (attr.type == fattr_t::FT_BLOCK);
+            return (res == STATUS_OK) && (attr.type == fattr_t::FT_REGULAR);
         }
 
         bool Path::is_dir() const
