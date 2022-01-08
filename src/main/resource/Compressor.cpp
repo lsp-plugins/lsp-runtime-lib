@@ -204,7 +204,8 @@ namespace lsp
             status_t res;
             const uint8_t *head = sTemp.data();
             const uint8_t *tail = &head[flength];
-            ssize_t offset = 0, length = 0, rep = 0, append = 0;
+            ssize_t offset = 0, length = 0, append = 0;
+            size_t rep = 0;
 
             IF_TRACE(
                 wssize_t coffset    = sOS.position();
@@ -222,7 +223,7 @@ namespace lsp
 
                 // Calc number of repeats
                 rep         = calc_repeats(&head[length], tail);
-                append      = length + lsp_min(rep, 4);
+                append      = length + lsp_min(rep, REPEAT_BUF_MAX);
 
                 // Estimate size of output
                 size_t est1 = (est_uint(sBuffer.size() + *head, 5, 5) + est_uint(rep, 0, 4)) * length;     // How many bits per octet
@@ -266,7 +267,7 @@ namespace lsp
 
                     // Append data to buffer
                     sBuffer.append(head, append);
-                    head           += append;
+                    head           += length + rep;
 
                     IF_TRACE(++octets);
                 }

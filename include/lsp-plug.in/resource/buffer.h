@@ -31,6 +31,12 @@ namespace lsp
     namespace resource
     {
         /**
+         * The maximum number of characters appended to the replay buffer
+         * if the character repeat at the tail is used.
+         */
+        static const size_t REPEAT_BUF_MAX          = 4;
+
+        /**
          * Location in the buffer
          */
         typedef struct location_t
