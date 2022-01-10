@@ -180,6 +180,7 @@ define vardef =
   $(if $(findstring src,$($(name)_TYPE)), $(eval $(call srcconfig, $(name))))
   $(if $(findstring hdr,$($(name)_TYPE)), $(eval $(call hdrconfig, $(name))))
   $(if $(findstring lib,$($(name)_TYPE)), $(eval $(call libconfig, $(name))))
+  $(if $(findstring bin,$($(name)_TYPE)), $(eval $(call binconfig, $(name))))
   $(if $(findstring opt,$($(name)_TYPE)), $(eval $(call optconfig, $(name))))
 endef
 
