@@ -17,6 +17,7 @@
 - Fixed Path::is_reg() method implementation for POSIX-based systems.
 - Fixed bug in the resource::Compressor and resource::Decompressor classes which could cause
   file corruption at decompression stage.
+- Reduced size of fields for resource::raw_resource_t structure.
 
 === 0.5.10 ===
 * Added support of boolean parameters by the configuration parser.

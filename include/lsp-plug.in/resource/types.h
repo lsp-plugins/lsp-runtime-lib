@@ -53,10 +53,10 @@ namespace lsp
         {
             resource_type_t         type;                       // Type of resource
             const char             *name;                       // Name of resource
-            ssize_t                 parent;                     // Index of parent resource (negative if none)
-            ssize_t                 segment;                    // The start of segment
-            ssize_t                 offset;                     // Offset of the resource
-            size_t                  length;                     // Length of the resource
+            int32_t                 parent;                     // Index of parent resource (negative if none)
+            int32_t                 segment;                    // The start of segment
+            int32_t                 offset;                     // Offset of the resource
+            uint32_t                length;                     // Length of the resource
         } raw_resource_t;
 
         /**
