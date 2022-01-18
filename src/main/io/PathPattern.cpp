@@ -227,7 +227,7 @@ namespace lsp
         status_t PathPattern::parse_sequence(cmd_t **dst, tokenizer_t *it)
         {
             cmd_t *out = NULL, *next = NULL;
-            status_t res;
+            status_t res = STATUS_OK;
 
             while (true)
             {

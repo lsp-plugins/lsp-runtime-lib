@@ -201,7 +201,7 @@ namespace lsp
             if (flength < 0)
                 return flength;
 
-            status_t res;
+            status_t res = STATUS_OK;
             const uint8_t *head = sTemp.data();
             const uint8_t *tail = &head[flength];
             ssize_t offset = 0, length = 0, append = 0;
