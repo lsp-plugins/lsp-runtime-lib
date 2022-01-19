@@ -207,12 +207,12 @@ namespace lsp
             ssize_t offset = 0, length = 0, append = 0;
             size_t rep = 0;
 
-            IF_TRACE(
-                wssize_t coffset    = sOS.position();
-                size_t octets       = 0;
-                size_t replays      = 0;
-                size_t repeats      = 0;
-            )
+//            IF_TRACE(
+//                wssize_t coffset    = sOS.position();
+//                size_t octets       = 0;
+//                size_t replays      = 0;
+//                size_t repeats      = 0;
+//            )
 
             while (head < tail)
             {
@@ -249,11 +249,11 @@ namespace lsp
                     sBuffer.append(head, append);
                     head           += length + rep;
 
-                    IF_TRACE(
-                        ++ replays;
-                        if (rep)
-                            ++ repeats;
-                    )
+//                    IF_TRACE(
+//                        ++ replays;
+//                        if (rep)
+//                            ++ repeats;
+//                    )
                 }
                 else
                 {
@@ -269,7 +269,7 @@ namespace lsp
                     sBuffer.append(head, append);
                     head           += length + rep;
 
-                    IF_TRACE(++octets);
+//                    IF_TRACE(++octets);
                 }
             }
 
@@ -278,14 +278,14 @@ namespace lsp
                 return -res;
 
             // Output stats
-            IF_TRACE(
-                size_t cbytes   = sOS.position() - coffset;
-
-                lsp_trace("  octets: %d, replays: %d, repeats: %d",
-                        int(octets), int(replays), int(repeats));
-                lsp_trace("  original size: %d, compressed size: %d, ratio: %.2f",
-                        int(flength), int(cbytes), double(flength) / double(cbytes));
-            )
+//            IF_TRACE(
+//                size_t cbytes   = sOS.position() - coffset;
+//
+//                lsp_trace("  octets: %d, replays: %d, repeats: %d",
+//                        int(octets), int(replays), int(repeats));
+//                lsp_trace("  original size: %d, compressed size: %d, ratio: %.2f",
+//                        int(flength), int(cbytes), double(flength) / double(cbytes));
+//            )
 
             // Remember the actual coordinates of the entry within data array
             r->segment          = nSegment;
@@ -293,8 +293,8 @@ namespace lsp
             r->length           = flength;
             nOffset            += flength;
 
-            lsp_trace("  compressed entry segment=%d, offset=%d length=%d",
-                    int(r->segment), int(r->offset), int(r->length));
+//            lsp_trace("  compressed entry segment=%d, offset=%d length=%d",
+//                    int(r->segment), int(r->offset), int(r->length));
 
             return r->length;
         }
