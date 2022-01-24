@@ -18,6 +18,7 @@
 - Fixed bug in the resource::Compressor and resource::Decompressor classes which could cause
   file corruption at decompression stage.
 - Reduced size of fields for resource::raw_resource_t structure.
+- Fixed bug in Wavefont OBJ file parser: the locale of the file always should be considered to be C.
 
 === 0.5.10 ===
 * Added support of boolean parameters by the configuration parser.
