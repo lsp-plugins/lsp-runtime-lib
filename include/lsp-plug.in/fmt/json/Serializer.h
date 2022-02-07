@@ -87,7 +87,7 @@ namespace lsp
 
             public:
                 /**
-                 * Open parser
+                 * Open serializer
                  * @param path UTF-8 path to the file
                  * @param settings serialization flags
                  * @param charset character set
@@ -96,7 +96,7 @@ namespace lsp
                 status_t    open(const char *path, const serial_flags_t *settings, const char *charset = NULL);
 
                 /**
-                 * Open parser
+                 * Open serializer
                  * @param path string representation of path to the file
                  * @param settings serialization flags
                  * @param charset character set
@@ -105,7 +105,7 @@ namespace lsp
                 status_t    open(const LSPString *path, const serial_flags_t *settings, const char *charset = NULL);
 
                 /**
-                 * Open parser
+                 * Open serializer
                  * @param path path to the file
                  * @param settings serialization flags
                  * @param charset character set
@@ -114,7 +114,7 @@ namespace lsp
                 status_t    open(const io::Path *path, const serial_flags_t *settings, const char *charset = NULL);
 
                 /**
-                 * Wrap string with parser
+                 * Wrap string with serializer
                  * @param str string to wrap
                  * @param settings serialization flags
                  * @return status of operation
@@ -122,7 +122,7 @@ namespace lsp
                 status_t    wrap(LSPString *str, const serial_flags_t *settings);
 
                 /**
-                 * Wrap input sequence with parser
+                 * Wrap input sequence with serializer
                  * @param seq sequence to use for reads
                  * @param settings serialization flags
                  * @param flags wrapping flags
@@ -131,7 +131,7 @@ namespace lsp
                 status_t    wrap(io::IOutSequence *seq, const serial_flags_t *settings, size_t flags = WRAP_NONE);
 
                 /**
-                 * Wrap input stream with parser
+                 * Wrap input stream with serializer
                  * @param os output stream
                  * @param version JSON version
                  * @param settings serialization flags
@@ -142,7 +142,7 @@ namespace lsp
                 status_t    wrap(io::IOutStream *os, const serial_flags_t *settings, size_t flags = WRAP_NONE, const char *charset = NULL);
 
                 /**
-                 * Close parser
+                 * Close serializer
                  * @return status of operation
                  */
                 status_t    close();
