@@ -24,43 +24,4 @@ ARTIFACT_NAME               = lsp-runtime-lib
 ARTIFACT_DESC               = Runtime library used by LSP Project for plugin development
 ARTIFACT_HEADERS            = lsp-plug.in
 ARTIFACT_EXPORT_ALL         = 1
-ARTIFACT_VERSION            = 0.5.10
-
-# List of dependencies
-DEPENDENCIES = \
-  LIBPTHREAD \
-  LIBDL \
-  LSP_COMMON_LIB \
-  LSP_LLTL_LIB
-
-TEST_DEPENDENCIES = \
-  LSP_TEST_FW
-
-# Platform-specific dependencies
-ifeq ($(PLATFORM),Linux)
-  DEPENDENCIES             += \
-    LIBSNDFILE
-endif
-
-ifeq ($(PLATFORM),BSD)
-  DEPENDENCIES             += \
-    LIBSNDFILE \
-    LIBICONV
-endif
-
-ifeq ($(PLATFORM),Windows)
-  DEPENDENCIES             += \
-    LIBSHLWAPI \
-    LIBWINMM \
-    LIBMSACM
-endif
-
-ALL_DEPENDENCIES = \
-  $(DEPENDENCIES) \
-  $(TEST_DEPENDENCIES) \
-  LIBSNDFILE \
-  LIBICONV \
-  LIBSHLWAPI \
-  LIBWINMM \
-  LIBMSACM
-
+ARTIFACT_VERSION            = 1.0.0

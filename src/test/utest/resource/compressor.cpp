@@ -62,7 +62,7 @@ UTEST_BEGIN("runtime.resource", compressor)
                 io::InFileStream ifs;
                 UTEST_ASSERT(ifs.open(&child) == STATUS_OK);
                 wssize_t len = c->create_file(&relative, &ifs);
-                UTEST_ASSERT(c >= 0);
+                UTEST_ASSERT(len >= 0);
                 UTEST_ASSERT(ifs.close() == STATUS_OK);
 
                 *data_size += len;

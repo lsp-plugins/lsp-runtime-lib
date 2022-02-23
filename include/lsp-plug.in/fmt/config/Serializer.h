@@ -239,6 +239,7 @@ namespace lsp
                  * @return status of operation
                  */
                 status_t    write_blob(const LSPString *key, const blob_t *v, size_t flags);
+                status_t    write_blob(const char *key, const blob_t *v, size_t flags);
         };
     
     } /* namespace config */

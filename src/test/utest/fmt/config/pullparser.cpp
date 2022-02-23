@@ -96,7 +96,7 @@ UTEST_BEGIN("runtime.fmt.config", pullparser)
         UTEST_ASSERT((pp = p.current()) != NULL);
         UTEST_ASSERT(pp->name.equals_ascii("key4"));
         UTEST_ASSERT(pp->flags == (SF_TYPE_F32 | SF_DECIBELS));
-        UTEST_ASSERT(float_equals_relative(pp->v.f32, 4.21696, 1e-5)); // 12.5 dB
+        UTEST_ASSERT(float_equals_relative(pp->v.f32, 12.5, 1e-5));
 
         // key5
         UTEST_ASSERT(p.next() == STATUS_OK);
@@ -110,13 +110,13 @@ UTEST_BEGIN("runtime.fmt.config", pullparser)
         UTEST_ASSERT((pp = p.current()) != NULL);
         UTEST_ASSERT(pp->name.equals_ascii("key6"));
         UTEST_ASSERT(pp->flags == (SF_TYPE_F32 | SF_TYPE_SET | SF_QUOTED | SF_DECIBELS));
-        UTEST_ASSERT(float_equals_relative(pp->v.f32, 4.21696, 1e-5)); // 12.5 dB
+        UTEST_ASSERT(float_equals_relative(pp->v.f32, 12.5, 1e-5));
 
         // key7
         UTEST_ASSERT(p.next(&xp) == STATUS_OK);
         UTEST_ASSERT(xp.name.equals_ascii("key7"));
         UTEST_ASSERT(xp.flags == SF_TYPE_F32);
-        UTEST_ASSERT(isinf(xp.v.f32) && (xp.v.f32 < 0)); // -inf
+        UTEST_ASSERT(isinf(xp.v.f32) && (xp.v.f32 < 0.0f)); // -inf
 
         // key8
         UTEST_ASSERT(p.next(&xp) == STATUS_OK);

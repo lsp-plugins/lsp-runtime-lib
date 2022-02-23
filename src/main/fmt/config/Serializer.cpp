@@ -24,7 +24,6 @@
 #include <lsp-plug.in/io/OutSequence.h>
 #include <lsp-plug.in/io/OutStringSequence.h>
 
-#include <math.h>
 #include <locale.h>
 
 namespace lsp
@@ -150,13 +149,6 @@ namespace lsp
             // Analyze format
             if (flags & SF_DECIBELS)
             {
-                if (abs(v) > 1e+40)
-                    v   = +INFINITY;
-                else if (abs(v) < 1e-40)
-                    v   = -INFINITY;
-                else
-                    v   = 20 * log(v);
-
                 switch (flags & SF_PREC_MASK)
                 {
                     case SF_PREC_SHORT: fmt = "%.1f db"; break;
@@ -760,6 +752,14 @@ namespace lsp
             res = pOut->write_ascii("\"\n");
 
             return res;
+        }
+
+        status_t Serializer::write_blob(const char *key, const blob_t *v, size_t flags)
+        {
+            LSPString tmp;
+            if (!tmp.set_utf8(key))
+                return STATUS_NO_MEM;
+            return write_blob(&tmp, v, flags);
         }
 
     } /* namespace config */

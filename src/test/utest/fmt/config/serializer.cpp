@@ -85,8 +85,9 @@ UTEST_BEGIN("runtime.fmt.config", serializer)
         v.f32       = 3.141591111111;
         UTEST_ASSERT(s.write("key5", &v, SF_TYPE_F32 | SF_PREC_SHORT) == STATUS_OK);
         UTEST_ASSERT(s.write("key6", &v, SF_TYPE_F32 | SF_TYPE_SET | SF_PREC_NORMAL) == STATUS_OK);
-        v.f64       = 0.0;
+        v.f64       = -INFINITY;
         UTEST_ASSERT(s.write("key7", &v, SF_TYPE_F64 | SF_PREC_SHORT | SF_DECIBELS) == STATUS_OK);
+        v.f64       = 0.0f;
         UTEST_ASSERT(s.write("key8", &v, SF_TYPE_F64 | SF_PREC_NORMAL | SF_QUOTED) == STATUS_OK);
 
         v.str       = const_cast<char *>("текст");

@@ -74,9 +74,13 @@ UTEST_BEGIN("runtime.expr", format)
     {
         LSPString out;
 
-        OK(format(&out, "{@int%d} {@neg%d} {@int%+d} {@neg%+d} {@int%b} {@int%o} {@hex%x} {@hex%X}", p));
+        OK(format(&out, "{@int%d} {@neg%d} {@int%+d} {@neg%+d} {@int%b} {@int%o} {@hex%x} {@hex%X} {@hex%+X} {@neg%x}", p));
         printf("out = %s\n", out.get_utf8());
-        UTEST_ASSERT(out.equals_ascii("100500 -1234 +100500 -1234 11000100010010100 304224 c0de C0DE"));
+        UTEST_ASSERT(out.equals_ascii("100500 -1234 +100500 -1234 11000100010010100 304224 c0de C0DE +C0DE -4d2"));
+
+        OK(format(&out, "{@int%8d} {@neg%8d} {@int%+8d} {@neg%+8d} {@int%20b} {@int%8o} {@hex%8x} {@hex%8X} {@hex%+8X} {@neg%8x}", p));
+        printf("out = %s\n", out.get_utf8());
+        UTEST_ASSERT(out.equals_ascii("00100500 -00001234 +00100500 -00001234 00011000100010010100 00304224 0000c0de 0000C0DE +0000C0DE -000004d2"));
 
         OK(format(&out, "{@null%d} {@undef%d} {@null%b} {@undef%b} {@null%o} {@undef%o} {@null%x} {@undef%x}", p));
         printf("out = %s\n", out.get_utf8());
@@ -85,6 +89,14 @@ UTEST_BEGIN("runtime.expr", format)
         OK(format(&out, "{@float%f} {@float%.2f} {@float%.0f} {@float%+.2f} {@nan%f} {@pinf%f} {@ninf%f} {@pinf%+f} {@null%f} {@undef%f}", p));
         printf("out = %s\n", out.get_utf8());
         UTEST_ASSERT(out.equals_ascii("440.000000 440.00 440 +440.00 nan inf -inf +inf <null> <undef>"));
+
+        OK(format(&out, "{@float%16f} {@float%8.2f} {@float%8.0f} {@float%+8.2f} {@neg_float%8.2f}", p));
+        printf("out = %s\n", out.get_utf8());
+        UTEST_ASSERT(out.equals_ascii("000000440.000000 00440.00 00000440 +00440.00 -00123.45"));
+
+        OK(format(&out, "{@float%F} {@float%.2F} {@float%.0F} {@float%+.2F} {@nan%F} {@pinf%F} {@ninf%F} {@pinf%+F} {@null%F} {@undef%F}", p));
+        printf("out = %s\n", out.get_utf8());
+        UTEST_ASSERT(out.equals_ascii("440.000000 440.00 440 +440.00 NAN INF -INF +INF <null> <undef>"));
 
         OK(format(&out, "{@bool%l} {@bool%L} {@bool%Ll} {@bool%lL} {@null%l} {@undef%l}", p));
         printf("out = %s\n", out.get_utf8());
@@ -128,6 +140,15 @@ UTEST_BEGIN("runtime.expr", format)
         UTEST_ASSERT(out.equals_ascii("    <null> <null>       <null>      <null>   <null>      <null>     <null>  "));
     }
 
+    void test_xpadding(Parameters *p)
+    {
+        LSPString out;
+
+        OK(format(&out, "{>@hex^_%8x:16$_} {@hex^_%8x:16$_<} {|@hex^_%8x:16$_} {|>@hex^_%8x:16$_} {<|@hex^_%8x:16$_} {>|@hex^_%7x:16$_} {|<@hex^_%7x:16$_}", p));
+        printf("out = %s\n", out.get_utf8());
+        UTEST_ASSERT(out.equals_ascii("________0000c0de 0000c0de________ ____0000c0de____ ______0000c0de__ __0000c0de______ ____000c0de_____ _____000c0de____"));
+    }
+
     UTEST_MAIN
     {
         Parameters p;
@@ -144,6 +165,7 @@ UTEST_BEGIN("runtime.expr", format)
         OK(p.add_int("neg", -1234));
         OK(p.add_int("hex", 0xc0de));
         OK(p.add_cstring("strC", ""));
+        OK(p.add_float("neg_float", -123.45));
 
         printf("\nTesting simple types...\n");
         test_simple(&p);
@@ -153,6 +175,9 @@ UTEST_BEGIN("runtime.expr", format)
 
         printf("\nTesting padding...\n");
         test_padding(&p);
+
+        printf("\nTesting external padding...\n");
+        test_xpadding(&p);
     }
 
 UTEST_END

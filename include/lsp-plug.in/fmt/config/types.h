@@ -111,16 +111,17 @@ namespace lsp
 
             public:
                 // Type checking methods
-                inline bool     is_i32() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_I32; }
-                inline bool     is_u32() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_U32; }
-                inline bool     is_i64() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_I64; }
-                inline bool     is_u64() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_U64; }
-                inline bool     is_f32() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_F32; }
-                inline bool     is_f64() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_F64; }
-                inline bool     is_bool() const             { return (flags & SF_TYPE_MASK) == SF_TYPE_BOOL; }
-                inline bool     is_str() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_STR; }
-                inline bool     is_string() const           { return (flags & SF_TYPE_MASK) == SF_TYPE_STR; }
-                inline bool     is_blob() const             { return (flags & SF_TYPE_MASK) == SF_TYPE_BLOB; }
+                inline size_t   type() const                { return flags & SF_TYPE_MASK;                      }
+                inline bool     is_i32() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_I32;     }
+                inline bool     is_u32() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_U32;     }
+                inline bool     is_i64() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_I64;     }
+                inline bool     is_u64() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_U64;     }
+                inline bool     is_f32() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_F32;     }
+                inline bool     is_f64() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_F64;     }
+                inline bool     is_bool() const             { return (flags & SF_TYPE_MASK) == SF_TYPE_BOOL;    }
+                inline bool     is_str() const              { return (flags & SF_TYPE_MASK) == SF_TYPE_STR;     }
+                inline bool     is_string() const           { return (flags & SF_TYPE_MASK) == SF_TYPE_STR;     }
+                inline bool     is_blob() const             { return (flags & SF_TYPE_MASK) == SF_TYPE_BLOB;    }
 
                 bool            is_int() const;
                 bool            is_signed() const;

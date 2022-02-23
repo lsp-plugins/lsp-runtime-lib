@@ -138,7 +138,7 @@ namespace lsp
 
         status_t PushParser::parse_document(IXMLHandler *handler)
         {
-            status_t token, res, last = -1;
+            status_t token, res = STATUS_OK, last = -1;
             LSPString tmp, *ptmp;
             lltl::parray<LSPString> ctag;
 

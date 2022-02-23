@@ -20,6 +20,7 @@
  */
 
 #include <lsp-plug.in/common/alloc.h>
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/io/InMemoryStream.h>
 #include <lsp-plug.in/resource/Decompressor.h>
 
@@ -225,7 +226,7 @@ namespace lsp
                 return STATUS_OK;
 
             status_t res;
-            size_t offset, length, rep, append;
+            size_t offset = 0, length = 0, rep = 0, append = 0;
             uint8_t b;
 
             // Read offset
@@ -249,7 +250,7 @@ namespace lsp
 
                 // Append decompression buffer
                 b           = sReplay.data[length - 1];
-                append      = lsp_min(rep, 4u);
+                append      = lsp_min(rep, REPEAT_BUF_MAX);
                 sBuffer.append(sReplay.data, length);
             }
             else
@@ -260,7 +261,7 @@ namespace lsp
                     return res;
 
                 b           = offset - sBuffer.size();
-                append      = lsp_min(rep, 4u) + 1;
+                append      = lsp_min(rep, REPEAT_BUF_MAX) + 1;
 
                 // Fill replay buffer with data
                 if ((res = set_bufc(b, rep)) != STATUS_OK)
@@ -315,7 +316,7 @@ namespace lsp
 
         ssize_t Decompressor::read_byte()
         {
-            status_t res;
+            ssize_t res;
 
             if (nOffset >= nLast)
                 return -set_error(STATUS_EOF);
@@ -323,13 +324,13 @@ namespace lsp
             do
             {
                 // Check if data has been read
-                ssize_t b       = get_bufc();
-                if (b >= 0)
+                res         = get_bufc();
+                if (res >= 0)
                 {
                     ++nOffset;
-                    return b;
+                    return res;
                 }
-            } while ((res = fill_buf()) != STATUS_OK);
+            } while ((res = fill_buf()) == STATUS_OK);
 
             set_error(res);
             return res;

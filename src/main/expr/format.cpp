@@ -169,7 +169,8 @@ namespace lsp
             F_FRAC      = 1 << 4,
             F_SIGN      = 1 << 5,
             F_LPAD      = 1 << 6,
-            F_RPAD      = 1 << 7
+            F_RPAD      = 1 << 7,
+            F_XWIDTH    = 1 << 8
         };
 
         typedef struct fmt_spec_t
@@ -183,6 +184,7 @@ namespace lsp
             align_type_t    align;      // Alignment
             lsp_wchar_t     type;       // Type
             size_t          width;      // Width
+            size_t          xwidth;     // Extra width
             size_t          frac;       // Fraction
         } fmt_spec_t;
 
@@ -190,14 +192,15 @@ namespace lsp
         {
             spec->buf.clear();
             spec->name.clear();
-            spec->index = index;
-            spec->flags = 0;
-            spec->lpad  = ' ';
-            spec->rpad  = ' ';
-            spec->align = AL_NONE;
-            spec->type  = 0;
-            spec->width = 0;
-            spec->frac  = 0;
+            spec->index     = index;
+            spec->flags     = 0;
+            spec->lpad      = ' ';
+            spec->rpad      = ' ';
+            spec->align     = AL_NONE;
+            spec->type      = 0;
+            spec->width     = 0;
+            spec->xwidth    = 0;
+            spec->frac      = 0;
         }
 
         status_t read_specifier(io::IOutSequence *out, io::IInSequence *fmt, fmt_spec_t *spec)
@@ -380,6 +383,23 @@ namespace lsp
                             res = STATUS_BAD_FORMAT;
                         break;
 
+                    case ':': // Extra width
+                        // Read extra width
+                        for ( ; i < len; ++i)
+                        {
+                            c = spec->buf.char_at(i);
+                            if ((c < '0') || (c > '9'))
+                                break;
+
+                            spec->flags |= F_XWIDTH;
+                            spec->xwidth = spec->xwidth * 10 + (c - '0');
+                        }
+
+                        // Ensure that there is something read
+                        if (!(spec->flags & F_XWIDTH))
+                            res = STATUS_BAD_FORMAT;
+                        break;
+
                     case '%': // Type specifier
                         // Prevent from duplicate definition
                         if (spec->flags & F_TYPE)
@@ -442,7 +462,7 @@ namespace lsp
                             case 'i': case 'd': case 'u': // decimals
                             case 'b': case 'o': case 'x': case 'X': // octals, binaries, hexadecimals
                             case 'f': case 'F': case 'e': case 'E': // floating-points
-                            case 's': // string
+                            case 's': case 'S': // string
                                 spec->type = c;
                                 break;
                             case 'l': // boolean, bOOLEAN
@@ -512,7 +532,6 @@ namespace lsp
                                 --i;
                                 break;
                         }
-
                         break;
 
                     default:
@@ -548,13 +567,40 @@ namespace lsp
             return STATUS_OK;
         }
 
+        status_t int_append_extra(fmt_spec_t *spec, value_t *v)
+        {
+            // Append to specified width
+            if (spec->flags & F_WIDTH)
+            {
+                while (spec->buf.length() < spec->width)
+                {
+                    if (!spec->buf.append('0'))
+                        return STATUS_NO_MEM;
+                }
+            }
+
+            // Append sign
+            if (v->v_int < 0)
+            {
+                if (!spec->buf.append('-'))
+                    return STATUS_NO_MEM;
+            }
+            else if (spec->flags & F_SIGN)
+            {
+                if (!spec->buf.append('+'))
+                    return STATUS_NO_MEM;
+            }
+
+            return STATUS_OK;
+        }
+
         status_t int_to_dec(fmt_spec_t *spec, value_t *v)
         {
             status_t res = check_specials(spec, v);
             if (res != STATUS_OK)
                 return (res == STATUS_SKIP) ? STATUS_OK : res;
 
-            ssize_t x = v->v_int;
+            ssize_t x = lsp_abs(v->v_int);
             do
             {
                 lsp_swchar_t rem = x % 10;
@@ -563,12 +609,7 @@ namespace lsp
                 x /= 10;
             } while (x);
 
-            if (v->v_int < 0)
-                res = (spec->buf.append('-')) ? STATUS_OK : STATUS_NO_MEM;
-            else if (spec->flags & F_SIGN)
-                res = (spec->buf.append('+')) ? STATUS_OK : STATUS_NO_MEM;
-
-            if (res != STATUS_OK)
+            if ((res = int_append_extra(spec, v)) != STATUS_OK)
                 return res;
 
             spec->buf.reverse();
@@ -581,7 +622,7 @@ namespace lsp
             if (res != STATUS_OK)
                 return (res == STATUS_SKIP) ? STATUS_OK : res;
 
-            size_t x = v->v_int;
+            size_t x = size_t(v->v_int);
             do
             {
                 if (!spec->buf.append(lsp_wchar_t((x % 10) + '0')))
@@ -589,7 +630,7 @@ namespace lsp
                 x /= 10;
             } while (x);
 
-            if (res != STATUS_OK)
+            if ((res = int_append_extra(spec, v)) != STATUS_OK)
                 return res;
 
             spec->buf.reverse();
@@ -602,7 +643,7 @@ namespace lsp
             if (res != STATUS_OK)
                 return (res == STATUS_SKIP) ? STATUS_OK : res;
 
-            size_t x = v->v_int;
+            size_t x = lsp_abs(v->v_int);
             do
             {
                 if (!spec->buf.append(lsp_wchar_t((x & 1) + '0')))
@@ -610,7 +651,7 @@ namespace lsp
                 x >>= 1;
             } while (x);
 
-            if (res != STATUS_OK)
+            if ((res = int_append_extra(spec, v)) != STATUS_OK)
                 return res;
 
             spec->buf.reverse();
@@ -631,7 +672,7 @@ namespace lsp
                 x >>= 3;
             } while (x);
 
-            if (res != STATUS_OK)
+            if ((res = int_append_extra(spec, v)) != STATUS_OK)
                 return res;
 
             spec->buf.reverse();
@@ -647,7 +688,8 @@ namespace lsp
                 return (res == STATUS_SKIP) ? STATUS_OK : res;
 
             const char *table = (spec->type == 'X') ? &hex_table[16] : hex_table;
-            size_t x = v->v_int;
+            size_t x = (v->v_int < 0) ? -v->v_int : v->v_int;
+
             do
             {
                 if (!spec->buf.append(table[x & 0xf]))
@@ -655,11 +697,16 @@ namespace lsp
                 x >>= 4;
             } while (x);
 
-            if (res != STATUS_OK)
+            if ((res = int_append_extra(spec, v)) != STATUS_OK)
                 return res;
 
             spec->buf.reverse();
             return STATUS_OK;
+        }
+
+        inline bool is_float_upper(fmt_spec_t *spec)
+        {
+            return ((spec->type == 'F') || (spec->type == 'E'));
         }
 
         status_t float_to_str(fmt_spec_t *spec, value_t *v)
@@ -669,31 +716,64 @@ namespace lsp
                 return (res == STATUS_SKIP) ? STATUS_OK : res;
 
             if (isnan(v->v_float))
-                res = (spec->buf.set_ascii("nan")) ? STATUS_OK : STATUS_NO_MEM;
+            {
+                const char *text = (is_float_upper(spec)) ? "NAN" : "nan";
+                res = (spec->buf.set_ascii(text)) ? STATUS_OK : STATUS_NO_MEM;
+            }
             else if (isinf(v->v_float))
             {
+                const char *text;
                 if (v->v_float < 0)
                 {
                     v->v_float = INFINITY;
-                    res = (spec->buf.set_ascii("-inf")) ? STATUS_OK : STATUS_NO_MEM;
+                    text = (is_float_upper(spec)) ? "-INF" : "-inf";
                 }
                 else if (spec->flags & F_SIGN)
-                    res = (spec->buf.set_ascii("+inf")) ? STATUS_OK : STATUS_NO_MEM;
+                    text = (is_float_upper(spec)) ? "+INF" : "+inf";
                 else
-                    res = (spec->buf.set_ascii("inf")) ? STATUS_OK : STATUS_NO_MEM;
+                    text = (is_float_upper(spec)) ? "INF" : "inf";
+
+                res = (spec->buf.set_ascii(text)) ? STATUS_OK : STATUS_NO_MEM;
             }
             else
             {
+                // Initialize format specifier
                 char fmt[64];
                 if (spec->flags & F_FRAC)
                     ::snprintf(fmt, sizeof(fmt), "%%.%d%c", int(spec->frac), char(spec->type));
                 else
                     ::snprintf(fmt, sizeof(fmt), "%%.6%c", char(spec->type));
 
+                // Format the floating-point value and reverse buffer
                 fmt[63] = '\0';
-                res = spec->buf.fmt_ascii(fmt, v->v_float) ? STATUS_OK : STATUS_NO_MEM;
-                if ((res == STATUS_OK) && (spec->flags & F_SIGN) && (v->v_float > 0))
-                    res = (spec->buf.prepend(lsp_wchar_t('+'))) ? STATUS_OK : STATUS_NO_MEM;
+                if (!spec->buf.fmt_ascii(fmt, lsp_abs(v->v_float)))
+                    return STATUS_NO_MEM;
+                spec->buf.reverse();
+
+                // Append to specified width
+                if (spec->flags & F_WIDTH)
+                {
+                    while (spec->buf.length() < spec->width)
+                    {
+                        if (!spec->buf.append('0'))
+                            return STATUS_NO_MEM;
+                    }
+                }
+
+                // Append sign
+                if (v->v_float < 0)
+                {
+                    if (!spec->buf.append('-'))
+                        return STATUS_NO_MEM;
+                }
+                else if (spec->flags & F_SIGN)
+                {
+                    if (!spec->buf.append('+'))
+                        return STATUS_NO_MEM;
+                }
+
+                // Reverse again
+                spec->buf.reverse();
             }
 
             return res;
@@ -715,15 +795,19 @@ namespace lsp
                 case 'T': spec->buf.toupper(); break;
                 case 'y':
                     if (spec->buf.length() > 0)
+                    {
                         spec->buf.tolower(0, 1);
-                    if (spec->buf.length() > 1)
-                        spec->buf.toupper(1);
+                        if (spec->buf.length() > 1)
+                            spec->buf.toupper(1);
+                    }
                     break;
                 case 'Y':
                     if (spec->buf.length() > 0)
+                    {
                         spec->buf.toupper(0, 1);
-                    if (spec->buf.length() > 1)
-                        spec->buf.tolower(1);
+                        if (spec->buf.length() > 1)
+                            spec->buf.tolower(1);
+                    }
                     break;
             }
 
@@ -804,7 +888,7 @@ namespace lsp
                     if (res == STATUS_OK)
                         res = float_to_str(spec, &v);
                     break;
-                case 's': case 't': case 'T': case 'y': case 'Y':
+                case 's': case 'S': case 't': case 'T': case 'y': case 'Y':
                     res = cast_value(&v, VT_STRING);
                     if (res == STATUS_OK)
                         res = text_to_str(spec, &v);
@@ -828,8 +912,8 @@ namespace lsp
             }
 
             // Compute padding
-            ssize_t lpad = 0, rpad = 0, pad = spec->width - spec->buf.length();
-            if ((spec->flags & F_WIDTH) && (pad > 0))
+            ssize_t lpad = 0, rpad = 0, pad = ssize_t(lsp_max(spec->width, spec->xwidth)) - ssize_t(spec->buf.length());
+            if ((spec->flags & (F_WIDTH | F_XWIDTH)) && (pad > 0))
             {
                 switch (spec->align)
                 {
@@ -942,8 +1026,19 @@ namespace lsp
                             init_spec(&spec, index);
                         }
                         break;
+                    case '}':
+                        protector = false;
+                        if ((res = out->write('}')) != STATUS_OK)
+                            return res;
+                        break;
 
                     default:
+                        if (protector)
+                        {
+                            if ((res = out->write('\\')) != STATUS_OK)
+                                return res;
+                            protector = false;
+                        }
                         if ((res = out->write(c)) != STATUS_OK)
                             return res;
                         break;

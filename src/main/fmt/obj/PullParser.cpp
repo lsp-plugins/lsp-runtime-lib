@@ -21,6 +21,7 @@
 
 #include <lsp-plug.in/fmt/obj/PullParser.h>
 
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/io/InFileStream.h>
 #include <lsp-plug.in/io/InStringSequence.h>
 #include <lsp-plug.in/io/InSequence.h>
@@ -498,14 +499,33 @@ namespace lsp
             if (*s == NULL)
                 return false;
 
+            // Save and update locale
+            char *saved = ::setlocale(LC_NUMERIC, NULL);
+            if (saved != NULL)
+            {
+                size_t len = ::strlen(saved) + 1;
+                char *saved_copy = static_cast<char *>(alloca(len));
+                ::memcpy(saved_copy, saved, len);
+                saved       = saved_copy;
+            }
+            ::setlocale(LC_NUMERIC, "C");
+
+            // Parse floating-point value
             errno = 0;
             char *ptr = NULL;
             float result = strtof(*s, &ptr);
-            if ((errno != 0) || (ptr == *s))
-                return false;
-            *dst    = result;
-            *s      = ptr;
-            return true;
+            bool success = ((errno == 0) && (ptr > *s));
+            if (success)
+            {
+                *dst    = result;
+                *s      = ptr;
+            }
+
+            // Restore locale
+            if (saved != NULL)
+                ::setlocale(LC_NUMERIC, saved);
+
+            return success;
         }
 
         bool PullParser::parse_int(ssize_t *dst, const char **s)

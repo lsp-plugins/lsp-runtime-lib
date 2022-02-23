@@ -2,6 +2,24 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.0 ===
+* Improved expr::format functions: extended format specifiers.
+* Refactoring of the lsp::Color utility class interface.
+* Added support of XYZ color space by the lsp::Color utility class.
+* Added support of CIE LAB D65 color space by the lsp::Color utility class.
+* Added support of CIE LCH D65 color space by the lsp::Color utility class.
+* Added support of CMYK color space by the lsp::Color utility class.
+* Added support of function-look color parsing by the lsp::Color utility class.
+* Color::scale_lightness renamed to Color::scale_hsl_lightness, added Color::scale_lch_luminance.
+* The fields of system::time_t structure are now of signed type.
+* Added overloaded implementation of Serializer::write_blob function.
+* fmt::config now delegates db parameter conversion to caller code.
+* Fixed Path::is_reg() method implementation for POSIX-based systems.
+* Fixed bug in the resource::Compressor and resource::Decompressor classes which could cause
+  file corruption at decompression stage.
+* Reduced size of fields for resource::raw_resource_t structure.
+* Fixed bug in Wavefont OBJ file parser: the locale of the file always should be considered to be C.
+
 === 0.5.10 ===
 * Added support of boolean parameters by the configuration parser.
 * Added resource::PrefixLoader resource loader implementation.
