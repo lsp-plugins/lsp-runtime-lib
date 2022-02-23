@@ -226,7 +226,8 @@ namespace lsp
                 return STATUS_OK;
 
             status_t res;
-            size_t offset, length, rep, append;
+            size_t offset, length, append;
+            size_t rep = 0;
             uint8_t b;
 
             // Read offset
