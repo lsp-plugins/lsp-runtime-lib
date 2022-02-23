@@ -1163,7 +1163,7 @@ namespace lsp
                 if (cl->has_write_method())
                 {
                     void *tmp = NULL;
-                    size_t tail;
+                    size_t tail = 0;
 
                     // Read object's serial data from underlying stream
                     res = read_custom_data(&tmp, &tail);
