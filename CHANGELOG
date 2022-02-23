@@ -2,6 +2,8 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.1 ===
+
 === 1.0.0 ===
 * Improved expr::format functions: extended format specifiers.
 * Refactoring of the lsp::Color utility class interface.
