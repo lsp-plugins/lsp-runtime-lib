@@ -91,13 +91,56 @@ UTEST_BEGIN("runtime.fmt", roomeqwizard)
         ::free(cfg);
     }
 
+    void read_file2(const char *fname)
+    {
+        room_ew::config_t *cfg = NULL;
+
+        // Load the equalizer settings
+        io::Path path;
+        UTEST_ASSERT(path.set(resources()) == STATUS_OK);
+        UTEST_ASSERT(path.append_child(fname) == STATUS_OK);
+        UTEST_ASSERT(room_ew::load(&path, &cfg) == STATUS_OK);
+
+        // Check configuration
+        UTEST_ASSERT(cfg != NULL);
+        UTEST_ASSERT(::strcmp(cfg->sNotes, "This file demonstrates all filter types the Generic equalizer supports") == 0);
+        UTEST_ASSERT(::strcmp(cfg->sEqType, "Generic") == 0);
+        UTEST_ASSERT(cfg->nVerMaj == 5);
+        UTEST_ASSERT(cfg->nVerMin == 1);
+        UTEST_ASSERT(cfg->nFilters == 20);
+        UTEST_ASSERT(cfg->vFilters != NULL);
+
+        room_ew::filter_t *vf = cfg->vFilters;
+        size_t idx = 0;
+
+        check_filter(&vf[idx++], true, room_ew::PK, 50.00, -10.00, 2.50);
+        check_filter(&vf[idx++], true, room_ew::MODAL, 100.00, 3.0, 5.41);
+        check_filter(&vf[idx++], true, room_ew::LP, 8.0, 0.0, -1);
+        check_filter(&vf[idx++], true, room_ew::HP, 30.00, 0.0, -1);
+        check_filter(&vf[idx++], true, room_ew::LPQ, 10.00, 0.0, 0.4);
+        check_filter(&vf[idx++], true, room_ew::HPQ, 20.00, 0.0, 0.5);
+        check_filter(&vf[idx++], true, room_ew::LS, 300.00, 5.0, -1);
+        check_filter(&vf[idx++], true, room_ew::HS, 1.00, -3.0, -1);
+        check_filter(&vf[idx++], true, room_ew::LS12, 2.00, -5.0, -1);
+        check_filter(&vf[idx++], true, room_ew::HS12, 500.0, 5.0, -1);
+        check_filter(&vf[idx++], true, room_ew::LS6, 50.0, 7.2, -1);
+        check_filter(&vf[idx++], true, room_ew::HS6, 12.0, 10.0, -1);
+        check_filter(&vf[idx++], true, room_ew::NO, 800.00, 0.00, -1);
+        check_filter(&vf[idx++], true, room_ew::AP, 900.00, 0.00, 0.707);
+
+        ::free(cfg);
+    }
+
     UTEST_MAIN
     {
         printf("Testing binary file...\n");
         read_file("fmt/rew/Test11.req");
 
-        printf("Testing binary file...\n");
+        printf("Testing text file...\n");
         read_file("fmt/rew/Test11.txt");
+
+        printf("Testing another file...\n");
+        read_file2("fmt/apo/demo.txt");
     }
 
 UTEST_END

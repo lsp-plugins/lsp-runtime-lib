@@ -291,6 +291,7 @@ namespace lsp
         status_t parse_double(double *dst, const LSPString *s, size_t *offset)
         {
             status_t res = skip_whitespace(s, offset);
+            lsp_wchar_t wc;
             if (res != STATUS_OK)
                 return res;
 
@@ -303,12 +304,13 @@ namespace lsp
             ssize_t is = 0;
             if (*offset < len)
             {
-                if (s->char_at(*offset) == '+')
+                wc = s->char_at(*offset);
+                if (wc == '+')
                 {
                     ++is;
                     ++(*offset);
                 }
-                else if (s->char_at(*offset) == '-')
+                else if (wc == '-')
                 {
                     ++is;
                     ++(*offset);
@@ -318,10 +320,10 @@ namespace lsp
 
             // Parse integer part
             double num = 0;
-            ssize_t in=0;
+            ssize_t in = 0;
             for ( ; *offset < len; ++(*offset), ++in)
             {
-                lsp_wchar_t wc = s->char_at(*offset);
+                wc = s->char_at(*offset);
                 if ((wc >= '0') && (wc <= '9'))
                     num = num * 10 + (wc - '0');
                 else
@@ -329,7 +331,7 @@ namespace lsp
             }
 
             // No fraction part?
-            if (((*offset) >= len) || (s->char_at(*offset) != '.'))
+            if ((*offset) >= len)
             {
                 if (in <= 0)
                     return STATUS_BAD_FORMAT;
@@ -337,14 +339,25 @@ namespace lsp
                 return STATUS_OK;
             }
             else
+            {
+                wc = s->char_at(*offset);
+                if ((wc != '.') && (wc != ','))
+                {
+                    if (in <= 0)
+                        return STATUS_BAD_FORMAT;
+                    *dst = num;
+                    return STATUS_OK;
+                }
+
                 ++(*offset);
+            }
 
             // Parse fraction part
             double fnum = 0.1;
             ssize_t fn=0;
             for ( ; *offset < len; ++(*offset), ++fn)
             {
-                lsp_wchar_t wc = s->char_at(*offset);
+                wc = s->char_at(*offset);
                 if ((wc >= '0') && (wc <= '9'))
                 {
                     num += (wc - '0') * fnum;
@@ -504,9 +517,13 @@ namespace lsp
 
                     if ((res = skip_whitespace(s, offset)) != STATUS_OK)
                         return res;
-                    if (!s->starts_with_ascii_nocase("hz ", *offset))
+
+                    if (s->starts_with_ascii_nocase("hz ", *offset))
+                        *offset += 3;
+                    else if (s->starts_with_ascii_nocase("h z ", *offset))
+                        *offset += 4;
+                    else
                         return STATUS_BAD_FORMAT;
-                    *offset += 3;
                 }
                 else if (s->starts_with_ascii_nocase("gain ", *offset))
                 {
@@ -564,9 +581,17 @@ namespace lsp
                     offset = 9;
                     if ((res = parse_decimal(&major, &s, &offset)) != STATUS_OK)
                         return res;
-                    if ((offset >= s.length()) || (s.char_at(offset) != '.'))
+                    if (offset < s.length())
+                    {
+                        lsp_wchar_t wc = s.char_at(offset);
+                        if ((wc != '.') && (wc != ','))
+                            return STATUS_BAD_FORMAT;
+                        ++offset;
+                    }
+                    else
                         return STATUS_BAD_FORMAT;
-                    ++offset;
+
+
                     if ((res = parse_decimal(&minor, &s, &offset)) != STATUS_OK)
                         return res;
                 }
