@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.1 ===
+* Better support of RoomEqWizard ill-formed files.
+
 === 1.0.0 ===
 * Improved expr::format functions: extended format specifiers.
 * Refactoring of the lsp::Color utility class interface.

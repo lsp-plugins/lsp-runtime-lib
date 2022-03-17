@@ -23,6 +23,7 @@ $(LSP_RUNTIME_LIB_BIN)/main/runtime/LSPString.o: \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/charset.h \
@@ -48,6 +49,7 @@ $(LSP_RUNTIME_LIB_BIN)/main/runtime/buffer.o: main/runtime/buffer.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/buffer.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
@@ -138,6 +140,7 @@ $(LSP_RUNTIME_LIB_BIN)/main/resource/Decompressor.o: \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InMemoryStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
@@ -179,6 +182,7 @@ $(LSP_RUNTIME_LIB_BIN)/main/resource/Compressor.o: \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/bits.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/arch/x86/bits.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/resource/Compressor.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutMemoryStream.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/darray.h \
@@ -216,6 +220,7 @@ $(LSP_RUNTIME_LIB_BIN)/main/protocol/osc/pattern.o: \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/protocol/osc.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/protocol/osc/types.h \
@@ -336,6 +341,7 @@ $(LSP_RUNTIME_LIB_BIN)/main/mm/MMIOReader.o: main/mm/MMIOReader.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/endian.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/arch/x86/endian.h \
@@ -359,6 +365,7 @@ $(LSP_RUNTIME_LIB_BIN)/main/mm/IOutAudioStream.o: \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/sample.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h
 $(LSP_RUNTIME_LIB_BIN)/main/mm/InAudioFileStream.o: \
  main/mm/InAudioFileStream.cpp \
@@ -378,6 +385,7 @@ $(LSP_RUNTIME_LIB_BIN)/main/mm/InAudioFileStream.o: \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/endian.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/arch/x86/endian.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
@@ -393,11 +401,13 @@ $(LSP_RUNTIME_LIB_BIN)/main/mm/IInAudioStream.o: \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/sample.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h
 $(LSP_RUNTIME_LIB_BIN)/main/mm/ACMStream.o: main/mm/ACMStream.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/endian.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/arch/x86/endian.h \
@@ -970,6 +980,7 @@ $(LSP_RUNTIME_LIB_BIN)/main/fmt/RoomEQWizard.o: main/fmt/RoomEQWizard.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/endian.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/arch/x86/endian.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h \
@@ -1041,6 +1052,7 @@ $(LSP_RUNTIME_LIB_BIN)/main/fmt/obj/PullParser.o: \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/obj/const.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/darray.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InFileStream.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/File.h \
@@ -1507,6 +1519,7 @@ $(LSP_RUNTIME_LIB_BIN)/main/fmt/java/ObjectStream.o: \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/arch/x86/endian.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InFileStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
@@ -1855,7 +1868,8 @@ $(LSP_RUNTIME_LIB_BIN)/main/expr/Parameters.o: main/expr/Parameters.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h
 $(LSP_RUNTIME_LIB_BIN)/main/expr/format.o: main/expr/format.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/expr/format.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
@@ -2016,6 +2030,7 @@ $(LSP_RUNTIME_LIB_BIN)/test/utest/resource/compressor.o: \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/types.h \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/main/dynarray.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
