@@ -24,7 +24,7 @@
 
 #define LSP_RUNTIME_LIB_MAJOR       1
 #define LSP_RUNTIME_LIB_MINOR       0
-#define LSP_RUNTIME_LIB_MICRO       1
+#define LSP_RUNTIME_LIB_MICRO       2
 
 #ifdef LSP_RUNTIME_LIB_BUILTIN
     #define LSP_RUNTIME_LIB_EXPORT
