@@ -338,7 +338,7 @@ namespace lsp
         size_t InAudioFileStream::select_format(size_t fmt)
         {
         #ifdef USE_LIBSNDFILE
-            // libsndfile allows to do some sample conversions internally
+            // libsndfile allows one to do some sample conversions internally
             // we trust it more than our own sample converison routines
             switch (sformat_format(fmt))
             {
