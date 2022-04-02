@@ -24,9 +24,10 @@
 #include <lsp-plug.in/ipc/Process.h>
 
 #ifdef PLATFORM_WINDOWS
-    #include <winbase.h>
-    #include <sysinfoapi.h>
     #include <shellapi.h>
+    #include <synchapi.h>
+    #include <sysinfoapi.h>
+    #include <winbase.h>
 #else
     #include <stdlib.h>
     #include <errno.h>
@@ -326,6 +327,18 @@ namespace lsp
             local->sec      = t.wSecond;
             local->nanos    = time->nanos;
         }
+
+        status_t sleep_msec(size_t delay)
+        {
+            while (delay > 0)
+            {
+                size_t period   = lsp_min(0x10000000, delay);
+                Sleep(DWORD(period));
+                delay -= period;
+            }
+
+            return STATUS_OK;
+        }
 #else
         void get_time(time_t *time)
         {
@@ -366,6 +379,37 @@ namespace lsp
             local->min      = t->tm_min;
             local->sec      = t->tm_sec;
             local->nanos    = stime.tv_nsec;
+        }
+
+        status_t sleep_msec(size_t delay)
+        {
+            if (delay <= 0)
+                return STATUS_OK;;
+
+            struct timespec req, rem;
+            req.tv_nsec = (delay % 1000) * 1000000;
+            req.tv_sec  = delay / 1000;
+
+            while ((req.tv_nsec > 0) && (req.tv_sec > 0))
+            {
+                int res = ::nanosleep(&req, &rem);
+                if (res != 0)
+                {
+                    switch (errno)
+                    {
+                        case EFAULT:
+                        case EINVAL:
+                            return STATUS_UNKNOWN_ERR;
+                        case EINTR:
+                        default:
+                            break;
+                    }
+                }
+                else
+                    req = rem;
+            }
+
+            return STATUS_OK;
         }
 #endif /* PLATFORM_WINDOWS */
 
