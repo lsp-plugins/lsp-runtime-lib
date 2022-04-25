@@ -24,7 +24,7 @@ These modules provide currently:
     * GTK2 and GTK3 bookmark file formats.
     * LSP JSON-serialized bookmarks.
   * Support of LSPC chunk data file format (aimed for storing audio streams).
-  * Wavefont OBJ file format parsing support for loading 3D models (limited support).
+  * Wavefront OBJ file format parsing support for loading 3D models (limited support).
   * RoomEqWizard file support.
 * Basic OS-independent I/O abstraction layer support:
   * io::Path class for abstract file system path presentation and operations.

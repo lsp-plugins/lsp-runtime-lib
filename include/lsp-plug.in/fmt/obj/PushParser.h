@@ -49,7 +49,7 @@ namespace lsp
             public:
                 /**
                  * Parse file
-                 * @param handler Wavefont Object file handler
+                 * @param handler Wavefront Object file handler
                  * @param path UTF-8 path to the file
                  * @param charset character set encoding of the file
                  * @return status of operation
@@ -58,7 +58,7 @@ namespace lsp
 
                 /**
                  * Parse file
-                 * @param handler Wavefont Object file handler
+                 * @param handler Wavefront Object file handler
                  * @param path path to the file
                  * @param charset character set encoding of the file
                  * @return status of operation
@@ -67,7 +67,7 @@ namespace lsp
 
                 /**
                  * Parse file
-                 * @param handler Wavefont Object file handler
+                 * @param handler Wavefront Object file handler
                  * @param path path to the file
                  * @param charset character set encoding of the file
                  * @return status of operation
@@ -76,7 +76,7 @@ namespace lsp
 
                 /**
                  * Parse data from input stream
-                 * @param handler Wavefont Object file handler
+                 * @param handler Wavefront Object file handler
                  * @param is input stream
                  * @param flags wrap flags
                  * @param charset character set
@@ -86,7 +86,7 @@ namespace lsp
 
                 /**
                  * Parse data from native encoded string
-                 * @param handler Wavefont Object file handler
+                 * @param handler Wavefront Object file handler
                  * @param str data input
                  * @param charset character set
                  * @return status of operation
@@ -95,7 +95,7 @@ namespace lsp
 
                 /**
                  * Parse data from text string
-                 * @param handler Wavefont Object file handler
+                 * @param handler Wavefront Object file handler
                  * @param str data input
                  * @return status of operation
                  */
@@ -103,7 +103,7 @@ namespace lsp
 
                 /**
                  * Parse data from character sequence
-                 * @param handler Wavefont Object file handler
+                 * @param handler Wavefront Object file handler
                  * @param seq input sequence
                  * @param flags wrap flags
                  * @return status of operation
