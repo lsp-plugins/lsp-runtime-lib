@@ -6,6 +6,8 @@
 - Updated plugin metadata (contributed by Dennis Braun).
 - Added system::sleep_msec function for millisecond-precise sleeps.
 - Fixed typo in Wavefront Object File Format name.
+- Renamed method OutBitStream::writeb to OutBitStream::bwrite to not to clash with
+  the parent IOutStream class.
 
 === 1.0.2 ===
 * Updated build scripts.

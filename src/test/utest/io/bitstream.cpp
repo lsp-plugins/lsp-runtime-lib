@@ -47,8 +47,8 @@ UTEST_BEGIN("runtime.io", bitstream)
         UTEST_ASSERT(obs.wrap(os, WRAP_NONE) == STATUS_OK);
 
         // Emit '9'
-        UTEST_ASSERT(obs.writeb(true) == STATUS_OK);
-        UTEST_ASSERT(obs.writeb(false) == STATUS_OK);
+        UTEST_ASSERT(obs.bwrite(true) == STATUS_OK);
+        UTEST_ASSERT(obs.bwrite(false) == STATUS_OK);
         UTEST_ASSERT(obs.writev(false) == STATUS_OK);
         UTEST_ASSERT(obs.writev(true) == STATUS_OK);
 
@@ -73,10 +73,10 @@ UTEST_BEGIN("runtime.io", bitstream)
         UTEST_ASSERT(obs.bwrite(&test_data[9], 180) == 180);                        // Emit 'a4517315bfa7bda8fdcfb2f1f1d042e58d0588f732798'
 
         // Emit 'b'
-        UTEST_ASSERT(obs.writeb(true) == STATUS_OK);
-        UTEST_ASSERT(obs.writeb(false) == STATUS_OK);
-        UTEST_ASSERT(obs.writeb(true) == STATUS_OK);
-        UTEST_ASSERT(obs.writeb(true) == STATUS_OK);
+        UTEST_ASSERT(obs.bwrite(true) == STATUS_OK);
+        UTEST_ASSERT(obs.bwrite(false) == STATUS_OK);
+        UTEST_ASSERT(obs.bwrite(true) == STATUS_OK);
+        UTEST_ASSERT(obs.bwrite(true) == STATUS_OK);
 
         UTEST_ASSERT(obs.flush() == STATUS_OK);                                     // Emit '0'
         UTEST_ASSERT(obs.writev(uint32_t(0x5ec9), 12) == STATUS_OK);                // Emit 'ec9'

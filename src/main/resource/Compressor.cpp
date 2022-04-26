@@ -378,14 +378,14 @@ namespace lsp
                 size_t max  = (1 << bits);
                 if (value < max)
                     break;
-                if ((res = sOut.writeb(true)) != STATUS_OK)
+                if ((res = sOut.bwrite(true)) != STATUS_OK)
                     return res;
 
                 value      -= max;
                 bits       += stepping;
             }
 
-            if ((res = sOut.writeb(false)) != STATUS_OK)
+            if ((res = sOut.bwrite(false)) != STATUS_OK)
                 return res;
 
             return (bits > 0) ? sOut.writev(value, bits) : STATUS_OK;
