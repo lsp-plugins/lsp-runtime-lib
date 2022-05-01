@@ -8,6 +8,7 @@
 - Fixed typo in Wavefront Object File Format name.
 - Renamed method OutBitStream::writeb to OutBitStream::bwrite to not to clash with
   the parent IOutStream class.
+- Added LSPString::ends_with_ascii and LSPString::ends_with_ascii_nocase methods.
 
 === 1.0.2 ===
 * Updated build scripts.

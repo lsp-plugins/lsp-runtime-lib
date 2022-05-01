@@ -863,6 +863,18 @@ namespace lsp
         return xcmp(&pData[offset], src->pData, src->nLength) == 0;
     }
 
+    bool LSPString::ends_with_ascii(const char *src) const
+    {
+        size_t len = strlen(src);
+        return (len <= nLength) ? starts_with_ascii(src, nLength - len) : false;
+    }
+
+    bool LSPString::ends_with_ascii_nocase(const char *src) const
+    {
+        size_t len = strlen(src);
+        return (len <= nLength) ? starts_with_ascii(src, nLength - len) : false;
+    }
+
     bool LSPString::ends_with_nocase(const LSPString *src) const
     {
         if (src->nLength <= 0)
