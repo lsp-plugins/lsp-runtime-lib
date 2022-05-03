@@ -152,6 +152,12 @@ namespace lsp
         void get_localtime(localtime_t *local, const time_t *time = NULL);
 
         /**
+         * Sleep for a specified amount of milliseconds
+         * @param delay the amount of milliseconds to sleep
+         */
+        status_t sleep_msec(size_t delay);
+
+        /**
          * Get temporary directory
          * @param path pointer to store result
          * @return status of operation

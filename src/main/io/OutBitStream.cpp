@@ -353,7 +353,7 @@ namespace lsp
             return do_flush_buffer();
         }
 
-        status_t OutBitStream::writeb(bool value)
+        status_t OutBitStream::bwrite(bool value)
         {
             status_t res;
             if (pOS == NULL)

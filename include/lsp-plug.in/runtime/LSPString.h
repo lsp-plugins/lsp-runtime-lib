@@ -383,35 +383,47 @@ namespace lsp
             inline size_t replace_all(char ch, lsp_wchar_t rep) { return replace_all(lsp_wchar_t(uint8_t(ch)), rep); };
             inline size_t replace_all(lsp_wchar_t ch, char rep) { return replace_all(ch, lsp_wchar_t(uint8_t(rep))); };
 
-            /** Check ending and start
+            /** Check ending of the string
              *
              */
             bool ends_with(lsp_wchar_t ch) const;
-            inline bool ends_with(char ch) const { return ends_with(lsp_wchar_t(uint8_t(ch))); };
+            inline bool ends_with(char ch) const                        { return ends_with(lsp_wchar_t(uint8_t(ch)));           };
+
             bool ends_with(const LSPString *src) const;
+
+            bool ends_with_ascii(const char *src) const;
+            bool ends_with_ascii_nocase(const char *src) const;
+
             bool ends_with_nocase(lsp_wchar_t ch) const;
-            inline bool ends_with_nocase(char ch) const { return ends_with(lsp_wchar_t(uint8_t(ch))); };
+            inline bool ends_with_nocase(char ch) const                 { return ends_with_nocase(lsp_wchar_t(uint8_t(ch)));    };
             bool ends_with_nocase(const LSPString *src) const;
 
-            bool starts_with(lsp_wchar_t ch) const;
-            inline bool starts_with(char ch) const { return starts_with(lsp_wchar_t(uint8_t(ch))); };
+            /** Check starting of the string
+             *
+             */
             bool starts_with(lsp_wchar_t ch, size_t offset) const;
-            inline bool starts_with(char ch, size_t offset) const { return starts_with(lsp_wchar_t(uint8_t(ch)), offset); };
+            bool starts_with(lsp_wchar_t ch) const                      { return starts_with(ch, 0);                            };
 
-            bool starts_with(const LSPString *src) const;
-            bool starts_with_ascii(const char *src) const;
+            inline bool starts_with(char ch) const                      { return starts_with(lsp_wchar_t(uint8_t(ch)), 0);      };
+            inline bool starts_with(char ch, size_t offset) const       { return starts_with(lsp_wchar_t(uint8_t(ch)), offset); };
+
             bool starts_with(const LSPString *src, size_t offset) const;
-            bool starts_with_ascii(const char *src, size_t offsset) const;
+            inline bool starts_with(const LSPString *src) const         { return starts_with(src, 0);                           };
 
-            bool starts_with_nocase(lsp_wchar_t ch) const;
-            inline bool starts_with_nocase(char ch) const { return starts_with_nocase(lsp_wchar_t(uint8_t(ch))); };
+            bool starts_with_ascii(const char *src, size_t offset) const;
+            inline bool starts_with_ascii(const char *src) const        { return starts_with_ascii(src, 0);                     };
+
             bool starts_with_nocase(lsp_wchar_t ch, size_t offset) const;
-            inline bool starts_with_nocase(char ch, size_t offset) const { return starts_with_nocase(lsp_wchar_t(uint8_t(ch)), offset); };
+            bool starts_with_nocase(lsp_wchar_t ch) const               { return starts_with(ch, 0);                            };
 
-            bool starts_with_nocase(const LSPString *src) const;
+            inline bool starts_with_nocase(char ch) const               { return starts_with_nocase(lsp_wchar_t(uint8_t(ch)), 0);       };
+            inline bool starts_with_nocase(char ch, size_t offset) const{ return starts_with_nocase(lsp_wchar_t(uint8_t(ch)), offset);  };
+
             bool starts_with_nocase(const LSPString *src, size_t offset) const;
-            bool starts_with_ascii_nocase(const char *src) const;
+            inline bool starts_with_nocase(const LSPString *src) const  { return starts_with_nocase(src, 0);                    };
+
             bool starts_with_ascii_nocase(const char *src, size_t offset) const;
+            inline bool starts_with_ascii_nocase(const char *src) const { return starts_with_ascii_nocase(src, 0);              };
 
             /** Delete character sequence from the string
              *

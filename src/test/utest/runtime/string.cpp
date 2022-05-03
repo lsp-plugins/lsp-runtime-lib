@@ -237,6 +237,76 @@ UTEST_BEGIN("runtime.runtime", string)
         UTEST_ASSERT(s1.ends_with(&s5));
     }
 
+    void test_start_end()
+    {
+        LSPString s;
+        UTEST_ASSERT(s.set_ascii("abcdefghij"));
+
+        // starts_with
+        UTEST_ASSERT(s.starts_with('a'));
+        UTEST_ASSERT(!s.starts_with('b'));
+        UTEST_ASSERT(s.starts_with('e', 4));
+        UTEST_ASSERT(!s.starts_with('d', 4));
+        UTEST_ASSERT(!s.starts_with('f', 4));
+
+        // starts_with_nocase
+        UTEST_ASSERT(s.starts_with_nocase('A'));
+        UTEST_ASSERT(!s.starts_with_nocase('B'));
+        UTEST_ASSERT(s.starts_with_nocase('E', 4));
+        UTEST_ASSERT(!s.starts_with_nocase('D', 4));
+        UTEST_ASSERT(!s.starts_with_nocase('F', 4));
+
+        // ends_with
+        UTEST_ASSERT(s.ends_with('j'));
+        UTEST_ASSERT(!s.ends_with('i'));
+
+        // ends_with_nocase
+        UTEST_ASSERT(s.ends_with_nocase('J'));
+        UTEST_ASSERT(!s.ends_with_nocase('I'));
+
+        // starts_with_ascii
+        UTEST_ASSERT(s.starts_with_ascii(""));
+        UTEST_ASSERT(s.starts_with_ascii("a"));
+        UTEST_ASSERT(s.starts_with_ascii("ab"));
+        UTEST_ASSERT(!s.starts_with_ascii("b"));
+        UTEST_ASSERT(s.starts_with_ascii("b", 1));
+        UTEST_ASSERT(s.starts_with_ascii("bc", 1));
+        UTEST_ASSERT(!s.starts_with_ascii("c", 1));
+        UTEST_ASSERT(s.starts_with_ascii("", 10));
+        UTEST_ASSERT(!s.starts_with_ascii("j", 10));
+        UTEST_ASSERT(!s.starts_with_ascii("", 11));
+        UTEST_ASSERT(s.starts_with_ascii("abcdefghij"));
+        UTEST_ASSERT(!s.starts_with_ascii("abcdefghijk"));
+
+        // starts_with_ascii_nocase
+        UTEST_ASSERT(s.starts_with_ascii_nocase(""));
+        UTEST_ASSERT(s.starts_with_ascii_nocase("A"));
+        UTEST_ASSERT(s.starts_with_ascii_nocase("AB"));
+        UTEST_ASSERT(!s.starts_with_ascii_nocase("B"));
+        UTEST_ASSERT(s.starts_with_ascii_nocase("B", 1));
+        UTEST_ASSERT(s.starts_with_ascii_nocase("BC", 1));
+        UTEST_ASSERT(!s.starts_with_ascii_nocase("C", 1));
+        UTEST_ASSERT(s.starts_with_ascii_nocase("", 10));
+        UTEST_ASSERT(!s.starts_with_ascii_nocase("J", 10));
+        UTEST_ASSERT(!s.starts_with_ascii_nocase("", 11));
+
+        // ends_with_ascii
+        UTEST_ASSERT(s.ends_with_ascii(""));
+        UTEST_ASSERT(s.ends_with_ascii("j"));
+        UTEST_ASSERT(!s.ends_with_ascii("i"));
+        UTEST_ASSERT(s.ends_with_ascii("ij"));
+        UTEST_ASSERT(s.ends_with_ascii("abcdefghij"));
+        UTEST_ASSERT(!s.ends_with_ascii("zabcdefghij"));
+
+        // ends_with_ascii_nocase
+        UTEST_ASSERT(s.ends_with_ascii_nocase(""));
+        UTEST_ASSERT(s.ends_with_ascii_nocase("J"));
+        UTEST_ASSERT(!s.ends_with_ascii_nocase("I"));
+        UTEST_ASSERT(s.ends_with_ascii_nocase("IJ"));
+        UTEST_ASSERT(s.ends_with_ascii_nocase("ABCDEFGHIJ"));
+        UTEST_ASSERT(!s.ends_with_ascii_nocase("ZABCDEFGHIJ"));
+    }
+
     void test_base_hashing()
     {
         printf("Performing hashing test...\n");
@@ -306,6 +376,7 @@ UTEST_BEGIN("runtime.runtime", string)
     UTEST_MAIN
     {
         test_basic();
+        test_start_end();
         test_base_hashing();
         test_hash_key();
     }
