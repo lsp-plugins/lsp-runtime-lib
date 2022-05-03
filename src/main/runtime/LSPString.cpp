@@ -872,7 +872,7 @@ namespace lsp
     bool LSPString::ends_with_ascii_nocase(const char *src) const
     {
         size_t len = strlen(src);
-        return (len <= nLength) ? starts_with_ascii(src, nLength - len) : false;
+        return (len <= nLength) ? starts_with_ascii_nocase(src, nLength - len) : false;
     }
 
     bool LSPString::ends_with_nocase(const LSPString *src) const
@@ -887,52 +887,16 @@ namespace lsp
         return xcasecmp(&pData[offset], src->pData, src->nLength) == 0;
     }
 
-    bool LSPString::starts_with(lsp_wchar_t ch) const
-    {
-        return (nLength > 0) ? pData[0] == ch : false;
-    }
-
     bool LSPString::starts_with(lsp_wchar_t ch, size_t offset) const
     {
         return (offset < nLength) ? pData[offset] == ch : false;
     }
 
-    bool LSPString::starts_with_nocase(lsp_wchar_t ch) const
-    {
-        if (nLength <= 0)
-            return false;
-        return towlower(pData[0]) == towlower(ch);
-    }
-
     bool LSPString::starts_with_nocase(lsp_wchar_t ch, size_t offset) const
     {
-        if (offset < nLength)
+        if (offset > nLength)
             return false;
         return towlower(pData[offset]) == towlower(ch);
-    }
-
-    bool LSPString::starts_with(const LSPString *src) const
-    {
-        if (src->nLength <= 0)
-            return true;
-
-        if (nLength < src->nLength)
-            return false;
-
-        return xcasecmp(pData, src->pData, src->nLength) == 0;
-    }
-
-    bool LSPString::starts_with_ascii(const char *str) const
-    {
-        for (size_t i=0, n=nLength; (i < n); ++i)
-        {
-            lsp_wchar_t c = uint8_t(*(str++));
-            if (c == 0)
-                return true;
-            else if (c != pData[i])
-                return false;
-        }
-        return (*str == '\0');
     }
 
     bool LSPString::starts_with(const LSPString *src, size_t offset) const
@@ -948,6 +912,9 @@ namespace lsp
 
     bool LSPString::starts_with_ascii(const char *str, size_t offset) const
     {
+        if (offset > nLength)
+            return false;
+
         for (size_t i=offset, n=nLength; (i < n); ++i)
         {
             lsp_wchar_t c = uint8_t(*(str++));
@@ -957,17 +924,6 @@ namespace lsp
                 return false;
         }
         return (*str == '\0');
-    }
-
-    bool LSPString::starts_with_nocase(const LSPString *src) const
-    {
-        if (src->nLength <= 0)
-            return true;
-
-        if (nLength < src->nLength)
-            return false;
-
-        return xcasecmp(pData, src->pData, src->nLength) == 0;
     }
 
     bool LSPString::starts_with_nocase(const LSPString *src, size_t offset) const
@@ -981,21 +937,11 @@ namespace lsp
         return xcasecmp(&pData[offset], src->pData, src->nLength) == 0;
     }
 
-    bool LSPString::starts_with_ascii_nocase(const char *str) const
-    {
-        for (size_t i=0, n=nLength; (i < n); ++i)
-        {
-            lsp_wchar_t c = uint8_t(*(str++));
-            if (c == 0)
-                return true;
-            else if (towlower(c) != towlower(pData[i]))
-                return false;
-        }
-        return (*str == '\0');
-    }
-
     bool LSPString::starts_with_ascii_nocase(const char *str, size_t offset) const
     {
+        if (offset > nLength)
+            return false;
+
         for (size_t i=offset, n=nLength; (i < n); ++i)
         {
             lsp_wchar_t c = uint8_t(*(str++));
