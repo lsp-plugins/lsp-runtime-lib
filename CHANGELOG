@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.4 ===
+* Updated build scripts.
+
 === 1.0.3 ===
 * Updated grammar in several text comments.
 * Added system::sleep_msec function for millisecond-precise sleeps.
@@ -143,3 +146,4 @@
 * OS-independend Inter-process communication (IPC) primitives.
 * Basic multimedia (MM) streaming primitives.
 * Different musical protocol support.
+
