@@ -37,6 +37,11 @@ namespace lsp
             for (size_t i=0, n=vLoaders.size(); i<n; ++i)
             {
                 prefix_t *p = vLoaders.uget(i);
+                if ((p->bFree) && (p->pLoader != NULL))
+                {
+                    delete p->pLoader;
+                    p->pLoader = NULL;
+                }
                 if (p != NULL)
                     delete p;
             }
@@ -107,7 +112,7 @@ namespace lsp
             return lookup_prefix(dst, path->as_string());
         }
 
-        status_t PrefixLoader::add_prefix(const char *prefix, ILoader *loader)
+        status_t PrefixLoader::add_prefix(const char *prefix, ILoader *loader, bool free)
         {
             if (prefix == NULL)
                 return set_error(STATUS_BAD_ARGUMENTS);
@@ -121,6 +126,7 @@ namespace lsp
                 return set_error(STATUS_NO_MEM);
             }
             pref->pLoader   = loader;
+            pref->bFree     = free;
 
             if (!vLoaders.add(pref))
             {
@@ -131,7 +137,7 @@ namespace lsp
             return set_error(STATUS_OK);
         }
 
-        status_t PrefixLoader::add_prefix(const LSPString *prefix, ILoader *loader)
+        status_t PrefixLoader::add_prefix(const LSPString *prefix, ILoader *loader, bool free)
         {
             if (prefix == NULL)
                 return set_error(STATUS_BAD_ARGUMENTS);
@@ -145,6 +151,7 @@ namespace lsp
                 return set_error(STATUS_NO_MEM);
             }
             pref->pLoader   = loader;
+            pref->bFree     = free;
 
             if (!vLoaders.add(pref))
             {
@@ -155,7 +162,7 @@ namespace lsp
             return set_error(STATUS_OK);
         }
 
-        status_t PrefixLoader::add_prefix(const io::Path *prefix, ILoader *loader)
+        status_t PrefixLoader::add_prefix(const io::Path *prefix, ILoader *loader, bool free)
         {
             if (prefix == NULL)
                 return set_error(STATUS_BAD_ARGUMENTS);
@@ -169,6 +176,7 @@ namespace lsp
                 return set_error(STATUS_NO_MEM);
             }
             pref->pLoader   = loader;
+            pref->bFree     = free;
 
             if (!vLoaders.add(pref))
             {

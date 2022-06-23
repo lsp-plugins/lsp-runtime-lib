@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.5 ===
+* Updated PrefixLoader interface and implementation.
 * Updated build scripts.
 
 === 1.0.4 ===
