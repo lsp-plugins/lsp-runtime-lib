@@ -389,24 +389,27 @@ namespace lsp
             struct timespec req, rem;
             req.tv_nsec = (delay % 1000) * 1000000;
             req.tv_sec  = delay / 1000;
+            rem.tv_nsec = 0;
+            rem.tv_sec  = 0;
 
-            while ((req.tv_nsec > 0) && (req.tv_sec > 0))
+            while ((req.tv_nsec > 0) || (req.tv_sec > 0))
             {
-                int res = ::nanosleep(&req, &rem);
-                if (res != 0)
+                // Perform nanosleep for the specific period of time.
+                // If function succeeded and waited the whole desired period
+                // of time, it should return 0.
+                if (::nanosleep(&req, &rem) == 0)
+                    break;
+
+                // If the sleep was interrupted, we need to update
+                // the remained number of time to sleep.
+                switch (errno)
                 {
-                    switch (errno)
-                    {
-                        case EFAULT:
-                        case EINVAL:
-                            return STATUS_UNKNOWN_ERR;
-                        case EINTR:
-                        default:
-                            break;
-                    }
+                    case EINTR:
+                        req = rem;
+                        break;
+                    default:
+                        return STATUS_UNKNOWN_ERR;
                 }
-                else
-                    req = rem;
             }
 
             return STATUS_OK;

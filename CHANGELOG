@@ -4,6 +4,7 @@
 
 === 1.0.5 ===
 * Updated PrefixLoader interface and implementation.
+* Fixed the improper use of nanosleep when introducing the sleep function.
 * Updated build scripts.
 
 === 1.0.4 ===
