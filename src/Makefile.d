@@ -1932,6 +1932,26 @@ $(LSP_RUNTIME_LIB_BIN)/main/expr/evaluator.o: main/expr/evaluator.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/expr/token.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/math.h
+$(LSP_RUNTIME_LIB_BIN)/test/utest/runtime/system.o: \
+ test/utest/runtime/system.cpp \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/utest.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/test.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/env.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/main/config.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/types.h \
+ $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/main/dynarray.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/system.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h
 $(LSP_RUNTIME_LIB_BIN)/test/utest/runtime/string.o: \
  test/utest/runtime/string.cpp \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/utest.h \
