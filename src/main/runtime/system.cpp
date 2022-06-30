@@ -330,12 +330,30 @@ namespace lsp
 
         status_t sleep_msec(size_t delay)
         {
+            HANDLE timer;
+            LARGE_INTEGER li;
+
+            timer = CreateWaitableTimerW(NULL, TRUE, NULL);
+            if (timer == NULL)
+                return STATUS_UNKNOWN_ERR;
+
             while (delay > 0)
             {
+                // Relative time, computed with precision of 100 ns
                 size_t period   = lsp_min(0x10000000U, delay);
-                Sleep(DWORD(period));
-                delay -= period;
+                li.QuadPart     = - LONGLONG(period) * 10000;
+
+                if (!SetWaitableTimer(timer, &li, 0, NULL, NULL, FALSE))
+                {
+                    CloseHandle(timer);
+                    return STATUS_UNKNOWN_ERR;
+                }
+
+                WaitForSingleObject(timer, INFINITE);
+                delay          -= period;
             }
+
+            CloseHandle(timer);
 
             return STATUS_OK;
         }
