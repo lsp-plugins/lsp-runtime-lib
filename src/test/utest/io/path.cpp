@@ -25,19 +25,21 @@
 #include <lsp-plug.in/stdlib/string.h>
 
 #ifdef PLATFORM_WINDOWS
-    #define TEST_PATH1      "C:\\Windows\\system32"
-    #define TEST_PATH2      "C:\\Windows\\system\\lib"
-    #define TEST_PATH3      "C:\\Windows\\system\\bin"
-    #define TEST_PATH4      "C:\\Windows\\system"
-    #define TEST_PATH5      "C:\\Windows"
-    #define TEST_ROOT       "C:\\"
+    #define TEST_PATH1          "C:\\Windows\\system32"
+    #define TEST_PATH2          "C:\\Windows\\system\\lib"
+    #define TEST_PATH3          "C:\\Windows\\system\\bin"
+    #define TEST_PATH4          "C:\\Windows\\system"
+    #define TEST_PATH4_LAST     "system"
+    #define TEST_PATH5          "C:\\Windows"
+    #define TEST_ROOT           "C:\\"
 #else
-    #define TEST_PATH1      "/usr/local/bin"
-    #define TEST_PATH2      "/usr/share/local/lib"
-    #define TEST_PATH3      "/usr/share/local/bin"
-    #define TEST_PATH4      "/usr/share/local"
-    #define TEST_PATH5      "/usr"
-    #define TEST_ROOT       "/"
+    #define TEST_PATH1          "/usr/local/bin"
+    #define TEST_PATH2          "/usr/share/local/lib"
+    #define TEST_PATH3          "/usr/share/local/bin"
+    #define TEST_PATH4          "/usr/share/local"
+    #define TEST_PATH4_LAST     "local"
+    #define TEST_PATH5          "/usr"
+    #define TEST_ROOT           "/"
 #endif
 
 using namespace lsp;
@@ -402,7 +404,7 @@ UTEST_BEGIN("runtime.io", path)
 
         UTEST_ASSERT(p.set(TEST_PATH4) == STATUS_OK);
         UTEST_ASSERT(p.remove_base() == STATUS_OK);
-        UTEST_ASSERT(p.equals("local"));
+        UTEST_ASSERT(p.equals(TEST_PATH4_LAST));
     }
 
 //    void        clear()
