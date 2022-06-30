@@ -5,6 +5,8 @@
 === 1.0.5 ===
 * Updated PrefixLoader interface and implementation.
 * Fixed the improper use of nanosleep when introducing the sleep function.
+* Fixed bug in path matching algorithm for io::PathPattern class.
+* Better handling of error codes for files under Windows platform.
 * Updated build scripts.
 
 === 1.0.4 ===
