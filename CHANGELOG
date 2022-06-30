@@ -7,6 +7,7 @@
 * Fixed the improper use of nanosleep when introducing the sleep function.
 * Fixed bug in path matching algorithm for io::PathPattern class.
 * Better handling of error codes for files under Windows platform.
+* Fixed failed case for ipc::Process launching algorithm under Windows platform.
 * Updated build scripts.
 
 === 1.0.4 ===
