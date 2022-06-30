@@ -8,6 +8,7 @@
 * Fixed bug in path matching algorithm for io::PathPattern class.
 * Better handling of error codes for files under Windows platform.
 * Fixed failed case for ipc::Process launching algorithm under Windows platform.
+* Fixed LSPString behaviour related to call of get_native() method for empty string.
 * Updated build scripts.
 
 === 1.0.4 ===
