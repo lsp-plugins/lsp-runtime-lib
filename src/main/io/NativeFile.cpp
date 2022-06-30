@@ -83,29 +83,24 @@ namespace lsp
             status_t res = File::stat(path, &stat);
             if (res == STATUS_OK)
             {
-                if (mode & FM_CREATE)
-                    return STATUS_ALREADY_EXISTS;
                 if (stat.type == fattr_t::FT_DIRECTORY)
-                    return STATUS_IS_DIRECTORY;
+                    return (mode & FM_CREATE) ? STATUS_ALREADY_EXISTS : STATUS_IS_DIRECTORY;
             }
-            else
+            else if (!(mode & FM_CREATE))
                 return set_error(res);
 
             int oflags;
             size_t fflags;
-            size_t shflags = FILE_SHARE_DELETE;
             size_t cmode;
             size_t atts = FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS;
             if (mode & FM_READ)
             {
                 oflags      = (mode & FM_WRITE) ? GENERIC_READ | GENERIC_WRITE : GENERIC_READ;
-                shflags    |= (mode & FM_WRITE) ? FILE_SHARE_READ | FILE_SHARE_WRITE : FILE_SHARE_READ;
                 fflags      = (mode & FM_WRITE) ? SF_READ | SF_WRITE : SF_READ;
             }
             else if (mode & FM_WRITE)
             {
                 oflags      = GENERIC_WRITE;
-                shflags    |= FILE_SHARE_WRITE;
                 fflags      = SF_WRITE;
             }
             else
@@ -121,7 +116,10 @@ namespace lsp
             if (mode & FM_DIRECT)
                 atts           |= FILE_FLAG_NO_BUFFERING;
 
-            fhandle_t fd = CreateFileW(path->get_utf16(), oflags, shflags, NULL, cmode, atts, NULL);
+            fhandle_t fd = CreateFileW(path->get_utf16(),
+                oflags,
+                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                NULL, cmode, atts, NULL);
             if (fd == INVALID_HANDLE_VALUE)
             {
                 DWORD error = GetLastError();

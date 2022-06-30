@@ -375,15 +375,18 @@ UTEST_BEGIN("runtime.io", file)
         UTEST_ASSERT(in.flush() == STATUS_OK);
 
         // Copy the file
-        printf("  copying output file...\n");
-        UTEST_ASSERT(io::File::copy(&src, &dst, 0x1234) == written);
+        printf("  copying file %s to %s...\n", src.as_native(), dst.as_native());
+        wssize_t copied = io::File::copy(&src, &dst, 0x1234);
+        UTEST_ASSERT_MSG(copied == written,
+            "Expected to be written %ld bytes but written %ld bytes",
+            long(written), long(copied));
 
         // Validate the file
         printf("  verifying file contents...\n");
         UTEST_ASSERT(in.seek(0, io::File::FSK_SET) == STATUS_OK);
         UTEST_ASSERT(out.open(&dst, io::File::FM_READ) == STATUS_OK);
 
-        wssize_t copied = 0;
+        copied = 0;
         while ((res = in.read(buf1.data(), buf1.size())) >= 0)
         {
             nread = out.read(buf2.data(), res);
