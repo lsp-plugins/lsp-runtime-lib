@@ -80,11 +80,16 @@ namespace lsp
                 return set_error(STATUS_BAD_ARGUMENTS);
 
             fattr_t stat;
-            if (File::stat(path, &stat) == STATUS_OK)
+            status_t res = File::stat(path, &stat);
+            if (res == STATUS_OK)
             {
+                if (mode & FM_CREATE)
+                    return STATUS_ALREADY_EXISTS;
                 if (stat.type == fattr_t::FT_DIRECTORY)
-                    return (mode & FM_CREATE) ? STATUS_ALREADY_EXISTS : STATUS_NOT_FOUND;
+                    return STATUS_IS_DIRECTORY;
             }
+            else
+                return set_error(res);
 
             int oflags;
             size_t fflags;
@@ -118,7 +123,46 @@ namespace lsp
 
             fhandle_t fd = CreateFileW(path->get_utf16(), oflags, shflags, NULL, cmode, atts, NULL);
             if (fd == INVALID_HANDLE_VALUE)
-                return set_error(STATUS_IO_ERROR);
+            {
+                DWORD error = GetLastError();
+                res = STATUS_IO_ERROR;
+
+                switch (error)
+                {
+                    case ERROR_PATH_NOT_FOUND:
+                    case ERROR_FILE_NOT_FOUND:
+                    case ERROR_INVALID_ACCESS:
+                    case ERROR_INVALID_DRIVE:
+                    case ERROR_CANNOT_MAKE:
+                        res = STATUS_NOT_FOUND;
+                        break;
+                    case ERROR_ACCESS_DENIED:
+                        res = STATUS_PERMISSION_DENIED;
+                        break;
+                    case ERROR_TOO_MANY_OPEN_FILES:
+                    case ERROR_NOT_ENOUGH_MEMORY:
+                    case ERROR_OUTOFMEMORY:
+                        res = STATUS_NO_MEM;
+                        break;
+                    case ERROR_WRITE_PROTECT:
+                        res = STATUS_READONLY;
+                        break;
+                    case ERROR_FILE_EXISTS:
+                    case ERROR_ALREADY_EXISTS:
+                    case ERROR_DIRECTORY:
+                        res = STATUS_ALREADY_EXISTS;
+                        break;
+                    case ERROR_BUFFER_OVERFLOW:
+                        res = STATUS_OVERFLOW;
+                        break;
+                    case ERROR_INVALID_NAME:
+                        res = STATUS_INVALID_VALUE;
+                        break;
+                    default:
+                        break;
+                }
+                return set_error(res);
+            }
 
             hFD         = fd;
             nFlags      = fflags | SF_CLOSE;

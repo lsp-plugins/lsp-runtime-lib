@@ -25,7 +25,9 @@
 #include <lsp-plug.in/io/InFileStream.h>
 #include <lsp-plug.in/io/InStringSequence.h>
 #include <lsp-plug.in/io/InSequence.h>
+
 #include <errno.h>
+#include <locale.h>
 
 namespace lsp
 {

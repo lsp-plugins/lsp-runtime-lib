@@ -332,7 +332,7 @@ namespace lsp
         {
             while (delay > 0)
             {
-                size_t period   = lsp_min(0x10000000, delay);
+                size_t period   = lsp_min(0x10000000U, delay);
                 Sleep(DWORD(period));
                 delay -= period;
             }

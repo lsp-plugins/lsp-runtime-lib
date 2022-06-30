@@ -173,12 +173,30 @@ namespace lsp
                     DWORD err = ::GetLastError();
                     switch (err)
                     {
-                        case ERROR_NO_MORE_FILES:
+                        case ERROR_PATH_NOT_FOUND:
                         case ERROR_FILE_NOT_FOUND:
+                        case ERROR_INVALID_ACCESS:
+                        case ERROR_INVALID_DRIVE:
+                        case ERROR_CANNOT_MAKE:
                             return STATUS_NOT_FOUND;
-                        default:
-                            return STATUS_IO_ERROR;
+                        case ERROR_ACCESS_DENIED:
+                            return STATUS_PERMISSION_DENIED;
+                        case ERROR_TOO_MANY_OPEN_FILES:
+                        case ERROR_NOT_ENOUGH_MEMORY:
+                        case ERROR_OUTOFMEMORY:
+                            return STATUS_NO_MEM;
+                        case ERROR_FILE_EXISTS:
+                        case ERROR_ALREADY_EXISTS:
+                        case ERROR_DIRECTORY:
+                            return STATUS_ALREADY_EXISTS;
+                        case ERROR_BUFFER_OVERFLOW:
+                            return STATUS_OVERFLOW;
+                        case ERROR_INVALID_NAME:
+                            return STATUS_INVALID_VALUE;
+                        default: break;
                     }
+
+                    return STATUS_IO_ERROR;
                 }
                 ::FindClose(dh);
 
@@ -245,7 +263,35 @@ namespace lsp
             BY_HANDLE_FILE_INFORMATION hfi;
 
             if (!::GetFileInformationByHandle(fd, &hfi))
+            {
+                DWORD err = ::GetLastError();
+
+                switch (err)
+                {
+                    case ERROR_PATH_NOT_FOUND:
+                    case ERROR_FILE_NOT_FOUND:
+                    case ERROR_INVALID_ACCESS:
+                    case ERROR_INVALID_DRIVE:
+                    case ERROR_CANNOT_MAKE:
+                        return STATUS_NOT_FOUND;
+                    case ERROR_ACCESS_DENIED:
+                        return STATUS_PERMISSION_DENIED;
+                    case ERROR_TOO_MANY_OPEN_FILES:
+                    case ERROR_NOT_ENOUGH_MEMORY:
+                    case ERROR_OUTOFMEMORY:
+                        return STATUS_NO_MEM;
+                    case ERROR_FILE_EXISTS:
+                    case ERROR_ALREADY_EXISTS:
+                    case ERROR_DIRECTORY:
+                        return STATUS_ALREADY_EXISTS;
+                    case ERROR_BUFFER_OVERFLOW:
+                        return STATUS_OVERFLOW;
+                    case ERROR_INVALID_NAME:
+                        return STATUS_INVALID_VALUE;
+                    default: break;
+                }
                 return STATUS_IO_ERROR;
+            }
 
             // Decode file type
             attr->type      = fattr_t::FT_REGULAR;
@@ -315,12 +361,30 @@ namespace lsp
                     DWORD err = ::GetLastError();
                     switch (err)
                     {
-                        case ERROR_NO_MORE_FILES:
+                        case ERROR_PATH_NOT_FOUND:
                         case ERROR_FILE_NOT_FOUND:
+                        case ERROR_INVALID_ACCESS:
+                        case ERROR_INVALID_DRIVE:
+                        case ERROR_CANNOT_MAKE:
                             return STATUS_NOT_FOUND;
-                        default:
-                            return STATUS_IO_ERROR;
+                        case ERROR_ACCESS_DENIED:
+                            return STATUS_PERMISSION_DENIED;
+                        case ERROR_TOO_MANY_OPEN_FILES:
+                        case ERROR_NOT_ENOUGH_MEMORY:
+                        case ERROR_OUTOFMEMORY:
+                            return STATUS_NO_MEM;
+                        case ERROR_FILE_EXISTS:
+                        case ERROR_ALREADY_EXISTS:
+                        case ERROR_DIRECTORY:
+                            return STATUS_ALREADY_EXISTS;
+                        case ERROR_BUFFER_OVERFLOW:
+                            return STATUS_OVERFLOW;
+                        case ERROR_INVALID_NAME:
+                            return STATUS_INVALID_VALUE;
+                        default: break;
                     }
+
+                    return STATUS_IO_ERROR;
                 }
                 ::FindClose(dh);
 
