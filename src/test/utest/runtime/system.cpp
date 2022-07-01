@@ -23,7 +23,7 @@
 #include <lsp-plug.in/runtime/system.h>
 
 #ifdef PLATFORM_WINDOWS
-    #define DELAY_PRECISION 6
+    #define DELAY_PRECISION 10
 #else
     #define DELAY_PRECISION 1
 #endif /* PLATFORM_WINDOWS */
