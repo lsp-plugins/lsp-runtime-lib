@@ -330,12 +330,30 @@ namespace lsp
 
         status_t sleep_msec(size_t delay)
         {
+            HANDLE timer;
+            LARGE_INTEGER li;
+
+            timer = CreateWaitableTimerW(NULL, TRUE, NULL);
+            if (timer == NULL)
+                return STATUS_UNKNOWN_ERR;
+
             while (delay > 0)
             {
-                size_t period   = lsp_min(0x10000000, delay);
-                Sleep(DWORD(period));
-                delay -= period;
+                // Relative time, computed with precision of 100 ns
+                size_t period   = lsp_min(0x10000000U, delay);
+                li.QuadPart     = - LONGLONG(period) * 10000;
+
+                if (!SetWaitableTimer(timer, &li, 0, NULL, NULL, FALSE))
+                {
+                    CloseHandle(timer);
+                    return STATUS_UNKNOWN_ERR;
+                }
+
+                WaitForSingleObject(timer, INFINITE);
+                delay          -= period;
             }
+
+            CloseHandle(timer);
 
             return STATUS_OK;
         }
@@ -389,24 +407,27 @@ namespace lsp
             struct timespec req, rem;
             req.tv_nsec = (delay % 1000) * 1000000;
             req.tv_sec  = delay / 1000;
+            rem.tv_nsec = 0;
+            rem.tv_sec  = 0;
 
-            while ((req.tv_nsec > 0) && (req.tv_sec > 0))
+            while ((req.tv_nsec > 0) || (req.tv_sec > 0))
             {
-                int res = ::nanosleep(&req, &rem);
-                if (res != 0)
+                // Perform nanosleep for the specific period of time.
+                // If function succeeded and waited the whole desired period
+                // of time, it should return 0.
+                if (::nanosleep(&req, &rem) == 0)
+                    break;
+
+                // If the sleep was interrupted, we need to update
+                // the remained number of time to sleep.
+                switch (errno)
                 {
-                    switch (errno)
-                    {
-                        case EFAULT:
-                        case EINVAL:
-                            return STATUS_UNKNOWN_ERR;
-                        case EINTR:
-                        default:
-                            break;
-                    }
+                    case EINTR:
+                        req = rem;
+                        break;
+                    default:
+                        return STATUS_UNKNOWN_ERR;
                 }
-                else
-                    req = rem;
             }
 
             return STATUS_OK;

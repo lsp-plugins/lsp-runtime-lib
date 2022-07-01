@@ -148,6 +148,7 @@ UTEST_BEGIN("runtime.runtime", string)
         printf("s4 = %s\n", s4.get_native());
 
         UTEST_ASSERT(s5.set(&s1, -4, -10)); // empty because -5 < -9
+        UTEST_ASSERT(s5.is_empty());
         UTEST_ASSERT(s5.get_native() != NULL);
         printf("s5 = %s\n", s5.get_native());
         UTEST_ASSERT(s3.equals(&s4));

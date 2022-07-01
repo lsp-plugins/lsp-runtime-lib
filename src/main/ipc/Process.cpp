@@ -647,6 +647,8 @@ namespace lsp
 
         bool Process::running()
         {
+            if (nStatus == PSTATUS_RUNNING_ERROR)
+                return true;
             return status() == PSTATUS_RUNNING;
         }
 
@@ -673,14 +675,8 @@ namespace lsp
             if (code == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
-            if (nStatus == PSTATUS_CREATED)
+            if (nStatus != PSTATUS_EXITED)
                 return STATUS_BAD_STATE;
-            if (nStatus == PSTATUS_RUNNING)
-            {
-                status_t res = wait(0);
-                if (res != STATUS_OK)
-                    return STATUS_BAD_STATE;
-            }
 
             *code   = nExitCode;
             return STATUS_OK;
@@ -833,7 +829,18 @@ namespace lsp
                 ::free(wenvp);
                 ::free(wargv);
 
-                return STATUS_UNKNOWN_ERR;
+                nStatus   = PSTATUS_RUNNING_ERROR;
+                switch (error)
+                {
+                    case ERROR_FILE_NOT_FOUND:
+                        nExitCode = STATUS_NOT_FOUND;
+                        break;
+                    default:
+                        nExitCode = STATUS_UNKNOWN_ERR;
+                        break;
+                }
+
+                return res;
             }
 
             // Free resources and close redirected file handles
@@ -851,9 +858,19 @@ namespace lsp
 
         status_t Process::wait(wssize_t millis)
         {
-            if (nStatus != PSTATUS_RUNNING)
+            // If we're simulating some process that failed to start as running,
+            // then we need to update the status and just return.
+            // Otherwise we need to reject any wait() request since process is in
+            // bad state.
+            if (nStatus == PSTATUS_RUNNING_ERROR)
+            {
+                nStatus = PSTATUS_EXITED;
+                return STATUS_OK;
+            }
+            else if (nStatus != PSTATUS_RUNNING)
                 return STATUS_BAD_STATE;
 
+            // Wait for completion of the process
             DWORD res = ::WaitForSingleObject(hProcess, (millis < 0) ? INFINITE : millis);
             switch (res)
             {

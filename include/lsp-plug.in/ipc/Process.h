@@ -46,7 +46,8 @@ namespace lsp
                     PSTATUS_CREATED,
                     PSTATUS_RUNNING,
                     PSTATUS_EXITED,
-                    PSTATUS_ERROR
+                    PSTATUS_ERROR,
+                    PSTATUS_RUNNING_ERROR
                 };
 
             private:

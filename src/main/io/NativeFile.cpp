@@ -80,27 +80,27 @@ namespace lsp
                 return set_error(STATUS_BAD_ARGUMENTS);
 
             fattr_t stat;
-            if (File::stat(path, &stat) == STATUS_OK)
+            status_t res = File::stat(path, &stat);
+            if (res == STATUS_OK)
             {
                 if (stat.type == fattr_t::FT_DIRECTORY)
-                    return (mode & FM_CREATE) ? STATUS_ALREADY_EXISTS : STATUS_NOT_FOUND;
+                    return (mode & FM_CREATE) ? STATUS_ALREADY_EXISTS : STATUS_IS_DIRECTORY;
             }
+            else if (!(mode & FM_CREATE))
+                return set_error(res);
 
             int oflags;
             size_t fflags;
-            size_t shflags = FILE_SHARE_DELETE;
             size_t cmode;
             size_t atts = FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS;
             if (mode & FM_READ)
             {
                 oflags      = (mode & FM_WRITE) ? GENERIC_READ | GENERIC_WRITE : GENERIC_READ;
-                shflags    |= (mode & FM_WRITE) ? FILE_SHARE_READ | FILE_SHARE_WRITE : FILE_SHARE_READ;
                 fflags      = (mode & FM_WRITE) ? SF_READ | SF_WRITE : SF_READ;
             }
             else if (mode & FM_WRITE)
             {
                 oflags      = GENERIC_WRITE;
-                shflags    |= FILE_SHARE_WRITE;
                 fflags      = SF_WRITE;
             }
             else
@@ -116,9 +116,51 @@ namespace lsp
             if (mode & FM_DIRECT)
                 atts           |= FILE_FLAG_NO_BUFFERING;
 
-            fhandle_t fd = CreateFileW(path->get_utf16(), oflags, shflags, NULL, cmode, atts, NULL);
+            fhandle_t fd = CreateFileW(path->get_utf16(),
+                oflags,
+                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                NULL, cmode, atts, NULL);
             if (fd == INVALID_HANDLE_VALUE)
-                return set_error(STATUS_IO_ERROR);
+            {
+                DWORD error = GetLastError();
+                res = STATUS_IO_ERROR;
+
+                switch (error)
+                {
+                    case ERROR_PATH_NOT_FOUND:
+                    case ERROR_FILE_NOT_FOUND:
+                    case ERROR_INVALID_ACCESS:
+                    case ERROR_INVALID_DRIVE:
+                    case ERROR_CANNOT_MAKE:
+                        res = STATUS_NOT_FOUND;
+                        break;
+                    case ERROR_ACCESS_DENIED:
+                        res = STATUS_PERMISSION_DENIED;
+                        break;
+                    case ERROR_TOO_MANY_OPEN_FILES:
+                    case ERROR_NOT_ENOUGH_MEMORY:
+                    case ERROR_OUTOFMEMORY:
+                        res = STATUS_NO_MEM;
+                        break;
+                    case ERROR_WRITE_PROTECT:
+                        res = STATUS_READONLY;
+                        break;
+                    case ERROR_FILE_EXISTS:
+                    case ERROR_ALREADY_EXISTS:
+                    case ERROR_DIRECTORY:
+                        res = STATUS_ALREADY_EXISTS;
+                        break;
+                    case ERROR_BUFFER_OVERFLOW:
+                        res = STATUS_OVERFLOW;
+                        break;
+                    case ERROR_INVALID_NAME:
+                        res = STATUS_INVALID_VALUE;
+                        break;
+                    default:
+                        break;
+                }
+                return set_error(res);
+            }
 
             hFD         = fd;
             nFlags      = fflags | SF_CLOSE;

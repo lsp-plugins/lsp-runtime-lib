@@ -44,6 +44,7 @@ namespace lsp
                 {
                     LSPString       sPrefix;
                     ILoader        *pLoader;
+                    bool            bFree;
                 } prefix_t;
 
             protected:
@@ -64,11 +65,12 @@ namespace lsp
                  * Associate some loader with prefix, loader will be automatically destroyed on destruction
                  * @param prefix prefix to use
                  * @param loader loader to associate
+                 * @param free free after use
                  * @return status of operation
                  */
-                status_t                    add_prefix(const char *prefix, ILoader *loader);
-                status_t                    add_prefix(const LSPString *prefix, ILoader *loader);
-                status_t                    add_prefix(const io::Path *prefix, ILoader *loader);
+                status_t                    add_prefix(const char *prefix, ILoader *loader, bool free);
+                status_t                    add_prefix(const LSPString *prefix, ILoader *loader, bool free);
+                status_t                    add_prefix(const io::Path *prefix, ILoader *loader, bool free);
 
             public:
                 virtual io::IInStream      *read_stream(const char *name);

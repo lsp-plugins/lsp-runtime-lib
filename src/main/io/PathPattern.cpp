@@ -29,6 +29,11 @@ namespace lsp
 {
     namespace io
     {
+        static inline bool is_file_separator(lsp_wchar_t c)
+        {
+            return (c == '/') || (c == '\\');
+        }
+
         PathPattern::PathPattern()
         {
             nFlags      = 0;
@@ -106,7 +111,7 @@ namespace lsp
                     if (mask->char_at(it->nPosition) != '*')
                         return it->nToken = T_ANY;
                     c = mask->char_at(it->nPosition+1);
-                    if ((c != '\\') && (c != '/'))
+                    if (!is_file_separator(c))
                         return it->nToken = T_ANY;
 
                     it->nPosition += 2;
@@ -495,11 +500,11 @@ namespace lsp
                 {
                     case '/':
                     case '\\':
-                        if ((c != '/') && (c != '\\'))
+                        if (!is_file_separator(c))
                             return false;
                         break;
                     case '?':
-                        if ((c == '/') || (c == '\\'))
+                        if (is_file_separator(c))
                             return false;
                         break;
                     case '`':
@@ -542,11 +547,11 @@ namespace lsp
                 {
                     case '/':
                     case '\\':
-                        if ((c != '/') && (c != '\\'))
+                        if (!is_file_separator(c))
                             return false;
                         break;
                     case '?':
-                        if ((c == '/') || (c == '\\'))
+                        if (is_file_separator(c))
                             return false;
                         break;
                     case '`':
@@ -637,7 +642,7 @@ namespace lsp
             for (size_t i=0; i<count; ++i)
             {
                 lsp_wchar_t ch  = str[i];
-                if ((ch == '/') || (ch == '\\'))
+                if (is_file_separator(ch))
                 {
                     am->bad         = start + i; // Cache last bad value
                     return cmd->bInverse;
@@ -673,7 +678,7 @@ namespace lsp
             {
                 // Previous character in sequence should be a path separator
                 ch                      = str[-1];
-                if ((ch != '/') && (ch != '\\'))
+                if (!is_file_separator(ch))
                     return cmd->bInverse;
 
                 // Zero length, previous character is separator -> matches
@@ -685,7 +690,7 @@ namespace lsp
 
             // Last character in sequence should be a path separator
             ch  = str[count-1];
-            if ((ch == '/') || (ch == '/'))
+            if (is_file_separator(ch))
                 return !cmd->bInverse;
 
             // The separator is not necessary if we are at the end of line

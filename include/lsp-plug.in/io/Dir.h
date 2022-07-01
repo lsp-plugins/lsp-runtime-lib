@@ -42,7 +42,6 @@ namespace lsp
         {
             protected:
                 status_t        nErrorCode;
-                size_t          nPosition;
                 Path            sPath;
 #ifdef PLATFORM_WINDOWS
                 HANDLE          hDir;           // Directory handle
@@ -139,12 +138,6 @@ namespace lsp
                  * @return true if last read operations reached end of file
                  */
                 inline bool eof() const { return nErrorCode == STATUS_EOF; };
-
-                /**
-                 * Return current position of directory in records
-                 * @return current position of directory in records
-                 */
-                inline size_t position() const { return nPosition; }
 
                 /**
                  * Get path associated with directory

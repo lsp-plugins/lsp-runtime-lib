@@ -46,7 +46,6 @@ namespace lsp
         Dir::Dir()
         {
             nErrorCode  = STATUS_OK;
-            nPosition   = 0;
 #ifdef PLATFORM_WINDOWS
             hDir        = INVALID_HANDLE_VALUE;
             nPending    = STATUS_OK;
@@ -136,7 +135,6 @@ namespace lsp
 #endif /* PLATFORM_WINDOWS */
 
             hDir        = dh;
-            nPosition   = 0;
             return set_error(STATUS_OK);
         }
 
@@ -195,7 +193,6 @@ namespace lsp
             ::rewinddir(hDir);
 #endif /* PLATFORM_WINDOWS */
 
-            nPosition = 0;
             return set_error(STATUS_OK);
         }
 
@@ -308,6 +305,21 @@ namespace lsp
             if (!out.set_utf16(sData.cFileName))
                 return set_error(STATUS_NO_MEM);
 
+            // Decode file state
+            // Decode file type
+            attr->type      = fattr_t::FT_REGULAR;
+            if (sData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                attr->type      = fattr_t::FT_DIRECTORY;
+            else if (sData.dwFileAttributes & FILE_ATTRIBUTE_DEVICE)
+                attr->type      = fattr_t::FT_BLOCK;
+
+            attr->blk_size  = 4096;
+            attr->size      = (wsize_t(sData.nFileSizeHigh) << 32) | sData.nFileSizeLow;
+            attr->inode     = 0;
+            attr->ctime     = ((wsize_t(sData.ftCreationTime.dwHighDateTime) << 32) | sData.ftCreationTime.dwLowDateTime) / 10000;
+            attr->mtime     = ((wsize_t(sData.ftLastWriteTime.dwHighDateTime) << 32) | sData.ftLastWriteTime.dwLowDateTime) / 10000;
+            attr->atime     = ((wsize_t(sData.ftLastAccessTime.dwHighDateTime) << 32) | sData.ftLastAccessTime.dwLowDateTime) / 10000;
+
             // Perform next iteration
             if (!::FindNextFileW(hDir, &sData))
             {
@@ -323,21 +335,6 @@ namespace lsp
                         break;
                 }
             }
-
-            // Decode file state
-            // Decode file type
-            attr->type      = fattr_t::FT_REGULAR;
-            if (sData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                attr->type      = fattr_t::FT_DIRECTORY;
-            else if (sData.dwFileAttributes & FILE_ATTRIBUTE_DEVICE)
-                attr->type      = fattr_t::FT_BLOCK;
-
-            attr->blk_size  = 4096;
-            attr->size      = (wsize_t(sData.nFileSizeHigh) << 32) | sData.nFileSizeLow;
-            attr->inode     = 0;
-            attr->ctime     = ((wsize_t(sData.ftCreationTime.dwHighDateTime) << 32) | sData.ftCreationTime.dwLowDateTime) / 10000;
-            attr->mtime     = ((wsize_t(sData.ftLastWriteTime.dwHighDateTime) << 32) | sData.ftLastWriteTime.dwLowDateTime) / 10000;
-            attr->atime     = ((wsize_t(sData.ftLastAccessTime.dwHighDateTime) << 32) | sData.ftLastAccessTime.dwLowDateTime) / 10000;
 #else
             // Read directory
             errno = 0;
@@ -475,7 +472,6 @@ namespace lsp
             hDir    = NULL;
 #endif /* PLATFORM_WINDOWS */
 
-            nPosition = 0;
             return set_error(STATUS_OK);
         }
 

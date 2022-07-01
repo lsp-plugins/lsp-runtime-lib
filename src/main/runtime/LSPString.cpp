@@ -1965,6 +1965,8 @@ namespace lsp
         ssize_t length = last - first;
         if (length < 0)
             return NULL;
+        else if (length == 0)
+            return "";
 
         // Get codepage
         ssize_t cp = codepage_from_name(charset);
@@ -1982,7 +1984,7 @@ namespace lsp
         pTemp->nOffset      = 0;
 
         size_t slen         = length;
-        size_t res = widechar_to_multibyte(cp, buf, &slen, NULL, NULL) + 4; // + terminating 0
+        ssize_t res         = widechar_to_multibyte(cp, buf, &slen, NULL, NULL) + 4; // + terminating 0
         if ((res <= 0) || (!resize_temp(res)))
         {
             free(buf);
@@ -1990,8 +1992,8 @@ namespace lsp
         }
 
         // We have enough space for saving data
-        size_t n = res;
-        res = widechar_to_multibyte(cp, buf, &slen, pTemp->pData, &n);
+        size_t n            = res;
+        res                 = widechar_to_multibyte(cp, buf, &slen, pTemp->pData, &n);
         if (res <= 0)
         {
             free(buf);

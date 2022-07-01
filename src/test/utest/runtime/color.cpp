@@ -420,30 +420,30 @@ UTEST_BEGIN("runtime.runtime", color)
     {
         printf("Testing RGB <-> LAB conversion...\n");
 
-        UTEST_ASSERT(test_rgb2lab("#000000", 0.0f, 0.0f, 0.0f));
+        UTEST_ASSERT(test_rgb2lab("#000000",    0.00000f,   0.00000f,     0.00000f));
 
-        UTEST_ASSERT(test_rgb2lab("#ff0000",   53.2329f,   80.1094f,   67.2201f ));
-        UTEST_ASSERT(test_rgb2lab("#00ff00",   87.7370f,  -86.1846f,   83.1812f ));
-        UTEST_ASSERT(test_rgb2lab("#0000ff",   32.3026f,   79.1967f, -107.8637f ));
-        UTEST_ASSERT(test_rgb2lab("#ffff00",   97.1382f,  -21.5559f,   94.4825f ));
-        UTEST_ASSERT(test_rgb2lab("#ff00ff",   60.3199f,   98.2542f,  -60.8430f ));
-        UTEST_ASSERT(test_rgb2lab("#00ffff",   91.1165f,  -48.0796f,  -14.1381f ));
-        UTEST_ASSERT(test_rgb2lab("#ffffff",  100.0000f,    0.0052f,   -0.0104f ));
+        UTEST_ASSERT(test_rgb2lab("#ff0000",   53.23288f,  80.10933f,    67.22010f ));
+        UTEST_ASSERT(test_rgb2lab("#00ff00",   87.73705f, -86.18465f,    83.18118f ));
+        UTEST_ASSERT(test_rgb2lab("#0000ff",   32.30259f,  79.19666f,  -107.86369f ));
+        UTEST_ASSERT(test_rgb2lab("#ffff00",   97.13825f, -21.55590f,    94.48249f ));
+        UTEST_ASSERT(test_rgb2lab("#ff00ff",   60.31994f,  98.25423f,   -60.84298f ));
+        UTEST_ASSERT(test_rgb2lab("#00ffff",   91.11653f, -48.07964f,   -14.13812f ));
+        UTEST_ASSERT(test_rgb2lab("#ffffff",  100.00000f,   0.00531f,    -0.01042f ));
 
-        UTEST_ASSERT(test_rgb2lab("#880000",   27.3920f,   50.2088f,   40.4310f ));
-        UTEST_ASSERT(test_rgb2lab("#008800",   49.0176f,  -54.0165f,   52.1341f ));
-        UTEST_ASSERT(test_rgb2lab("#000088",   14.2738f,   49.6368f,  -67.6039f ));
-        UTEST_ASSERT(test_rgb2lab("#888800",   54.9098f,  -13.5103f,   59.2172f ));
-        UTEST_ASSERT(test_rgb2lab("#880088",   31.8338f,   61.5812f,  -38.1336f ));
-        UTEST_ASSERT(test_rgb2lab("#008888",   51.1357f,  -30.1341f,   -8.8611f ));
-        UTEST_ASSERT(test_rgb2lab("#888888",   56.7034f,    0.0033f,   -0.0065f ));
+        UTEST_ASSERT(test_rgb2lab("#880000",   27.39196f,  50.20879f,    40.43097f ));
+        UTEST_ASSERT(test_rgb2lab("#008800",   49.01756f, -54.01651f,    52.13409f ));
+        UTEST_ASSERT(test_rgb2lab("#000088",   14.27381f,  49.63680f,   -67.60395f ));
+        UTEST_ASSERT(test_rgb2lab("#888800",   54.90981f, -13.51026f,    59.21724f ));
+        UTEST_ASSERT(test_rgb2lab("#880088",   31.83379f,  61.58120f,   -38.13356f ));
+        UTEST_ASSERT(test_rgb2lab("#008888",   51.13567f, -30.13408f,    -8.86111f ));
+        UTEST_ASSERT(test_rgb2lab("#888888",   56.70342f,   0.00331f,    -0.00652f ));
 
-        UTEST_ASSERT(test_rgb2lab("#ffcc00",   84.1973f,    3.6799f,   85.2229f ));
-        UTEST_ASSERT(test_rgb2lab("#ff00cc",   57.6742f,   91.7417f,  -36.3256f ));
-        UTEST_ASSERT(test_rgb2lab("#00ffcc",   89.8034f,  -61.6198f,   10.3716f ));
-        UTEST_ASSERT(test_rgb2lab("#ccff00",   93.6055f,  -41.9481f,   90.2777f ));
-        UTEST_ASSERT(test_rgb2lab("#cc00ff",   51.9020f,   91.0125f,  -74.8496f ));
-        UTEST_ASSERT(test_rgb2lab("#00ccff",   76.3176f,  -24.3449f,  -36.6835f ));
+        UTEST_ASSERT(test_rgb2lab("#ffcc00",   84.19730f,   3.67990f,    85.22286f ));
+        UTEST_ASSERT(test_rgb2lab("#ff00cc",   57.67424f,  91.74174f,   -36.32563f ));
+        UTEST_ASSERT(test_rgb2lab("#00ffcc",   89.80343f, -61.61985f,    10.37161f ));
+        UTEST_ASSERT(test_rgb2lab("#ccff00",   93.60550f, -41.94814f,    90.27765f ));
+        UTEST_ASSERT(test_rgb2lab("#cc00ff",   51.90202f,  91.01245f,   -74.84959f ));
+        UTEST_ASSERT(test_rgb2lab("#00ccff",   76.31763f, -24.34486f,   -36.68355f ));
     }
 
     bool test_rgb2cmyk(const char *value, float c, float m, float y, float k)
