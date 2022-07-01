@@ -19,13 +19,14 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <lsp-plug.in/stdlib/string.h>
-#include <lsp-plug.in/resource/ILoader.h>
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/io/InSequence.h>
 #include <lsp-plug.in/io/InFileStream.h>
 #include <lsp-plug.in/io/Dir.h>
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/lltl/darray.h>
+#include <lsp-plug.in/resource/ILoader.h>
+#include <lsp-plug.in/stdlib/string.h>
 
 namespace lsp
 {
