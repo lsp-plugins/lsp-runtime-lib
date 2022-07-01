@@ -2,6 +2,8 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.6 ===
+
 === 1.0.5 ===
 * Updated PrefixLoader interface and implementation.
 * Fixed the improper use of nanosleep when introducing the sleep function.
