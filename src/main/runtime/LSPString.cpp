@@ -194,6 +194,13 @@ namespace lsp
         return nLength = length;
     }
 
+    size_t LSPString::range_length(ssize_t first, ssize_t last) const
+    {
+        XSAFE_TRANS(first, nLength, 0);
+        XSAFE_TRANS(last, nLength, 0);
+        return (first < last) ? last - first : 0;
+    }
+
     bool LSPString::size_reserve(size_t size)
     {
         if (size > 0)

@@ -87,6 +87,14 @@ namespace lsp
             inline size_t length() const { return nLength; }
 
             /**
+             * Get the length of the range
+             * @param first the index of first character
+             * @param last the index of last character
+             * @return final length of the range
+             */
+            size_t range_length(ssize_t first, ssize_t last) const;
+
+            /**
              * Set the length of the string, allows only to cut data from tail
              * @param length the length of the string
              * @return the length of the string after applied operarion
