@@ -2476,6 +2476,114 @@ namespace lsp
         return nHash = hash;
     }
 
+    bool LSPString::to_dos()
+    {
+        // Step 1: estimate the number of unprocessed line endings
+        size_t count = 0;
+        for (size_t i=0; i<nLength; )
+        {
+            if (pData[i++] != '\n')
+                continue;
+            if ((i == nLength) || (pData[i] != '\r'))
+                ++count;
+            else
+                ++i;
+        }
+
+        // Return if there are no changes
+        if (count <= 0)
+            return true;
+        else if (!cap_grow(count))
+            return false;
+
+        // Now we need to replace all line endings with proper ones
+        size_t distance;
+        lsp_wchar_t *dst    = &pData[nLength + count];
+        const lsp_wchar_t *src = &pData[nLength];
+        const lsp_wchar_t *blk;
+        nLength            += count;
+
+        while (count-- > 0)
+        {
+            // Find the occurrence
+            for (blk = src; blk > pData; --blk)
+            {
+                if (blk[-1] != '\n')
+                    continue;
+                if ((blk >= src) || (*blk != '\r'))
+                    break;
+            }
+
+            // blk now points at the block before the '\r' symbol
+            distance        = src - blk;
+            dst            -= distance;
+            if (distance > 0)
+                memmove(dst, blk, distance * sizeof(lsp_wchar_t));
+            src             = blk - 1;
+            dst            -= 2;
+            dst[0]         = '\n';
+            dst[1]         = '\r';
+        }
+
+        return true;
+    }
+
+    bool LSPString::to_unix()
+    {
+        if (nLength < 2)
+            return true;
+
+        // Step 1: estimate the number of unprocessed line endings
+        size_t count = 0;
+        for (size_t i=0; i<nLength-1; )
+        {
+            if (pData[i++] != '\n')
+                continue;
+            if (pData[i] == '\r')
+            {
+                ++count;
+                ++i;
+            }
+        }
+
+        // Return if there are no changes
+        if (count <= 0)
+            return true;
+
+        size_t distance;
+        lsp_wchar_t *dst        = pData;
+        const lsp_wchar_t *src  = pData;
+        const lsp_wchar_t *end  = &pData[nLength];
+        const lsp_wchar_t *blk;
+        nLength                -= count;
+
+        while (count-- > 0)
+        {
+            // Find the occurrence
+            for (blk = src; blk < end; ++blk)
+            {
+                if (*blk != '\n')
+                    continue;
+                ++blk;
+                if ((blk < end) && (*blk == '\r'))
+                    break;
+            }
+
+            // blk now points at the end of block before the '\r' symbol
+            distance        = blk - src;
+            if ((distance > 0) && (src != dst))
+                memmove(dst, src, distance * sizeof(lsp_wchar_t));
+            src            += distance + 1;
+            dst            += distance;
+        }
+
+        // move the rest data
+        if (src < end)
+            memmove(dst, src, (end - src) * sizeof(lsp_wchar_t));
+
+        return true;
+    }
+
     namespace lltl
     {
         size_t hash_spec<LSPString>::hash_func(const void *ptr, size_t size)

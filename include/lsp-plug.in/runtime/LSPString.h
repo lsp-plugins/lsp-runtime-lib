@@ -570,6 +570,13 @@ namespace lsp
              * @return hash code
              */
             size_t  hash() const;
+
+            /**
+             * Convert line endings
+             * @return true if the conversion has succeeded
+             */
+            bool to_dos();
+            bool to_unix();
     };
     
     // LLTL specialization for String class

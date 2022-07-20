@@ -5,6 +5,7 @@
 === 1.0.6 ===
 * Added opacity manipulation to the lsp::Color class.
 * Added LSPString::range_length() method to compute the length of the range.
+* Added LSPString::to_unix() and LSPString::to_dos() line ending conversion routines.
 
 === 1.0.5 ===
 * Updated PrefixLoader interface and implementation.
