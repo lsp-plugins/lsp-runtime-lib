@@ -394,6 +394,7 @@ UTEST_BEGIN("runtime.runtime", string)
             { "\r\n", "\r\n", "\n" },
             { "\n\r\n", "\r\n\r\n", "\n\n" },
             { "\n\r\n\r", "\r\n\r\n\r", "\n\n\r" },
+            { "\r\n\r\n", "\r\n\r\n", "\n\n" },
             { "\n\r\r\n\r\r", "\r\n\r\r\n\r\r", "\n\r\n\r\r" },
 
             { "Two\nlines", "Two\r\nlines", "Two\nlines" },
