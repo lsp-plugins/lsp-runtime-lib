@@ -2480,14 +2480,12 @@ namespace lsp
     {
         // Step 1: estimate the number of unprocessed line endings
         size_t count = 0;
-        for (size_t i=0; i<nLength; )
+        for (size_t i=0; i<nLength; ++i)
         {
-            if (pData[i++] != '\n')
+            if (pData[i] != '\n')
                 continue;
-            if ((i == nLength) || (pData[i] != '\r'))
+            if ((i == 0) || (pData[i-1] != '\r'))
                 ++count;
-            else
-                ++i;
         }
 
         // Return if there are no changes
@@ -2507,11 +2505,11 @@ namespace lsp
         while (count-- > 0)
         {
             // Find the occurrence
-            for (blk = src; blk > pData; --blk)
+            for (blk = src-1; blk > pData; --blk)
             {
-                if (blk[-1] != '\n')
+                if (*blk != '\n')
                     continue;
-                if ((blk >= src) || (*blk != '\r'))
+                if ((blk <= pData) || (blk[-1] != '\r'))
                     break;
             }
 
@@ -2520,10 +2518,8 @@ namespace lsp
             dst            -= distance;
             if (distance > 0)
                 memmove(dst, blk, distance * sizeof(lsp_wchar_t));
-            src             = blk - 1;
-            dst            -= 2;
-            dst[0]         = '\n';
-            dst[1]         = '\r';
+            src             = blk;
+            *(--dst)        = '\r';
         }
 
         return true;
@@ -2531,20 +2527,14 @@ namespace lsp
 
     bool LSPString::to_unix()
     {
-        if (nLength < 2)
-            return true;
-
         // Step 1: estimate the number of unprocessed line endings
         size_t count = 0;
-        for (size_t i=0; i<nLength-1; )
+        for (size_t i=1; i<nLength; ++i)
         {
-            if (pData[i++] != '\n')
+            if (pData[i] != '\n')
                 continue;
-            if (pData[i] == '\r')
-            {
+            if (pData[i-1] == '\r')
                 ++count;
-                ++i;
-            }
         }
 
         // Return if there are no changes
@@ -2562,17 +2552,16 @@ namespace lsp
         while (count-- > 0)
         {
             // Find the occurrence
-            for (blk = src; blk < end; ++blk)
+            for (blk = src + 1; blk < end; ++blk)
             {
                 if (*blk != '\n')
                     continue;
-                ++blk;
-                if ((blk < end) && (*blk == '\r'))
+                if ((blk > pData) && (blk[-1] == '\r'))
                     break;
             }
 
             // blk now points at the end of block before the '\r' symbol
-            distance        = blk - src;
+            distance        = blk - src - 1;
             if ((distance > 0) && (src != dst))
                 memmove(dst, src, distance * sizeof(lsp_wchar_t));
             src            += distance + 1;
