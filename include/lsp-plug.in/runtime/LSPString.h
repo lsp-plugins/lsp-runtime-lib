@@ -87,6 +87,14 @@ namespace lsp
             inline size_t length() const { return nLength; }
 
             /**
+             * Get the length of the range
+             * @param first the index of first character
+             * @param last the index of last character
+             * @return final length of the range
+             */
+            size_t range_length(ssize_t first, ssize_t last) const;
+
+            /**
              * Set the length of the string, allows only to cut data from tail
              * @param length the length of the string
              * @return the length of the string after applied operarion
@@ -214,8 +222,8 @@ namespace lsp
             bool append(const LSPString *src);
             bool append(const LSPString *src, ssize_t first);
             bool append(const LSPString *src, ssize_t first, ssize_t last);
-            inline bool append_ascii(const char *arr) { return append_ascii(arr, ::strlen(arr)); };
-            inline bool append_utf8(const char *arr) { return append_utf8(arr, ::strlen(arr)); };
+            inline bool append_ascii(const char *arr) { return append_ascii(arr, ::strlen(arr));    };
+            inline bool append_utf8(const char *arr)  { return append_utf8(arr, ::strlen(arr));     };
             bool append_utf16(const lsp_utf16_t *arr);
 
             bool prepend(lsp_wchar_t ch);
@@ -225,8 +233,8 @@ namespace lsp
             bool prepend(const LSPString *src);
             bool prepend(const LSPString *src, ssize_t first);
             bool prepend(const LSPString *src, ssize_t first, ssize_t last);
-            inline bool prepend_ascii(const char *arr) { return prepend_ascii(arr, ::strlen(arr)); };
-            inline bool prepend_utf8(const char *arr) { return prepend_ascii(arr, ::strlen(arr)); };
+            inline bool prepend_ascii(const char *arr) { return prepend_ascii(arr, ::strlen(arr));  };
+            inline bool prepend_utf8(const char *arr)  { return prepend_utf8(arr, ::strlen(arr));   };
 
             /** Get unicode character at the specified position
              *
@@ -562,6 +570,13 @@ namespace lsp
              * @return hash code
              */
             size_t  hash() const;
+
+            /**
+             * Convert line endings
+             * @return true if the conversion has succeeded
+             */
+            bool to_dos();
+            bool to_unix();
     };
     
     // LLTL specialization for String class

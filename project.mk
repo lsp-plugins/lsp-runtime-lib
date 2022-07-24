@@ -23,5 +23,5 @@ ARTIFACT_ID                 = LSP_RUNTIME_LIB
 ARTIFACT_NAME               = lsp-runtime-lib
 ARTIFACT_DESC               = Runtime library used by LSP Project for plugin development
 ARTIFACT_HEADERS            = lsp-plug.in
-ARTIFACT_EXPORT_ALL         = 1
-ARTIFACT_VERSION            = 1.0.5
+ARTIFACT_VERSION            = 1.0.6
+ARTIFACT_EXPORT_SYMBOLS     = 1

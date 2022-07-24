@@ -403,7 +403,13 @@ namespace lsp
 
     Color &Color::alpha(float a)
     {
-        A = a;
+        A       = a;
+        return *this;
+    }
+
+    Color &Color::opacity(float o)
+    {
+        A       = 1.0f - o;
         return *this;
     }
 
@@ -817,6 +823,17 @@ namespace lsp
         g       = rgb.G;
         b       = rgb.B;
         a       = A;
+
+        return *this;
+    }
+
+    const Color &Color::get_rgbo(float &r, float &g, float &b, float &o) const
+    {
+        calc_rgb();
+        r       = rgb.R;
+        g       = rgb.G;
+        b       = rgb.B;
+        o       = 1.0f - A;
 
         return *this;
     }

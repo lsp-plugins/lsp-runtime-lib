@@ -143,6 +143,7 @@ namespace lsp
             const Color    &get_rgb(float &r, float &g, float &b) const;
             Color          &get_rgb(float &r, float &g, float &b);
             const Color    &get_rgba(float &r, float &g, float &b, float &a) const;
+            const Color    &get_rgbo(float &r, float &g, float &b, float &o) const;
             Color          &get_rgba(float &r, float &g, float &b, float &a);
 
             uint32_t        rgb24() const;
@@ -335,7 +336,9 @@ namespace lsp
         // Alpha-blending channel
         public:
             inline float    alpha() const           { return A;                 }
+            inline float    opacity() const         { return 1.0f - A;          }
             Color          &alpha(float a);
+            Color          &opacity(float o);
 
         // Parsing
         public:

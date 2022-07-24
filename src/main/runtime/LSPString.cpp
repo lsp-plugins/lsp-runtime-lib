@@ -194,6 +194,13 @@ namespace lsp
         return nLength = length;
     }
 
+    size_t LSPString::range_length(ssize_t first, ssize_t last) const
+    {
+        XSAFE_TRANS(first, nLength, 0);
+        XSAFE_TRANS(last, nLength, 0);
+        return (first < last) ? last - first : 0;
+    }
+
     bool LSPString::size_reserve(size_t size)
     {
         if (size > 0)
@@ -2467,6 +2474,105 @@ namespace lsp
             hash = (hash * 0x10015) ^ pData[i];
 
         return nHash = hash;
+    }
+
+    bool LSPString::to_dos()
+    {
+        // Step 1: estimate the number of unprocessed line endings
+        size_t count = 0;
+        for (size_t i=0; i<nLength; ++i)
+        {
+            if (pData[i] != '\n')
+                continue;
+            if ((i == 0) || (pData[i-1] != '\r'))
+                ++count;
+        }
+
+        // Return if there are no changes
+        if (count <= 0)
+            return true;
+        else if (!cap_grow(count))
+            return false;
+        drop_temp();
+
+        // Now we need to replace all line endings with proper ones
+        size_t distance;
+        lsp_wchar_t *dst    = &pData[nLength + count];
+        const lsp_wchar_t *src = &pData[nLength];
+        const lsp_wchar_t *blk;
+        nLength            += count;
+
+        while (count-- > 0)
+        {
+            // Find the occurrence
+            for (blk = src-1; blk > pData; --blk)
+            {
+                if (*blk != '\n')
+                    continue;
+                if ((blk <= pData) || (blk[-1] != '\r'))
+                    break;
+            }
+
+            // blk now points at the block before the '\r' symbol
+            distance        = src - blk;
+            dst            -= distance;
+            if (distance > 0)
+                memmove(dst, blk, distance * sizeof(lsp_wchar_t));
+            src             = blk;
+            *(--dst)        = '\r';
+        }
+
+        return true;
+    }
+
+    bool LSPString::to_unix()
+    {
+        // Step 1: estimate the number of unprocessed line endings
+        size_t count = 0;
+        for (size_t i=1; i<nLength; ++i)
+        {
+            if (pData[i] != '\n')
+                continue;
+            if (pData[i-1] == '\r')
+                ++count;
+        }
+
+        // Return if there are no changes
+        if (count <= 0)
+            return true;
+        drop_temp();
+
+        size_t distance;
+        lsp_wchar_t *dst        = pData;
+        const lsp_wchar_t *src  = pData;
+        const lsp_wchar_t *end  = &pData[nLength];
+        const lsp_wchar_t *blk;
+        nLength                -= count;
+
+        while (count-- > 0)
+        {
+            // Find the occurrence
+            for (blk = src + 1; blk < end; ++blk)
+            {
+                if (*blk != '\n')
+                    continue;
+                if ((blk > pData) && (blk[-1] == '\r'))
+                    break;
+            }
+
+            // blk now points at the end of block before the '\r' symbol
+            distance        = blk - src - 1;
+            if ((distance > 0) && (src != dst))
+                memmove(dst, src, distance * sizeof(lsp_wchar_t));
+            src            += distance + 1;
+            dst            += distance;
+        }
+
+        // move the rest data
+        if (src < end)
+            memmove(dst, src, (end - src) * sizeof(lsp_wchar_t));
+
+        return true;
     }
 
     namespace lltl

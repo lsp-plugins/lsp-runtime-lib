@@ -374,12 +374,65 @@ UTEST_BEGIN("runtime.runtime", string)
         UTEST_ASSERT(h.size() == 10);
     }
 
+    void test_line_convert()
+    {
+        typedef struct cv_t {
+            const char *src;
+            const char *dos;
+            const char *unx;
+        } cv_t;
+
+        static const cv_t cases[] =
+        {
+            { "", "", "" },
+            { "test", "test", "test" },
+            { "some line", "some line", "some line" },
+
+            { "\n", "\r\n", "\n" },
+            { "\r", "\r", "\r" },
+            { "\n\n", "\r\n\r\n", "\n\n" },
+            { "\r\n", "\r\n", "\n" },
+            { "\n\r\n", "\r\n\r\n", "\n\n" },
+            { "\n\r\n\r", "\r\n\r\n\r", "\n\n\r" },
+            { "\r\n\r\n", "\r\n\r\n", "\n\n" },
+            { "\n\r\r\n\r\r", "\r\n\r\r\n\r\r", "\n\r\n\r\r" },
+
+            { "Two\nlines", "Two\r\nlines", "Two\nlines" },
+            { "Two\r\nlines", "Two\r\nlines", "Two\nlines" },
+            { "Three\nlines\n", "Three\r\nlines\r\n", "Three\nlines\n" },
+            { "Three\r\nlines\r\n", "Three\r\nlines\r\n", "Three\nlines\n" },
+            { "Three\r\nlines\n", "Three\r\nlines\r\n", "Three\nlines\n" },
+            { "Three\nlines\r\n", "Three\r\nlines\r\n", "Three\nlines\n" },
+
+            { "\nYet\nAnother\nTest\nCase\n", "\r\nYet\r\nAnother\r\nTest\r\nCase\r\n", "\nYet\nAnother\nTest\nCase\n" },
+            { "\r\nYet\nAnother\nTest\nCase\n", "\r\nYet\r\nAnother\r\nTest\r\nCase\r\n", "\nYet\nAnother\nTest\nCase\n" },
+            { "\n\rYet\nAnother\nTest\nCase\r", "\r\n\rYet\r\nAnother\r\nTest\r\nCase\r", "\n\rYet\nAnother\nTest\nCase\r" },
+        };
+
+        printf("Testing dos/unix line conversion\n");
+
+        for (size_t i=0, n=sizeof(cases)/sizeof(cv_t); i<n; ++i)
+        {
+            LSPString a, b;
+            printf("Testing string #%d: %s\n", int(i), cases[i].src);
+            UTEST_ASSERT(a.set_ascii(cases[i].src));
+            UTEST_ASSERT(b.set_ascii(cases[i].src));
+
+            UTEST_ASSERT(a.to_dos());
+            UTEST_ASSERT(a.equals_ascii(cases[i].dos));
+
+            UTEST_ASSERT(b.to_unix());
+            UTEST_ASSERT(b.equals_ascii(cases[i].unx));
+        }
+    }
+
     UTEST_MAIN
     {
         test_basic();
         test_start_end();
         test_base_hashing();
         test_hash_key();
+        test_line_convert();
     }
 UTEST_END;
 
