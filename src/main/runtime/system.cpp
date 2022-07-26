@@ -299,6 +299,14 @@ namespace lsp
             time->nanos     = (itime % 10000000) * 100;
         }
 
+        time_millis_t get_time_millis()
+        {
+            FILETIME t;
+            ::GetSystemTimeAsFileTime(&t);
+            uint64_t itime  = (uint64_t(t.dwHighDateTime) << 32) | t.dwLowDateTime;
+            return itime / 10000;
+        }
+
         void get_localtime(localtime_t *local, const time_t *time)
         {
             SYSTEMTIME t;
@@ -365,6 +373,13 @@ namespace lsp
 
             time->seconds   = t.tv_sec;
             time->nanos     = t.tv_nsec;
+        }
+
+        time_millis_t get_time_millis()
+        {
+            struct timespec t;
+            ::clock_gettime(CLOCK_REALTIME, &t);
+            return time_millis_t(t.tv_sec) * 1000 + time_millis_t(t.tv_nsec) / 1000000;
         }
 
         void get_localtime(localtime_t *local, const time_t *time)

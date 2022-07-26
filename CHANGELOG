@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.7 ===
+* Added system::get_time_millis() function.
 
 === 1.0.6 ===
 * Added opacity manipulation to the lsp::Color class.

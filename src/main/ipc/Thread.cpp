@@ -128,6 +128,7 @@ namespace lsp
 
             // Execute the thread
             status_t res    = _this->run();
+            pThis           = NULL;
 
             // Commit the 'FINISHED' status
             int state;

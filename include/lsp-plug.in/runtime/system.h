@@ -42,6 +42,11 @@ namespace lsp
         } time_t;
 
         /**
+         * System timestamp in milliseconds
+         */
+        typedef uint64_t time_millis_t;
+
+        /**
          * Local time information
          */
         typedef struct localtime_t
@@ -143,6 +148,12 @@ namespace lsp
          * @param time pointer to structure to store time value
          */
         void get_time(time_t *time);
+
+        /**
+         * Get current time in milliseconds
+         * @return current time in milliseconds
+         */
+        time_millis_t get_time_millis();
 
         /**
          * Convert time structure to the local time
