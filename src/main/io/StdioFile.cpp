@@ -25,6 +25,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifdef PLATFORM_WINDOWS
+    #include <windows.h>
+#endif /* PLATFORM_WINDOWS */
+
 namespace lsp
 {
     namespace io

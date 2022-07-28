@@ -25,6 +25,7 @@
 #include <lsp-plug.in/stdlib/stdio.h>
 
 #ifdef PLATFORM_WINDOWS
+    #include <windows.h>
     #include <fileapi.h>
     #include <io.h>
     #include <winbase.h>

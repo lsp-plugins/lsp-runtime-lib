@@ -22,6 +22,7 @@
 #include <lsp-plug.in/io/Dir.h>
 
 #ifdef PLATFORM_WINDOWS
+    #include <windows.h>
     #include <fileapi.h>
     #include <winbase.h>
 #else

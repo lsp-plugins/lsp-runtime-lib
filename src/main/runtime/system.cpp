@@ -24,6 +24,7 @@
 #include <lsp-plug.in/ipc/Process.h>
 
 #ifdef PLATFORM_WINDOWS
+    #include <windows.h>
     #include <shellapi.h>
     #include <synchapi.h>
     #include <sysinfoapi.h>

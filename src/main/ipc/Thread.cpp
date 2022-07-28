@@ -27,6 +27,10 @@
 #include <errno.h>
 #include <unistd.h>
 
+#ifdef PLATFORM_WINDOWS
+    #include <windows.h>
+#endif /* PLATFORM_WINDOWS */
+
 namespace lsp
 {
     namespace ipc

@@ -29,6 +29,10 @@
 #include <stdlib.h>
 #include <wctype.h>
 
+#ifdef PLATFORM_WINDOWS
+    #include <windows.h>
+#endif /* PLATFORM_WINDOWS */
+
 namespace lsp
 {
 #if defined(PLATFORM_WINDOWS)

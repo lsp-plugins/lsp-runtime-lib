@@ -36,8 +36,7 @@ namespace lsp
     namespace mm
     {
     #ifndef USE_LIBSNDFILE
-        class MMIOWriter;
-        class ACMStream;
+        struct WAVEFILE;
     #endif /* USE_LIBSNDFILE */
 
         class OutAudioFileStream: public IOutAudioStream
@@ -46,17 +45,15 @@ namespace lsp
                 OutAudioFileStream & operator = (const OutAudioFileStream &);
 
             protected:
-                // Platform-specific fields
+
             #ifdef USE_LIBSNDFILE
-                SNDFILE            *hHandle;
+                typedef SNDFILE                 handle_t;
             #else
-                MMIOWriter         *pMMIO;          // MMIO writer
-                ACMStream          *pACM;           // ACM stream
-                WAVEFORMATEX        sPcmFmt;        // PCM format descriptor
-                WAVEFORMATEX       *pFormat;        // Actual PCM stream format
-                wsize_t             nTotalFrames;   // Total frames written
+                typedef struct WAVEFILE         handle_t;
             #endif
-                // Common fields
+
+            protected:
+                handle_t           *hHandle;
                 size_t              nCodec;
                 bool                bSeekable;
 
@@ -66,16 +63,17 @@ namespace lsp
                 static bool         select_sndfile_format(SF_INFO *info, audio_stream_t *fmt, size_t codec);
             #else
                 virtual ssize_t     conv_write(const void *src, size_t nframes, size_t fmt);
-                ssize_t             decode_sample_format(WAVEFORMATEX *wfe);
                 ssize_t             write_acm_convert(const void *src, size_t nframes);
-                status_t            flush_internal(bool eof);
+                status_t            flush_handle(handle_t *hHandle, bool eof);
             #endif
 
                 virtual ssize_t     direct_write(const void *src, size_t nframes, size_t fmt);
 
                 virtual size_t      select_format(size_t rfmt);
 
-                status_t            close_handle();
+                status_t            flush_internal(bool eof);
+                status_t            do_close();
+                static status_t     close_handle(handle_t *h);
 
             public:
                 explicit OutAudioFileStream();

@@ -58,6 +58,10 @@ namespace lsp
                     LSPString   value;
                 } envvar_t;
 
+#ifdef PLATFORM_WINDOWS
+                typedef void           *HANDLE;
+#endif /* PLATFORM_WINDOWS */
+
             private:
                 LSPString               sCommand;
                 lltl::parray<LSPString> vArgs;
@@ -66,8 +70,8 @@ namespace lsp
                 int                     nExitCode;
 
 #ifdef PLATFORM_WINDOWS
+                uint32_t                nPID;
                 HANDLE                  hProcess;
-                WORD                    nPID;
                 HANDLE                  hStdIn;
                 HANDLE                  hStdOut;
                 HANDLE                  hStdErr;

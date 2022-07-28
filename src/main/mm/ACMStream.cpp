@@ -29,6 +29,7 @@
 
 #ifndef USE_LIBSNDFILE
 
+#include <windows.h>
 #include <mmreg.h>
 #include <msacm.h>
 

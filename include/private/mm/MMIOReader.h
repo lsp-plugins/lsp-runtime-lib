@@ -23,12 +23,14 @@
 #define PRIVATE_MM_MMIOREADER_H_
 
 #include <lsp-plug.in/runtime/version.h>
+
+#ifndef USE_LIBSNDFILE
+
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 
-#ifndef USE_LIBSNDFILE
-
+#include <windows.h>
 #include <mmsystem.h>
 #include <mmreg.h>
 

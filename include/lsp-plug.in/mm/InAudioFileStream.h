@@ -29,19 +29,14 @@
 
 #ifdef USE_LIBSNDFILE
     #include <sndfile.h>
-#else
-    #include <mmsystem.h>
-    #include <mmreg.h>
-    #include <msacm.h>
-#endif
+#endif /* USE_LIBSNDFILE */
 
 namespace lsp
 {
     namespace mm
     {
     #ifndef USE_LIBSNDFILE
-        class ACMStream;
-        class MMIOReader;
+        struct WAVEFILE;
     #endif /* USE_LIBSNDFILE */
 
         class InAudioFileStream: public IInAudioStream
@@ -50,23 +45,21 @@ namespace lsp
                 InAudioFileStream & operator = (const InAudioFileStream &);
 
             protected:
-                // Platform-specific parameters
             #ifdef USE_LIBSNDFILE
-                SNDFILE            *hHandle;
+                typedef SNDFILE                 handle_t;
             #else
-                MMIOReader         *pMMIO;
-                ACMStream          *pACM;
-                WAVEFORMATEX       *pFormat;
+                typedef struct WAVEFILE         handle_t;
             #endif
 
-                // Common parameters
+            protected:
+                // Platform-specific parameters
+                handle_t           *hHandle;
                 bool                bSeekable;
 
             protected:
             #ifdef USE_LIBSNDFILE
                 static status_t     decode_sf_error(SNDFILE *fd);
             #else
-                static ssize_t      decode_sample_format(WAVEFORMATEX *wfe);
                 ssize_t             read_acm_convert(void *dst, size_t nframes, size_t fmt);
             #endif
 
@@ -74,7 +67,8 @@ namespace lsp
 
                 virtual size_t      select_format(size_t fmt);
 
-                status_t            close_handle();
+                status_t            do_close();
+                static status_t     close_handle(handle_t *h);
 
             public:
                 explicit InAudioFileStream();
