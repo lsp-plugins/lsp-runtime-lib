@@ -130,6 +130,7 @@ namespace lsp
             }
 
             h->pFormat  = NULL;     // Freed by owner
+            free(h);
 
             return res;
         #endif /* USE_LIBSNDFILE */
@@ -284,11 +285,11 @@ namespace lsp
                 return set_error(res);
 
             // Analyze format
+            ssize_t fmt;
             WAVEFORMATEX *wfe   = h->pMMIO->format();
             if ((wfe->wFormatTag == WAVE_FORMAT_PCM) || (wfe->wFormatTag == WAVE_FORMAT_IEEE_FLOAT))
             {
-                ssize_t fmt         = decode_sample_format(wfe);
-                if (fmt <= 0)
+                if ((fmt = decode_sample_format(wfe)) <= 0)
                     return set_error(STATUS_UNSUPPORTED_FORMAT);
 
                 // All is OK, use reading of PCM samples
@@ -309,20 +310,19 @@ namespace lsp
             }
 
             // Create ACM stream
-            ACMStream *acm      = new ACMStream();
-            if (acm == NULL)
+            h->pACM             = new ACMStream();
+            if (h->pACM == NULL)
                 return set_error(STATUS_NO_MEM);
-            if ((res = acm->read_pcm(wfe)) != STATUS_OK)
+            if ((res = h->pACM->read_pcm(wfe)) != STATUS_OK)
                 return set_error(res);
 
             // Detect format
-            wfe                 = acm->out_format();
-            ssize_t fmt         = decode_sample_format(wfe);
-            if (fmt <= 0)
+            wfe                 = h->pACM->out_format();
+            if ((fmt = decode_sample_format(wfe)) <= 0)
                 return set_error(STATUS_UNSUPPORTED_FORMAT);
 
             // All is ok
-            h->pFormat          = acm->out_format();
+            h->pFormat          = h->pACM->out_format();
 
             sFormat.srate       = wfe->nSamplesPerSec;
             sFormat.channels    = wfe->nChannels;
@@ -420,17 +420,14 @@ namespace lsp
             res = decode_sf_error(hHandle);
             return -((res == STATUS_OK) ? STATUS_EOF : res);
         #else
-            if (hHandle->pMMIO != NULL)
-            {
-                if (hHandle->pACM != NULL)
-                    return read_acm_convert(dst, nframes, fmt);
+            if (hHandle->pMMIO == NULL)
+                return -STATUS_NOT_SUPPORTED;
+            if (hHandle->pACM != NULL)
+                return read_acm_convert(dst, nframes, fmt);
 
-                size_t fsize    = sformat_size_of(sFormat.format) * sFormat.channels;
-                ssize_t nread   = hHandle->pMMIO->read(dst, fsize * nframes);
-                return (nread < 0) ? nread : nread / fsize;
-            }
-
-            return -STATUS_NOT_SUPPORTED;
+            size_t fsize    = sformat_size_of(sFormat.format) * sFormat.channels;
+            ssize_t nread   = hHandle->pMMIO->read(dst, fsize * nframes);
+            return (nread < 0) ? nread : nread / fsize;
         #endif /* USE_LIBSNDFILE */
         }
 

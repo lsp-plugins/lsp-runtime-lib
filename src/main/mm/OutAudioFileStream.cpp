@@ -415,6 +415,9 @@ namespace lsp
 
         status_t OutAudioFileStream::do_close()
         {
+            if (hHandle == NULL)
+                return STATUS_OK;
+
             status_t res = flush_internal(true);
             status_t res2= close_handle(hHandle);
 
@@ -439,7 +442,7 @@ namespace lsp
                 // Perform pull of portion of buffer
                 ssize_t count       = hHandle->pACM->pull(&dptr, IO_BUF_SIZE, eof);
                 if (count < 0)
-                    return -count;
+                    return (count == -STATUS_EOF) ? STATUS_OK : -count;
                 else if (count == 0)
                     break;
 
