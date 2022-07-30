@@ -329,22 +329,18 @@ $(LSP_RUNTIME_LIB_BIN)/main/mm/OutAudioFileStream.o: \
  main/mm/OutAudioFileStream.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/OutAudioFileStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/finally.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IOutAudioStream.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
- $(LSP_RUNTIME_LIB_INC)/private/mm/MMIOWriter.h \
- $(LSP_RUNTIME_LIB_INC)/private/mm/ACMStream.h \
- $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/darray.h \
- $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h
 $(LSP_RUNTIME_LIB_BIN)/main/mm/MMIOWriter.o: main/mm/MMIOWriter.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/endian.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
@@ -395,16 +391,16 @@ $(LSP_RUNTIME_LIB_BIN)/main/mm/InAudioFileStream.o: \
  main/mm/InAudioFileStream.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/InAudioFileStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/finally.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IInAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/endian.h \
@@ -413,10 +409,7 @@ $(LSP_RUNTIME_LIB_BIN)/main/mm/InAudioFileStream.o: \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
- $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
- $(LSP_RUNTIME_LIB_INC)/private/mm/ACMStream.h \
- $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/darray.h \
- $(LSP_RUNTIME_LIB_INC)/private/mm/MMIOReader.h
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h
 $(LSP_RUNTIME_LIB_BIN)/main/mm/IInAudioStream.o: \
  main/mm/IInAudioStream.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IInAudioStream.h \
@@ -2197,16 +2190,16 @@ $(LSP_RUNTIME_LIB_BIN)/test/utest/mm/outaudiofilestream.o: \
  test/utest/mm/outaudiofilestream.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/InAudioFileStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/finally.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IInAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/OutAudioFileStream.h \
@@ -2216,16 +2209,16 @@ $(LSP_RUNTIME_LIB_BIN)/test/utest/mm/inaudiofilestream.o: \
  test/utest/mm/inaudiofilestream.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/InAudioFileStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/finally.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IInAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/math.h
