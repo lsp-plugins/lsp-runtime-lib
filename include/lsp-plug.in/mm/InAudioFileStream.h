@@ -23,9 +23,11 @@
 #define LSP_PLUG_IN_MM_INAUDIOFILESTREAM_H_
 
 #include <lsp-plug.in/runtime/version.h>
-#include <lsp-plug.in/runtime/LSPString.h>
+
+#include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/mm/IInAudioStream.h>
+#include <lsp-plug.in/runtime/LSPString.h>
 
 #ifdef USE_LIBSNDFILE
     #include <sndfile.h>

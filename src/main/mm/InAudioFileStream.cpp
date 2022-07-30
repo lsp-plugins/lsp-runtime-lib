@@ -112,7 +112,7 @@ namespace lsp
 
         #ifdef USE_LIBSNDFILE
             int res     = sf_close(h);
-            return set_error((res == 0) ? STATUS_OK : STATUS_IO_ERROR);
+            return (res == 0) ? STATUS_OK : STATUS_IO_ERROR;
         #else
             status_t res    = STATUS_OK;
             if (h->pACM != NULL)

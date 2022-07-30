@@ -383,7 +383,7 @@ namespace lsp
             lsp_finally { h = NULL; };
 
         #ifdef USE_LIBSNDFILE
-            int res     = sf_close(hHandle);
+            int res     = sf_close(h);
             return (res == 0) ? STATUS_OK : STATUS_IO_ERROR;
         #else
             status_t res = STATUS_OK;
