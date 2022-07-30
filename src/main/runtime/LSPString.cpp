@@ -27,10 +27,10 @@
 #include <lsp-plug.in/io/charset.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <wctype.h>
-#include <stdarg.h>
 
 #define GRANULARITY     0x20
 #define BUF_SIZE        0x200

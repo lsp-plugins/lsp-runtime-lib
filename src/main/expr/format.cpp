@@ -25,6 +25,7 @@
 #include <lsp-plug.in/io/OutStringSequence.h>
 #include <lsp-plug.in/stdlib/stdio.h>
 #include <lsp-plug.in/stdlib/math.h>
+#include <ctype.h>
 
 namespace lsp
 {
@@ -231,7 +232,8 @@ namespace lsp
                     break;
 
                 // Append character and repeat
-                spec->buf.append(c);
+                if (!spec->buf.append(c))
+                    return STATUS_NO_MEM;
             }
 
             // now parse format specifier
@@ -737,18 +739,39 @@ namespace lsp
             }
             else
             {
-                // Initialize format specifier
                 char fmt[64];
+            #ifdef PLATFORM_WINDOWS
+                // Windows format string does not respect uppercase format letters.
+                // That's why we need to do some workaround work
+                // Initialize format specifier
+                bool uppercase = isupper(spec->type);
+                char spec_type = tolower(spec->type);
+                if (spec->flags & F_FRAC)
+                    ::snprintf(fmt, sizeof(fmt), "%%.%d%c", int(spec->frac), spec_type);
+                else
+                    ::snprintf(fmt, sizeof(fmt), "%%.6%c", spec_type);
+                fmt[sizeof(fmt)-1] = '\0';
+
+                // Format the floating-point value and reverse buffer
+                if (!spec->buf.fmt_ascii(fmt, lsp_abs(v->v_float)))
+                    return STATUS_NO_MEM;
+
+                if (uppercase)
+                    spec->buf.toupper();
+                spec->buf.reverse();
+            #else
+                // Initialize format specifier
                 if (spec->flags & F_FRAC)
                     ::snprintf(fmt, sizeof(fmt), "%%.%d%c", int(spec->frac), char(spec->type));
                 else
                     ::snprintf(fmt, sizeof(fmt), "%%.6%c", char(spec->type));
+                fmt[sizeof(fmt)-1] = '\0';
 
                 // Format the floating-point value and reverse buffer
-                fmt[63] = '\0';
                 if (!spec->buf.fmt_ascii(fmt, lsp_abs(v->v_float)))
                     return STATUS_NO_MEM;
                 spec->buf.reverse();
+            #endif /* PLATFORM_WINDOWS */
 
                 // Append to specified width
                 if (spec->flags & F_WIDTH)
@@ -1045,6 +1068,6 @@ namespace lsp
                 } // c
             }
         }
-    }
-}
+    } /* namespace expr */
+} /* namespace lsp */
 
