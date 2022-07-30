@@ -14,7 +14,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.exe.debug.1011521175" name="DebugLinux" optionalBuildProperties="org.eclipse.cdt.docker.launcher.containerbuild.property.volumes=,org.eclipse.cdt.docker.launcher.containerbuild.property.selectedvolumes=" parent="cdt.managedbuild.config.gnu.exe.debug">
+				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.exe.debug.1011521175" name="DebugLinux" optionalBuildProperties="org.eclipse.cdt.docker.launcher.containerbuild.property.selectedvolumes=,org.eclipse.cdt.docker.launcher.containerbuild.property.volumes=" parent="cdt.managedbuild.config.gnu.exe.debug">
 					<folderInfo id="cdt.managedbuild.config.gnu.exe.debug.1011521175." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.exe.debug.1821623262" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.exe.debug">
 							<targetPlatform id="cdt.managedbuild.target.gnu.platform.exe.debug.236626716" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.exe.debug"/>
@@ -185,7 +185,6 @@
 									<listOptionValue builtIn="false" value="LSP_TESTING"/>
 									<listOptionValue builtIn="false" value="LSP_IDE_DEBUG"/>
 									<listOptionValue builtIn="false" value="LSP_TRACE"/>
-									<listOptionValue builtIn="false" value="USE_LIBSNDFILE"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.dialect.std.950122113" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.300351960" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
@@ -203,7 +202,6 @@
 									<listOptionValue builtIn="false" value="LSP_TESTING"/>
 									<listOptionValue builtIn="false" value="LSP_IDE_DEBUG"/>
 									<listOptionValue builtIn="false" value="LSP_TRACE"/>
-									<listOptionValue builtIn="false" value="USE_LIBSNDFILE"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1973920411" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -253,8 +251,10 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="DebugLinux"/>
 		<configuration configurationName="Debug Linux"/>
 		<configuration configurationName="Debug Win"/>
+		<configuration configurationName="DebugWin"/>
 		<configuration configurationName="Release">
 			<resource resourceType="PROJECT" workspacePath="/lsp-runtime-lib"/>
 		</configuration>
