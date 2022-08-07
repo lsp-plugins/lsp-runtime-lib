@@ -19,9 +19,9 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <lsp-plug.in/runtime/system.h>
 #include <lsp-plug.in/io/Dir.h>
 #include <lsp-plug.in/ipc/Process.h>
+#include <lsp-plug.in/runtime/system.h>
 
 #ifdef PLATFORM_WINDOWS
     #include <windows.h>
@@ -295,7 +295,6 @@ namespace lsp
             FILETIME t;
             ::GetSystemTimeAsFileTime(&t);
             uint64_t itime  = (uint64_t(t.dwHighDateTime) << 32) | t.dwLowDateTime;
-
             time->seconds   = itime / 10000000;
             time->nanos     = (itime % 10000000) * 100;
         }

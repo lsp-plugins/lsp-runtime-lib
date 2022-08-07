@@ -5,6 +5,8 @@
 === 1.0.7 ===
 * Added system::get_time_millis() function.
 * Got rid of the <windows.h> plague header in header files.
+* Fixed integer overflow in system::time_t data structure for 32-bit systems
+  by extending the size of seconds field up to 64 bit.
 * Updated build scripts.
 
 === 1.0.6 ===

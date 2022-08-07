@@ -37,8 +37,8 @@ namespace lsp
          */
         typedef struct time_t
         {
-            ssize_t     seconds;    /* The value in seconds */
-            ssize_t     nanos;      /* The value in nanoseconds between 0 and 10^9-1 */
+            uint64_t     seconds;    /* The value in seconds */
+            uint32_t     nanos;      /* The value in nanoseconds between 0 and 10^9-1 */
         } time_t;
 
         /**
