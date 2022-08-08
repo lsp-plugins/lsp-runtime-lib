@@ -2494,6 +2494,7 @@ namespace lsp
         else if (!cap_grow(count))
             return false;
         drop_temp();
+        nHash               = 0;
 
         // Now we need to replace all line endings with proper ones
         size_t distance;
@@ -2541,6 +2542,7 @@ namespace lsp
         if (count <= 0)
             return true;
         drop_temp();
+        nHash                   = 0;
 
         size_t distance;
         lsp_wchar_t *dst        = pData;
