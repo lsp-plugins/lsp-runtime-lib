@@ -45,6 +45,12 @@
     #include <mntent.h>
 #endif /* PLATFORM_LINUX */
 
+#if defined PLATFORM_BSD
+    #include <sys/mount.h>
+    #include <sys/param.h>
+    #include <sys/ucred.h>
+#endif /* PLATFORM_BSD */
+
 namespace lsp
 {
     namespace system
@@ -618,17 +624,12 @@ namespace lsp
             if (!path->starts_with(FILE_SEPARATOR_C))
                 return false;
 
-            lsp_trace("path = %s", path->get_native());
-
             struct stat st;
             if (::stat(path->get_native(), &st) != 0)
-            {
-                int error = errno;
-                lsp_trace("errno = %d", error);
                 return false;
-            }
 
-            return (st.st_mode & S_IFMT) == S_IFBLK;
+            int mode = st.st_mode & S_IFMT;
+            return (mode == S_IFBLK) || (mode == S_IFCHR);
         }
     #endif /* PLATFORM_POSIX */
 
@@ -828,29 +829,49 @@ namespace lsp
         static status_t read_bsd_mntinfo(lltl::parray<volume_info_t> *volumes)
         {
             struct statfs *fsp;
-            int entries;
+            lltl::parray<volume_info_t> list;
+            lsp_finally { free_volume_info(&list); };
 
-          entries = getmntinfo (&fsp, MNT_NOWAIT);
-          if (entries < 0)
-            return NULL;
-          for (; entries-- > 0; fsp++)
+            // Get mount information
+            int entries = getmntinfo (&fsp, MNT_NOWAIT);
+            if (entries < 0)
+                return STATUS_NOT_SUPPORTED;
+
+            for (int i=0; i < entries; ++fsp, ++i)
             {
-              char *fs_type = fsp_to_string (fsp);
+                // Create record
+                volume_info_t *info = new volume_info_t();
+                if (info == NULL)
+                    return STATUS_NO_MEM;
+                else if (!list.add(info))
+                {
+                    delete info;
+                    return STATUS_NO_MEM;
+                }
 
-              me = xmalloc (sizeof *me);
-              me->me_devname = xstrdup (fsp->f_mntfromname);
-              me->me_mountdir = xstrdup (fsp->f_mntonname);
-              me->me_mntroot = NULL;
-              me->me_type = fs_type;
-              me->me_type_malloced = 0;
-              me->me_dummy = ME_DUMMY (me->me_devname, me->me_type);
-              me->me_remote = ME_REMOTE (me->me_devname, me->me_type);
-              me->me_dev = (dev_t) -1;        /* Magic; means not known yet. */
+                // Fill fields
+                if (!info->device.set_utf8(fsp->f_mntfromname))
+                    return STATUS_NO_MEM;
+                if (!info->target.set_utf8(fsp->f_mntonname))
+                    return STATUS_NO_MEM;
+                if (!info->root.set_ascii("/"))
+                    return STATUS_NO_MEM;
+                if (!info->name.set_utf8(fsp->f_fstypename))
+                    return STATUS_NO_MEM;
 
-              /* Add to the linked list. */
-              *mtail = me;
-              mtail = &me->me_next;
+                // Produce final record
+                info->flags     = 0;
+                if (is_dummy_fs(&info->name, false))
+                    info->flags    |= VF_DUMMY;
+                if (is_remote_fs(&info->device, &info->name))
+                    info->flags    |= VF_REMOTE;
+                if (is_posix_drive(&info->device))
+                    info->flags    |= VF_DRIVE;
             }
+
+            // Commit and return
+            list.swap(volumes);
+            return STATUS_OK;
         }
     #endif /* PLATFORM_BSD */
 
