@@ -97,17 +97,17 @@ UTEST_BEGIN("runtime.runtime", system)
         // Test reading of volume info
         test_volume_info();
 
-//        // Test time measurement
-//        test_time_measure();
-//
-//        // Test the system::sleep_msec function.
-//        test_sleep_msec(10);
-//        test_sleep_msec(15);
-//        test_sleep_msec(100);
-//        test_sleep_msec(105);
-//        test_sleep_msec(150);
-//        test_sleep_msec(1000);
-//        test_sleep_msec(1005);
+        // Test time measurement
+        test_time_measure();
+
+        // Test the system::sleep_msec function.
+        test_sleep_msec(10);
+        test_sleep_msec(15);
+        test_sleep_msec(100);
+        test_sleep_msec(105);
+        test_sleep_msec(150);
+        test_sleep_msec(1000);
+        test_sleep_msec(1005);
     }
 UTEST_END;
 

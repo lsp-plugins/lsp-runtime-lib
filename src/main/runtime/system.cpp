@@ -19,6 +19,7 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/io/Dir.h>
 #include <lsp-plug.in/ipc/Process.h>
@@ -875,6 +876,177 @@ namespace lsp
         }
     #endif /* PLATFORM_BSD */
 
+        status_t read_pathnames(const WCHAR *volume, WCHAR **list, size_t *cap)
+        {
+            DWORD cap_req = 0;
+
+            // Obtain volume information
+            while (true)
+            {
+                if (GetVolumePathNamesForVolumeNameW(volume, *list, *cap, &cap_req))
+                    return STATUS_OK;
+                if (GetLastError() != ERROR_MORE_DATA)
+                    return STATUS_UNKNOWN_ERR;
+
+                // Allocate the desired chunk of memory
+                cap_req     = lsp::align_size(cap_req, 0x20);
+                WCHAR *buf  = static_cast<WCHAR *>(realloc(*list, (cap_req + 1) * sizeof(WCHAR)));
+                if (buf == NULL)
+                    return STATUS_NO_MEM;
+                *list       = buf;
+                *cap        = cap_req;
+            }
+        }
+
+        status_t read_windows_mntinfo(lltl::parray<volume_info_t> *volumes)
+        {
+            status_t res;
+            lltl::parray<volume_info_t> list;
+            lsp_finally { free_volume_info(&list); };
+
+            // Read the value
+            WCHAR *vol_name = static_cast<WCHAR *>(malloc((MAX_PATH + 4) * 3 * sizeof(WCHAR)));
+            if (vol_name == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally { free(vol_name); };
+            WCHAR *dev_name = &vol_name[MAX_PATH + 4];
+            WCHAR *fs_name  = &dev_name[MAX_PATH + 4];
+            HANDLE h        = INVALID_HANDLE_VALUE;
+
+            // Allocate place for the volume names
+            size_t pth_cap  = 0;
+            WCHAR *pth_name = NULL;
+            lsp_finally {
+                if (pth_name != NULL)
+                    free(pth_name);
+            };
+
+            // Start volume scanning
+            if ((h = FindFirstVolumeW(vol_name, MAX_PATH + 4)) == INVALID_HANDLE_VALUE)
+                return STATUS_NOT_SUPPORTED;
+            lsp_finally { FindVolumeClose(h); };
+
+            do
+            {
+                //  Skip the \\?\ prefix and remove the trailing backslash.
+                WCHAR idx   = wcslen(vol_name) - 1;
+
+                if ((vol_name[0] != L'\\') ||
+                    (vol_name[1] != L'\\') ||
+                    (vol_name[2] != L'?') ||
+                    (vol_name[3] != L'\\') ||
+                    (vol_name[idx] != L'\\'))
+                    continue;
+
+                // Obtain the device name
+                vol_name[idx] = '\0';
+                DWORD chars = QueryDosDeviceW(&vol_name[4], dev_name, MAX_PATH);
+                vol_name[idx] = '\\';
+                if (chars == 0)
+                    continue;
+
+                // Obtain the list of path names
+                if ((res = read_pathnames(vol_name, &pth_name, &pth_cap)) != STATUS_OK)
+                    return res;
+
+                // Do simple stuff if path names have been not obtained
+                if (*pth_name == '\0')
+                {
+                    // Create record
+                    volume_info_t *info = new volume_info_t();
+                    if (info == NULL)
+                        return STATUS_NO_MEM;
+                    else if (!list.add(info))
+                    {
+                        delete info;
+                        return STATUS_NO_MEM;
+                    }
+
+                    // Fill volume name field
+                    if (!info->device.set_utf16(vol_name))
+                        return STATUS_NO_MEM;
+                    if (!info->root.set_utf16(dev_name))
+                        return STATUS_NO_MEM;
+                    if (!info->target.set_ascii(""))
+                        return STATUS_NO_MEM;
+                    if (!info->name.set_ascii(""))
+                        return STATUS_NO_MEM;
+
+                    // Obtain flags
+                    UINT drv_type = GetDriveTypeW(dev_name);
+                    switch (drv_type)
+                    {
+                        case DRIVE_REMOVABLE:
+                        case DRIVE_FIXED:
+                        case DRIVE_CDROM:
+                        case DRIVE_RAMDISK:
+                            info->flags     = VF_DRIVE;
+                            break;
+                        case DRIVE_REMOTE:
+                            info->flags     = VF_REMOTE;
+                            break;
+                        default:
+                            info->flags     = 0;
+                            break;
+                    }
+                    continue;
+                }
+
+                for (WCHAR *vol_drive = pth_name; *vol_drive != '\0';)
+                {
+                    size_t len  = wcslen(vol_drive);
+                    lsp_finally { vol_drive = &vol_drive[len + 1]; };
+
+                    // Obtain the volume information
+                    if (!GetVolumeInformationW(vol_drive, NULL, 0, NULL, NULL, NULL, fs_name, MAX_PATH + 4))
+                        fs_name[0] = '\0';
+
+                    // Create record
+                    volume_info_t *info = new volume_info_t();
+                    if (info == NULL)
+                        return STATUS_NO_MEM;
+                    else if (!list.add(info))
+                    {
+                        delete info;
+                        return STATUS_NO_MEM;
+                    }
+
+                    // Fill volume name field
+                    if (!info->device.set_utf16(vol_name))
+                        return STATUS_NO_MEM;
+                    if (!info->root.set_utf16(dev_name))
+                        return STATUS_NO_MEM;
+                    if (!info->target.set_utf16(vol_drive))
+                        return STATUS_NO_MEM;
+                    if (!info->name.set_utf16(fs_name))
+                        return STATUS_NO_MEM;
+
+                    // Obtain flags
+                    UINT drv_type = GetDriveTypeW(vol_drive);
+                    switch (drv_type)
+                    {
+                        case DRIVE_REMOVABLE:
+                        case DRIVE_FIXED:
+                        case DRIVE_CDROM:
+                        case DRIVE_RAMDISK:
+                            info->flags     = VF_DRIVE;
+                            break;
+                        case DRIVE_REMOTE:
+                            info->flags     = VF_REMOTE;
+                            break;
+                        default:
+                            info->flags     = 0;
+                            break;
+                    }
+                }
+
+            } while (FindNextVolumeW(h, vol_name, MAX_PATH));
+
+            // Commit and return
+            list.swap(volumes);
+            return STATUS_OK;
+        }
+
         status_t read_volume_info(lltl::parray<volume_info_t> *volumes)
         {
             // Verify input
@@ -896,7 +1068,10 @@ namespace lsp
             if ((res = read_bsd_mntinfo(volumes)) != STATUS_NOT_SUPPORTED)
                 return res;
         #endif /* PLATFORM_BSD */
-
+        #ifdef PLATFORM_WINDOWS
+            if ((res = read_windows_mntinfo(volumes)) != STATUS_NOT_SUPPORTED)
+                return res;
+        #endif /* PLATFORM_WINDOWS */
 
             return res;
         }
