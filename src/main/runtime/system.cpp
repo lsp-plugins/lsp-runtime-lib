@@ -19,9 +19,12 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/io/Dir.h>
 #include <lsp-plug.in/ipc/Process.h>
+#include <lsp-plug.in/lltl/darray.h>
 #include <lsp-plug.in/runtime/system.h>
+#include <lsp-plug.in/stdlib/stdlib.h>
 
 #ifdef PLATFORM_WINDOWS
     #include <windows.h>
@@ -29,12 +32,18 @@
     #include <synchapi.h>
     #include <sysinfoapi.h>
     #include <winbase.h>
-#else
-    #include <stdlib.h>
-    #include <errno.h>
-    #include <time.h>
-    #include <sys/time.h>
 #endif /* PLATFORM_WINDOWS */
+
+#if defined PLATFORM_POSIX
+    #include <errno.h>
+    #include <sys/stat.h>
+    #include <sys/time.h>
+    #include <time.h>
+#endif /* PLATFORM_POSIX */
+
+#if defined PLATFORM_LINUX
+    #include <mntent.h>
+#endif /* PLATFORM_LINUX */
 
 namespace lsp
 {
@@ -530,7 +539,362 @@ namespace lsp
 
             return STATUS_OK;
         }
-    }
-}
+
+        static inline bool match_string(const LSPString *s, const char **list)
+        {
+            for (; *list != NULL; ++list)
+                if (s->equals_ascii(*list))
+                    return true;
+            return false;
+        }
+
+        static inline bool is_dummy_fs(const LSPString *fs_type, bool bind)
+        {
+            static const char *dummy_fs_types[] =
+            {
+                "autofs",
+                "proc",
+                "debugfs",
+                "devpts",
+                "fusectl",
+                "fuse.portal",
+                "mqueue",
+                "rpc_pipefs",
+                "sysfs",
+                "devfs",
+                "kernfs",
+                "ignore",
+                NULL
+            };
+
+            if ((fs_type->equals_ascii("bind")) && (!bind))
+                return true;
+
+            return match_string(fs_type, dummy_fs_types);
+        }
+
+        static inline bool is_remote_fs(const LSPString *fs_type, const LSPString *fs_name)
+        {
+        #ifdef PLATFORM_WINDOWS
+            // TODO
+        #endif /* PLATFORM_WINDOWS */
+
+            static const char *network_fs_types[] =
+            {
+                "smbfs",
+                "smb3",
+                "cifs",
+                "nfs",
+                NULL
+            };
+
+            static const char *network_fs_names[] =
+            {
+                "acfs",
+                "afs",
+                "coda",
+                "auristorfs",
+                "fhgfs",
+                "gpfs",
+                "ibrix",
+                "ocfs2",
+                "vxfs",
+                "nfs",
+                "-hosts",
+                NULL
+            };
+
+            if (fs_name->index_of(':') >= 0)
+                return true;
+            if (fs_name->starts_with_ascii("\\\\"))
+                return match_string(fs_type, network_fs_types);
+
+            return match_string(fs_name, network_fs_names);
+        }
+
+    #ifdef PLATFORM_POSIX
+        bool is_posix_drive(const LSPString *path)
+        {
+            if (!path->starts_with(FILE_SEPARATOR_C))
+                return false;
+
+            lsp_trace("path = %s", path->get_native());
+
+            struct stat st;
+            if (::stat(path->get_native(), &st) != 0)
+            {
+                int error = errno;
+                lsp_trace("errno = %d", error);
+                return false;
+            }
+
+            return (st.st_mode & S_IFMT) == S_IFBLK;
+        }
+    #endif /* PLATFORM_POSIX */
+
+    #ifdef PLATFORM_LINUX
+        static inline char *move_forward(char *s, char *end, size_t n)
+        {
+            while (n--)
+            {
+                s = static_cast<char *>(memchr(s, ' ', end - s));
+                if (s == NULL)
+                    break;
+                ++s;
+            }
+            return s;
+        }
+
+        static inline status_t read_field(LSPString *dst, char *s, char *end)
+        {
+            char *e = static_cast<char *>(memchr(s, ' ', end - s));
+            if (e == NULL)
+                return STATUS_BAD_FORMAT;
+
+            // Process string in-place to remove some escapings
+            size_t v    = 0;
+            size_t l    = e - s;
+            for (size_t i = 0; i < l; i++)
+            {
+                if ((s[i] == '\\') && ((i + 4) < l) &&
+                    (s[i + 1] >= '0') && (s[i + 1] <= '3') &&
+                    (s[i + 2] >= '0') && (s[i + 2] <= '7') &&
+                    (s[i + 3] >= '0') && (s[i + 3] <= '7'))
+                {
+                    s[v++]  = (s[i + 1] - '0') * 64 + (s[i + 2] - '0') * 8 + (s[i + 3] - '0');
+                    i += 3;
+                }
+                else
+                    s[v++]  = s[i];
+            }
+
+            return (dst->set_utf8(s, v)) ? STATUS_OK : STATUS_NO_MEM;
+        }
+
+        static status_t read_linux_mountinfo(lltl::parray<volume_info_t> *volumes)
+        {
+            status_t res;
+            lltl::parray<volume_info_t> list;
+            lsp_finally { free_volume_info(&list); };
+
+            // Open the file
+            FILE *fd    = fopen("/proc/self/mountinfo", "r");
+            if (fd == NULL)
+                return STATUS_NOT_SUPPORTED;
+            lsp_finally { fclose(fd); };
+
+            // Line
+            char *line = NULL;
+            size_t line_cap = 0;
+            lsp_finally {
+                if (line != NULL)
+                    free(line);
+            };
+
+            // Read the mountinfo file
+            // 36 35 98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
+            // (1)(2)(3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
+            //
+            // (1) mount ID:  unique identifier of the mount (may be reused after umount)
+            // (2) parent ID:  ID of parent (or of self for the top of the mount tree)
+            // (3) major:minor:  value of st_dev for files on filesystem
+            // (4) root:  root of the mount within the filesystem
+            // (5) mount point:  mount point relative to the process's root
+            // (6) mount options:  per mount options
+            // (7) optional fields:  zero or more fields of the form "tag[:value]"
+            // (8) separator:  marks the end of the optional fields
+            // (9) filesystem type:  name of filesystem of the form "type[.subtype]"
+            // (10) mount source:  filesystem specific information or "none"
+            // (11) super options:  per super block options
+            //
+            // Parsers should ignore all unrecognised optional fields.  Currently the
+            // possible optional fields are:
+            //
+            // shared:X  mount is shared in peer group X
+            // master:X  mount is slave to peer group X
+            // propagate_from:X  mount is slave and receives propagation from peer group X (*)
+            // unbindable  mount is unbindable
+            ssize_t len;
+            char *end, *s;
+
+            while ((len = getline(&line, &line_cap, fd)) >= 0)
+            {
+                // Create record
+                volume_info_t *info = new volume_info_t();
+                if (info == NULL)
+                    return STATUS_NO_MEM;
+                else if (!list.add(info))
+                {
+                    delete info;
+                    return STATUS_NO_MEM;
+                }
+
+                // Parse the line
+                end         = &line[len];
+                // root
+                if ((s = move_forward(line, end, 3)) == NULL)
+                    return STATUS_BAD_FORMAT;
+                if ((res = read_field(&info->root, s, end)) != STATUS_OK)
+                    return res;
+                // mount point
+                if ((s = move_forward(s, end, 1)) == NULL)
+                    return STATUS_BAD_FORMAT;
+                if ((res = read_field(&info->target, s, end)) != STATUS_OK)
+                    return res;
+                // end of the optional fields
+                if ((s = strstr(s, " - ")) == NULL)
+                    return STATUS_BAD_FORMAT;
+                s += 3;
+                // filesystem type
+                if ((res = read_field(&info->name, s, end)) != STATUS_OK)
+                    return res;
+                // mount source
+                if ((s = move_forward(s, end, 1)) == NULL)
+                    return STATUS_BAD_FORMAT;
+                if ((res = read_field(&info->device, s, end)) != STATUS_OK)
+                    return res;
+
+                // Produce final record
+                info->flags     = 0;
+                if (is_dummy_fs(&info->name, false))
+                    info->flags    |= VF_DUMMY;
+                if (is_remote_fs(&info->device, &info->name))
+                    info->flags    |= VF_REMOTE;
+                if (is_posix_drive(&info->device))
+                    info->flags    |= VF_DRIVE;
+            }
+
+            if (!feof(fd))
+                return STATUS_IO_ERROR;
+
+            // Commit and return
+            list.swap(volumes);
+            return STATUS_OK;
+        }
+
+        static status_t read_linux_mntent(const char *path, lltl::parray<volume_info_t> *volumes)
+        {
+            struct mntent *mnt;
+            lltl::parray<volume_info_t> list;
+            lsp_finally { free_volume_info(&list); };
+
+            // Open the file
+            FILE *fd    = setmntent(path, "r");
+            if (fd == NULL)
+                return STATUS_NOT_SUPPORTED;
+            lsp_finally { endmntent(fd); };
+
+            // Parse records
+            while ((mnt = getmntent(fd)) != NULL)
+            {
+                // Create record
+                volume_info_t *info = new volume_info_t();
+                if (info == NULL)
+                    return STATUS_NO_MEM;
+                else if (!list.add(info))
+                {
+                    delete info;
+                    return STATUS_NO_MEM;
+                }
+
+                // Fill fields
+                bool bind   = hasmntopt (mnt, "bind");
+                if (!info->device.set_utf8(mnt->mnt_fsname))
+                    return STATUS_NO_MEM;
+                if (!info->target.set_utf8(mnt->mnt_dir))
+                    return STATUS_NO_MEM;
+                if (!info->root.set_ascii("/"))
+                    return STATUS_NO_MEM;
+                if (!info->name.set_utf8(mnt->mnt_type))
+                    return STATUS_NO_MEM;
+
+                // Produce final record
+                info->flags     = 0;
+                if (is_dummy_fs(&info->name, bind))
+                    info->flags    |= VF_DUMMY;
+                if (is_remote_fs(&info->device, &info->name))
+                    info->flags    |= VF_REMOTE;
+                if (is_posix_drive(&info->device))
+                    info->flags    |= VF_DRIVE;
+            }
+
+            // Commit and return
+            list.swap(volumes);
+            return STATUS_OK;
+        }
+    #endif /* PLATFORM_LINUX */
+
+    #ifdef PLATFORM_BSD
+        static status_t read_bsd_mntinfo(lltl::parray<volume_info_t> *volumes)
+        {
+            struct statfs *fsp;
+            int entries;
+
+          entries = getmntinfo (&fsp, MNT_NOWAIT);
+          if (entries < 0)
+            return NULL;
+          for (; entries-- > 0; fsp++)
+            {
+              char *fs_type = fsp_to_string (fsp);
+
+              me = xmalloc (sizeof *me);
+              me->me_devname = xstrdup (fsp->f_mntfromname);
+              me->me_mountdir = xstrdup (fsp->f_mntonname);
+              me->me_mntroot = NULL;
+              me->me_type = fs_type;
+              me->me_type_malloced = 0;
+              me->me_dummy = ME_DUMMY (me->me_devname, me->me_type);
+              me->me_remote = ME_REMOTE (me->me_devname, me->me_type);
+              me->me_dev = (dev_t) -1;        /* Magic; means not known yet. */
+
+              /* Add to the linked list. */
+              *mtail = me;
+              mtail = &me->me_next;
+            }
+        }
+    #endif /* PLATFORM_BSD */
+
+        status_t read_volume_info(lltl::parray<volume_info_t> *volumes)
+        {
+            // Verify input
+            if (volumes == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            status_t res = STATUS_NOT_IMPLEMENTED;
+        #ifdef PLATFORM_LINUX
+            if ((res = read_linux_mountinfo(volumes)) != STATUS_NOT_SUPPORTED)
+                return res;
+            if ((res = read_linux_mntent("/proc/self/mounts", volumes)) != STATUS_NOT_SUPPORTED)
+                return res;
+            if ((res = read_linux_mntent("/proc/mounts", volumes)) != STATUS_NOT_SUPPORTED)
+                return res;
+            if ((res = read_linux_mntent("/etc/mtab", volumes)) != STATUS_NOT_SUPPORTED)
+                return res;
+        #endif /* PLATFORM_LINUX */
+        #ifdef PLATFORM_BSD
+            if ((res = read_bsd_mntinfo(volumes)) != STATUS_NOT_SUPPORTED)
+                return res;
+        #endif /* PLATFORM_BSD */
+
+
+            return res;
+        }
+
+        void free_volume_info(lltl::parray<volume_info_t> *volumes)
+        {
+            if (volumes == NULL)
+                return;
+
+            for (size_t i=0, n=volumes->size(); i<n; ++i)
+            {
+                volume_info_t *p = volumes->uget(i);
+                if (p != NULL)
+                    delete p;
+            }
+            volumes->flush();
+        }
+
+    } /* namespace system */
+} /* namespace lsp */
 
 

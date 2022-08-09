@@ -27,6 +27,7 @@
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/io/Path.h>
+#include <lsp-plug.in/lltl/parray.h>
 
 namespace lsp
 {
@@ -60,6 +61,22 @@ namespace lsp
             uint8_t     sec;        /* Second of a minute, 0-59 */
             uint32_t    nanos;      /* Number of nanoseconds */
         } localtime_t;
+
+        enum volume_flags_t
+        {
+            VF_DUMMY    = 1 << 0,
+            VF_REMOTE   = 1 << 1,
+            VF_DRIVE    = 1 << 2
+        };
+
+        typedef struct volume_info_t
+        {
+            LSPString   device;     /* Name of associated device */
+            LSPString   root;       /* Directory on filesystem of device used (for bind) */
+            LSPString   target;     /* Target mount point on the file system */
+            LSPString   name;       /* Name of the file system */
+            size_t      flags;      /* See volume_flags_t */
+        } volume_info_t;
 
         /**
          * Get environment variable
@@ -209,6 +226,19 @@ namespace lsp
          * @return status of operation
          */
         status_t follow_url(const LSPString *url);
+
+        /**
+         * Read information about available system volumes
+         * @param volumes pointer to array to store volume information
+         * @return status of operation
+         */
+        status_t read_volume_info(lltl::parray<volume_info_t> *volumes);
+
+        /**
+         * Free information about available system volumes
+         * @param volumes pointer to array that stores volume information
+         */
+        void free_volume_info(lltl::parray<volume_info_t> *volumes);
     }
 }
 

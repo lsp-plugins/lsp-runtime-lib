@@ -68,19 +68,46 @@ UTEST_BEGIN("runtime.runtime", system)
         UTEST_ASSERT((computed - millis) <= 10);
     }
 
+    void test_volume_info()
+    {
+        lltl::parray<system::volume_info_t> list;
+        UTEST_ASSERT(system::read_volume_info(&list) == STATUS_OK);
+        lsp_finally{ system::free_volume_info(&list); };
+
+        printf("List of available volumes:\n");
+
+        for (size_t i=0, n=list.size(); i<n; ++i)
+        {
+            system::volume_info_t *v = list.uget(i);
+            UTEST_ASSERT(v != NULL);
+
+            printf("dev %s root=%s type=%s mounted on %s dummy=%s, remote=%s, drive=%s\n",
+                v->device.get_native(),
+                v->root.get_native(),
+                v->name.get_native(),
+                v->target.get_native(),
+                (v->flags & system::VF_DUMMY) ? "true" : "false",
+                (v->flags & system::VF_REMOTE) ? "true" : "false",
+                (v->flags & system::VF_DRIVE) ? "true" : "false");
+        }
+    }
+
     UTEST_MAIN
     {
-        // Test time measurement
-        test_time_measure();
+        // Test reading of volume info
+        test_volume_info();
 
-        // Test the system::sleep_msec function.
-        test_sleep_msec(10);
-        test_sleep_msec(15);
-        test_sleep_msec(100);
-        test_sleep_msec(105);
-        test_sleep_msec(150);
-        test_sleep_msec(1000);
-        test_sleep_msec(1005);
+//        // Test time measurement
+//        test_time_measure();
+//
+//        // Test the system::sleep_msec function.
+//        test_sleep_msec(10);
+//        test_sleep_msec(15);
+//        test_sleep_msec(100);
+//        test_sleep_msec(105);
+//        test_sleep_msec(150);
+//        test_sleep_msec(1000);
+//        test_sleep_msec(1005);
     }
 UTEST_END;
 
