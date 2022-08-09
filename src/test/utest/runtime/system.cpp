@@ -71,7 +71,7 @@ UTEST_BEGIN("runtime.runtime", system)
     void test_volume_info()
     {
         lltl::parray<system::volume_info_t> list;
-        UTEST_ASSERT(system::read_volume_info(&list) == STATUS_OK);
+        UTEST_ASSERT(system::get_volume_info(&list) == STATUS_OK);
         lsp_finally{ system::free_volume_info(&list); };
 
         printf("List of available volumes:\n");

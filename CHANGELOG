@@ -7,6 +7,8 @@
 * Got rid of the <windows.h> plague header in header files.
 * Fixed integer overflow in system::time_t data structure for 32-bit systems
   by extending the size of seconds field up to 64 bit.
+* Added system::get_volume_info() and system:: free_volume_info() functions
+  for obtaining list of mounted volumes in the system.
 * Updated build scripts.
 
 === 1.0.6 ===

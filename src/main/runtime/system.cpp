@@ -32,7 +32,7 @@
     #include <shellapi.h>
     #include <synchapi.h>
     #include <sysinfoapi.h>
-    #include <winbase.h>
+    #include <winnetwk.h>
 #endif /* PLATFORM_WINDOWS */
 
 #if defined PLATFORM_POSIX
@@ -1047,7 +1047,95 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t read_volume_info(lltl::parray<volume_info_t> *volumes)
+        status_t read_windows_netinfo(lltl::parray<volume_info_t> *volumes)
+        {
+            lltl::parray<volume_info_t> list;
+            lsp_finally { free_volume_info(&list); };
+
+            // Open the enumeration
+            NETRESOURCEW *local = NULL;
+            HANDLE hEnum = NULL;
+            DWORD dwResult = WNetOpenEnumW(RESOURCE_CONNECTED, RESOURCETYPE_DISK, 0, local, &hEnum);
+            if (dwResult != NO_ERROR)
+                return STATUS_NOT_SUPPORTED;
+            lsp_finally { WNetCloseEnum(hEnum); };
+
+            // Iterate over resources
+            DWORD cEntries = -1;
+            DWORD cbBuffer = 16384;
+            local = static_cast<NETRESOURCEW *>(GlobalAlloc(GPTR, cbBuffer));
+            if (local == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally { GlobalFree(local); };
+
+            // Perform enumeration
+            while (true)
+            {
+                dwResult = WNetEnumResourceW(hEnum, &cEntries, local, &cbBuffer);
+                if (dwResult == ERROR_NO_MORE_ITEMS)
+                    break;
+                if (dwResult == ERROR_MORE_DATA)
+                {
+                    NETRESOURCEW *pnew  = static_cast<NETRESOURCEW *>(GlobalReAlloc(local, cbBuffer, GPTR));
+                    if (pnew == NULL)
+                        return STATUS_NO_MEM;
+                    local               = pnew;
+                    continue;
+                }
+                if (dwResult != NO_ERROR)
+                    return STATUS_UNKNOWN_ERR;
+
+                // Process each entry
+                for (DWORD i = 0; i < cEntries; i++)
+                {
+                    NETRESOURCEW *item = &local[i];
+
+                    if (item->dwScope != RESOURCE_CONNECTED)
+                        continue;
+                    if (item->dwType != RESOURCETYPE_DISK)
+                        continue;
+                    if ((item->dwDisplayType != RESOURCEDISPLAYTYPE_SHARE) &&
+                        (item->dwDisplayType != RESOURCEDISPLAYTYPE_DIRECTORY))
+                        continue;
+
+                    // Create record
+                    volume_info_t *info = new volume_info_t();
+                    if (info == NULL)
+                        return STATUS_NO_MEM;
+                    else if (!list.add(info))
+                    {
+                        delete info;
+                        return STATUS_NO_MEM;
+                    }
+
+                    // Fill volume name field
+                    if (!info->device.set_utf16(item->lpProvider))
+                        return STATUS_NO_MEM;
+                    if (!info->root.set_utf16(item->lpRemoteName))
+                        return STATUS_NO_MEM;
+                    if (!info->target.set_utf16(item->lpLocalName))
+                        return STATUS_NO_MEM;
+                    if (!info->target.ends_with(FILE_SEPARATOR_C))
+                    {
+                        if (!info->target.append(FILE_SEPARATOR_C))
+                            return STATUS_NO_MEM;
+                    }
+                    if ((item->lpComment != NULL) && (!info->name.set_utf16(item->lpComment)))
+                        return STATUS_NO_MEM;
+
+                    info->flags     = VF_REMOTE;
+                }
+            }
+
+            // Commit and return
+            if (!volumes->add(&list))
+                return STATUS_NO_MEM;
+
+            list.flush();
+            return STATUS_OK;
+        }
+
+        status_t get_volume_info(lltl::parray<volume_info_t> *volumes)
         {
             // Verify input
             if (volumes == NULL)
@@ -1069,8 +1157,9 @@ namespace lsp
                 return res;
         #endif /* PLATFORM_BSD */
         #ifdef PLATFORM_WINDOWS
-            if ((res = read_windows_mntinfo(volumes)) != STATUS_NOT_SUPPORTED)
-                return res;
+            res = read_windows_mntinfo(volumes);
+            if (res == STATUS_OK)
+                res = read_windows_netinfo(volumes);
         #endif /* PLATFORM_WINDOWS */
 
             return res;

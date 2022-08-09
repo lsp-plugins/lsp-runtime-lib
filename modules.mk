@@ -71,4 +71,9 @@ LIBMSACM_NAME              := libmsacm
 LIBMSACM_TYPE              := opt
 LIBMSACM_LDFLAGS           := -lmsacm32
 
+LIBMPR_VERSION             := system
+LIBMPR_NAME                := libmpr
+LIBMPR_TYPE                := opt
+LIBMPR_LDFLAGS             := -lmpr
+
 

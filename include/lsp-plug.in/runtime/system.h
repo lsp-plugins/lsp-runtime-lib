@@ -228,11 +228,11 @@ namespace lsp
         status_t follow_url(const LSPString *url);
 
         /**
-         * Read information about available system volumes
+         * Obtain information about available system volumes
          * @param volumes pointer to array to store volume information
          * @return status of operation
          */
-        status_t read_volume_info(lltl::parray<volume_info_t> *volumes);
+        status_t get_volume_info(lltl::parray<volume_info_t> *volumes);
 
         /**
          * Free information about available system volumes
