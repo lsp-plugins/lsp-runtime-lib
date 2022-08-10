@@ -876,6 +876,7 @@ namespace lsp
         }
     #endif /* PLATFORM_BSD */
 
+    #ifdef PLATFORM_WINDOWS
         status_t read_pathnames(const WCHAR *volume, WCHAR **list, size_t *cap)
         {
             DWORD cap_req = 0;
@@ -1134,6 +1135,7 @@ namespace lsp
             list.flush();
             return STATUS_OK;
         }
+    #endif /* PLATFORM_WINDOWS */
 
         status_t get_volume_info(lltl::parray<volume_info_t> *volumes)
         {
