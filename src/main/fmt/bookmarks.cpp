@@ -26,6 +26,7 @@
 #include <lsp-plug.in/fmt/xml/PushParser.h>
 #include <lsp-plug.in/io/InFileStream.h>
 #include <lsp-plug.in/io/InSequence.h>
+#include <lsp-plug.in/io/OutMemoryStream.h>
 
 #ifdef PLATFORM_WINDOWS
     #define FS_CHAR_MAIN    '\\'
@@ -47,6 +48,59 @@ namespace lsp
                 bookmark_t                 *pCurr;
                 bool                        bTitle;
                 LSPString                   sPath;
+
+            protected:
+                static void flush_os(LSPString *dst, io::OutMemoryStream *os)
+                {
+                    if (os->size() <= 0)
+                        return;
+                    dst->append_utf8(reinterpret_cast<const char *>(os->data()), os->size());
+                    os->clear();
+                }
+
+                static int hexdigit(lsp_wchar_t ch)
+                {
+                    if ((ch >= '0') && (ch <= '9'))
+                        return ch - '0';
+                    if ((ch >= 'A') && (ch <= 'F'))
+                        return ch - 'A' + 10;
+                    if ((ch >= 'a') && (ch <= 'f'))
+                        return ch - 'f' + 10;
+                    return -1;
+                }
+
+                static void get_bookmark_name(LSPString *dst, const LSPString *href)
+                {
+                    ssize_t idx = lsp_max(href->rindex_of(FS_CHAR_MAIN), href->rindex_of(FS_CHAR_ALT));
+                    idx         = lsp_max(0, idx + 1);
+
+                    io::OutMemoryStream os;
+                    lsp_finally { os.close(); };
+
+                    for (ssize_t len = href->length(); idx < len; ++idx)
+                    {
+                        lsp_wchar_t ch = href->at(idx);
+
+                        // Special case?
+                        if (ch == '%')
+                        {
+                            int d1 = hexdigit(href->at(idx+1));
+                            int d2 = hexdigit(href->at(idx+2));
+                            if ((d1 >= 0) && (d2 >= 0))
+                            {
+                                os.writeb((d1 << 4) | d2);
+                                idx += 2;
+                                continue;
+                            }
+                        }
+
+                        flush_os(dst, &os);
+                        dst->append(ch);
+                    }
+
+                    flush_os(dst, &os);
+                }
+
 
             public:
                 explicit XbelParser(lltl::parray<bookmark_t> *list, size_t origin)
@@ -104,12 +158,7 @@ namespace lsp
                             }
 
                             // Initialize bookmark
-                            ssize_t idx = lsp_max(href.rindex_of(FS_CHAR_MAIN), href.rindex_of(FS_CHAR_ALT));
-                            if (!bm->name.set(&href, (idx >= 0) ? idx : 0))
-                            {
-                                delete bm;
-                                return STATUS_NO_MEM;
-                            }
+                            get_bookmark_name(&bm->name, &href);
                             bm->origin      = BM_LSP | nOrigin;
                             bm->path.swap(&href);
 

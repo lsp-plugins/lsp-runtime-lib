@@ -9,6 +9,8 @@
   by extending the size of seconds field up to 64 bit.
 * Added system::get_volume_info() and system:: free_volume_info() functions
   for obtaining list of mounted volumes in the system.
+* Added URL-decoding of the name of the link for QT5 bookmarks.
+* Fixed improper size tracking in io::OutMemoryStream::writeb() method.
 * Updated build scripts.
 
 === 1.0.6 ===
