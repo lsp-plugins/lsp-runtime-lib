@@ -731,6 +731,10 @@ namespace lsp
             //! the LinkInfoHeaderSize field is greater than or equal to 0x00000024.
             uint32_t            local_base_path_offset_unicode;
 
+            //! An optional, 32-bit, unsigned integer that specifies the location of the CommonPathSuffixUnicode field.
+            //! This value is an offset, in bytes, from the start of the LinkInfo structure. This field can be present only
+            //! if the value of the LinkInfoHeaderSize field is greater than or equal to 0x00000024
+            uint32_t            local_base_path_suffix_offset_unicode;
         } shlink_link_info_t;
 
         /**
