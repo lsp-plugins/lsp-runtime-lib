@@ -25,6 +25,11 @@
 namespace lsp
 {
     using namespace lsp::bookmarks;
+
+    static ssize_t compare_bookmarks(const bookmark_t *a, const bookmark_t *b)
+    {
+        return a->name.compare_to_nocase(&b->name);
+    }
 }
 
 UTEST_BEGIN("runtime.fmt", bookmarks)
@@ -81,6 +86,35 @@ UTEST_BEGIN("runtime.fmt", bookmarks)
         UTEST_ASSERT(bm.get(4)->name.equals_utf8("eclipse"));
 
         destroy_bookmarks(&bm);
+    }
+
+    void test_lnk_bookmarks()
+    {
+        lltl::parray<bookmark_t> bm;
+        io::Path path;
+        UTEST_ASSERT(path.set(resources()) == STATUS_OK);
+        UTEST_ASSERT(path.append_child("fmt/bookmarks/lnk") == STATUS_OK);
+
+        printf("Reading LNK bookmarks from path %s\n", path.as_native());
+        UTEST_ASSERT(read_bookmarks_lnk(&bm, &path) == STATUS_OK);
+
+        bm.qsort(compare_bookmarks);
+        for (size_t i=0; i<bm.size(); ++i)
+            printf("  Read LNK bookmark: %s -> %s\n", bm.get(i)->path.get_utf8(), bm.get(i)->name.get_utf8());
+
+        UTEST_ASSERT(bm.size() == 6);
+        UTEST_ASSERT(bm.get(0)->path.equals_utf8("C:\\cygwin\\bin"));
+        UTEST_ASSERT(bm.get(0)->name.equals_utf8("bin"));
+        UTEST_ASSERT(bm.get(1)->path.equals_utf8("C:\\cygwin"));
+        UTEST_ASSERT(bm.get(1)->name.equals_utf8("cygwin"));
+        UTEST_ASSERT(bm.get(2)->path.equals_utf8("C:\\Users\\sadko\\Desktop"));
+        UTEST_ASSERT(bm.get(2)->name.equals_utf8("Desktop"));
+        UTEST_ASSERT(bm.get(3)->path.equals_utf8("C:\\Users\\sadko\\Downloads"));
+        UTEST_ASSERT(bm.get(3)->name.equals_utf8("Downloads"));
+        UTEST_ASSERT(bm.get(4)->path.equals_utf8("C:\\mingw"));
+        UTEST_ASSERT(bm.get(4)->name.equals_utf8("mingw"));
+        UTEST_ASSERT(bm.get(5)->path.equals_utf8("C:\\PerfLogs"));
+        UTEST_ASSERT(bm.get(5)->name.equals_utf8("PerfLogs"));
     }
 
     void test_lsp_bookmarks()
@@ -218,6 +252,8 @@ UTEST_BEGIN("runtime.fmt", bookmarks)
         test_gtk3_bookmarks();
         printf("Testing read of QT5 bookmarks...\n");
         test_qt5_bookmarks();
+        printf("Testing read of LNK bookmarks...\n");
+        test_lnk_bookmarks();
         printf("Testing read of LSP bookmarks...\n");
         test_lsp_bookmarks();
         printf("Testing write of LSP bookmarks...\n");

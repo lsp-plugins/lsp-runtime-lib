@@ -291,6 +291,12 @@ namespace lsp
             bool set_utf16(const lsp_utf16_t *s, size_t n);
             bool set_utf16(const lsp_utf16_t *s);
 
+            bool set_utf16le(const lsp_utf16_t *s, size_t n);
+            bool set_utf16le(const lsp_utf16_t *s);
+
+            bool set_utf16be(const lsp_utf16_t *s, size_t n);
+            bool set_utf16be(const lsp_utf16_t *s);
+
             bool set_ascii(const char *s, size_t n);
             inline bool set_ascii(const char *s) { return set_ascii(s, ::strlen(s)); };
 

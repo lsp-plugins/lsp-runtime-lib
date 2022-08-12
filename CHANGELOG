@@ -11,6 +11,7 @@
   for obtaining list of mounted volumes in the system.
 * Added URL-decoding of the name of the link for QT5 bookmarks.
 * Fixed improper size tracking in io::OutMemoryStream::writeb() method.
+* Added support of reading *.lnk files as bookmarks.
 * Updated build scripts.
 
 === 1.0.6 ===

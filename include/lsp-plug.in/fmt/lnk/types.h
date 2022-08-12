@@ -725,6 +725,13 @@ namespace lsp
             //! This value is an offset, in bytes, from the start of the LinkInfo structure.
             uint32_t            common_path_suffix_offset;
 
+        } shlink_link_info_t;
+
+        /**
+         * Optional part of shlink_link_info_t
+         */
+        typedef struct shlink_link_info_opt_t
+        {
             //! An optional, 32-bit, unsigned integer that specifies the location of the LocalBasePathUnicode field.
             //! If the VolumeIDAndLocalBasePath flag is set, this value is an offset, in bytes, from the start of the
             //! LinkInfo structure; otherwise, this value MUST be zero. This field can be present only if the value of
@@ -735,7 +742,8 @@ namespace lsp
             //! This value is an offset, in bytes, from the start of the LinkInfo structure. This field can be present only
             //! if the value of the LinkInfoHeaderSize field is greater than or equal to 0x00000024
             uint32_t            local_base_path_suffix_offset_unicode;
-        } shlink_link_info_t;
+
+        } shlink_link_info_opt_t;
 
         /**
          * The CommonNetworkRelativeLink structure specifies information about the network location where a
@@ -1028,8 +1036,8 @@ namespace lsp
 
         } shlink_shim_data_block_t;
 
-        //! The KnownFolderDataBlock structure specifies the location of a known folder. This data can be used
-        //! when a link target is a known folder to keep track of the folder so that the link target IDList can be
+        //! The SpecialFolderDataBlock structure specifies the location of a special folder. This data can be used
+        //! when a link target is a special folder to keep track of the folder, so that the link target IDList can be
         //! translated when the link is loaded.
         typedef struct shlink_special_folder_data_block_t
         {

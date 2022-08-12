@@ -1743,6 +1743,52 @@ namespace lsp
         return true;
     }
 
+    bool LSPString::set_utf16le(const lsp_utf16_t *s)
+    {
+        return set_utf16le(s, u16len(s));
+    }
+
+    bool LSPString::set_utf16le(const lsp_utf16_t *s, size_t n)
+    {
+        LSPString   tmp;
+        lsp_wchar_t ch;
+
+        while (lsp_utf32_t(ch = read_utf16le_streaming(&s, &n, true)) != LSP_UTF32_EOF)
+        {
+            // Append code point
+            if (!tmp.append(ch))
+                return false;
+        }
+        if (n > 0)
+            return false;
+
+        tmp.swap(this);
+        return true;
+    }
+
+    bool LSPString::set_utf16be(const lsp_utf16_t *s)
+    {
+        return set_utf16be(s, u16len(s));
+    }
+
+    bool LSPString::set_utf16be(const lsp_utf16_t *s, size_t n)
+    {
+        LSPString   tmp;
+        lsp_wchar_t ch;
+
+        while (lsp_utf32_t(ch = read_utf16be_streaming(&s, &n, true)) != LSP_UTF32_EOF)
+        {
+            // Append code point
+            if (!tmp.append(ch))
+                return false;
+        }
+        if (n > 0)
+            return false;
+
+        tmp.swap(this);
+        return true;
+    }
+
 #if defined(PLATFORM_WINDOWS)
     bool LSPString::set_native(const char *s, size_t n, const char *charset)
     {

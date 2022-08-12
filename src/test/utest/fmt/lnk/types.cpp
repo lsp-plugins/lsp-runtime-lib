@@ -176,7 +176,7 @@ UTEST_BEGIN("runtime.fmt.lnk", types)
         UTEST_ASSERT(LE_TO_CPU(linfo->size) == 0x0000003C);
         UTEST_ASSERT(p + LE_TO_CPU(linfo->size) <= e);
 
-        UTEST_ASSERT(LE_TO_CPU(linfo->header_size) == sizeof(shlink_link_info_t) - sizeof(uint32_t) * 2);
+        UTEST_ASSERT(LE_TO_CPU(linfo->header_size) == sizeof(shlink_link_info_t));
         UTEST_ASSERT(LE_TO_CPU(linfo->flags) == SHLINK_LINK_INFO_VOLUME_ID_AND_LOCAL_BASE_PATH);
         UTEST_ASSERT(LE_TO_CPU(linfo->volume_id_offset) == 0x0000001C);
 
