@@ -26,7 +26,7 @@ namespace lsp
     namespace lnk
     {
         LSP_RUNTIME_LIB_PUBLIC
-        const shlink_guid_t SHLINK_FILE_HEADER_GUID =
+        extern const shlink_guid_t SHLINK_FILE_HEADER_GUID =
         {
             0x00021401, 0x00000000, 0x000000C0, 0x46000000
         };
