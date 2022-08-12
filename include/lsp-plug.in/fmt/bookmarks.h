@@ -33,6 +33,7 @@
 #define GTK3_BOOKMARK_PATH          ".config/gtk-3.0/bookmarks"
 #define GTK2_BOOKMARK_PATH          ".gtk-bookmarks"
 #define QT5_BOOKMARK_PATH           ".local/share/user-places.xbel"
+#define LNK_BOOKMARK_PATH           "Links"
 
 namespace lsp
 {

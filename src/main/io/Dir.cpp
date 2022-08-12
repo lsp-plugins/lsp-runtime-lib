@@ -123,6 +123,17 @@ namespace lsp
                         dh          = FAKE_HANDLE;
                         pending     = STATUS_EOF;
                         break;
+                    case ERROR_PATH_NOT_FOUND:
+                    case ERROR_INVALID_DRIVE:
+                        return set_error(STATUS_NOT_DIRECTORY);
+                    case ERROR_NOT_READY:           return set_error(STATUS_NO_DATA);
+                    case ERROR_TOO_MANY_OPEN_FILES: return set_error(STATUS_OVERFLOW);
+                    case ERROR_OUTOFMEMORY:
+                    case ERROR_NOT_ENOUGH_MEMORY:
+                        return set_error(STATUS_NO_MEM);
+                    case ERROR_INVALID_ACCESS:
+                    case ERROR_ACCESS_DENIED:
+                        return set_error(STATUS_PERMISSION_DENIED);
                     default:
                         return set_error(STATUS_UNKNOWN_ERR);
                 }
@@ -196,6 +207,17 @@ namespace lsp
                         dh          = FAKE_HANDLE;
                         pending     = STATUS_EOF;
                         break;
+                    case ERROR_PATH_NOT_FOUND:
+                    case ERROR_INVALID_DRIVE:
+                        return set_error(STATUS_NOT_DIRECTORY);
+                    case ERROR_NOT_READY:           return set_error(STATUS_NO_DATA);
+                    case ERROR_TOO_MANY_OPEN_FILES: return set_error(STATUS_OVERFLOW);
+                    case ERROR_OUTOFMEMORY:
+                    case ERROR_NOT_ENOUGH_MEMORY:
+                        return set_error(STATUS_NO_MEM);
+                    case ERROR_INVALID_ACCESS:
+                    case ERROR_ACCESS_DENIED:
+                        return set_error(STATUS_PERMISSION_DENIED);
                     default:
                         return set_error(STATUS_UNKNOWN_ERR);
                 }
@@ -244,6 +266,9 @@ namespace lsp
                     case ERROR_FILE_NOT_FOUND:
                         hDir->nPending    = STATUS_EOF;
                         break;
+                    case ERROR_OUTOFMEMORY:
+                    case ERROR_NOT_ENOUGH_MEMORY:
+                        return set_error(STATUS_NO_MEM);
                     default:
                         hDir->nPending    = STATUS_UNKNOWN_ERR;
                         break;
