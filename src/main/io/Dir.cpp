@@ -224,7 +224,7 @@ namespace lsp
             }
 
             // Close current  handle
-            if (hDir != FAKE_HANDLE)
+            if (hDir->hHandle != FAKE_HANDLE)
                 ::FindClose(hDir->hHandle);
 
             // Replace closed handle by new handle
@@ -249,7 +249,7 @@ namespace lsp
 #ifdef PLATFORM_WINDOWS
             if (hDir->nPending != STATUS_OK)
                 return set_error(hDir->nPending);
-            else if (hDir == FAKE_HANDLE)
+            else if (hDir->hHandle == FAKE_HANDLE)
                 return set_error(STATUS_BAD_STATE);
 
             // Set result
@@ -342,7 +342,7 @@ namespace lsp
 #ifdef PLATFORM_WINDOWS
             if (hDir->nPending != STATUS_OK)
                 return set_error(hDir->nPending);
-            else if (hDir == FAKE_HANDLE)
+            else if (hDir->hHandle == FAKE_HANDLE)
                 return set_error(STATUS_BAD_STATE);
 
             // Set result
