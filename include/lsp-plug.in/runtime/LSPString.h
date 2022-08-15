@@ -310,7 +310,15 @@ namespace lsp
 
             const lsp_utf16_t *get_utf16(ssize_t first, ssize_t last) const;
             inline const lsp_utf16_t *get_utf16(ssize_t first) const { return get_utf16(first, nLength); };
-            const lsp_utf16_t *get_utf16() const { return get_utf16(0, nLength); };
+            inline const lsp_utf16_t *get_utf16() const { return get_utf16(0, nLength); };
+
+            const lsp_utf16_t *get_utf16le(ssize_t first, ssize_t last) const;
+            inline const lsp_utf16_t *get_utf16le(ssize_t first) const { return get_utf16le(first, nLength); };
+            inline const lsp_utf16_t *get_utf16le() const { return get_utf16le(0, nLength); };
+
+            const lsp_utf16_t *get_utf16be(ssize_t first, ssize_t last) const;
+            inline const lsp_utf16_t *get_utf16be(ssize_t first) const { return get_utf16be(first, nLength); };
+            inline const lsp_utf16_t *get_utf16be() const { return get_utf16be(0, nLength); };
 
             const char *get_ascii(ssize_t first, ssize_t last) const;
             inline const char *get_ascii(ssize_t first) const { return get_ascii(first, nLength); };
@@ -351,6 +359,19 @@ namespace lsp
             inline lsp_utf16_t *clone_utf16(ssize_t first) const { return clone_utf16(NULL, first, nLength); };
             inline lsp_utf16_t *clone_utf16() const { return clone_utf16(NULL, 0, nLength); };
 
+            lsp_utf16_t *clone_utf16le(size_t *bytes, ssize_t first, ssize_t last) const;
+            inline lsp_utf16_t *clone_utf16le(size_t *bytes, ssize_t first) const { return clone_utf16le(bytes, first, nLength); };
+            inline lsp_utf16_t *clone_utf16le(size_t *bytes) const { return clone_utf16le(bytes, 0, nLength); };
+            inline lsp_utf16_t *clone_utf16le(ssize_t first, ssize_t last) const { return clone_utf16le(NULL, first, last); };
+            inline lsp_utf16_t *clone_utf16le(ssize_t first) const { return clone_utf16le(NULL, first, nLength); };
+            inline lsp_utf16_t *clone_utf16le() const { return clone_utf16le(NULL, 0, nLength); };
+
+            lsp_utf16_t *clone_utf16be(size_t *bytes, ssize_t first, ssize_t last) const;
+            inline lsp_utf16_t *clone_utf16be(size_t *bytes, ssize_t first) const { return clone_utf16be(bytes, first, nLength); };
+            inline lsp_utf16_t *clone_utf16be(size_t *bytes) const { return clone_utf16be(bytes, 0, nLength); };
+            inline lsp_utf16_t *clone_utf16be(ssize_t first, ssize_t last) const { return clone_utf16be(NULL, first, last); };
+            inline lsp_utf16_t *clone_utf16be(ssize_t first) const { return clone_utf16be(NULL, first, nLength); };
+            inline lsp_utf16_t *clone_utf16be() const { return clone_utf16be(NULL, 0, nLength); };
             /**
              * Clone string as set of UTF-16 characters. 1 ascii character at the tail will contain additional end-of-line.
              */
