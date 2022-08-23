@@ -14,6 +14,8 @@
 * Fixed several bugs in LSPString class implementation.
 * Added support of reading *.lnk files as bookmarks.
 * Fixed memory leakage in lsp::obj::PullParser::wrap() method.
+* Fixed bug in io::Path::canonicalize() method that could issue reads outside
+  of allocated memory.
 * Updated build scripts.
 
 === 1.0.6 ===
