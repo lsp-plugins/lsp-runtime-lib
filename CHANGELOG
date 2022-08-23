@@ -16,6 +16,7 @@
 * Fixed memory leakage in lsp::obj::PullParser::wrap() method.
 * Fixed bug in io::Path::canonicalize() method that could issue reads outside
   of allocated memory.
+* Fixed improper usage of sf_open function of libsndfile in mm::InAudioFileStream.
 * Updated build scripts.
 
 === 1.0.6 ===

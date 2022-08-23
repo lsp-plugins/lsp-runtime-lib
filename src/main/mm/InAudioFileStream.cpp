@@ -19,12 +19,13 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <lsp-plug.in/mm/InAudioFileStream.h>
-#include <lsp-plug.in/common/endian.h>
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/common/debug.h>
-#include <lsp-plug.in/stdlib/stdio.h>
+#include <lsp-plug.in/common/endian.h>
 #include <lsp-plug.in/lltl/parray.h>
+#include <lsp-plug.in/mm/InAudioFileStream.h>
+#include <lsp-plug.in/stdlib/stdio.h>
+#include <lsp-plug.in/stdlib/string.h>
 
 #ifdef PLATFORM_WINDOWS
     #include <private/mm/ACMStream.h>
@@ -241,6 +242,11 @@ namespace lsp
             SNDFILE *sf;
 
             // Open file for reading
+            // Note! From documentation:
+            // When opening a file for read, the format field should be set to zero before calling sf_open().
+            // The only exception to this is the case of RAW files where the caller has to set the samplerate, channels
+            // and format fields to valid values. All other fields of the structure are filled in by the library.
+            info.format         = 0;
             if ((sf = sf_open(path->get_native(), SFM_READ, &info)) == NULL)
                 return set_error(decode_sf_error(sf));
 
