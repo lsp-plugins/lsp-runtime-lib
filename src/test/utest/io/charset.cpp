@@ -244,12 +244,16 @@ UTEST_BEGIN("runtime.io", charset)
 
             // UTF8 -> UTF16
             s_na   = lsp::utf8_to_utf16(ck->s);
-            s_le   = lsp::utf8_to_utf16le(ck->s);
-            s_be   = lsp::utf8_to_utf16be(ck->s);
-
             UTEST_ASSERT(s_na != NULL);
+            lsp_finally{ free(s_na); };
+
+            s_le   = lsp::utf8_to_utf16le(ck->s);
             UTEST_ASSERT(s_le != NULL);
+            lsp_finally{ free(s_le); };
+
+            s_be   = lsp::utf8_to_utf16be(ck->s);
             UTEST_ASSERT(s_be != NULL);
+            lsp_finally{ free(s_be); };
 
             UTEST_ASSERT_MSG(((len = strlen_test(s_na)) == ck->u16strlen),
                     "Error checking line %d: utf16_strlen=%d, expected=%d",
@@ -263,16 +267,18 @@ UTEST_BEGIN("runtime.io", charset)
             if (len > 0)
                 UTEST_ASSERT(strcmp_test(s_le, s_be) != 0);
 
-            free(s_na);
-
             // UTF8 -> UTF32
             s32_na = lsp::utf8_to_utf32(ck->s);
-            s32_le = lsp::utf8_to_utf32le(ck->s);
-            s32_be = lsp::utf8_to_utf32be(ck->s);
-
             UTEST_ASSERT(s32_na != NULL);
+            lsp_finally{ free(s32_na); };
+
+            s32_le = lsp::utf8_to_utf32le(ck->s);
             UTEST_ASSERT(s32_le != NULL);
+            lsp_finally{ free(s32_le); };
+
+            s32_be = lsp::utf8_to_utf32be(ck->s);
             UTEST_ASSERT(s32_be != NULL);
+            lsp_finally{ free(s32_be); };
 
             UTEST_ASSERT_MSG(((len = strlen_test(s32_na)) == ck->u32strlen),
                     "Error checking line %d: utf32_strlen=%d, expected=%d",
@@ -285,8 +291,6 @@ UTEST_BEGIN("runtime.io", charset)
             UTEST_ASSERT(strcmp_bswap(s32_na, s32_be, false) == 0);
             if (len > 0)
                 UTEST_ASSERT(strcmp_test(s32_le, s32_be) != 0);
-
-            free(s32_na);
         }
     }
 
