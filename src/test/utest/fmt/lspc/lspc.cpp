@@ -20,11 +20,11 @@
  */
 
 #include <lsp-plug.in/common/endian.h>
+#include <lsp-plug.in/fmt/lspc/File.h>
 #include <lsp-plug.in/runtime/LSPString.h>
+#include <lsp-plug.in/stdlib/string.h>
 #include <lsp-plug.in/test-fw/utest.h>
 #include <lsp-plug.in/test-fw/ByteBuffer.h>
-#include <lsp-plug.in/fmt/lspc/File.h>
-#include <lsp-plug.in/stdlib/string.h>
 
 #define EXTRA_SIZE          0x10
 #define BUFFER_SIZE         0x100000
@@ -313,8 +313,11 @@ UTEST_BEGIN("runtime.fmt.lspc", lspc)
         {
             // Read as 'upgraded' version
             lspc_chunk_audio_header_v2_t ahdr2;
-            rd->read_header(&ahdr2, sizeof(lspc_chunk_audio_header_v2_t));
-            res = status_t(rd->last_error());
+            bzero(&ahdr2, sizeof(ahdr2));
+
+            ssize_t n               = rd->read_header(&ahdr2, sizeof(lspc_chunk_audio_header_v2_t));
+            UTEST_ASSERT(n >= 0);
+            res                     = status_t(rd->last_error());
             UTEST_ASSERT_MSG((res == STATUS_OK), "Invalid last_error status: %d", int(res));
 
             ahdr2.channels          = BE_TO_CPU(ahdr2.channels);
@@ -350,8 +353,11 @@ UTEST_BEGIN("runtime.fmt.lspc", lspc)
         {
             // Read as 'legacy' version
             lspc::chunk_audio_header_t ahdr1;
-            res                     = rd->read_header(&ahdr1, sizeof(lspc::chunk_audio_header_t));
-            res = status_t(rd->last_error());
+            bzero(&ahdr1, sizeof(ahdr1));
+
+            ssize_t n               = rd->read_header(&ahdr1, sizeof(lspc::chunk_audio_header_t));
+            UTEST_ASSERT(n >= 0);
+            res                     = status_t(rd->last_error());
             UTEST_ASSERT_MSG((res == STATUS_OK), "Invalid last_error status: %d", int(res));
 
             ahdr1.channels          = BE_TO_CPU(ahdr1.channels);
