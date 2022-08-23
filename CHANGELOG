@@ -13,6 +13,7 @@
 * Fixed improper size tracking in io::OutMemoryStream::writeb() method.
 * Fixed several bugs in LSPString class implementation.
 * Added support of reading *.lnk files as bookmarks.
+* Fixed memory leakage in lsp::obj::PullParser::wrap() method.
 * Updated build scripts.
 
 === 1.0.6 ===
