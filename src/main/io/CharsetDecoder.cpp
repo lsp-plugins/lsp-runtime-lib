@@ -280,7 +280,6 @@ namespace lsp
             char *xinbuf        = reinterpret_cast<char *>(bBufHead);
             char *xoutbuf       = reinterpret_cast<char *>(cBufTail);
             bufsz               = DATA_BUFSIZE * sizeof(lsp_wchar_t);
-            char *dbg_inbuf     = xinbuf;
             size_t old_xinleft  = xinleft;
 
             // Perform conversion
