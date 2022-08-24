@@ -19,7 +19,9 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/io/CharsetDecoder.h>
+#include <lsp-plug.in/stdlib/stdlib.h>
 #include <errno.h>
 
 #define DATA_BUFSIZE   0x1000
@@ -251,7 +253,7 @@ namespace lsp
 
             // Is there any data in byte buffer?
             size_t xinleft      = bBufTail - bBufHead;
-            if (!xinleft)
+            if (xinleft <= 0)
                 return bufsz;
 
             // Now we can surely decode DATA_BUFSIZE characters
@@ -278,6 +280,8 @@ namespace lsp
             char *xinbuf        = reinterpret_cast<char *>(bBufHead);
             char *xoutbuf       = reinterpret_cast<char *>(cBufTail);
             bufsz               = DATA_BUFSIZE * sizeof(lsp_wchar_t);
+            char *dbg_inbuf     = xinbuf;
+            size_t old_xinleft  = xinleft;
 
             // Perform conversion
             size_t nconv        = ::iconv(hIconv, &xinbuf, &xinleft, &xoutbuf, &bufsz);
@@ -289,6 +293,11 @@ namespace lsp
                     case E2BIG:
                     case EINVAL:
                         break;
+                    case EILSEQ:
+                        if (old_xinleft > xinleft)
+                            break;
+                        return -STATUS_BAD_FORMAT;
+
                     default:
                         return -STATUS_BAD_FORMAT;
                 }
