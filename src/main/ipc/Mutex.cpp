@@ -22,6 +22,10 @@
 #include <lsp-plug.in/ipc/Mutex.h>
 #include <errno.h>
 
+#ifdef PLATFORM_WINDOWS
+    #include <windows.h>
+#endif /* PLATFORM_WINDOWS */
+
 namespace lsp
 {
     namespace ipc

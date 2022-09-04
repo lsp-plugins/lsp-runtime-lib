@@ -22,6 +22,7 @@
 #include <lsp-plug.in/io/NativeFile.h>
 
 #if defined(PLATFORM_WINDOWS)
+    #include <windows.h>
     #include <fileapi.h>
 #endif /* PLATFORM_WINDOWS */
 

@@ -33,6 +33,7 @@
 #define GTK3_BOOKMARK_PATH          ".config/gtk-3.0/bookmarks"
 #define GTK2_BOOKMARK_PATH          ".gtk-bookmarks"
 #define QT5_BOOKMARK_PATH           ".local/share/user-places.xbel"
+#define LNK_BOOKMARK_PATH           "Links"
 
 namespace lsp
 {
@@ -43,7 +44,8 @@ namespace lsp
             BM_LSP      = 1 << 0,
             BM_GTK2     = 1 << 1,
             BM_GTK3     = 1 << 2,
-            BM_QT5      = 1 << 3
+            BM_QT5      = 1 << 3,
+            BM_LNK      = 1 << 4,
         };
 
         typedef struct bookmark_t
@@ -157,6 +159,30 @@ namespace lsp
          * @return status of operation
          */
         status_t read_bookmarks_qt5(lltl::parray<bookmark_t> *dst, io::IInSequence *in);
+
+        /**
+         * Read Windows bookmarks from the specified folder
+         * @param dst destination array to store bookmarks
+         * @param path location of *.lnk files to read bookmarks
+         * @return status of operation
+         */
+        status_t read_bookmarks_lnk(lltl::parray<bookmark_t> *dst, const char *path);
+
+        /**
+         * Read Windows bookmarks from the specified folder
+         * @param dst destination array to store bookmarks
+         * @param path location of *.lnk files to read bookmarks
+         * @return status of operation
+         */
+        status_t read_bookmarks_lnk(lltl::parray<bookmark_t> *dst, const LSPString *path);
+
+        /**
+         * Read Windows bookmarks from the specified folder
+         * @param dst destination array to store bookmarks
+         * @param path location of *.lnk files to read bookmarks
+         * @return status of operation
+         */
+        status_t read_bookmarks_lnk(lltl::parray<bookmark_t> *dst, const io::Path *path);
 
         /**
          * Read LSP bookmarks in JSON5 format

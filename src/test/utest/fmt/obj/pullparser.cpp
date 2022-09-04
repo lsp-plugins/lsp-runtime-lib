@@ -70,17 +70,20 @@ UTEST_BEGIN("runtime.fmt.obj", pullparser)
         va_list v;
         va_start(v, n);
 
+        bool result = true;
         for (size_t i=0; i<n; ++i)
         {
             int idx = va_arg(v, int);
             const index_t *v = xv->uget(i);
             if (*v != idx)
-                return false;
+            {
+                result = false;
+                break;
+            }
         }
 
         va_end(v);
-
-        return true;
+        return result;
     }
 
     void test_simple_obj_file()

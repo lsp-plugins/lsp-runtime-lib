@@ -1177,7 +1177,8 @@ namespace lsp
 
             lsp_wchar_t c;
             size_t len              = sPath.length();
-            lsp_wchar_t *s          = const_cast<lsp_wchar_t *>(sPath.characters());
+            lsp_wchar_t *path       = const_cast<lsp_wchar_t *>(sPath.characters());
+            lsp_wchar_t *s          = path;
             lsp_wchar_t *e          = &s[len];
             state_t state           = S_SEEK;
 
@@ -1235,13 +1236,14 @@ namespace lsp
                         if (c == FILE_SEPARATOR_C)
                         {
                             state       = S_SEPARATOR;
-                            do // Roll-back path
+                            if (w > s)
                             {
-                                if (w <= s)
-                                    break;
-                                --w;
+                                do // Roll-back path
+                                {
+                                    --w;
+                                }
+                                while ((w > path) && (w[-1] != FILE_SEPARATOR_C));
                             }
-                            while (w[-1] != FILE_SEPARATOR_C);
                         }
                         else
                         {
@@ -1257,7 +1259,7 @@ namespace lsp
             while ((w > s) && (w[-1] == FILE_SEPARATOR_C))
                 --w;
 
-            sPath.set_length(w - const_cast<lsp_wchar_t *>(sPath.characters()));
+            sPath.set_length(w - path);
 
             return STATUS_OK;
         }

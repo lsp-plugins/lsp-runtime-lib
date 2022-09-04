@@ -22,6 +22,10 @@
 #include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/ipc/Library.h>
 
+#ifdef PLATFORM_WINDOWS
+    #include <windows.h>
+#endif /* PLATFORM_WINDOWS */
+
 namespace lsp
 {
     namespace ipc
@@ -156,8 +160,9 @@ namespace lsp
 
 #ifdef PLATFORM_WINDOWS
             WCHAR *xpath = reinterpret_cast<WCHAR *>(::malloc((PATH_MAX + 1) * sizeof(WCHAR)));
-            if (path == NULL)
+            if (xpath == NULL)
                 return STATUS_NO_MEM;
+            lsp_finally { free(xpath); };
 
             HMODULE hm = NULL;
 
@@ -167,22 +172,13 @@ namespace lsp
                     reinterpret_cast<LPCWSTR>(ptr),
                     &hm)
                )
-            {
-                ::free(xpath);
                 return STATUS_NOT_FOUND;
-            }
 
             if (::GetModuleFileNameW(hm, xpath, sizeof(path)) == 0)
-            {
-                ::free(xpath);
                 return STATUS_NOT_FOUND;
-            }
 
             if (!path->set_utf16(xpath))
-            {
-                ::free(path);
                 return STATUS_NO_MEM;
-            }
 #else
             Dl_info dli;
             int res     = ::dladdr(const_cast<void *>(ptr), &dli);

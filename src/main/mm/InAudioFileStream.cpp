@@ -19,14 +19,23 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <lsp-plug.in/mm/InAudioFileStream.h>
-#include <lsp-plug.in/common/endian.h>
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/common/debug.h>
-#include <lsp-plug.in/stdlib/stdio.h>
+#include <lsp-plug.in/common/endian.h>
 #include <lsp-plug.in/lltl/parray.h>
-#include <private/mm/ACMStream.h>
-#include <private/mm/MMIOReader.h>
+#include <lsp-plug.in/mm/InAudioFileStream.h>
+#include <lsp-plug.in/stdlib/stdio.h>
+#include <lsp-plug.in/stdlib/string.h>
+
+#ifdef PLATFORM_WINDOWS
+    #include <private/mm/ACMStream.h>
+    #include <private/mm/MMIOReader.h>
+
+    #include <windows.h>
+    #include <mmsystem.h>
+    #include <mmreg.h>
+    #include <msacm.h>
+#endif /* PLATFORM_WINDOWS */
 
 #ifdef USE_LIBSNDFILE
     #if (__SIZEOF_INT__ == 4)
@@ -44,57 +53,87 @@ namespace lsp
 {
     namespace mm
     {
+    #ifndef USE_LIBSNDFILE
+        struct WAVEFILE
+        {
+            MMIOReader         *pMMIO;
+            ACMStream          *pACM;
+            WAVEFORMATEX       *pFormat;
+        };
+
+        static ssize_t decode_sample_format(WAVEFORMATEX *wfe)
+        {
+            if (wfe->wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
+                return SFMT_F32_LE;
+
+            if (wfe->wFormatTag == WAVE_FORMAT_PCM)
+            {
+                switch (wfe->wBitsPerSample)
+                {
+                    case 8: return SFMT_U8_CPU;
+                    case 16: return SFMT_S16_LE;
+                    case 24: return SFMT_S24_LE;
+                    case 32: return SFMT_S32_LE;
+                    default:
+                        break;
+                }
+            }
+
+            return -1;
+        }
+    #endif /* USE_LIBSNDFILE */
         
         InAudioFileStream::InAudioFileStream()
         {
-        #ifdef USE_LIBSNDFILE
             hHandle     = NULL;
-        #else
-            pMMIO       = NULL;
-            pACM        = NULL;
-            pFormat     = NULL;
-        #endif /* USE_LIBSNDFILE */
             bSeekable   = false;
         }
         
         InAudioFileStream::~InAudioFileStream()
         {
             IInAudioStream::close();
-            close_handle();
+            do_close();
         }
 
-        status_t InAudioFileStream::close_handle()
+        status_t InAudioFileStream::do_close()
         {
-        #ifdef USE_LIBSNDFILE
-            if (hHandle == NULL)
+            status_t res    = close_handle(hHandle);
+
+            hHandle         = NULL;
+            bSeekable       = false;
+            nOffset         = -1;       // Mark as closed
+
+            return set_error(res);
+        }
+
+        status_t InAudioFileStream::close_handle(handle_t *h)
+        {
+            if (h == NULL)
                 return STATUS_OK;
 
-            int res     = sf_close(hHandle);
-
-            hHandle     = NULL;
-            bSeekable   = false;
-            nOffset     = -1;       // Mark as closed
-
-            return set_error((res == 0) ? STATUS_OK : STATUS_IO_ERROR);
+        #ifdef USE_LIBSNDFILE
+            int res     = sf_close(h);
+            return (res == 0) ? STATUS_OK : STATUS_IO_ERROR;
         #else
-            if (pACM != NULL)
+            status_t res    = STATUS_OK;
+            if (h->pACM != NULL)
             {
-                pACM->close();
-                delete pACM;
-                pACM        = NULL;
+                res         = update_status(res, h->pACM->close());
+                delete h->pACM;
+                h->pACM     = NULL;
             }
 
-            if (pMMIO != NULL)
+            if (h->pMMIO != NULL)
             {
-                pMMIO->close();
-                delete pMMIO;
-                pMMIO       = NULL;
+                res         = update_status(res, h->pMMIO->close());
+                delete h->pMMIO;
+                h->pMMIO    = NULL;
             }
 
-            pFormat     = NULL;     // Freed by owner
-            nOffset     = -1;       // Mark as closed
+            h->pFormat  = NULL;     // Freed by owner
+            free(h);
 
-            return set_error(STATUS_OK);
+            return res;
         #endif /* USE_LIBSNDFILE */
         }
 
@@ -116,27 +155,6 @@ namespace lsp
             }
         }
     #else
-        ssize_t InAudioFileStream::decode_sample_format(WAVEFORMATEX *wfe)
-        {
-            if (wfe->wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
-                return SFMT_F32_LE;
-
-            if (wfe->wFormatTag == WAVE_FORMAT_PCM)
-            {
-                switch (wfe->wBitsPerSample)
-                {
-                    case 8: return SFMT_U8_CPU;
-                    case 16: return SFMT_S16_LE;
-                    case 24: return SFMT_S24_LE;
-                    case 32: return SFMT_S32_LE;
-                    default:
-                        break;
-                }
-            }
-
-            return -1;
-        }
-
         ssize_t InAudioFileStream::read_acm_convert(void *dst, size_t nframes, size_t fmt)
         {
             size_t nread    = 0;
@@ -150,7 +168,7 @@ namespace lsp
             {
                 // Perform pull
                 size_t can_pull     = nframes - nread;
-                ssize_t count       = pACM->pull(&sptr, can_pull, eof);
+                ssize_t count       = hHandle->pACM->pull(&sptr, can_pull, eof);
                 if (count > 0)
                 {
                     // Copy data to dptr
@@ -170,7 +188,7 @@ namespace lsp
                 }
 
                 // Perform push if possible
-                count               = pACM->push(&sptr);
+                count               = hHandle->pACM->push(&sptr);
                 if (count < 0)
                 {
                     if (nread > 0)
@@ -179,7 +197,7 @@ namespace lsp
                 }
 
                 // Read data into buffer block and commit new position
-                count               = pMMIO->read(sptr, count);
+                count               = hHandle->pMMIO->read(sptr, count);
                 if (count < 0)
                 {
                     if (count == -STATUS_EOF)
@@ -190,7 +208,7 @@ namespace lsp
                     return count;
                 }
 
-                pACM->commit(count);
+                hHandle->pACM->commit(count);
             }
 
             return nread / fsize;
@@ -224,6 +242,11 @@ namespace lsp
             SNDFILE *sf;
 
             // Open file for reading
+            // Note! From documentation:
+            // When opening a file for read, the format field should be set to zero before calling sf_open().
+            // The only exception to this is the case of RAW files where the caller has to set the samplerate, channels
+            // and format fields to valid values. All other fields of the structure are filled in by the library.
+            info.format         = 0;
             if ((sf = sf_open(path->get_native(), SFM_READ, &info)) == NULL)
                 return set_error(decode_sf_error(sf));
 
@@ -254,85 +277,77 @@ namespace lsp
         #else
             status_t res        = STATUS_OK;
 
+            // Allocate handle
+            handle_t *h     = static_cast<handle_t *>(malloc(sizeof(handle_t)));
+            if (h == NULL)
+                return set_error(STATUS_NO_MEM);
+            lsp_finally { close_handle(h);  };
+
             // Try to load data using MMIO
-            MMIOReader *mmio    = new MMIOReader();
-            if (mmio == NULL)
+            h->pMMIO        = new MMIOReader();
+            if (h->pMMIO == NULL)
                 return -set_error(STATUS_NO_MEM);
+            if ((res = h->pMMIO->open(path)) != STATUS_OK)
+                return set_error(res);
 
-            if ((res = mmio->open(path)) == STATUS_OK)
+            // Analyze format
+            ssize_t fmt;
+            WAVEFORMATEX *wfe   = h->pMMIO->format();
+            if ((wfe->wFormatTag == WAVE_FORMAT_PCM) || (wfe->wFormatTag == WAVE_FORMAT_IEEE_FLOAT))
             {
-                // Analyze format
-                WAVEFORMATEX *wfe   = mmio->format();
-                if ((wfe->wFormatTag != WAVE_FORMAT_PCM) && (wfe->wFormatTag != WAVE_FORMAT_IEEE_FLOAT))
-                {
-                    // Create ACM stream
-                    ACMStream *acm      = new ACMStream();
-                    if (acm != NULL)
-                    {
-                        // Initialize ACM stream
-                        if ((res = acm->read_pcm(wfe)) == STATUS_OK)
-                        {
-                            wfe                 = acm->out_format();
-                            ssize_t fmt         = decode_sample_format(wfe);
-                            if (fmt > 0)
-                            {
-                                // All is ok
-                                pMMIO               = mmio;
-                                pACM                = acm;
-                                pFormat             = acm->out_format();
-                                sFormat.srate       = wfe->nSamplesPerSec;
-                                sFormat.channels    = wfe->nChannels;
-                                sFormat.frames      = mmio->frames();
-                                sFormat.format      = fmt;
-                                nOffset             = 0;
-                                bSeekable           = false;
+                if ((fmt = decode_sample_format(wfe)) <= 0)
+                    return set_error(STATUS_UNSUPPORTED_FORMAT);
 
-                                return set_error(STATUS_OK);
-                            }
-                            else
-                                res  = STATUS_UNSUPPORTED_FORMAT;
-                        }
-                    }
+                // All is OK, use reading of PCM samples
+                h->pACM             = NULL;
+                h->pFormat          = wfe;
 
-                    // Close and delete ACM
-                    acm->close();
-                    delete acm;
-                }
-                else
-                {
-                    ssize_t fmt         = decode_sample_format(wfe);
-                    if (fmt > 0)
-                    {
-                        // All is OK, ust reading PCM samples
-                        pMMIO               = mmio;
-                        pACM                = NULL;
-                        pFormat             = wfe;
-                        sFormat.srate       = wfe->nSamplesPerSec;
-                        sFormat.channels    = wfe->nChannels;
-                        sFormat.frames      = mmio->frames();
-                        sFormat.format      = fmt;
-                        nOffset             = 0;
-                        bSeekable           = mmio->seekable();
+                sFormat.srate       = wfe->nSamplesPerSec;
+                sFormat.channels    = wfe->nChannels;
+                sFormat.frames      = h->pMMIO->frames();
+                sFormat.format      = fmt;
 
-                        return set_error(STATUS_OK);
-                    }
-                    else
-                        res  = STATUS_UNSUPPORTED_FORMAT;
-                }
+                nOffset             = 0;
+                bSeekable           = h->pMMIO->seekable();
+
+                // Commit handle and return
+                lsp::swap(hHandle, h);
+                return set_error(STATUS_OK);
             }
 
-            // Close and delete MMIO
-            mmio->close();
-            delete mmio;
+            // Create ACM stream
+            h->pACM             = new ACMStream();
+            if (h->pACM == NULL)
+                return set_error(STATUS_NO_MEM);
+            if ((res = h->pACM->read_pcm(wfe)) != STATUS_OK)
+                return set_error(res);
 
-            return set_error(res);
+            // Detect format
+            wfe                 = h->pACM->out_format();
+            if ((fmt = decode_sample_format(wfe)) <= 0)
+                return set_error(STATUS_UNSUPPORTED_FORMAT);
+
+            // All is ok
+            h->pFormat          = h->pACM->out_format();
+
+            sFormat.srate       = wfe->nSamplesPerSec;
+            sFormat.channels    = wfe->nChannels;
+            sFormat.frames      = h->pMMIO->frames();
+            sFormat.format      = fmt;
+
+            nOffset             = 0;
+            bSeekable           = false;
+
+            // Commit handle and return
+            lsp::swap(hHandle, h);
+            return set_error(STATUS_OK);
         #endif /* USE_LIBSNDFILE */
         }
 
         status_t InAudioFileStream::close()
         {
             IInAudioStream::close();
-            return close_handle();
+            return do_close();
         }
 
         size_t InAudioFileStream::select_format(size_t fmt)
@@ -411,17 +426,14 @@ namespace lsp
             res = decode_sf_error(hHandle);
             return -((res == STATUS_OK) ? STATUS_EOF : res);
         #else
-            if (pMMIO != NULL)
-            {
-                if (pACM != NULL)
-                    return read_acm_convert(dst, nframes, fmt);
+            if (hHandle->pMMIO == NULL)
+                return -STATUS_NOT_SUPPORTED;
+            if (hHandle->pACM != NULL)
+                return read_acm_convert(dst, nframes, fmt);
 
-                size_t fsize    = sformat_size_of(sFormat.format) * sFormat.channels;
-                ssize_t nread   = pMMIO->read(dst, fsize * nframes);
-                return (nread < 0) ? nread : nread / fsize;
-            }
-
-            return -STATUS_NOT_SUPPORTED;
+            size_t fsize    = sformat_size_of(sFormat.format) * sFormat.channels;
+            ssize_t nread   = hHandle->pMMIO->read(dst, fsize * nframes);
+            return (nread < 0) ? nread : nread / fsize;
         #endif /* USE_LIBSNDFILE */
         }
 
@@ -443,10 +455,10 @@ namespace lsp
 
             return -set_error(decode_sf_error(hHandle));
         #else
-            if (pMMIO != NULL)
+            if (hHandle->pMMIO != NULL)
             {
-                size_t fsize    = sformat_size_of(sFormat.format) * LE_TO_CPU(pFormat->nChannels);
-                wssize_t res    = pMMIO->seek((nOffset + nframes) * fsize);
+                size_t fsize    = sformat_size_of(sFormat.format) * LE_TO_CPU(hHandle->pFormat->nChannels);
+                wssize_t res    = hHandle->pMMIO->seek((nOffset + nframes) * fsize);
                 if (res < 0)
                 {
                     set_error(-res);
@@ -478,10 +490,10 @@ namespace lsp
 
             return -set_error(decode_sf_error(hHandle));
         #else
-            if (pMMIO != NULL)
+            if (hHandle->pMMIO != NULL)
             {
-                size_t fsize    = sformat_size_of(sFormat.format) * LE_TO_CPU(pFormat->nChannels);
-                wssize_t res    = pMMIO->seek(nframes * fsize);
+                size_t fsize    = sformat_size_of(sFormat.format) * LE_TO_CPU(hHandle->pFormat->nChannels);
+                wssize_t res    = hHandle->pMMIO->seek(nframes * fsize);
                 if (res < 0)
                 {
                     set_error(-res);

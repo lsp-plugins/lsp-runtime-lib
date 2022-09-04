@@ -25,6 +25,11 @@
 namespace lsp
 {
     using namespace lsp::bookmarks;
+
+    static ssize_t compare_bookmarks(const bookmark_t *a, const bookmark_t *b)
+    {
+        return a->name.compare_to_nocase(&b->name);
+    }
 }
 
 UTEST_BEGIN("runtime.fmt", bookmarks)
@@ -32,6 +37,7 @@ UTEST_BEGIN("runtime.fmt", bookmarks)
     void test_gtk3_bookmarks()
     {
         lltl::parray<bookmark_t> bm;
+        lsp_finally { destroy_bookmarks(&bm); };
 
         io::Path path;
         UTEST_ASSERT(path.set(resources()) == STATUS_OK);
@@ -50,13 +56,12 @@ UTEST_BEGIN("runtime.fmt", bookmarks)
         UTEST_ASSERT(bm.get(1)->name.equals_ascii("Some alias"));
         UTEST_ASSERT(bm.get(2)->path.equals_ascii("/path/with spaces/for test"));
         UTEST_ASSERT(bm.get(2)->name.equals_ascii("for test"));
-
-        destroy_bookmarks(&bm);
     }
 
     void test_qt5_bookmarks()
     {
         lltl::parray<bookmark_t> bm;
+        lsp_finally { destroy_bookmarks(&bm); };
 
         io::Path path;
         UTEST_ASSERT(path.set(resources()) == STATUS_OK);
@@ -79,13 +84,43 @@ UTEST_BEGIN("runtime.fmt", bookmarks)
         UTEST_ASSERT(bm.get(3)->name.equals_utf8("Root"));
         UTEST_ASSERT(bm.get(4)->path.equals_utf8("/home/vsadovnikov/eclipse"));
         UTEST_ASSERT(bm.get(4)->name.equals_utf8("eclipse"));
+    }
 
-        destroy_bookmarks(&bm);
+    void test_lnk_bookmarks()
+    {
+        lltl::parray<bookmark_t> bm;
+        lsp_finally { destroy_bookmarks(&bm); };
+
+        io::Path path;
+        UTEST_ASSERT(path.set(resources()) == STATUS_OK);
+        UTEST_ASSERT(path.append_child("fmt/bookmarks/lnk") == STATUS_OK);
+
+        printf("Reading LNK bookmarks from path %s\n", path.as_native());
+        UTEST_ASSERT(read_bookmarks_lnk(&bm, &path) == STATUS_OK);
+
+        bm.qsort(compare_bookmarks);
+        for (size_t i=0; i<bm.size(); ++i)
+            printf("  Read LNK bookmark: %s -> %s\n", bm.get(i)->path.get_utf8(), bm.get(i)->name.get_utf8());
+
+        UTEST_ASSERT(bm.size() == 6);
+        UTEST_ASSERT(bm.get(0)->path.equals_utf8("C:\\cygwin\\bin"));
+        UTEST_ASSERT(bm.get(0)->name.equals_utf8("bin"));
+        UTEST_ASSERT(bm.get(1)->path.equals_utf8("C:\\cygwin"));
+        UTEST_ASSERT(bm.get(1)->name.equals_utf8("cygwin"));
+        UTEST_ASSERT(bm.get(2)->path.equals_utf8("C:\\Users\\sadko\\Desktop"));
+        UTEST_ASSERT(bm.get(2)->name.equals_utf8("Desktop"));
+        UTEST_ASSERT(bm.get(3)->path.equals_utf8("C:\\Users\\sadko\\Downloads"));
+        UTEST_ASSERT(bm.get(3)->name.equals_utf8("Downloads"));
+        UTEST_ASSERT(bm.get(4)->path.equals_utf8("C:\\mingw"));
+        UTEST_ASSERT(bm.get(4)->name.equals_utf8("mingw"));
+        UTEST_ASSERT(bm.get(5)->path.equals_utf8("C:\\PerfLogs"));
+        UTEST_ASSERT(bm.get(5)->name.equals_utf8("PerfLogs"));
     }
 
     void test_lsp_bookmarks()
     {
         lltl::parray<bookmark_t> bm;
+        lsp_finally { destroy_bookmarks(&bm); };
 
         io::Path path;
         UTEST_ASSERT(path.set(resources()) == STATUS_OK);
@@ -115,8 +150,6 @@ UTEST_BEGIN("runtime.fmt", bookmarks)
         UTEST_ASSERT(bm.get(3)->path.is_empty());
         UTEST_ASSERT(bm.get(3)->name.is_empty());
         UTEST_ASSERT(bm.get(3)->origin == 0);
-
-        destroy_bookmarks(&bm);
     }
 
     void add_bookmark(lltl::parray<bookmark_t> &bm, const char *path, const char *name, size_t flags)
@@ -132,6 +165,8 @@ UTEST_BEGIN("runtime.fmt", bookmarks)
     void test_save_bookmarks()
     {
         lltl::parray<bookmark_t> bm;
+        lsp_finally { destroy_bookmarks(&bm); };
+
         io::Path path;
 
         UTEST_ASSERT(path.fmt("%s/utest-%s.json", tempdir(), full_name()) >= 0);
@@ -160,13 +195,15 @@ UTEST_BEGIN("runtime.fmt", bookmarks)
         UTEST_ASSERT(bm.get(1)->path.equals_ascii("/home/some/path/1"));
         UTEST_ASSERT(bm.get(1)->name.equals_ascii("Additional path"));
         UTEST_ASSERT(bm.get(1)->origin == (BM_LSP | BM_GTK3 | BM_QT5));
-
-        destroy_bookmarks(&bm);
     }
 
     void test_merge_bookmarks()
     {
         lltl::parray<bookmark_t> dst, src;
+        lsp_finally {
+            destroy_bookmarks(&dst);
+            destroy_bookmarks(&src);
+        };
 
         add_bookmark(dst, "/0/0", "0-0", 0);                    // removed
         add_bookmark(dst, "/0/1", "0-1", BM_LSP);               // + BM_GTK3 -> changed
@@ -207,9 +244,6 @@ UTEST_BEGIN("runtime.fmt", bookmarks)
         UTEST_ASSERT(dst.get(3)->path.equals_ascii("/2/1"));
         UTEST_ASSERT(dst.get(3)->name.equals_ascii("2-1"));
         UTEST_ASSERT(dst.get(3)->origin == (BM_GTK3 | BM_LSP));
-
-        destroy_bookmarks(&dst);
-        destroy_bookmarks(&src);
     }
 
     UTEST_MAIN
@@ -218,6 +252,8 @@ UTEST_BEGIN("runtime.fmt", bookmarks)
         test_gtk3_bookmarks();
         printf("Testing read of QT5 bookmarks...\n");
         test_qt5_bookmarks();
+        printf("Testing read of LNK bookmarks...\n");
+        test_lnk_bookmarks();
         printf("Testing read of LSP bookmarks...\n");
         test_lsp_bookmarks();
         printf("Testing write of LSP bookmarks...\n");

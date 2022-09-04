@@ -27,10 +27,10 @@
 #include <lsp-plug.in/io/charset.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <wctype.h>
-#include <stdarg.h>
 
 #define GRANULARITY     0x20
 #define BUF_SIZE        0x200
@@ -1743,6 +1743,52 @@ namespace lsp
         return true;
     }
 
+    bool LSPString::set_utf16le(const lsp_utf16_t *s)
+    {
+        return set_utf16le(s, u16len(s));
+    }
+
+    bool LSPString::set_utf16le(const lsp_utf16_t *s, size_t n)
+    {
+        LSPString   tmp;
+        lsp_wchar_t ch;
+
+        while (lsp_utf32_t(ch = read_utf16le_streaming(&s, &n, true)) != LSP_UTF32_EOF)
+        {
+            // Append code point
+            if (!tmp.append(ch))
+                return false;
+        }
+        if (n > 0)
+            return false;
+
+        tmp.swap(this);
+        return true;
+    }
+
+    bool LSPString::set_utf16be(const lsp_utf16_t *s)
+    {
+        return set_utf16be(s, u16len(s));
+    }
+
+    bool LSPString::set_utf16be(const lsp_utf16_t *s, size_t n)
+    {
+        LSPString   tmp;
+        lsp_wchar_t ch;
+
+        while (lsp_utf32_t(ch = read_utf16be_streaming(&s, &n, true)) != LSP_UTF32_EOF)
+        {
+            // Append code point
+            if (!tmp.append(ch))
+                return false;
+        }
+        if (n > 0)
+            return false;
+
+        tmp.swap(this);
+        return true;
+    }
+
 #if defined(PLATFORM_WINDOWS)
     bool LSPString::set_native(const char *s, size_t n, const char *charset)
     {
@@ -1939,6 +1985,72 @@ namespace lsp
         return reinterpret_cast<lsp_utf16_t *>(pTemp->pData);
     }
 
+    const lsp_utf16_t *LSPString::get_utf16le(ssize_t first, ssize_t last) const
+    {
+        XSAFE_TRANS(first, nLength, NULL);
+        XSAFE_TRANS(last, nLength, NULL);
+        if (first > last)
+            return NULL;
+
+        if (pTemp != NULL)
+            pTemp->nOffset      = 0;
+
+        lsp_utf16_t temp[BUF_SIZE + 8];
+        lsp_utf16_t *th = temp, *tt = &temp[BUF_SIZE];
+
+        for (ssize_t i=first; i<last; ++i)
+        {
+            lsp_wchar_t ch = pData[i];
+            write_utf16le_codepoint(&th, ch);
+
+            if (th >= tt)
+            {
+                if (!append_temp(reinterpret_cast<char *>(temp), (th - temp) * sizeof(lsp_utf16_t)))
+                    return NULL;
+                th  = temp;
+            }
+        }
+
+        *(th++) = '\0';
+        if (!append_temp(reinterpret_cast<char *>(temp), (th - temp) * sizeof(lsp_utf16_t)))
+            return NULL;
+
+        return reinterpret_cast<lsp_utf16_t *>(pTemp->pData);
+    }
+
+    const lsp_utf16_t *LSPString::get_utf16be(ssize_t first, ssize_t last) const
+    {
+        XSAFE_TRANS(first, nLength, NULL);
+        XSAFE_TRANS(last, nLength, NULL);
+        if (first > last)
+            return NULL;
+
+        if (pTemp != NULL)
+            pTemp->nOffset      = 0;
+
+        lsp_utf16_t temp[BUF_SIZE + 8];
+        lsp_utf16_t *th = temp, *tt = &temp[BUF_SIZE];
+
+        for (ssize_t i=first; i<last; ++i)
+        {
+            lsp_wchar_t ch = pData[i];
+            write_utf16be_codepoint(&th, ch);
+
+            if (th >= tt)
+            {
+                if (!append_temp(reinterpret_cast<char *>(temp), (th - temp) * sizeof(lsp_utf16_t)))
+                    return NULL;
+                th  = temp;
+            }
+        }
+
+        *(th++) = '\0';
+        if (!append_temp(reinterpret_cast<char *>(temp), (th - temp) * sizeof(lsp_utf16_t)))
+            return NULL;
+
+        return reinterpret_cast<lsp_utf16_t *>(pTemp->pData);
+    }
+
     const char *LSPString::get_ascii(ssize_t first, ssize_t last) const
     {
         XSAFE_TRANS(first, nLength, NULL);
@@ -1984,6 +2096,7 @@ namespace lsp
         lsp_utf16_t *buf    = const_cast<lsp_utf16_t *>(get_utf16(first, last));
         if (buf == NULL)
             return NULL;
+        lsp_finally{ free(buf); };
 
         // Drop temporary data because it is stored in buf variable and can not be reused
         pTemp->pData        = NULL;
@@ -1993,27 +2106,21 @@ namespace lsp
         size_t slen         = length;
         ssize_t res         = widechar_to_multibyte(cp, buf, &slen, NULL, NULL) + 4; // + terminating 0
         if ((res <= 0) || (!resize_temp(res)))
-        {
-            free(buf);
             return NULL;
-        }
 
         // We have enough space for saving data
         size_t n            = res;
         res                 = widechar_to_multibyte(cp, buf, &slen, pTemp->pData, &n);
         if (res <= 0)
-        {
-            free(buf);
             return NULL;
-        }
 
         // Append terminating zero
         pTemp->pData[res++] = '\0';
         pTemp->pData[res++] = '\0';
         pTemp->pData[res++] = '\0';
-        pTemp->pData[res]   = '\0';
+        pTemp->pData[res++] = '\0';
+        pTemp->nOffset      = res;
 
-        free(buf);
         return pTemp->pData;
     }
 #else
@@ -2134,6 +2241,32 @@ namespace lsp
     lsp_utf16_t *LSPString::clone_utf16(size_t *bytes, ssize_t first, ssize_t last) const
     {
         const lsp_utf16_t *utf16 = get_utf16(first, last);
+        if (utf16 == NULL)
+            return NULL;
+
+        size_t offset = (pTemp != NULL) ? pTemp->nOffset : 0;
+        lsp_utf16_t *ptr = (utf16 != NULL) ? reinterpret_cast<lsp_utf16_t *>(lsp::memdup(utf16, offset)) : NULL;
+        if (bytes != NULL)
+            *bytes = (ptr != NULL) ? offset : 0;
+        return ptr;
+    }
+
+    lsp_utf16_t *LSPString::clone_utf16le(size_t *bytes, ssize_t first, ssize_t last) const
+    {
+        const lsp_utf16_t *utf16 = get_utf16le(first, last);
+        if (utf16 == NULL)
+            return NULL;
+
+        size_t offset = (pTemp != NULL) ? pTemp->nOffset : 0;
+        lsp_utf16_t *ptr = (utf16 != NULL) ? reinterpret_cast<lsp_utf16_t *>(lsp::memdup(utf16, offset)) : NULL;
+        if (bytes != NULL)
+            *bytes = (ptr != NULL) ? offset : 0;
+        return ptr;
+    }
+
+    lsp_utf16_t *LSPString::clone_utf16be(size_t *bytes, ssize_t first, ssize_t last) const
+    {
+        const lsp_utf16_t *utf16 = get_utf16be(first, last);
         if (utf16 == NULL)
             return NULL;
 
@@ -2494,6 +2627,7 @@ namespace lsp
         else if (!cap_grow(count))
             return false;
         drop_temp();
+        nHash               = 0;
 
         // Now we need to replace all line endings with proper ones
         size_t distance;
@@ -2541,6 +2675,7 @@ namespace lsp
         if (count <= 0)
             return true;
         drop_temp();
+        nHash                   = 0;
 
         size_t distance;
         lsp_wchar_t *dst        = pData;

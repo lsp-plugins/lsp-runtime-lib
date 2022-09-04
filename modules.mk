@@ -19,19 +19,19 @@
 #
 
 # Variables that describe dependencies
-LSP_COMMON_LIB_VERSION     := 1.0.20
+LSP_COMMON_LIB_VERSION     := 1.0.21
 LSP_COMMON_LIB_NAME        := lsp-common-lib
 LSP_COMMON_LIB_TYPE        := src
 LSP_COMMON_LIB_URL_RO      := https://github.com/lsp-plugins/$(LSP_COMMON_LIB_NAME).git
 LSP_COMMON_LIB_URL_RW      := git@github.com:lsp-plugins/$(LSP_COMMON_LIB_NAME).git
 
-LSP_LLTL_LIB_VERSION       := 1.0.4
+LSP_LLTL_LIB_VERSION       := 1.0.5
 LSP_LLTL_LIB_NAME          := lsp-lltl-lib
 LSP_LLTL_LIB_TYPE          := src
 LSP_LLTL_LIB_URL_RO        := https://github.com/lsp-plugins/$(LSP_LLTL_LIB_NAME).git
 LSP_LLTL_LIB_URL_RW        := git@github.com:lsp-plugins/$(LSP_LLTL_LIB_NAME).git
 
-LSP_TEST_FW_VERSION        := 1.0.14
+LSP_TEST_FW_VERSION        := 1.0.15
 LSP_TEST_FW_NAME           := lsp-test-fw
 LSP_TEST_FW_TYPE           := src
 LSP_TEST_FW_URL_RO         := https://github.com/lsp-plugins/$(LSP_TEST_FW_NAME).git
@@ -70,5 +70,10 @@ LIBMSACM_VERSION           := system
 LIBMSACM_NAME              := libmsacm
 LIBMSACM_TYPE              := opt
 LIBMSACM_LDFLAGS           := -lmsacm32
+
+LIBMPR_VERSION             := system
+LIBMPR_NAME                := libmpr
+LIBMPR_TYPE                := opt
+LIBMPR_LDFLAGS             := -lmpr
 
 

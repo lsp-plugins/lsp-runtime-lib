@@ -25,22 +25,21 @@
 #ifdef PLATFORM_WINDOWS
     #define DELAY_PRECISION 10
 #else
-    #define DELAY_PRECISION 1
+    #define DELAY_PRECISION 5
 #endif /* PLATFORM_WINDOWS */
 
 UTEST_BEGIN("runtime.runtime", system)
 
     void test_sleep_msec(size_t period)
     {
-        system::time_t start, end;
+        system::time_millis_t start, end;
         printf("Testing sleep for %d milliseconds\n", int(period));
 
-        system::get_time(&start);
+        start = system::get_time_millis();
         UTEST_ASSERT(system::sleep_msec(period) == STATUS_OK);
-        system::get_time(&end);
+        end = system::get_time_millis();
 
-        wssize_t delay_ms = wssize_t(end.seconds - start.seconds) * 1000 + wssize_t(end.nanos - start.nanos) / 1000000;
-
+        wssize_t delay_ms = end - start;
         printf("Requested delay: %ld, actual delay: %ld\n", long(period), long(delay_ms));
 
         // The delay should not be less than expected.
@@ -50,8 +49,57 @@ UTEST_BEGIN("runtime.runtime", system)
             "Expected delay: %ld but actual delay is %ld", long(period), long(delay_ms));
     }
 
+    void test_time_measure()
+    {
+        system::time_t ctime;
+        system::time_millis_t millis, computed;
+
+        millis = system::get_time_millis();
+        system::get_time(&ctime);
+        computed = system::time_millis_t(ctime.seconds) * 1000 + system::time_millis_t(ctime.nanos) / 1000000;
+
+        printf("ctime    = %lld seconds %lld nanos\n", (long long)(ctime.seconds), (long long)(ctime.nanos));
+        printf("millis   = %lld\n", (long long)millis);
+        printf("computed = %lld\n", (long long)computed);
+        printf("rate     = %lld\n", (long long)(millis/computed));
+
+        UTEST_ASSERT(ctime.nanos < 1000000000u);
+        UTEST_ASSERT(computed >= millis);
+        UTEST_ASSERT((computed - millis) <= 10);
+    }
+
+    void test_volume_info()
+    {
+        lltl::parray<system::volume_info_t> list;
+        UTEST_ASSERT(system::get_volume_info(&list) == STATUS_OK);
+        lsp_finally{ system::free_volume_info(&list); };
+
+        printf("List of available volumes:\n");
+
+        for (size_t i=0, n=list.size(); i<n; ++i)
+        {
+            system::volume_info_t *v = list.uget(i);
+            UTEST_ASSERT(v != NULL);
+
+            printf("dev %s root=%s type=%s mounted on %s dummy=%s, remote=%s, drive=%s\n",
+                v->device.get_native(),
+                v->root.get_native(),
+                v->name.get_native(),
+                v->target.get_native(),
+                (v->flags & system::VF_DUMMY) ? "true" : "false",
+                (v->flags & system::VF_REMOTE) ? "true" : "false",
+                (v->flags & system::VF_DRIVE) ? "true" : "false");
+        }
+    }
+
     UTEST_MAIN
     {
+        // Test reading of volume info
+        test_volume_info();
+
+        // Test time measurement
+        test_time_measure();
+
         // Test the system::sleep_msec function.
         test_sleep_msec(10);
         test_sleep_msec(15);

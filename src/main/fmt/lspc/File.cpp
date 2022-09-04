@@ -27,6 +27,10 @@
 #include <fcntl.h>
 #include <lsp-plug.in/fmt/lspc/File.h>
 
+#ifdef PLATFORM_WINDOWS
+    #include <windows.h>
+#endif /* PLATFORM_WINDOWS */
+
 namespace lsp
 {
     namespace lspc

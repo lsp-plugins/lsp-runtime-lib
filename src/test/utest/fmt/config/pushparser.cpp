@@ -19,12 +19,11 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <lsp-plug.in/test-fw/utest.h>
-#include <lsp-plug.in/test-fw/helpers.h>
 #include <lsp-plug.in/fmt/config/PushParser.h>
 #include <lsp-plug.in/io/OutFileStream.h>
-#include <stdarg.h>
-#include <math.h>
+#include <lsp-plug.in/stdlib/math.h>
+#include <lsp-plug.in/test-fw/helpers.h>
+#include <lsp-plug.in/test-fw/utest.h>
 
 namespace lsp
 {
@@ -82,6 +81,15 @@ namespace lsp
 }
 
 UTEST_BEGIN("runtime.fmt.config", pushparser)
+
+    static const char *special_value(double v)
+    {
+        if (isinf(v))
+            return (v < 0) ? "-inf" : "inf";
+        if (isnan(v))
+            return "nan";
+        return NULL;
+    }
 
     class Handler: public IConfigHandler
     {
@@ -144,8 +152,17 @@ UTEST_BEGIN("runtime.fmt.config", pushparser)
             {
                 char f[0x10];
                 dump_flags(f, flags);
-                pStr->fmt_append_utf8("%s=f32[%s]:%.4f\n", name->get_utf8(), f, value);
-                pTest->printf("%s=f32[%s]:%.4f\n", name->get_utf8(), f, value);
+                const char *special = special_value(value);
+                if (special != NULL)
+                {
+                    pStr->fmt_append_utf8("%s=f32[%s]:%s\n", name->get_utf8(), f, special);
+                    pTest->printf("%s=f32[%s]:%s\n", name->get_utf8(), f, special);
+                }
+                else
+                {
+                    pStr->fmt_append_utf8("%s=f32[%s]:%.4f\n", name->get_utf8(), f, value);
+                    pTest->printf("%s=f32[%s]:%.4f\n", name->get_utf8(), f, value);
+                }
                 return STATUS_OK;
             }
 
@@ -171,8 +188,17 @@ UTEST_BEGIN("runtime.fmt.config", pushparser)
             {
                 char f[0x10];
                 dump_flags(f, flags);
-                pStr->fmt_append_utf8("%s=f64[%s]:%.4f\n", name->get_utf8(), f, value);
-                pTest->printf("%s=f64[%s]:%.4f\n", name->get_utf8(), f, value);
+                const char *special = special_value(value);
+                if (special != NULL)
+                {
+                    pStr->fmt_append_utf8("%s=f64[%s]:%s\n", name->get_utf8(), f, special);
+                    pTest->printf("%s=f64[%s]:%s\n", name->get_utf8(), f, special);
+                }
+                else
+                {
+                    pStr->fmt_append_utf8("%s=f64[%s]:%.4f\n", name->get_utf8(), f, value);
+                    pTest->printf("%s=f64[%s]:%.4f\n", name->get_utf8(), f, value);
+                }
                 return STATUS_OK;
             }
 

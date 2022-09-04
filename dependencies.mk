@@ -18,42 +18,68 @@
 # along with lsp-runtime-lib.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-# List of dependencies
+#------------------------------------------------------------------------------
+# List of common dependencies
 DEPENDENCIES = \
-  LIBPTHREAD \
   LSP_COMMON_LIB \
   LSP_LLTL_LIB
 
 TEST_DEPENDENCIES = \
   LSP_TEST_FW
 
-# Platform-specific dependencies
+#------------------------------------------------------------------------------
+# Linux dependencies
+LINUX_DEPENDENCIES = \
+  LIBPTHREAD \
+  LIBDL \
+  LIBSNDFILE
+
+LINUX_TEST_DEPENDENCIES =
+
 ifeq ($(PLATFORM),Linux)
-  DEPENDENCIES             += \
-    LIBDL \
-    LIBSNDFILE
+  DEPENDENCIES             += $(LINUX_DEPENDENCIES)
+  TEST_DEPENDENCIES        += $(LINUX_TEST_DEPENDENCIES)
 endif
+
+#------------------------------------------------------------------------------
+# BSD dependencies
+BSD_DEPENDENCIES = \
+  LIBPTHREAD \
+  LIBDL \
+  LIBICONV \
+  LIBSNDFILE
+
+BSD_TEST_DEPENDENCIES =
 
 ifeq ($(PLATFORM),BSD)
-  DEPENDENCIES             += \
-    LIBDL \
-    LIBSNDFILE \
-    LIBICONV
+  DEPENDENCIES             += $(BSD_DEPENDENCIES)
+  TEST_DEPENDENCIES        += $(BSD_TEST_DEPENDENCIES)
 endif
 
-ifeq ($(PLATFORM),Windows)
-  DEPENDENCIES             += \
-    LIBSHLWAPI \
-    LIBWINMM \
-    LIBMSACM
-endif
-
-ALL_DEPENDENCIES = \
-  $(DEPENDENCIES) \
-  $(TEST_DEPENDENCIES) \
-  LIBSNDFILE \
-  LIBICONV \
+#------------------------------------------------------------------------------
+# Windows dependencies
+WINDOWS_DEPENDENCIES = \
   LIBSHLWAPI \
   LIBWINMM \
-  LIBMSACM
+  LIBMSACM \
+  LIBMPR
+
+WINDOWS_TEST_DEPENDENCIES =
+
+ifeq ($(PLATFORM),Windows)
+  DEPENDENCIES             += $(WINDOWS_DEPENDENCIES)
+  TEST_DEPENDENCIES        += $(WINDOWS_TEST_DEPENDENCIES)
+endif
+
+#------------------------------------------------------------------------------
+# Overall system dependencies
+ALL_DEPENDENCIES = \
+  $(DEPENDENCIES) \
+  $(LINUX_DEPENDENCIES) \
+  $(BSD_DEPENDENCIES) \
+  $(WINDOWS_DEPENDENCIES) \
+  $(TEST_DEPENDENCIES) \
+  $(LINUX_TEST_DEPENDENCIES) \
+  $(BSD_TEST_DEPENDENCIES) \
+  $(WINDOWS_TEST_DEPENDENCIES)
 

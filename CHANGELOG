@@ -2,6 +2,23 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.7 ===
+* Added system::get_time_millis() function.
+* Got rid of the <windows.h> plague header in header files.
+* Fixed integer overflow in system::time_t data structure for 32-bit systems
+  by extending the size of seconds field up to 64 bit.
+* Added system::get_volume_info() and system:: free_volume_info() functions
+  for obtaining list of mounted volumes in the system.
+* Added URL-decoding of the name of the link for QT5 bookmarks.
+* Fixed improper size tracking in io::OutMemoryStream::writeb() method.
+* Fixed several bugs in LSPString class implementation.
+* Added support of reading *.lnk files as bookmarks.
+* Fixed memory leakage in lsp::obj::PullParser::wrap() method.
+* Fixed bug in io::Path::canonicalize() method that could issue reads outside
+  of allocated memory.
+* Fixed improper usage of sf_open function of libsndfile in mm::InAudioFileStream.
+* Updated build scripts.
+
 === 1.0.6 ===
 * Added opacity manipulation to the lsp::Color class.
 * Added LSPString::range_length() method to compute the length of the range.

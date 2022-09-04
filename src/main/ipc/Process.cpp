@@ -29,6 +29,7 @@
 #include <lsp-plug.in/io/InFileStream.h>
 
 #if defined(PLATFORM_WINDOWS)
+    #include <windows.h>
     #include <processthreadsapi.h>
     #include <namedpipeapi.h>
     #include <synchapi.h>
@@ -53,8 +54,8 @@ namespace lsp
             nExitCode           = 0;
 
 #ifdef PLATFORM_WINDOWS
-            hProcess            = NULL;
             nPID                = 0;
+            hProcess            = NULL;
             hStdIn              = NULL;
             hStdOut             = NULL;
             hStdErr             = NULL;

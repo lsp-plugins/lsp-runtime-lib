@@ -19,14 +19,25 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <lsp-plug.in/io/InStringSequence.h>
 #include <lsp-plug.in/expr/types.h>
 #include <lsp-plug.in/expr/Tokenizer.h>
+#include <lsp-plug.in/io/InStringSequence.h>
+#include <lsp-plug.in/stdlib/math.h>
 
 namespace lsp
 {
     namespace expr
     {
+        template <class T>
+            static inline const char *special_value(const T f)
+            {
+                if (isinf(f))
+                    return (f < 0.0f) ? "-inf" : "inf";
+                if (isnan(f))
+                    return "nan";
+                return NULL;
+            }
+
         void init_value(value_t *dst)
         {
             dst->type       = VT_UNDEF;
@@ -342,9 +353,17 @@ namespace lsp
                         return STATUS_NO_MEM;
                     break;
                 case VT_FLOAT:
-                    if (!tmp.fmt_ascii("%f", double(v->v_float)))
+                {
+                    const char *special = special_value(v->v_float);
+                    if (special)
+                    {
+                        if (!tmp.set_ascii(special))
+                            return STATUS_NO_MEM;
+                    }
+                    else if (!tmp.fmt_ascii("%f", double(v->v_float)))
                         return STATUS_NO_MEM;
                     break;
+                }
                 case VT_BOOL:
                     if (!tmp.set_ascii((v->v_bool) ? "true" : "false"))
                         return STATUS_NO_MEM;
@@ -379,9 +398,17 @@ namespace lsp
                         return STATUS_NO_MEM;
                     break;
                 case VT_FLOAT:
-                    if (!tmp.fmt_ascii("%f", double(v->v_float)))
+                {
+                    const char *special = special_value(v->v_float);
+                    if (special)
+                    {
+                        if (!tmp.set_ascii(special))
+                            return STATUS_NO_MEM;
+                    }
+                    else if (!tmp.fmt_ascii("%f", double(v->v_float)))
                         return STATUS_NO_MEM;
                     break;
+                }
                 case VT_BOOL:
                     if (!tmp.set_ascii((v->v_bool) ? "true" : "false"))
                         return STATUS_NO_MEM;
@@ -466,7 +493,7 @@ namespace lsp
             }
             return STATUS_OK;
         }
-    }
-}
+    } /* namespace expr */
+} /* namespace lsp */
 
 

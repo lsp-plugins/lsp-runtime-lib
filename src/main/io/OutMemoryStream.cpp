@@ -75,6 +75,8 @@ namespace lsp
                 return -res;
 
             pData[nPosition++]  = v;
+            if (nSize < nPosition)
+                nSize       = nPosition;
             return 1;
         }
 

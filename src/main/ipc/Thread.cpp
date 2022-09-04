@@ -27,6 +27,10 @@
 #include <errno.h>
 #include <unistd.h>
 
+#ifdef PLATFORM_WINDOWS
+    #include <windows.h>
+#endif /* PLATFORM_WINDOWS */
+
 namespace lsp
 {
     namespace ipc
@@ -128,6 +132,7 @@ namespace lsp
 
             // Execute the thread
             status_t res    = _this->run();
+            pThis           = NULL;
 
             // Commit the 'FINISHED' status
             int state;

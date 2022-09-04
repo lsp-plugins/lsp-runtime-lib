@@ -27,9 +27,11 @@
 #include <unistd.h>
 
 #if defined(PLATFORM_WINDOWS)
-    #define FD_INVALID(fd)      (fd) == INVALID_HANDLE_VALUE
+    #include <windows.h>
+
+    #define FD_INVALID(fd)      ((fd) == INVALID_HANDLE_VALUE)
 #else
-    #define FD_INVALID(fd)      (fd) < 0
+    #define FD_INVALID(fd)      ((fd) < 0)
 #endif /* PLATFORM_WINDOWS */
 
 namespace lsp

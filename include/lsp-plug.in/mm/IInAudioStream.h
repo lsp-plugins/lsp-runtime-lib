@@ -23,6 +23,7 @@
 #define LSP_PLUG_IN_MM_IINAUDIOSTREAM_H_
 
 #include <lsp-plug.in/runtime/version.h>
+
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/mm/types.h>
 

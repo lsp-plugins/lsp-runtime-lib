@@ -206,6 +206,7 @@ namespace lsp
 
             // Initialize state
             pIn             = seq;
+            nWFlags         = flags;
             pBuffer         = b;
             nBufOff         = 0;
             nBufLen         = 0;

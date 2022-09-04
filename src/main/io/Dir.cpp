@@ -22,6 +22,7 @@
 #include <lsp-plug.in/io/Dir.h>
 
 #ifdef PLATFORM_WINDOWS
+    #include <windows.h>
     #include <fileapi.h>
     #include <winbase.h>
 #else
@@ -31,27 +32,28 @@
     #include <unistd.h>
 #endif /* PLATFORM_WINDOWS */
 
-#ifdef PLATFORM_WINDOWS
-    #define FAKE_HANDLE             ((HANDLE)(-1))
-    #define check_closed(hdir)      (hdir == INVALID_HANDLE_VALUE)
-#else
-    #define check_closed(hdir)      (hdir == NULL)
-#endif /* PLATFORM_WINDOWS */
-
 namespace lsp
 {
     namespace io
     {
+    #ifdef PLATFORM_WINDOWS
+        typedef struct dirhandle_t
+        {
+            HANDLE              hHandle;        // Directory handle
+            WIN32_FIND_DATAW    sData;         // Last data read
+            status_t            nPending;       // Pending error code
+        } dirhandle_t;
+    #endif /* PLATFORM_WINDOWS */
         
+        static inline bool check_closed(dirhandle_t *dir)
+        {
+            return dir == NULL;
+        }
+
         Dir::Dir()
         {
             nErrorCode  = STATUS_OK;
-#ifdef PLATFORM_WINDOWS
-            hDir        = INVALID_HANDLE_VALUE;
-            nPending    = STATUS_OK;
-#else
             hDir        = NULL;
-#endif /* PLATFORM_WINDOWS */
         }
         
         Dir::~Dir()
@@ -82,7 +84,17 @@ namespace lsp
             if (sPath.set(path) != STATUS_OK)
                 return set_error(STATUS_NO_MEM);
 
-#ifdef PLATFORM_WINDOWS
+        #ifdef PLATFORM_WINDOWS
+            // Create dir handle
+            dirhandle_t *dir = reinterpret_cast<dirhandle_t *>(malloc(sizeof(dirhandle_t)));
+            if (dir == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally {
+                if (dir != NULL)
+                    free(dir);
+            };
+            bzero(dir, sizeof(dirhandle_t));
+
             // Create search mask
             Path mask;
             status_t res = mask.set(path);
@@ -96,7 +108,7 @@ namespace lsp
 
             // Call API for FindFirst
             status_t pending    = STATUS_OK;
-            HANDLE dh           = ::FindFirstFileW(mask.as_string()->get_utf16(), &sData);
+            HANDLE dh           = ::FindFirstFileW(mask.as_string()->get_utf16(), &dir->sData);
             if (dh == INVALID_HANDLE_VALUE)
             {
                 DWORD err = ::GetLastError();
@@ -104,16 +116,29 @@ namespace lsp
                 {
                     case ERROR_NO_MORE_FILES:
                     case ERROR_FILE_NOT_FOUND:
-                        dh          = FAKE_HANDLE;
                         pending     = STATUS_EOF;
                         break;
+                    case ERROR_PATH_NOT_FOUND:
+                    case ERROR_INVALID_DRIVE:
+                        return set_error(STATUS_NOT_DIRECTORY);
+                    case ERROR_NOT_READY:           return set_error(STATUS_NO_DATA);
+                    case ERROR_TOO_MANY_OPEN_FILES: return set_error(STATUS_OVERFLOW);
+                    case ERROR_OUTOFMEMORY:
+                    case ERROR_NOT_ENOUGH_MEMORY:
+                        return set_error(STATUS_NO_MEM);
+                    case ERROR_INVALID_ACCESS:
+                    case ERROR_ACCESS_DENIED:
+                        return set_error(STATUS_PERMISSION_DENIED);
                     default:
                         return set_error(STATUS_UNKNOWN_ERR);
                 }
             }
 
-            nPending        = pending;
-#else
+            // Commit state
+            dir->nPending   = pending;
+            dir->hHandle    = dh;
+            lsp::swap(hDir, dir);
+        #else
             DIR *dh = ::opendir(path->get_native());
             if (dh == NULL)
             {
@@ -132,9 +157,9 @@ namespace lsp
                 }
             }
 
-#endif /* PLATFORM_WINDOWS */
-
             hDir        = dh;
+        #endif /* PLATFORM_WINDOWS */
+
             return set_error(STATUS_OK);
         }
 
@@ -152,7 +177,7 @@ namespace lsp
             if (check_closed(hDir))
                 return set_error(STATUS_BAD_STATE);
 
-#ifdef PLATFORM_WINDOWS
+        #ifdef PLATFORM_WINDOWS
             // Create search mask
             Path mask;
             status_t res = mask.set(&sPath);
@@ -166,7 +191,7 @@ namespace lsp
 
             // Call API for FindFirst
             status_t pending    = STATUS_OK;
-            HANDLE dh   = ::FindFirstFileW(mask.as_string()->get_utf16(), &sData);
+            HANDLE dh   = ::FindFirstFileW(mask.as_string()->get_utf16(), &hDir->sData);
             if (dh == INVALID_HANDLE_VALUE)
             {
                 DWORD err = ::GetLastError();
@@ -174,24 +199,34 @@ namespace lsp
                 {
                     case ERROR_NO_MORE_FILES:
                     case ERROR_FILE_NOT_FOUND:
-                        dh          = FAKE_HANDLE;
                         pending     = STATUS_EOF;
                         break;
+                    case ERROR_PATH_NOT_FOUND:
+                    case ERROR_INVALID_DRIVE:
+                        return set_error(STATUS_NOT_DIRECTORY);
+                    case ERROR_NOT_READY:           return set_error(STATUS_NO_DATA);
+                    case ERROR_TOO_MANY_OPEN_FILES: return set_error(STATUS_OVERFLOW);
+                    case ERROR_OUTOFMEMORY:
+                    case ERROR_NOT_ENOUGH_MEMORY:
+                        return set_error(STATUS_NO_MEM);
+                    case ERROR_INVALID_ACCESS:
+                    case ERROR_ACCESS_DENIED:
+                        return set_error(STATUS_PERMISSION_DENIED);
                     default:
                         return set_error(STATUS_UNKNOWN_ERR);
                 }
             }
 
             // Close current  handle
-            if (hDir != FAKE_HANDLE)
-                ::FindClose(hDir);
+            if ((hDir->hHandle != INVALID_HANDLE_VALUE))
+                ::FindClose(hDir->hHandle);
 
             // Replace closed handle by new handle
-            hDir        = dh;
-            nPending    = pending;
-#else
+            hDir->hHandle   = dh;
+            hDir->nPending  = pending;
+        #else
             ::rewinddir(hDir);
-#endif /* PLATFORM_WINDOWS */
+        #endif /* PLATFORM_WINDOWS */
 
             return set_error(STATUS_OK);
         }
@@ -205,32 +240,35 @@ namespace lsp
 
             LSPString out;
 
-#ifdef PLATFORM_WINDOWS
-            if (nPending != STATUS_OK)
-                return set_error(nPending);
-            else if (hDir == FAKE_HANDLE)
+        #ifdef PLATFORM_WINDOWS
+            if (hDir->nPending != STATUS_OK)
+                return set_error(hDir->nPending);
+            else if (hDir->hHandle == INVALID_HANDLE_VALUE)
                 return set_error(STATUS_BAD_STATE);
 
             // Set result
-            if (!out.set_utf16(sData.cFileName))
+            if (!out.set_utf16(hDir->sData.cFileName))
                 return set_error(STATUS_NO_MEM);
 
             // Perform next iteration
-            if (!::FindNextFileW(hDir, &sData))
+            if (!::FindNextFileW(hDir->hHandle, &hDir->sData))
             {
                 DWORD err = ::GetLastError();
                 switch (err)
                 {
                     case ERROR_NO_MORE_FILES:
                     case ERROR_FILE_NOT_FOUND:
-                        nPending    = STATUS_EOF;
+                        hDir->nPending    = STATUS_EOF;
                         break;
+                    case ERROR_OUTOFMEMORY:
+                    case ERROR_NOT_ENOUGH_MEMORY:
+                        return set_error(STATUS_NO_MEM);
                     default:
-                        nPending    = STATUS_UNKNOWN_ERR;
+                        hDir->nPending    = STATUS_UNKNOWN_ERR;
                         break;
                 }
             }
-#else
+        #else
             // Read directory
             errno = 0;
             struct dirent *dent = ::readdir(hDir);
@@ -245,7 +283,7 @@ namespace lsp
             if (!out.set_native(dent->d_name))
                 return set_error(STATUS_NO_MEM);
 
-#endif /* PLATFORM_WINDOWS */
+        #endif /* PLATFORM_WINDOWS */
             if (full)
             {
                 Path tmp;
@@ -295,47 +333,47 @@ namespace lsp
 
             LSPString out;
 
-#ifdef PLATFORM_WINDOWS
-            if (nPending != STATUS_OK)
-                return set_error(nPending);
-            else if (hDir == FAKE_HANDLE)
+        #ifdef PLATFORM_WINDOWS
+            if (hDir->nPending != STATUS_OK)
+                return set_error(hDir->nPending);
+            else if (hDir->hHandle == INVALID_HANDLE_VALUE)
                 return set_error(STATUS_BAD_STATE);
 
             // Set result
-            if (!out.set_utf16(sData.cFileName))
+            if (!out.set_utf16(hDir->sData.cFileName))
                 return set_error(STATUS_NO_MEM);
 
             // Decode file state
             // Decode file type
             attr->type      = fattr_t::FT_REGULAR;
-            if (sData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            if (hDir->sData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
                 attr->type      = fattr_t::FT_DIRECTORY;
-            else if (sData.dwFileAttributes & FILE_ATTRIBUTE_DEVICE)
+            else if (hDir->sData.dwFileAttributes & FILE_ATTRIBUTE_DEVICE)
                 attr->type      = fattr_t::FT_BLOCK;
 
             attr->blk_size  = 4096;
-            attr->size      = (wsize_t(sData.nFileSizeHigh) << 32) | sData.nFileSizeLow;
+            attr->size      = (wsize_t(hDir->sData.nFileSizeHigh) << 32) | hDir->sData.nFileSizeLow;
             attr->inode     = 0;
-            attr->ctime     = ((wsize_t(sData.ftCreationTime.dwHighDateTime) << 32) | sData.ftCreationTime.dwLowDateTime) / 10000;
-            attr->mtime     = ((wsize_t(sData.ftLastWriteTime.dwHighDateTime) << 32) | sData.ftLastWriteTime.dwLowDateTime) / 10000;
-            attr->atime     = ((wsize_t(sData.ftLastAccessTime.dwHighDateTime) << 32) | sData.ftLastAccessTime.dwLowDateTime) / 10000;
+            attr->ctime     = ((wsize_t(hDir->sData.ftCreationTime.dwHighDateTime) << 32) | hDir->sData.ftCreationTime.dwLowDateTime) / 10000;
+            attr->mtime     = ((wsize_t(hDir->sData.ftLastWriteTime.dwHighDateTime) << 32) | hDir->sData.ftLastWriteTime.dwLowDateTime) / 10000;
+            attr->atime     = ((wsize_t(hDir->sData.ftLastAccessTime.dwHighDateTime) << 32) | hDir->sData.ftLastAccessTime.dwLowDateTime) / 10000;
 
             // Perform next iteration
-            if (!::FindNextFileW(hDir, &sData))
+            if (!::FindNextFileW(hDir->hHandle, &hDir->sData))
             {
                 DWORD err = ::GetLastError();
                 switch (err)
                 {
                     case ERROR_NO_MORE_FILES:
                     case ERROR_FILE_NOT_FOUND:
-                        nPending    = STATUS_EOF;
+                        hDir->nPending  = STATUS_EOF;
                         break;
                     default:
-                        nPending    = STATUS_UNKNOWN_ERR;
+                        hDir->nPending  = STATUS_UNKNOWN_ERR;
                         break;
                 }
             }
-#else
+        #else
             // Read directory
             errno = 0;
             struct dirent *dent = ::readdir(hDir);
@@ -348,9 +386,9 @@ namespace lsp
 
             // Stat the record
             struct stat sb;
-#if ((_POSIX_C_SOURCE >= 200809L) || defined(_ATFILE_SOURCE))
+        #if ((_POSIX_C_SOURCE >= 200809L) || defined(_ATFILE_SOURCE))
             int code = ::fstatat(::dirfd(hDir), dent->d_name, &sb, AT_SYMLINK_NOFOLLOW);
-#else
+        #else
             LSPString xpath, xname;
             if (!xname.set_native(dent->d_name))
                 return set_error(STATUS_NO_MEM);
@@ -361,7 +399,7 @@ namespace lsp
             if (!xpath.append(&xname))
                 return set_error(STATUS_NO_MEM);
             int code = ::lstat(xpath.get_native(), &sb);
-#endif
+        #endif
             if (code != 0)
             {
                 code = errno;
@@ -400,7 +438,7 @@ namespace lsp
             attr->ctime     = (sb.st_ctim.tv_sec * 1000L) + (sb.st_ctim.tv_nsec / 1000000);
             attr->mtime     = (sb.st_mtim.tv_sec * 1000L) + (sb.st_mtim.tv_nsec / 1000000);
             attr->atime     = (sb.st_atim.tv_sec * 1000L) + (sb.st_atim.tv_nsec / 1000000);
-#endif /* PLATFORM_WINDOWS */
+        #endif /* PLATFORM_WINDOWS */
 
             if (full)
             {
@@ -453,26 +491,30 @@ namespace lsp
             if (check_closed(hDir))
                 return set_error(STATUS_BAD_STATE);
 
-#ifdef PLATFORM_WINDOWS
-            if (hDir != FAKE_HANDLE)
+            status_t res    = STATUS_OK;
+        #ifdef PLATFORM_WINDOWS
+            if (hDir != NULL)
             {
-                if (!::FindClose(hDir))
-                    return set_error(STATUS_UNKNOWN_ERR);
-                hDir    = INVALID_HANDLE_VALUE;
+                if ((hDir->hHandle != NULL) &&
+                    (hDir->hHandle != INVALID_HANDLE_VALUE))
+                {
+                    if (!::FindClose(hDir->hHandle))
+                        res = STATUS_UNKNOWN_ERR;
+                    hDir->hHandle   = NULL;
+                }
+                free(hDir);
+                hDir    = NULL;
             }
-#else
+        #else
             if (::closedir(hDir) != 0)
             {
                 int error = errno;
-                if (error == EBADF)
-                    return set_error(STATUS_BAD_STATE);
-                else
-                    return set_error(STATUS_IO_ERROR);
+                res = (error == EBADF) ? STATUS_BAD_STATE : STATUS_IO_ERROR;
             }
             hDir    = NULL;
-#endif /* PLATFORM_WINDOWS */
+        #endif /* PLATFORM_WINDOWS */
 
-            return set_error(STATUS_OK);
+            return set_error(res);
         }
 
         status_t Dir::stat(const char *path, fattr_t *attr)
@@ -594,7 +636,7 @@ namespace lsp
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
-#ifdef PLATFORM_WINDOWS
+        #ifdef PLATFORM_WINDOWS
             const WCHAR *xp = path->get_utf16();
             if (::CreateDirectoryW(xp, NULL))
                 return STATUS_OK;
@@ -610,7 +652,7 @@ namespace lsp
                 default:
                     return STATUS_IO_ERROR;
             }
-#else
+        #else
             // Try to create directory
             if (::mkdir(path->get_native(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0)
                 return STATUS_OK;
@@ -644,7 +686,7 @@ namespace lsp
                 default:
                     return STATUS_IO_ERROR;
             }
-#endif /* PLATFORM_WINDOWS */
+        #endif /* PLATFORM_WINDOWS */
             return STATUS_OK;
         }
 
@@ -671,7 +713,7 @@ namespace lsp
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
-#ifdef PLATFORM_WINDOWS
+        #ifdef PLATFORM_WINDOWS
             if (::RemoveDirectoryW(path->get_utf16()))
                 return STATUS_OK;
 
@@ -688,7 +730,7 @@ namespace lsp
                 default:
                     return STATUS_IO_ERROR;
             }
-#else
+        #else
             // Try to remove directory
             if (::rmdir(path->get_native()) == 0)
                 return STATUS_OK;
@@ -716,7 +758,7 @@ namespace lsp
                 default:
                     return STATUS_IO_ERROR;
             }
-#endif /* PLATFORM_WINDOWS */
+        #endif /* PLATFORM_WINDOWS */
             return STATUS_OK;
         }
 
@@ -725,7 +767,7 @@ namespace lsp
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
-#ifdef PLATFORM_WINDOWS
+        #ifdef PLATFORM_WINDOWS
             DWORD len = ::GetCurrentDirectoryW(0, NULL);
             if (len == 0)
                 return STATUS_UNKNOWN_ERR;
@@ -744,7 +786,7 @@ namespace lsp
             status_t res = (path->set_utf16(buf, len)) ? STATUS_OK : STATUS_NO_MEM;
             ::free(buf);
             return res;
-#else
+        #else
             char spath[PATH_MAX];
             char *p = ::getcwd(spath, PATH_MAX);
             if (p == NULL)
@@ -767,7 +809,7 @@ namespace lsp
             }
 
             return (path->set_native(p)) ? STATUS_OK : STATUS_NO_MEM;
-#endif /* PLATFORM_WINDOWS */
+        #endif /* PLATFORM_WINDOWS */
         }
 
         status_t Dir::get_current(Path *path)

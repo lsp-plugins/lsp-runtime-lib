@@ -23,13 +23,15 @@
 #define PRIVATE_MM_ACMSTREAM_H_
 
 #include <lsp-plug.in/runtime/version.h>
+
+#ifndef USE_LIBSNDFILE
+
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/lltl/darray.h>
 #include <lsp-plug.in/lltl/parray.h>
 
-#ifndef USE_LIBSNDFILE
-
+#include <windows.h>
 #include <mmreg.h>
 #include <msacm.h>
 

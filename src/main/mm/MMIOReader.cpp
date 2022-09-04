@@ -19,13 +19,15 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#ifndef USE_LIBSNDFILE
+
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/common/endian.h>
 #include <lsp-plug.in/mm/sample.h>
+
 #include <private/mm/MMIOReader.h>
 
-#ifndef USE_LIBSNDFILE
 namespace lsp
 {
     namespace mm

@@ -27,6 +27,7 @@
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/io/Path.h>
+#include <lsp-plug.in/lltl/parray.h>
 
 namespace lsp
 {
@@ -37,9 +38,14 @@ namespace lsp
          */
         typedef struct time_t
         {
-            ssize_t     seconds;    /* The value in seconds */
-            ssize_t     nanos;      /* The value in nanoseconds between 0 and 10^9-1 */
+            uint64_t     seconds;    /* The value in seconds */
+            uint32_t     nanos;      /* The value in nanoseconds between 0 and 10^9-1 */
         } time_t;
+
+        /**
+         * System timestamp in milliseconds
+         */
+        typedef uint64_t time_millis_t;
 
         /**
          * Local time information
@@ -55,6 +61,22 @@ namespace lsp
             uint8_t     sec;        /* Second of a minute, 0-59 */
             uint32_t    nanos;      /* Number of nanoseconds */
         } localtime_t;
+
+        enum volume_flags_t
+        {
+            VF_DUMMY    = 1 << 0,
+            VF_REMOTE   = 1 << 1,
+            VF_DRIVE    = 1 << 2
+        };
+
+        typedef struct volume_info_t
+        {
+            LSPString   device;     /* Name of associated device */
+            LSPString   root;       /* Directory on filesystem of device used (for bind) */
+            LSPString   target;     /* Target mount point on the file system */
+            LSPString   name;       /* Name of the file system */
+            size_t      flags;      /* See volume_flags_t */
+        } volume_info_t;
 
         /**
          * Get environment variable
@@ -145,6 +167,12 @@ namespace lsp
         void get_time(time_t *time);
 
         /**
+         * Get current time in milliseconds
+         * @return current time in milliseconds
+         */
+        time_millis_t get_time_millis();
+
+        /**
          * Convert time structure to the local time
          * @param ltime pointer to store the result
          * @param time time structure to convert, use current time if NULL
@@ -198,6 +226,19 @@ namespace lsp
          * @return status of operation
          */
         status_t follow_url(const LSPString *url);
+
+        /**
+         * Obtain information about available system volumes
+         * @param volumes pointer to array to store volume information
+         * @return status of operation
+         */
+        status_t get_volume_info(lltl::parray<volume_info_t> *volumes);
+
+        /**
+         * Free information about available system volumes
+         * @param volumes pointer to array that stores volume information
+         */
+        void free_volume_info(lltl::parray<volume_info_t> *volumes);
     }
 }
 

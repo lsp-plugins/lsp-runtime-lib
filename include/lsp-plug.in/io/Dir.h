@@ -28,9 +28,7 @@
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/io/File.h>
 
-#ifdef PLATFORM_WINDOWS
-    #include <fileapi.h>
-#else
+#ifndef PLATFORM_WINDOWS
     #include <dirent.h>
 #endif /* PLATFORM_WINDOWS */
 
@@ -38,21 +36,22 @@ namespace lsp
 {
     namespace io
     {
+    #ifdef PLATFORM_WINDOWS
+        struct dirhandle_t;
+    #else
+        typedef DIR         dirhandle_t;
+    #endif /* PLATFORM_WINDOWS */
+
         class Dir
         {
+            private:
+                Dir & operator = (const Dir &);
+                Dir(const Dir &);
+
             protected:
                 status_t        nErrorCode;
                 Path            sPath;
-#ifdef PLATFORM_WINDOWS
-                HANDLE          hDir;           // Directory handle
-                WIN32_FIND_DATAW sData;         // Last data read
-                status_t        nPending;       // Pending error code
-#else
-                DIR            *hDir;           // Directory handle
-#endif /* PLATFORM_WINDOWS */
-
-            private:
-                Dir &operator = (const Dir &);
+                dirhandle_t    *hDir;
 
             protected:
                 inline status_t set_error(status_t error) { return nErrorCode = error; }
