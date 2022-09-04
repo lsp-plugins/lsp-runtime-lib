@@ -25,7 +25,7 @@
 #ifdef PLATFORM_WINDOWS
     #define DELAY_PRECISION 10
 #else
-    #define DELAY_PRECISION 1
+    #define DELAY_PRECISION 5
 #endif /* PLATFORM_WINDOWS */
 
 UTEST_BEGIN("runtime.runtime", system)
