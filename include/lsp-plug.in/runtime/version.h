@@ -28,7 +28,7 @@
 
 #if defined(LSP_RUNTIME_LIB_PUBLISHER)
     #define LSP_RUNTIME_LIB_PUBLIC          LSP_EXPORT_MODIFIER
-#elif defined(LSP_RUNTIME_LIB_LIB_BUILTIN) || defined(LSP_IDE_DEBUG)
+#elif defined(LSP_RUNTIME_LIB_BUILTIN) || defined(LSP_IDE_DEBUG)
     #define LSP_RUNTIME_LIB_PUBLIC
 #else
     #define LSP_RUNTIME_LIB_PUBLIC          LSP_IMPORT_MODIFIER

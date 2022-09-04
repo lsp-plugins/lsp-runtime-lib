@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.8 ===
+* Fixed improper export definitions (typo in macro).
 
 === 1.0.7 ===
 * Added system::get_time_millis() function.
