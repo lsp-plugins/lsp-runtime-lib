@@ -2,6 +2,8 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.8 ===
+
 === 1.0.7 ===
 * Added system::get_time_millis() function.
 * Got rid of the <windows.h> plague header in header files.
