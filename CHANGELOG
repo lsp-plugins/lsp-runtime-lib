@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.9 ===
+* Updated build scripts.
 
 === 1.0.8 ===
 * Fixed improper export definitions (typo in macro).
