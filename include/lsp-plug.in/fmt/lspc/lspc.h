@@ -97,12 +97,27 @@ namespace lsp
             uint32_t        reserved[6];    // Some reserved data for future use
         } chunk_audio_profile_t;
 
+        typedef struct chunk_text_config_t  // Magic number: 'TCFG'
+        {
+            header_t        common;         // Common header data
+            uint16_t        pad;            // Padding (reserved)
+        } chunk_text_config_t;
+
+        typedef struct chunk_file_t         // Magic number: 'FILE'
+        {
+            header_t        common;         // Common header data
+            uint16_t        path_len;       // Length of the path
+            char            path[];         // Relative path in UTF-8 encoding
+        } chunk_file_t;
+
     #pragma pack(pop)
 
     // Different chunk types
     #define LSPC_ROOT_MAGIC             0x4C535043
     #define LSPC_CHUNK_AUDIO            0x41554449
     #define LSPC_CHUNK_PROFILE          0x50524F46
+    #define LSPC_CHUNK_TEXT_CONFIG      0x54434647
+    #define LSPC_CHUNK_FILE             0x46494C45
 
     // Chunk flags
     #define LSPC_CHUNK_FLAG_LAST        (1 << 0)
