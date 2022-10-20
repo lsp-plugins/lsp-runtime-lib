@@ -28,8 +28,10 @@ namespace lsp
     namespace lspc
     {
         ChunkWriter::ChunkWriter(Resource *fd, uint32_t magic):
-            ChunkAccessor(fd, magic)
+            ChunkAccessor(fd, magic),
+            sStream(this)
         {
+            nPosition = 0;
             if (last_error() != STATUS_OK)
                 return;
             nChunksOut      = 0;
@@ -121,6 +123,7 @@ namespace lsp
 
                         // Update position and counter
                         nBufPos         = 0;
+                        nPosition      += nBufSize;
                         nChunksOut     ++;
                     }
                 }
@@ -147,6 +150,7 @@ namespace lsp
                     // Update position and counter
                     count          -= can_write;
                     src            += can_write;
+                    nPosition      += can_write;
                     nChunksOut     ++;
                 }
             }
@@ -159,7 +163,7 @@ namespace lsp
             if (pFile == NULL)
                 return set_error(STATUS_CLOSED);
 
-            const header_t *phdr = reinterpret_cast<const header_t *>(buf);
+            const header_t *phdr = static_cast<const header_t *>(buf);
             if (phdr->size < sizeof(header_t))
                 return set_error(STATUS_BAD_ARGUMENTS);
 

@@ -24,6 +24,7 @@
 
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/fmt/lspc/ChunkAccessor.h>
+#include <lsp-plug.in/fmt/lspc/ChunkReaderStream.h>
 
 namespace lsp
 {
@@ -41,13 +42,28 @@ namespace lsp
                 uint32_t            nUnread;            // Number of bytes still not read from chunk
                 size_t              nBufTail;           // Buffer tail
                 wsize_t             nFileOff;           // File read offset
-                bool                bLast;
+                wssize_t            nPosition;          // Actual read position
+                bool                bLast;              // Indicator of the last chunk
+                ChunkReaderStream   sStream;            // The stream interface
 
             protected:
                 explicit ChunkReader(Resource *fd, uint32_t magic, uint32_t uid);
 
             public:
                 virtual ~ChunkReader();
+
+            public:
+                /**
+                 * Obtain access to chunk reader as a stream.
+                 * @return pointer to the stream
+                 */
+                inline io::IInStream   *stream()            { return &sStream;      }
+
+                /**
+                 * Get current read position in bytes
+                 * @return actual position from the beginning of the chunk including header
+                 */
+                inline wssize_t         position() const    { return nPosition;     }
 
             public:
                 /**
@@ -63,7 +79,7 @@ namespace lsp
                  * Read regular data from LSPC chunk.
                  * @param buf the pointer to store data
                  * @param count number of bytes to read
-                 * @return status of operation or error code (negative)
+                 * @return number of bytes read or error code (negative)
                  */
                 virtual ssize_t     read(void *buf, size_t count);
 
