@@ -1860,13 +1860,13 @@ namespace lsp
                 return res;
 
             // Check that beginning of paths matches
-            size_t matched = sPath.match(&base->sPath);
+            ssize_t matched = sPath.match(&base->sPath);
             if (matched <= 0)
                 return STATUS_NOT_FOUND;
 
             // The length matches the base file?
             ssize_t idx1, idx2;
-            if (matched == base->length())
+            if (matched == ssize_t(base->length()))
             {
                 if (sPath.length() == base->length())
                 {
@@ -1887,7 +1887,7 @@ namespace lsp
                 if ((idx1 < 0) || (idx2 != idx1))
                     return STATUS_NOT_FOUND;
             }
-            else if (matched == sPath.length())
+            else if (matched == ssize_t(sPath.length()))
             {
                 if (base->sPath.char_at(matched) != FILE_SEPARATOR_C)
                     return STATUS_NOT_FOUND;
@@ -1898,7 +1898,19 @@ namespace lsp
             }
             else
             {
-                // Find last matchind file separator
+                // Special case when the match ended up with file separator
+                // in one or both path names.
+                if (sPath.char_at(matched) == FILE_SEPARATOR_C)
+                {
+                    if (base->sPath.char_at(matched) != FILE_SEPARATOR_C)
+                        --matched;
+                }
+                else if (base->sPath.char_at(matched) == FILE_SEPARATOR_C)
+                    --matched;
+                if (matched < 0)
+                    return STATUS_NOT_FOUND;
+
+                // Find last matching file separator
                 idx1 = sPath.rindex_of(matched, FILE_SEPARATOR_C);
                 idx2 = base->sPath.rindex_of(matched, FILE_SEPARATOR_C);
                 if ((idx1 < 0) || (idx2 != idx1))
