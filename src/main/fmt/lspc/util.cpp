@@ -86,7 +86,7 @@ namespace lsp
 
             // Create chunk and remember it's size
             status_t res;
-            lspc::ChunkWriter *cw = file->write_chunk(LSPC_CHUNK_AUDIO);
+            lspc::ChunkWriter *cw = file->write_chunk(LSPC_CHUNK_PATH);
             if (cw == NULL)
                 return STATUS_BAD_STATE;
             lsp_finally { delete cw; };
@@ -114,8 +114,6 @@ namespace lsp
             if ((res = cw->write_header(&cp)) != STATUS_OK)
                 return res;
             if ((res = cw->write(path->path, path_size)) != STATUS_OK)
-                return res;
-            if ((res = cw->flush()) != STATUS_OK)
                 return res;
             if ((res = cw->close()) != STATUS_OK)
                 return res;
@@ -214,9 +212,8 @@ namespace lsp
 
             // Write data to configuration entry
             io::IOutStream *os = wr->stream();
-            res = is->sink(os, buf_size);
-            if (res == STATUS_OK)
-                res = os->flush();
+            wssize_t written = is->sink(os, buf_size);
+            res = (written < 0) ? -written : STATUS_OK;
 
             // Close stream, writer and exit
             status_t res2 = os->close();
