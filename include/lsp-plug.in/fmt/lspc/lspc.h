@@ -41,9 +41,11 @@ namespace lsp
          */
 
     #pragma pack(push, 1)
+        typedef uint32_t chunk_id_t;        // Chunk identifier
+
         typedef struct root_header_t
         {
-            uint32_t        magic;          // Magic number, should be 'LSPC'
+            uint32_t        magic;          // Magic number, should be LSPC_ROOT_MAGIC
             uint16_t        version;        // Header version
             uint16_t        size;           // Size of header
             uint32_t        reserved[4];    // Some reserved data
@@ -69,23 +71,23 @@ namespace lsp
             uint8_t         data[];         // header contents
         } chunk_raw_header_t;
 
-        typedef struct chunk_audio_header_t // Magic number: 'LCAH'
+        typedef struct chunk_audio_header_t // Magic number: LSPC_CHUNK_AUDIO
         {
             header_t        common;         // Common header data
             uint8_t         channels;       // Number of channels
-            uint8_t         sample_format;  // Sample format
+            uint8_t         sample_format;  // Sample format (see lspc_sample_format_t)
             uint32_t        sample_rate;    // Sample rate
-            uint32_t        codec;          // Codec used
+            uint32_t        codec;          // Codec used (see lspc_codec_t)
             uint64_t        frames;         // Overall number of frames in file
             int64_t 		offset; 		// Offset with which to load the frames (since header v.1, deprecated since header v.2)
             uint32_t        reserved[4];    // Some reserved data
         } chunk_audio_header_t;
 
-        typedef struct chunk_audio_profile_t // Magic number: 'LCAP'
+        typedef struct chunk_audio_profile_t // Magic number: LSPC_CHUNK_PROFILE
         {
             header_t        common;         // Common header data
-            uint16_t        pad;            // Padding (reserved)
-            uint32_t        chunk_id;       // Chunk identifier related to the audio profile
+            uint16_t        pad;            // Padding (reserved), should be zero
+            chunk_id_t      chunk_id;       // Chunk identifier related to the audio profile
             uint32_t        chirp_order;    // Chirp order
             float           alpha;          // The chirp parameter alpha, a float value
             double          beta;           // The chirp parameter beta, a double value
@@ -97,74 +99,96 @@ namespace lsp
             uint32_t        reserved[6];    // Some reserved data for future use
         } chunk_audio_profile_t;
 
-        typedef struct chunk_text_config_t  // Magic number: 'TCFG'
+        typedef struct chunk_text_config_t  // Magic number: LSPC_CHUNK_TEXT_CONFIG
         {
             header_t        common;         // Common header data
-            uint16_t        pad;            // Padding (reserved)
+            uint16_t        pad;            // Padding (reserved), should be zero
+            chunk_id_t      chunk_id;       // Identifier of chunk that contains the data
         } chunk_text_config_t;
 
-        typedef struct chunk_file_t         // Magic number: 'FILE'
+        typedef struct chunk_path_t         // Magic number: LSPC_CHUNK_PATH
         {
             header_t        common;         // Common header data
-            uint16_t        path_len;       // Length of the path
-            char            path[];         // Relative path in UTF-8 encoding
-        } chunk_file_t;
+            uint16_t        path_size;      // Size of the path string in bytes
+            uint32_t        flags;          // Path flags (see path_flags_t)
+            chunk_id_t      chunk_id;       // Identifier of the related chunk that contains the data
+            char            path[];         // Relative path in UTF-8 encoding, no zero at the end of path
+        } chunk_path_t;
+
+        typedef struct chunk_plain_data_t   // Magic number: 'LSPC_CHUNK_PLAIN_DATA
+        {
+            header_t        common;         // Common header data
+            uint8_t         data[];         // The data contained in the chunk
+        } chunk_plain_data_t;
 
     #pragma pack(pop)
 
-    // Different chunk types
-    #define LSPC_ROOT_MAGIC             0x4C535043
-    #define LSPC_CHUNK_AUDIO            0x41554449
-    #define LSPC_CHUNK_PROFILE          0x50524F46
-    #define LSPC_CHUNK_TEXT_CONFIG      0x54434647
-    #define LSPC_CHUNK_FILE             0x46494C45
+        // Different chunk types
+        #define LSPC_ROOT_MAGIC             0x4C535043      /* 'LSPC' - magic number for the root LSPC header           */
+        #define LSPC_CHUNK_AUDIO            0x41554449      /* 'AUDI' - magic number for the audio data chunk           */
+        #define LSPC_CHUNK_PROFILE          0x50524F46      /* 'PROF' - magic number for the profile data chunk         */
+        #define LSPC_CHUNK_TEXT_CONFIG      0x54434647      /* 'TCFG' - magic number for the text configuration file    */
+        #define LSPC_CHUNK_PATH             0x50415448      /* 'PATH' - magic number for the file descriptor            */
+        #define LSPC_CHUNK_PLAIN_DATA       0x44415441      /* 'DATA' - magic number for some plain data                */
 
-    // Chunk flags
-    #define LSPC_CHUNK_FLAG_LAST        (1 << 0)
+        // Chunk flags
+        #define LSPC_CHUNK_FLAG_LAST        (1 << 0)
 
-    // Different kinds of sample format
-    #define LSPC_SAMPLE_FMT_U8LE        0x00
-    #define LSPC_SAMPLE_FMT_U8BE        0x01
-    #define LSPC_SAMPLE_FMT_S8LE        0x02
-    #define LSPC_SAMPLE_FMT_S8BE        0x03
-    #define LSPC_SAMPLE_FMT_U16LE       0x04
-    #define LSPC_SAMPLE_FMT_U16BE       0x05
-    #define LSPC_SAMPLE_FMT_S16LE       0x06
-    #define LSPC_SAMPLE_FMT_S16BE       0x07
-    #define LSPC_SAMPLE_FMT_U24LE       0x08
-    #define LSPC_SAMPLE_FMT_U24BE       0x09
-    #define LSPC_SAMPLE_FMT_S24LE       0x0a
-    #define LSPC_SAMPLE_FMT_S24BE       0x0b
-    #define LSPC_SAMPLE_FMT_U32LE       0x0c
-    #define LSPC_SAMPLE_FMT_U32BE       0x0d
-    #define LSPC_SAMPLE_FMT_S32LE       0x0e
-    #define LSPC_SAMPLE_FMT_S32BE       0x0f
-    #define LSPC_SAMPLE_FMT_F32LE       0x10
-    #define LSPC_SAMPLE_FMT_F32BE       0x11
-    #define LSPC_SAMPLE_FMT_F64LE       0x12
-    #define LSPC_SAMPLE_FMT_F64BE       0x13
+        // Different kinds of sample format
+        enum lspc_sample_format_t
+        {
+            SAMPLE_FMT_U8LE         = 0x00,
+            SAMPLE_FMT_U8BE         = 0x01,
+            SAMPLE_FMT_S8LE         = 0x02,
+            SAMPLE_FMT_S8BE         = 0x03,
+            SAMPLE_FMT_U16LE        = 0x04,
+            SAMPLE_FMT_U16BE        = 0x05,
+            SAMPLE_FMT_S16LE        = 0x06,
+            SAMPLE_FMT_S16BE        = 0x07,
+            SAMPLE_FMT_U24LE        = 0x08,
+            SAMPLE_FMT_U24BE        = 0x09,
+            SAMPLE_FMT_S24LE        = 0x0a,
+            SAMPLE_FMT_S24BE        = 0x0b,
+            SAMPLE_FMT_U32LE        = 0x0c,
+            SAMPLE_FMT_U32BE        = 0x0d,
+            SAMPLE_FMT_S32LE        = 0x0e,
+            SAMPLE_FMT_S32BE        = 0x0f,
+            SAMPLE_FMT_F32LE        = 0x10,
+            SAMPLE_FMT_F32BE        = 0x11,
+            SAMPLE_FMT_F64LE        = 0x12,
+            SAMPLE_FMT_F64BE        = 0x13
+        };
 
-    typedef struct audio_parameters_t
-    {
-        size_t          channels;       // Number of channels
-        size_t          sample_format;  // Sample format
-        size_t          sample_rate;    // Sample rate
-        size_t          codec;          // Codec used
-        wsize_t         frames;         // Overall number of frames in file
-    } audio_parameters_t;
+        #define LSPC_SAMPLE_FMT_IS_LE(x)    (!(x & 1))
+        #define LSPC_SAMPLE_FMT_IS_BE(x)    (x & 1)
+        #ifdef ARCH_LE /* Little-endian architecture */
+            #define LSPC_SAMPLE_FMT_NEED_REVERSE(x)         LSPC_SAMPLE_FMT_IS_BE(x)
+        #else /* Big-endian architecture */
+            #define LSPC_SAMPLE_FMT_NEED_REVERSE(x)         LSPC_SAMPLE_FMT_IS_LE(x)
+        #endif /* ARCH_LE */
 
-    #define LSPC_SAMPLE_FMT_IS_LE(x)    (!(x & 1))
-    #define LSPC_SAMPLE_FMT_IS_BE(x)    (x & 1)
-    #ifdef ARCH_LE /* Little-endian architecture */
-        #define LSPC_SAMPLE_FMT_NEED_REVERSE(x)     LSPC_SAMPLE_FMT_IS_BE(x)
-    #else /* Big-endian architecture */
-        #define  LSPC_SAMPLE_FMT_NEED_REVERSE(x)     LSPC_SAMPLE_FMT_IS_LE(x)
-    #endif /* ARCH_LE */
+        // Different codec types
+        enum lspc_codec_t
+        {
+            CODEC_PCM               = 0         // PCM data
+        };
 
-    // Different codec types
-    #define LSPC_CODEC_PCM              0
+        // Different path flags
+        enum path_flags_t
+        {
+            PATH_DIR                = 1 << 0    // Pathname is a directory
+        };
 
-    }
-} /* lsp */
+        typedef struct audio_parameters_t
+        {
+            size_t          channels;       // Number of channels
+            size_t          sample_format;  // Sample format
+            size_t          sample_rate;    // Sample rate
+            size_t          codec;          // Codec used
+            wsize_t         frames;         // Overall number of frames in file
+        } audio_parameters_t;
+
+    } /* namespace lspc */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_FMT_LSPC_LSPC_H_ */

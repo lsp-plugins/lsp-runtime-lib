@@ -225,7 +225,7 @@ namespace lsp
                 return STATUS_BAD_FORMAT;
             else if (p->sample_rate == 0)
                 return STATUS_BAD_FORMAT;
-            else if (p->codec != LSPC_CODEC_PCM)
+            else if (p->codec != lspc::CODEC_PCM)
                 return STATUS_BAD_FORMAT;
 
             size_t sb           = 0;
@@ -236,83 +236,83 @@ namespace lsp
 
             switch (p->sample_format)
             {
-                case LSPC_SAMPLE_FMT_U8LE:
-                case LSPC_SAMPLE_FMT_U8BE:
+                case lspc::SAMPLE_FMT_U8LE:
+                case lspc::SAMPLE_FMT_U8BE:
                     ef = encode_u8;
                     sb = 1;
-                    le = p->sample_format == LSPC_SAMPLE_FMT_U8LE;
+                    le = p->sample_format == lspc::SAMPLE_FMT_U8LE;
                     break;
 
-                case LSPC_SAMPLE_FMT_S8LE:
-                case LSPC_SAMPLE_FMT_S8BE:
+                case lspc::SAMPLE_FMT_S8LE:
+                case lspc::SAMPLE_FMT_S8BE:
                     ef = encode_s8;
                     sb = 1;
-                    le = p->sample_format == LSPC_SAMPLE_FMT_S8LE;
+                    le = p->sample_format == lspc::SAMPLE_FMT_S8LE;
                     break;
 
-                case LSPC_SAMPLE_FMT_U16LE:
-                case LSPC_SAMPLE_FMT_U16BE:
+                case lspc::SAMPLE_FMT_U16LE:
+                case lspc::SAMPLE_FMT_U16BE:
                     ef = encode_u16;
                     sb = 2;
-                    le = p->sample_format == LSPC_SAMPLE_FMT_U16LE;
+                    le = p->sample_format == lspc::SAMPLE_FMT_U16LE;
                     break;
 
-                case LSPC_SAMPLE_FMT_S16LE:
-                case LSPC_SAMPLE_FMT_S16BE:
+                case lspc::SAMPLE_FMT_S16LE:
+                case lspc::SAMPLE_FMT_S16BE:
                     ef = encode_s16;
                     sb = 2;
-                    le = p->sample_format == LSPC_SAMPLE_FMT_S16LE;
+                    le = p->sample_format == lspc::SAMPLE_FMT_S16LE;
                     break;
 
-                case LSPC_SAMPLE_FMT_U24LE:
+                case lspc::SAMPLE_FMT_U24LE:
                     ef = encode_u24le;
                     sb = 3;
                     le = true;
                     break;
-                case LSPC_SAMPLE_FMT_U24BE:
+                case lspc::SAMPLE_FMT_U24BE:
                     ef = encode_u24be;
                     sb = 3;
                     le = false;
                     break;
-                case LSPC_SAMPLE_FMT_S24LE:
+                case lspc::SAMPLE_FMT_S24LE:
                     ef = encode_s24le;
                     sb = 3;
                     le = true;
                     break;
-                case LSPC_SAMPLE_FMT_S24BE:
+                case lspc::SAMPLE_FMT_S24BE:
                     ef = encode_s24be;
                     sb = 3;
                     le = false;
                     break;
 
-                case LSPC_SAMPLE_FMT_U32LE:
-                case LSPC_SAMPLE_FMT_U32BE:
+                case lspc::SAMPLE_FMT_U32LE:
+                case lspc::SAMPLE_FMT_U32BE:
                     ef = encode_u32;
                     sb = 4;
-                    le = p->sample_format == LSPC_SAMPLE_FMT_U32LE;
+                    le = p->sample_format == lspc::SAMPLE_FMT_U32LE;
                     break;
 
-                case LSPC_SAMPLE_FMT_S32LE:
-                case LSPC_SAMPLE_FMT_S32BE:
+                case lspc::SAMPLE_FMT_S32LE:
+                case lspc::SAMPLE_FMT_S32BE:
                     ef = encode_s32;
                     sb = 4;
-                    le = p->sample_format == LSPC_SAMPLE_FMT_S32LE;
+                    le = p->sample_format == lspc::SAMPLE_FMT_S32LE;
                     break;
 
-                case LSPC_SAMPLE_FMT_F32LE:
-                case LSPC_SAMPLE_FMT_F32BE:
+                case lspc::SAMPLE_FMT_F32LE:
+                case lspc::SAMPLE_FMT_F32BE:
                     ef = encode_f32;
                     int_sample = false;
                     sb = 4;
-                    le = p->sample_format == LSPC_SAMPLE_FMT_F32LE;
+                    le = p->sample_format == lspc::SAMPLE_FMT_F32LE;
                     break;
 
-                case LSPC_SAMPLE_FMT_F64LE:
-                case LSPC_SAMPLE_FMT_F64BE:
+                case lspc::SAMPLE_FMT_F64LE:
+                case lspc::SAMPLE_FMT_F64BE:
                     ef = encode_f64;
                     int_sample = false;
                     sb = 8;
-                    le = p->sample_format == LSPC_SAMPLE_FMT_F64LE;
+                    le = p->sample_format == lspc::SAMPLE_FMT_F64LE;
                     break;
 
                 default:
