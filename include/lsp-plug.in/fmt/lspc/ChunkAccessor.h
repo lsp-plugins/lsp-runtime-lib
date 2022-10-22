@@ -23,8 +23,10 @@
 #define LSP_PLUG_IN_FMT_LSPC_CHUNKACCESSOR_H_
 
 #include <lsp-plug.in/runtime/version.h>
+
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
+#include <lsp-plug.in/fmt/lspc/lspc.h>
 #include <lsp-plug.in/stdlib/stdio.h>
 
 namespace lsp
@@ -67,7 +69,7 @@ namespace lsp
                 Resource       *pFile;          // Pointer to the shared file resource
                 uint32_t        nMagic;         // Magic number as size of chunk
                 status_t        nErrorCode;     // Last error code
-                uint32_t        nUID;           // Unique chunk identifier
+                chunk_id_t      nUID;           // Unique chunk identifier
 
             protected:
                 inline status_t set_error(status_t err)     { return nErrorCode = err; }
@@ -82,7 +84,7 @@ namespace lsp
             public:
                 inline size_t       buffer_size() const     { return nBufSize;      }
                 inline status_t     last_error() const      { return nErrorCode;    }
-                inline uint32_t     unique_id() const       { return nUID;          }
+                inline chunk_id_t   unique_id() const       { return nUID;          }
                 inline uint32_t     magic() const           { return nMagic;        }
 
             public:

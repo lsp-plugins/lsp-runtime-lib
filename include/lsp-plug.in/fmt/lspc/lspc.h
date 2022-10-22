@@ -112,13 +112,12 @@ namespace lsp
             uint16_t        path_size;      // Size of the path string in bytes
             uint32_t        flags;          // Path flags (see path_flags_t)
             chunk_id_t      chunk_id;       // Identifier of the related chunk that contains the data
-            char            path[];         // Relative path in UTF-8 encoding, no zero at the end of path
         } chunk_path_t;
 
         typedef struct chunk_plain_data_t   // Magic number: 'LSPC_CHUNK_PLAIN_DATA
         {
             header_t        common;         // Common header data
-            uint8_t         data[];         // The data contained in the chunk
+            uint16_t        pad;            // Padding (reserved), should be zero
         } chunk_plain_data_t;
 
     #pragma pack(pop)
@@ -187,6 +186,13 @@ namespace lsp
             size_t          codec;          // Codec used
             wsize_t         frames;         // Overall number of frames in file
         } audio_parameters_t;
+
+        typedef struct path_entry_t
+        {
+            const char     *path;           // Path entry
+            uint32_t        flags;          // Path flag
+            chunk_id_t      chunk_id;       // Referenced chunk identifier
+        } path_entry_t;
 
     } /* namespace lspc */
 } /* namespace lsp */
