@@ -25,7 +25,9 @@
 #include <lsp-plug.in/runtime/version.h>
 
 #include <lsp-plug.in/common/status.h>
+#include <lsp-plug.in/fmt/lspc/ChunkWriter.h>
 #include <lsp-plug.in/fmt/lspc/File.h>
+#include <lsp-plug.in/io/IInStream.h>
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 
@@ -61,8 +63,8 @@ namespace lsp
 
         /**
          * Write path entry to LSPC file
-         * @param chunk_id pointer to return chunk identifier, can be NULL
-         * @param file the LSPC file to create chunk
+         * @param chunk_id pointer to store allocated chunk identifier, can be NULL
+         * @param file the LSPC file to write the chunk
          * @param path the path string
          * @param flags path flags
          * @param reference_id the identifier of chunk referenced by the path entry
@@ -71,6 +73,69 @@ namespace lsp
         status_t write_path_entry(chunk_id_t *chunk_id, File *file, const char *path, size_t flags, chunk_id_t reference_id);
         status_t write_path_entry(chunk_id_t *chunk_id, File *file, const io::Path *path, size_t flags, chunk_id_t reference_id);
         status_t write_path_entry(chunk_id_t *chunk_id, File *file, const LSPString *path, size_t flags, chunk_id_t reference_id);
+
+        /**
+         * Write configuration entry to the LSPC file
+         * @param chunk_id pointer to store allocated chunk identifier, can be NULL
+         * @param file the LSPC file to write the chunk
+         * @param path the location of configuration file to write
+         * @param buf_size size of buffer for I/O operations
+         * @return status of operation
+         */
+        status_t write_config_entry(chunk_id_t *chunk_id, File *file, const char *path, size_t buf_size = 0x1000);
+        status_t write_config_entry(chunk_id_t *chunk_id, File *file, const io::Path *path, size_t buf_size = 0x1000);
+        status_t write_config_entry(chunk_id_t *chunk_id, File *file, const LSPString *path, size_t buf_size = 0x1000);
+
+        /**
+         * Write the contents of the passed stream to the LSPC file as a configuration chunk
+         * @param chunk_id pointer to store allocated chunk identifier, can be NULL
+         * @param file the LSPC file to write the chunk
+         * @param is input stream that provides data to write
+         * @param buf_size size of buffer for I/O operations
+         * @return status of operation
+         */
+        status_t write_config_entry(chunk_id_t *chunk_id, File *file, io::IInStream *is, size_t buf_size = 0x1000);
+
+        /**
+         * Create configuration entry in the LSPC file and return chunk writer that will allow to write to the entry
+         * @param chunk_id pointer to store allocated chunk identifier, can be NULL
+         * @param file the LSPC file to write the chunk
+         * @param writer pointer to store the created chunk writer that should be deleted after use
+         * @return status of operation
+         */
+        status_t write_config_entry(chunk_id_t *chunk_id, File *file, lspc::ChunkWriter **writer);
+
+        /**
+         * Create configuration entry in the LSPC file and return chunk writer that will allow to write to the entry
+         * @param chunk_id pointer to store allocated chunk identifier, can be NULL
+         * @param file the LSPC file to write the chunk
+         * @param os pointer to store the created output stream that should be deleted after use
+         * @param buf_size size of buffer for I/O operations
+         * @return status of operation
+         */
+        status_t write_config_entry(chunk_id_t *chunk_id, File *file, io::IOutStream **os);
+
+        /**
+         * Write configuration entry data to the LSPC file
+         * @param chunk_id pointer to store allocated chunk identifier, can be NULL
+         * @param file the LSPC file to write the chunk
+         * @param data the text configuration data to write to the file
+         * @param buf_size size of buffer for I/O operations
+         * @return status of operation
+         */
+        status_t write_config_entry_data(chunk_id_t *chunk_id, File *file, const char *data, size_t buf_size = 0x1000);
+        status_t write_config_entry_data(chunk_id_t *chunk_id, File *file, const LSPString *data, size_t buf_size = 0x1000);
+
+        /**
+         * Write configuration entry data to the LSPC file
+         * @param chunk_id pointer to store allocated chunk identifier, can be NULL
+         * @param file the LSPC file to write the chunk
+         * @param data the binary data to write to the file
+         * @param bytes the size of data in bytes
+         * @param buf_size size of buffer for I/O operations
+         * @return status of operation
+         */
+        status_t write_config_entry_data(chunk_id_t *chunk_id, File *file, const void *data, size_t bytes, size_t buf_size = 0x1000);
     } /* namespace lspc */
 } /* namespace lsp */
 

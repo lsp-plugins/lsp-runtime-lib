@@ -25,13 +25,23 @@ namespace lsp
 {
     namespace lspc
     {
-        ChunkWriterStream::ChunkWriterStream(ChunkWriter *writer)
+        ChunkWriterStream::ChunkWriterStream(ChunkWriter *writer, bool free)
         {
             pWriter = writer;
+            bDelete = free;
         }
 
         ChunkWriterStream::~ChunkWriterStream()
         {
+            do_close();
+        }
+
+        void ChunkWriterStream::do_close()
+        {
+            if (pWriter == NULL)
+                return;
+            if (bDelete)
+                delete pWriter;
             pWriter = NULL;
         }
 
@@ -80,8 +90,9 @@ namespace lsp
 
         status_t ChunkWriterStream::close()
         {
-            pWriter     = NULL;
+            do_close();
             return set_error(STATUS_OK);
         }
+
     } /* namespace lspc */
 } /* namespace lsp */

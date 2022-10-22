@@ -38,9 +38,13 @@ namespace lsp
 
             private:
                 ChunkWriter    *pWriter;
+                bool            bDelete;
+
+            private:
+                void            do_close();
 
             public:
-                ChunkWriterStream(ChunkWriter *writer);
+                ChunkWriterStream(ChunkWriter *writer, bool free = false);
                 virtual ~ChunkWriterStream();
 
             public:

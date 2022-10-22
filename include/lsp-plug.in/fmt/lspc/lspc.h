@@ -103,7 +103,6 @@ namespace lsp
         {
             header_t        common;         // Common header data
             uint16_t        pad;            // Padding (reserved), should be zero
-            chunk_id_t      chunk_id;       // Identifier of chunk that contains the data
         } chunk_text_config_t;
 
         typedef struct chunk_path_t         // Magic number: LSPC_CHUNK_PATH
@@ -114,7 +113,7 @@ namespace lsp
             chunk_id_t      chunk_id;       // Identifier of the related chunk that contains the data
         } chunk_path_t;
 
-        typedef struct chunk_plain_data_t   // Magic number: 'LSPC_CHUNK_PLAIN_DATA
+        typedef struct chunk_plain_data_t   // Magic number: LSPC_CHUNK_PLAIN_DATA
         {
             header_t        common;         // Common header data
             uint16_t        pad;            // Padding (reserved), should be zero
