@@ -5,6 +5,8 @@
 === 1.0.10 ===
 * Fixed bug in io::Path::as_relative() call.
 * Fixed bug in lspc::AudioWriter::write_frames() method.
+* Added lspc::IAudioFormatSelector interface class for selecting audio format
+  when writing to LSPC file.
 
 === 1.0.9 ===
 * Updated build scripts.
