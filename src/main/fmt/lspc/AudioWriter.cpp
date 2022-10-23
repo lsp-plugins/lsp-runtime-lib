@@ -409,59 +409,6 @@ namespace lsp
             return create(path->as_string(), params);
         }
 
-        status_t AudioWriter::open(File *lspc, const audio_parameters_t *params, bool auto_close)
-        {
-            if (nFlags & F_OPENED)
-                return STATUS_OPENED;
-
-            nFlags                  = 0;
-            status_t res = parse_parameters(params);
-            if (res != STATUS_OK)
-                return res;
-
-            ChunkWriter *wr = lspc->write_chunk(LSPC_CHUNK_AUDIO);
-            if (wr == NULL)
-                return STATUS_NO_MEM;
-
-            res = write_header(wr);
-            if (res != STATUS_OK)
-            {
-                free_resources();
-                wr->close();
-                delete wr;
-                return res;
-            }
-
-            pFD         = lspc;
-            pWD         = wr;
-            nFlags     |= F_OPENED | F_CLOSE_WRITER | F_DROP_WRITER;
-            if (auto_close)
-                nFlags     |= F_CLOSE_FILE;
-            return STATUS_OK;
-        }
-
-        status_t AudioWriter::open_raw(File *lspc, const audio_parameters_t *params, bool auto_close)
-        {
-            if (nFlags & F_OPENED)
-                return STATUS_OPENED;
-
-            nFlags                  = 0;
-            status_t res = parse_parameters(params);
-            if (res != STATUS_OK)
-                return res;
-
-            ChunkWriter *wr = lspc->write_chunk(LSPC_CHUNK_AUDIO);
-            if (wr == NULL)
-                return STATUS_NO_MEM;
-
-            pFD         = lspc;
-            pWD         = wr;
-            nFlags     |= F_OPENED | F_CLOSE_WRITER | F_DROP_WRITER;
-            if (auto_close)
-                nFlags     |= F_CLOSE_FILE;
-            return STATUS_OK;
-        }
-
         status_t AudioWriter::open(File *lspc, uint32_t magic, const audio_parameters_t *params, bool auto_close)
         {
             if (nFlags & F_OPENED)
@@ -493,26 +440,9 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t AudioWriter::open_raw(File *lspc, uint32_t magic, const audio_parameters_t *params, bool auto_close)
+        status_t AudioWriter::open(File *lspc, const audio_parameters_t *params, bool auto_close)
         {
-            if (nFlags & F_OPENED)
-                return STATUS_OPENED;
-
-            nFlags                  = 0;
-            status_t res = parse_parameters(params);
-            if (res != STATUS_OK)
-                return res;
-
-            ChunkWriter *wr = lspc->write_chunk(magic);
-            if (wr == NULL)
-                return STATUS_NO_MEM;
-
-            pFD         = lspc;
-            pWD         = wr;
-            nFlags     |= F_OPENED | F_CLOSE_WRITER | F_DROP_WRITER;
-            if (auto_close)
-                nFlags     |= F_CLOSE_FILE;
-            return STATUS_OK;
+            return open(lspc, LSPC_CHUNK_AUDIO, params, auto_close);
         }
 
         status_t AudioWriter::open(ChunkWriter *wr, const audio_parameters_t *params, bool auto_close)
@@ -535,6 +465,50 @@ namespace lsp
             nFlags     |= F_OPENED;
             if (auto_close)
                 nFlags     |= F_CLOSE_WRITER;
+            return STATUS_OK;
+        }
+
+        status_t AudioWriter::open_raw(File *lspc, const audio_parameters_t *params, bool auto_close)
+        {
+            if (nFlags & F_OPENED)
+                return STATUS_OPENED;
+
+            nFlags                  = 0;
+            status_t res = parse_parameters(params);
+            if (res != STATUS_OK)
+                return res;
+
+            ChunkWriter *wr = lspc->write_chunk(LSPC_CHUNK_AUDIO);
+            if (wr == NULL)
+                return STATUS_NO_MEM;
+
+            pFD         = lspc;
+            pWD         = wr;
+            nFlags     |= F_OPENED | F_CLOSE_WRITER | F_DROP_WRITER;
+            if (auto_close)
+                nFlags     |= F_CLOSE_FILE;
+            return STATUS_OK;
+        }
+
+        status_t AudioWriter::open_raw(File *lspc, uint32_t magic, const audio_parameters_t *params, bool auto_close)
+        {
+            if (nFlags & F_OPENED)
+                return STATUS_OPENED;
+
+            nFlags                  = 0;
+            status_t res = parse_parameters(params);
+            if (res != STATUS_OK)
+                return res;
+
+            ChunkWriter *wr = lspc->write_chunk(magic);
+            if (wr == NULL)
+                return STATUS_NO_MEM;
+
+            pFD         = lspc;
+            pWD         = wr;
+            nFlags     |= F_OPENED | F_CLOSE_WRITER | F_DROP_WRITER;
+            if (auto_close)
+                nFlags     |= F_CLOSE_FILE;
             return STATUS_OK;
         }
 
@@ -564,8 +538,7 @@ namespace lsp
             for (size_t i=0; i<nc; ++i)
                 vp[i]       = data[i];
 
-            size_t n_written = 0;
-            while (n_written < frames)
+            for (size_t n_written = 0; n_written < frames; )
             {
                 // Estimate number of frames to write
                 size_t to_write = frames - n_written;
@@ -593,8 +566,7 @@ namespace lsp
             if (!(nFlags & F_OPENED))
                 return STATUS_CLOSED;
 
-            size_t n_written = 0;
-            while (n_written < frames)
+            for (size_t n_written = 0; n_written < frames; )
             {
                 // Estimate number of frames to write
                 size_t to_write = frames - n_written;
@@ -603,7 +575,7 @@ namespace lsp
 
                 // Copy frames to buffer
                 size_t floats = to_write * nFrameChannels;
-                pEncode(pFBuffer, pBuffer, floats);
+                pEncode(pFBuffer, data, floats);
 
                 // Reverse bytes (if required)
                 if (nFlags & F_REV_BYTES)
