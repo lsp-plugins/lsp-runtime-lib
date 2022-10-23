@@ -186,6 +186,13 @@ namespace lsp
             wsize_t         frames;         // Overall number of frames in file
         } audio_parameters_t;
 
+        typedef struct audio_format_t
+        {
+            size_t          sample_format;  // Sample format
+            size_t          sample_rate;    // Sample rate
+            size_t          codec;          // Codec used
+        } audio_format_t;
+
         typedef struct path_entry_t
         {
             const char     *path;           // Path entry

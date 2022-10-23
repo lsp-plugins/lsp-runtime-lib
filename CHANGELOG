@@ -7,6 +7,7 @@
 * Fixed bug in lspc::AudioWriter::write_frames() method.
 * Added lspc::IAudioFormatSelector interface class for selecting audio format
   when writing to LSPC file.
+* Added several utility functions for easier work with LSPC file format.
 
 === 1.0.9 ===
 * Updated build scripts.

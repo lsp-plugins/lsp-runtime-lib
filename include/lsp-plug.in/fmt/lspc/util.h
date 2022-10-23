@@ -27,6 +27,9 @@
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/fmt/lspc/ChunkWriter.h>
 #include <lsp-plug.in/fmt/lspc/File.h>
+#include <lsp-plug.in/fmt/lspc/IAudioFormatSelector.h>
+#include <lsp-plug.in/mm/IInAudioStream.h>
+#include <lsp-plug.in/mm/types.h>
 #include <lsp-plug.in/io/IInStream.h>
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/runtime/LSPString.h>
@@ -136,6 +139,49 @@ namespace lsp
          * @return status of operation
          */
         status_t write_config_entry_data(chunk_id_t *chunk_id, File *file, const void *data, size_t bytes, size_t buf_size = 0x1000);
+
+        /**
+         * Write audio file as a dedicated chunk to the LSPC file
+         * @param chunk_id pointer to store allocated chunk identifier, can be NULL
+         * @param file the LSPC file to write the chunk
+         * @param is audio input stream to read data
+         * @param buf_size size of buffer for I/O operations
+         * @return status of operation
+         */
+        status_t write_audio_entry(
+            chunk_id_t *chunk_id, File *file,
+            const char *path, IAudioFormatSelector *selector = NULL, size_t buf_size = 0x1000);
+        status_t write_audio_entry(
+            chunk_id_t *chunk_id, File *file,
+            const io::Path *path, IAudioFormatSelector *selector = NULL, size_t buf_size = 0x1000);
+        status_t write_audio_entry(
+            chunk_id_t *chunk_id, File *file,
+            const LSPString *path, IAudioFormatSelector *selector = NULL, size_t buf_size = 0x1000);
+
+        /**
+         * Write audio entry from memory to the LSPC file
+         * @param chunk_id pointer to store allocated chunk identifier, can be NULL
+         * @param file the LSPC file to write the chunk
+         * @param frames pointer to the array with packed frames
+         * @param params audio parameters
+         * @return status of operation
+         */
+        status_t write_audio_entry(
+            chunk_id_t *chunk_id, File *file,
+            const float *frames, const audio_parameters_t *params);
+
+        /**
+         * Write audio file as a dedicated chunk to the LSPC file
+         * @param chunk_id pointer to store allocated chunk identifier, can be NULL
+         * @param file the LSPC file to write the chunk
+         * @param is audio input stream to read data
+         * @param selector audio format selector, default one will be used if none provided
+         * @param buf_size size of buffer for I/O operations
+         * @return status of operation
+         */
+        status_t write_audio_entry(
+            chunk_id_t *chunk_id, File *file,
+            mm::IInAudioStream *is, IAudioFormatSelector *selector = NULL, size_t buf_size = 0x1000);
     } /* namespace lspc */
 } /* namespace lsp */
 
