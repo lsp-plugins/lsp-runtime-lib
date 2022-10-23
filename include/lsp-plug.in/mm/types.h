@@ -35,17 +35,18 @@ namespace lsp
         enum sformat_t
         {
             SFMT_NONE,
+            SFMT_SHIFT_BITS = 2,
 
-            SFMT_U8         = 1 << 2,
-            SFMT_S8         = 2 << 2,
-            SFMT_U16        = 3 << 2,
-            SFMT_S16        = 4 << 2,
-            SFMT_U24        = 5 << 2,
-            SFMT_S24        = 6 << 2,
-            SFMT_U32        = 7 << 2,
-            SFMT_S32        = 8 << 2,
-            SFMT_F32        = 9 << 2,
-            SFMT_F64        = 10 << 2,
+            SFMT_U8         = 1 << SFMT_SHIFT_BITS,
+            SFMT_S8         = 2 << SFMT_SHIFT_BITS,
+            SFMT_U16        = 3 << SFMT_SHIFT_BITS,
+            SFMT_S16        = 4 << SFMT_SHIFT_BITS,
+            SFMT_U24        = 5 << SFMT_SHIFT_BITS,
+            SFMT_S24        = 6 << SFMT_SHIFT_BITS,
+            SFMT_U32        = 7 << SFMT_SHIFT_BITS,
+            SFMT_S32        = 8 << SFMT_SHIFT_BITS,
+            SFMT_F32        = 9 << SFMT_SHIFT_BITS,
+            SFMT_F64        = 10 << SFMT_SHIFT_BITS,
 
             SFMT_DFL        = 0,
             SFMT_LE         = 1,
