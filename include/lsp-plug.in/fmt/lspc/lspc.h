@@ -195,7 +195,7 @@ namespace lsp
 
         typedef struct path_entry_t
         {
-            const char     *path;           // Path entry
+            char           *path;           // Path entry
             uint32_t        flags;          // Path flag
             chunk_id_t      chunk_id;       // Referenced chunk identifier
         } path_entry_t;

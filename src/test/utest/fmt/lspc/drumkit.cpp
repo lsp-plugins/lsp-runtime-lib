@@ -49,13 +49,13 @@ UTEST_BEGIN("runtime.fmt.lspc", drumkit)
             {
                 // Read file and create audio chunk
                 printf("Writing file data chunk for file '%s'...\n", abs_child.as_native());
-                UTEST_ASSERT(lspc::write_audio_entry(&chunk_id, lspc, &abs_child) == STATUS_OK);
+                UTEST_ASSERT(lspc::write_audio(&chunk_id, lspc, &abs_child) == STATUS_OK);
                 printf("Written as chunk id=%d\n", int(chunk_id));
 
                 // Write the path entry that references the created audio chunk
                 printf("Writing path entry chunk '%s' referencing chunk id=%d for file '%s'...\n",
                     child.as_native(), int(chunk_id), abs_child.as_native());
-                UTEST_ASSERT(lspc::write_path_entry(&chunk_id, lspc, &child, 0, chunk_id) == STATUS_OK);
+                UTEST_ASSERT(lspc::write_path(&chunk_id, lspc, &child, 0, chunk_id) == STATUS_OK);
                 printf("Written as chunk id=%d\n", int(chunk_id));
             }
             else if (attr.type == io::fattr_t::FT_DIRECTORY)
@@ -64,7 +64,7 @@ UTEST_BEGIN("runtime.fmt.lspc", drumkit)
                     continue;
 
                 printf("Writing path entry chunk for directory '%s'...\n", abs_child.as_native());
-                UTEST_ASSERT(lspc::write_path_entry(&chunk_id, lspc, &item, lspc::PATH_DIR, 0) == STATUS_OK);
+                UTEST_ASSERT(lspc::write_path(&chunk_id, lspc, &item, lspc::PATH_DIR, 0) == STATUS_OK);
                 printf("Written as chunk id=%d\n", int(chunk_id));
 
                 // Perform recursive call
@@ -87,7 +87,7 @@ UTEST_BEGIN("runtime.fmt.lspc", drumkit)
         write_dir_to_drumkit(&lspc, path, &relative);
 
         printf("Writing configuration file '%s'...\n", config->as_native());
-        UTEST_ASSERT(lspc::write_config_entry(&chunk_id, &lspc, config) == STATUS_OK);
+        UTEST_ASSERT(lspc::write_config(&chunk_id, &lspc, config) == STATUS_OK);
         printf("Written as chunk id=%d\n", int(chunk_id));
     }
 
