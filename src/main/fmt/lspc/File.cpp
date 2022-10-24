@@ -22,10 +22,12 @@
 #include <lsp-plug.in/common/endian.h>
 #include <lsp-plug.in/stdlib/string.h>
 #include <lsp-plug.in/fmt/lspc/lspc.h>
+#include <lsp-plug.in/fmt/lspc/File.h>
+#include <lsp-plug.in/lltl/darray.h>
+
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <lsp-plug.in/fmt/lspc/File.h>
 
 #ifdef PLATFORM_WINDOWS
     #include <windows.h>
@@ -352,6 +354,119 @@ namespace lsp
             rd->nFileOff        = pos;
             rd->nUnread         = hdr.size;
             return rd;
+        }
+
+        ssize_t File::enumerate_chunks(uint32_t magic, chunk_id_t **list)
+        {
+            lltl::darray<chunk_id_t> chunk_ids;
+            if ((pFile == NULL) || (bWrite))
+                return -STATUS_BAD_STATE;
+
+            // Find the initial position of the chunk in file
+            status_t res;
+            chunk_header_t hdr;
+            wsize_t pos         = nHdrSize;
+            while ((res = pFile->read(pos, &hdr, sizeof(chunk_header_t))) == sizeof(chunk_header_t))
+            {
+                hdr.magic   = BE_TO_CPU(hdr.magic);
+                hdr.uid     = BE_TO_CPU(hdr.uid);
+                hdr.flags   = BE_TO_CPU(hdr.flags);
+                hdr.size    = BE_TO_CPU(hdr.size);
+
+                // Found matching chunk?
+                if (hdr.magic == magic)
+                {
+                    // Check that chunk is not already in the list
+                    bool found  = false;
+                    for (size_t i=0, n=chunk_ids.size(); i<n; ++i)
+                    {
+                        chunk_id_t *id = chunk_ids.uget(i);
+                        if (*id == hdr.uid)
+                        {
+                            found       = true;
+                            break;
+                        }
+                    }
+
+                    // Do we need to add chunk to the list?
+                    if (!found)
+                    {
+                        if (!chunk_ids.add(hdr.uid))
+                            return -STATUS_NO_MEM;
+                    }
+                }
+
+                // Update position
+                pos        += hdr.size + sizeof(chunk_header_t);
+            }
+
+            // Did we reach the end of file?
+            if ((res != 0) && (res != -STATUS_EOF))
+                return -STATUS_CORRUPTED;
+
+            // Return success result
+            ssize_t count = chunk_ids.size();
+            if (list != NULL)
+                *list = chunk_ids.release();
+            return count;
+        }
+
+        ssize_t File::enumerate_chunks(chunk_info_t **list)
+        {
+            lltl::darray<chunk_info_t> chunk_infos;
+            if ((pFile == NULL) || (bWrite))
+                return -STATUS_BAD_STATE;
+
+            // Find the initial position of the chunk in file
+            status_t res;
+            chunk_header_t hdr;
+            wsize_t pos         = nHdrSize;
+            while ((res = pFile->read(pos, &hdr, sizeof(chunk_header_t))) == sizeof(chunk_header_t))
+            {
+                hdr.magic   = BE_TO_CPU(hdr.magic);
+                hdr.uid     = BE_TO_CPU(hdr.uid);
+                hdr.flags   = BE_TO_CPU(hdr.flags);
+                hdr.size    = BE_TO_CPU(hdr.size);
+
+                // Check that chunk is not already in the list
+                chunk_info_t *chunk  = NULL;
+                for (size_t i=0, n=chunk_infos.size(); i<n; ++i)
+                {
+                    chunk_info_t *info  = chunk_infos.uget(i);
+                    if (info->chunk_id == hdr.uid)
+                    {
+                        chunk           = info;
+                        break;
+                    }
+                }
+
+                // Do we need to add chunk to the list?
+                if (chunk == NULL)
+                {
+                    if ((chunk = chunk_infos.add()) == NULL)
+                        return -STATUS_NO_MEM;
+
+                    chunk->magic    = hdr.magic;
+                    chunk->chunk_id = hdr.uid;
+                    chunk->position = pos;
+                    chunk->size     = hdr.size;
+                }
+                else
+                    chunk->size    += hdr.size;
+
+                // Update position
+                pos        += hdr.size + sizeof(chunk_header_t);
+            }
+
+            // Did we reach the end of file?
+            if ((res != 0) && (res != -STATUS_EOF))
+                return -STATUS_CORRUPTED;
+
+            // Return success result
+            ssize_t count = chunk_infos.size();
+            if (list != NULL)
+                *list = chunk_infos.release();
+            return count;
         }
     }
 } /* namespace lsp */

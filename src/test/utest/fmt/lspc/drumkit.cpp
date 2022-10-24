@@ -89,6 +89,57 @@ UTEST_BEGIN("runtime.fmt.lspc", drumkit)
         printf("Writing configuration file '%s'...\n", config->as_native());
         UTEST_ASSERT(lspc::write_config(&chunk_id, &lspc, config) == STATUS_OK);
         printf("Written as chunk id=%d\n", int(chunk_id));
+
+        UTEST_ASSERT(lspc.close() == STATUS_OK);
+    }
+
+    void enumerate_chunks(lspc::File *lspc, uint32_t chunk_magic, ssize_t required_count)
+    {
+        lspc::chunk_id_t *list = NULL;
+        ssize_t count = lspc->enumerate_chunks(chunk_magic, &list);
+        UTEST_ASSERT(count == required_count);
+        UTEST_ASSERT(list != NULL);
+
+        for (ssize_t i=0; i<count; ++i)
+            printf("  found chunk id=%d\n", int(list[i]));
+        free(list);
+    }
+
+    void enumerate_all_chunks(lspc::File *lspc, ssize_t required_count)
+    {
+        lspc::chunk_info_t *list = NULL;
+        ssize_t count = lspc->enumerate_chunks(&list);
+        UTEST_ASSERT(count == required_count);
+        UTEST_ASSERT(list != NULL);
+
+        for (ssize_t i=0; i<count; ++i)
+            printf("  found chunk id=%2d magic='%c%c%c%c' position=%lld size=%lld\n",
+                int(list[i].chunk_id),
+                char((list[i].magic >> 24) & 0xff),
+                char((list[i].magic >> 16) & 0xff),
+                char((list[i].magic >> 8) & 0xff),
+                char((list[i].magic) & 0xff),
+                (long long)list[i].position,
+                (long long)list[i].size);
+        free(list);
+    }
+
+    void enumerate_drumkit_chunks(const io::Path *drumkit)
+    {
+        lspc::File lspc;
+
+        printf("Opening drumkit file...\n");
+        UTEST_ASSERT(lspc.open(drumkit) == STATUS_OK);
+
+        printf("Enumerating text configuration chunks...\n");
+        enumerate_chunks(&lspc, LSPC_CHUNK_TEXT_CONFIG, 1);
+        printf("Enumerating audio chunks...\n");
+        enumerate_chunks(&lspc, LSPC_CHUNK_AUDIO, 4);
+        printf("Enumerating path chunks...\n");
+        enumerate_chunks(&lspc, LSPC_CHUNK_PATH, 5);
+
+        printf("Enumerating all chunks...\n");
+        enumerate_all_chunks(&lspc, 10);
     }
 
     UTEST_MAIN
@@ -99,6 +150,7 @@ UTEST_BEGIN("runtime.fmt.lspc", drumkit)
         UTEST_ASSERT(config.fmt("%s/fmt/lspc/drumkit/drumkit.cfg", resources()));
 
         create_drumkit_file(&drumkit, &src_dir, &config);
+        enumerate_drumkit_chunks(&drumkit);
     }
 
 UTEST_END

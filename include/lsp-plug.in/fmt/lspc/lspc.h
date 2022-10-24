@@ -38,9 +38,18 @@ namespace lsp
          *      4. Chunk
          *      ...
          *      N. Chunk
+         *
+         *  Each chunk represents the potion of the stream and has the following structure:
+         *      1. Chunk header
+         *      2. Payload
+         *
+         *  Each chunk header identifies the type of chunk and unique identifier of the stream
+         *  associated with the chunk. Additionally, it holds size of payload data and flags
+         *  like the indicator of last chunk in the stream.
          */
 
     #pragma pack(push, 1)
+        typedef uint32_t chunk_magic_t;     // Chunk magic (type) code
         typedef uint32_t chunk_id_t;        // Chunk identifier
 
         typedef struct root_header_t
@@ -176,6 +185,14 @@ namespace lsp
         {
             PATH_DIR                = 1 << 0    // Pathname is a directory
         };
+
+        typedef struct chunk_info_t
+        {
+            uint32_t        magic;          // Chunk magic number
+            chunk_id_t      chunk_id;       // Chunk identifier
+            wsize_t         position;       // Chunk position in the file
+            wsize_t         size;           // Overall size of the payload in the chunk
+        } chunk_info_t;
 
         typedef struct audio_parameters_t
         {
