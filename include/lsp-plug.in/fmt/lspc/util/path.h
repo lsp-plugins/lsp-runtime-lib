@@ -92,6 +92,43 @@ namespace lsp
         LSP_RUNTIME_LIB_PUBLIC
         status_t write_path(chunk_id_t *chunk_id, File *file, const LSPString *path, size_t flags, chunk_id_t reference_id);
 
+
+        /**
+         * Read path entry from the LSPC file
+         * @param chunk_id chunk identifier
+         * @param file the LSPC fiel to read the chunk
+         * @param path the pointer to store the allocated path entry record, can be NULL
+         * @return status of operation
+         */
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_path(chunk_id_t chunk_id, File *file, path_entry_t **path);
+
+        /**
+         * Read path entry from the LSPC file
+         * @param chunk_id chunk identifier
+         * @param file the LSPC fiel to read the chunk
+         * @param path the pointer to store the pointer to allocated string, can be NULL, should be free()'d after use
+         * @param flags chunk flags, can be NULL
+         * @param reference_id referenced chunk identifier, can be NULL
+         * @return status of operation
+         */
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_path(chunk_id_t chunk_id, File *file, char **path, size_t *flags, chunk_id_t *reference_id);
+
+        /**
+         * Read path entry from the LSPC file
+         * @param chunk_id chunk identifier
+         * @param file the LSPC fiel to read the chunk
+         * @param path the pointer to store the path data
+         * @param flags chunk flags, can be NULL
+         * @param reference_id referenced chunk identifier, can be NULL
+         * @return status of operation
+         */
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_path(chunk_id_t chunk_id, File *file, io::Path *path, size_t *flags, chunk_id_t *reference_id);
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_path(chunk_id_t chunk_id, File *file, LSPString *path, size_t *flags, chunk_id_t *reference_id);
     } /* namespace lspc */
 } /* namespace lsp */
 

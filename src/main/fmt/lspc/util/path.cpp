@@ -21,6 +21,7 @@
 
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/common/endian.h>
+#include <lsp-plug.in/fmt/lspc/ChunkReader.h>
 #include <lsp-plug.in/fmt/lspc/ChunkWriter.h>
 #include <lsp-plug.in/fmt/lspc/util/path.h>
 #include <lsp-plug.in/stdlib/stdlib.h>
@@ -186,6 +187,147 @@ namespace lsp
             pe.chunk_id = reference_id;
 
             return write_path(chunk_id, file, &pe);
+        }
+
+        //---------------------------------------------------------------------
+        // Read operations
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_path(chunk_id_t chunk_id, File *file, path_entry_t **path)
+        {
+            // Get the chunk
+            if (file == NULL)
+                return STATUS_BAD_ARGUMENTS;
+            ChunkReader *rd = file->read_chunk(chunk_id, LSPC_CHUNK_PATH);
+            if (rd == NULL)
+                return STATUS_NOT_FOUND;
+            lsp_finally { delete rd; };
+
+            // Read the header
+            chunk_path_t hdr;
+            ssize_t read = rd->read_header(&hdr, sizeof(hdr));
+            if (read < 0)
+                return -read;
+            else if (read != sizeof(hdr))
+                return STATUS_CORRUPTED;
+
+            // Nothing to return?
+            if (path == NULL)
+                return STATUS_OK;
+
+            // Convert the header
+            hdr.path_size   = BE_TO_CPU(hdr.path_size);
+            hdr.flags       = BE_TO_CPU(hdr.flags);
+            hdr.chunk_id    = BE_TO_CPU(hdr.chunk_id);
+
+            // Allocate path entry
+            path_entry_t *pe= alloc_path(hdr.path_size);
+            if (pe == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally {
+                if (pe != NULL)
+                    free_path(pe);
+            };
+
+            pe->flags       = hdr.flags;
+            pe->chunk_id    = hdr.chunk_id;
+
+            // Read the path string
+            read = rd->read(pe->path, hdr.path_size);
+            if (read < 0)
+                return -read;
+            else if (read != hdr.path_size)
+                return STATUS_CORRUPTED;
+            pe->path[hdr.path_size] = '\0';    // Do not forget the trailing zero
+
+            // Close the reader
+            status_t res    = rd->close();
+            if (res != STATUS_OK)
+                return res;
+
+            // Return the result
+            *path           = pe;
+            pe             = NULL;
+
+            return STATUS_OK;
+        }
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_path(chunk_id_t chunk_id, File *file, char **path, size_t *flags, chunk_id_t *reference_id)
+        {
+            // Read path entry
+            path_entry_t *entry = NULL;
+            status_t res = read_path(chunk_id, file, &entry);
+            if (res != STATUS_OK)
+                return res;
+            else if (entry == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally { free_path(entry); };
+
+            // Pass the arguments to the caller
+            if (path != NULL)
+            {
+                char *p     = strdup(entry->path);
+                if (p == NULL)
+                    return STATUS_NO_MEM;
+                *path       = p;
+            }
+            if (flags != NULL)
+                *flags      = entry->flags;
+            if (reference_id != NULL)
+                *reference_id   = entry->chunk_id;
+
+            return STATUS_OK;
+        }
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_path(chunk_id_t chunk_id, File *file, io::Path *path, size_t *flags, chunk_id_t *reference_id)
+        {
+            // Read path entry
+            path_entry_t *entry = NULL;
+            status_t res = read_path(chunk_id, file, &entry);
+            if (res != STATUS_OK)
+                return res;
+            else if (entry == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally { free_path(entry); };
+
+            // Pass the arguments to the caller
+            if (path != NULL)
+            {
+                if ((res = path->set(entry->path)) != STATUS_OK)
+                    return res;
+            }
+            if (flags != NULL)
+                *flags      = entry->flags;
+            if (reference_id != NULL)
+                *reference_id   = entry->chunk_id;
+
+            return STATUS_OK;
+        }
+
+        status_t read_path(chunk_id_t chunk_id, File *file, LSPString *path, size_t *flags, chunk_id_t *reference_id)
+        {
+            // Read path entry
+            path_entry_t *entry = NULL;
+            status_t res = read_path(chunk_id, file, &entry);
+            if (res != STATUS_OK)
+                return res;
+            else if (entry == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally { free_path(entry); };
+
+            // Pass the arguments to the caller
+            if (path != NULL)
+            {
+                if (!path->set_utf8(entry->path))
+                    return STATUS_NO_MEM;
+            }
+            if (flags != NULL)
+                *flags      = entry->flags;
+            if (reference_id != NULL)
+                *reference_id   = entry->chunk_id;
+
+            return STATUS_OK;
         }
     } /* namespace lspc */
 } /* namespace lsp */

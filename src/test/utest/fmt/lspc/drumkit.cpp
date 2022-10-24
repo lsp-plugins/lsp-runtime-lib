@@ -140,17 +140,53 @@ UTEST_BEGIN("runtime.fmt.lspc", drumkit)
 
         printf("Enumerating all chunks...\n");
         enumerate_all_chunks(&lspc, 10);
+
+        UTEST_ASSERT(lspc.close() == STATUS_OK);
+    }
+
+    void extract_drumkit_file(io::Path *dst_dir, io::Path *drumkit)
+    {
+        lspc::File lspc;
+
+        printf("Extracting drumkit file...\n");
+        UTEST_ASSERT(lspc.open(drumkit) == STATUS_OK);
+
+        lspc::chunk_id_t *paths = NULL;
+        ssize_t path_count = lspc.enumerate_chunks(LSPC_CHUNK_PATH, &paths);
+        UTEST_ASSERT(path_count == 5);
+
+        LSPString rel_path;
+        size_t flags;
+        lspc::chunk_id_t ref_id;
+        for (ssize_t i=0; i<path_count; ++i)
+        {
+            UTEST_ASSERT(lspc::read_path(paths[i], &lspc, &rel_path, &flags, &ref_id) == STATUS_OK);
+            printf("  read chunk %d: path='%s' flags=0x%x, referenced chunk_id=%d\n",
+                int(paths[i]), rel_path.get_native(), int(flags), int(ref_id));
+            if (flags & lspc::PATH_DIR)
+            {
+                printf("  chunk is a directory record, nothing to do, skipping\n");
+                continue;
+            }
+
+            printf("  extracting...\n");
+            // TODO
+        }
+
+        UTEST_ASSERT(lspc.close() == STATUS_OK);
     }
 
     UTEST_MAIN
     {
-        io::Path drumkit, src_dir, config;
+        io::Path drumkit, src_dir, dst_dir, config;
         UTEST_ASSERT(drumkit.fmt("%s/utest-%s-drumkit.lspc", tempdir(), full_name()));
         UTEST_ASSERT(src_dir.fmt("%s/fmt/lspc/drumkit/data", resources()));
+        UTEST_ASSERT(dst_dir.fmt("%s/utest-%s-drumkit", tempdir(), full_name()));
         UTEST_ASSERT(config.fmt("%s/fmt/lspc/drumkit/drumkit.cfg", resources()));
 
         create_drumkit_file(&drumkit, &src_dir, &config);
         enumerate_drumkit_chunks(&drumkit);
+        extract_drumkit_file(&dst_dir, &drumkit);
     }
 
 UTEST_END
