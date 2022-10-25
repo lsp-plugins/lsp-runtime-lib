@@ -110,6 +110,68 @@ namespace lsp
         LSP_RUNTIME_LIB_PUBLIC
         status_t write_config_data(chunk_id_t *chunk_id, File *file, const void *data, size_t bytes, size_t buf_size = 0x1000);
 
+
+        /**
+         * Read configuration chunk to the file
+         * @param chunk_id chunk identifier
+         * @param file the LSPC file to read the chunk
+         * @param path target file name
+         * @param buf_size size of buffer for I/O operations
+         * @return status of operation
+         */
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_config(chunk_id_t chunk_id, File *file, const char *path, size_t buf_size = 0x1000);
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_config(chunk_id_t chunk_id, File *file, const io::Path *path, size_t buf_size = 0x1000);
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_config(chunk_id_t chunk_id, File *file, const LSPString *path, size_t buf_size = 0x1000);
+
+        /**
+         * Read configuration chunk to the output stream
+         * @param chunk_id chunk identifier
+         * @param file the LSPC file to read the chunk
+         * @param path target file name
+         * @param buf_size size of buffer for I/O operations
+         * @return status of operation
+         */
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_config(chunk_id_t chunk_id, File *file, io::IOutStream *os, size_t buf_size = 0x1000);
+
+        /**
+         * Read configuration chunk into the memory and return pointer to the allocated string
+         * @param chunk_id chunk identifier
+         * @param file the LSPC file to read the chunk
+         * @param data pointer to store the resulting string, should be free()'d by the caller after use
+         * @param buf_size size of buffer for I/O operations
+         * @return status of operation
+         */
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_config_data(chunk_id_t chunk_id, File *file, char **data, size_t buf_size = 0x1000);
+
+        /**
+         * Read configuration chunk into the string
+         * @param chunk_id chunk identifier
+         * @param file the LSPC file to read the chunk
+         * @param data string to store the result
+         * @param buf_size size of buffer for I/O operations
+         * @return status of operation
+         */
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_config_data(chunk_id_t chunk_id, File *file, LSPString *data, size_t buf_size = 0x1000);
+
+        /**
+         * Read configuration chunk into the memory and return it's size
+         * @param chunk_id chunk identifier
+         * @param file the LSPC file to read the chunk
+         * @param data pointer to store the address of the buffer, should be free()'d by the caller after use
+         * @param size pointer to return the size of read data
+         * @param buf_size size of buffer for I/O operations
+         * @return status of operation
+         */
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_config_data(chunk_id_t chunk_id, File *file, void **data, size_t *size, size_t buf_size = 0x1000);
     } /* namespace lspc */
 } /* namespace lsp */
 

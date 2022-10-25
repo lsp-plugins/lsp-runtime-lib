@@ -23,7 +23,9 @@
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/fmt/lspc/util/config.h>
 #include <lsp-plug.in/io/InFileStream.h>
+#include <lsp-plug.in/io/OutFileStream.h>
 #include <lsp-plug.in/io/InMemoryStream.h>
+#include <lsp-plug.in/io/OutMemoryStream.h>
 
 namespace lsp
 {
@@ -197,6 +199,131 @@ namespace lsp
             return STATUS_OK;
         }
 
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_config(chunk_id_t chunk_id, File *file, const char *path, size_t buf_size)
+        {
+            io::OutFileStream os;
+            status_t res = os.open(path, io::File::FM_WRITE_NEW);
+            if (res != STATUS_OK)
+                return res;
+            res = read_config(chunk_id, file, &os, buf_size);
+            status_t res2 = os.close();
+            return (res != STATUS_OK) ? res : res2;
+        }
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_config(chunk_id_t chunk_id, File *file, const io::Path *path, size_t buf_size)
+        {
+            io::OutFileStream os;
+            status_t res = os.open(path, io::File::FM_WRITE_NEW);
+            if (res != STATUS_OK)
+                return res;
+            res = read_config(chunk_id, file, &os, buf_size);
+            status_t res2 = os.close();
+            return (res != STATUS_OK) ? res : res2;
+        }
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_config(chunk_id_t chunk_id, File *file, const LSPString *path, size_t buf_size)
+        {
+            io::OutFileStream os;
+            status_t res = os.open(path, io::File::FM_WRITE_NEW);
+            if (res != STATUS_OK)
+                return res;
+            res = read_config(chunk_id, file, &os, buf_size);
+            status_t res2 = os.close();
+            return (res != STATUS_OK) ? res : res2;
+        }
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_config_data(chunk_id_t chunk_id, File *file, char **data, size_t buf_size)
+        {
+            // Validate arguments
+            if (data == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            // Read data
+            io::OutMemoryStream os;
+            status_t res = read_config(chunk_id, file, &os, buf_size);
+            if (res == STATUS_OK)
+                res         = os.writeb('\0');
+            status_t res2 = os.close();
+            if (res == STATUS_OK)
+                res         = res2;
+
+            // Return result
+            *data       = reinterpret_cast<char *>(os.release());
+            return STATUS_OK;
+        }
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_config_data(chunk_id_t chunk_id, File *file, void **data, size_t *size, size_t buf_size)
+        {
+            // Validate arguments
+            if ((data == NULL) || (size == NULL))
+                return STATUS_BAD_ARGUMENTS;
+
+            // Read data
+            io::OutMemoryStream os;
+            status_t res = read_config(chunk_id, file, &os, buf_size);
+            status_t res2 = os.close();
+            if (res == STATUS_OK)
+                res         = res2;
+
+            // Return result
+            *size       = os.size();
+            *data       = os.release();
+            return STATUS_OK;
+        }
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_config_data(chunk_id_t chunk_id, File *file, LSPString *data, size_t buf_size)
+        {
+            // Validate arguments
+            if (data == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            // Read data
+            io::OutMemoryStream os;
+            status_t res = read_config(chunk_id, file, &os, buf_size);
+            status_t res2 = os.close();
+            if (res == STATUS_OK)
+                res         = res2;
+
+            // Return result
+            return (data->set_utf8(reinterpret_cast<const char *>(os.data()), os.size())) ?
+                STATUS_OK : STATUS_NO_MEM;
+        }
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_config(chunk_id_t chunk_id, File *file, io::IOutStream *os, size_t buf_size)
+        {
+            if ((file == NULL) || (os == NULL))
+                return STATUS_BAD_ARGUMENTS;
+
+            // Open the reader
+            ChunkReader *rd = file->read_chunk(chunk_id, LSPC_CHUNK_TEXT_CONFIG);
+            if (rd == NULL)
+                return STATUS_NOT_FOUND;
+            lsp_finally { delete rd; };
+
+            // Read the header
+            lspc::chunk_text_config_t hdr;
+            ssize_t nread = rd->read_header(&hdr, sizeof(hdr));
+            if (nread < 0)
+                return -nread;
+            else if (nread != sizeof(hdr))
+                return STATUS_CORRUPTED;
+            else if (hdr.common.version != 0)
+                return STATUS_NOT_SUPPORTED;
+
+            // Do the stuff
+            wssize_t written = rd->stream()->sink(os, buf_size);
+            status_t res = rd->close();
+
+            return (written < 0) ? -written : res;
+        }
     } /* namespace lspc */
 } /* namespace lsp */
 

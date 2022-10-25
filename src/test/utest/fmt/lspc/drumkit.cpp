@@ -155,6 +155,7 @@ UTEST_BEGIN("runtime.fmt.lspc", drumkit)
         ssize_t path_count = lspc.enumerate_chunks(LSPC_CHUNK_PATH, &paths);
         UTEST_ASSERT(path_count == 5);
 
+        // Process audio files
         LSPString rel_path;
         io::Path path, dir;
         size_t flags;
@@ -178,6 +179,19 @@ UTEST_BEGIN("runtime.fmt.lspc", drumkit)
             UTEST_ASSERT(lspc::read_audio(ref_id, &lspc, &path, mm::SFMT_S24_DFL, mm::AFMT_WAV | mm::CFMT_PCM) == STATUS_OK);
         }
 
+        // Find the text configuration chunk
+        lspc::chunk_id_t *config = NULL;
+        ssize_t config_count = lspc.enumerate_chunks(LSPC_CHUNK_TEXT_CONFIG, &config);
+        UTEST_ASSERT(config_count == 1);
+
+        // Extract the text configuration
+        UTEST_ASSERT(path.set(dst_dir, "drumkit.cfg") == STATUS_OK);
+        printf("  extracting text configuration chunk id=%d to '%s'...\n", int(config[0]), path.as_native());
+        UTEST_ASSERT(path.get_parent(&dir) == STATUS_OK);
+        UTEST_ASSERT(dir.mkdir(true) == STATUS_OK);
+        UTEST_ASSERT(lspc::read_config(config[0], &lspc, &path)  == STATUS_OK);
+
+        // Close the LSPC file
         UTEST_ASSERT(lspc.close() == STATUS_OK);
     }
 

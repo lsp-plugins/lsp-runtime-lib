@@ -209,6 +209,8 @@ namespace lsp
                 return -read;
             else if (read != sizeof(hdr))
                 return STATUS_CORRUPTED;
+            else if (hdr.common.version != 0)
+                return STATUS_NOT_SUPPORTED;
 
             // Nothing to return?
             if (path == NULL)

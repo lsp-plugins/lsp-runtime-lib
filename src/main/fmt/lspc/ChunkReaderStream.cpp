@@ -53,11 +53,13 @@ namespace lsp
             if (pReader == NULL)
                 return -set_error(STATUS_CLOSED);
             ssize_t res = pReader->read(dst, count);
-            if (res >= 0)
+            if (res > 0)
             {
                 set_error(STATUS_OK);
                 return res;
             }
+            else if (res == 0)
+                return -set_error(STATUS_EOF);
             return -set_error(-res);
         }
 
