@@ -156,6 +156,7 @@ UTEST_BEGIN("runtime.fmt.lspc", drumkit)
         UTEST_ASSERT(path_count == 5);
 
         LSPString rel_path;
+        io::Path path, dir;
         size_t flags;
         lspc::chunk_id_t ref_id;
         for (ssize_t i=0; i<path_count; ++i)
@@ -169,8 +170,12 @@ UTEST_BEGIN("runtime.fmt.lspc", drumkit)
                 continue;
             }
 
-            printf("  extracting...\n");
-            // TODO
+            // Extract file
+            UTEST_ASSERT(path.set(dst_dir, &rel_path) == STATUS_OK);
+            printf("  extracting audio chunk id=%d to '%s'...\n", int(ref_id), path.as_native());
+            UTEST_ASSERT(path.get_parent(&dir) == STATUS_OK);
+            UTEST_ASSERT(dir.mkdir(true) == STATUS_OK);
+            UTEST_ASSERT(lspc::read_audio(ref_id, &lspc, &path, mm::SFMT_S24_DFL, mm::AFMT_WAV | mm::CFMT_PCM) == STATUS_OK);
         }
 
         UTEST_ASSERT(lspc.close() == STATUS_OK);

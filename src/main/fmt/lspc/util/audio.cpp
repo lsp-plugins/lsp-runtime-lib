@@ -19,10 +19,13 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/fmt/lspc/util/audio.h>
+#include <lsp-plug.in/fmt/lspc/AudioReader.h>
 #include <lsp-plug.in/fmt/lspc/AudioWriter.h>
 #include <lsp-plug.in/fmt/lspc/IAudioFormatSelector.h>
 #include <lsp-plug.in/mm/InAudioFileStream.h>
+#include <lsp-plug.in/mm/OutAudioFileStream.h>
 #include <lsp-plug.in/stdlib/stdlib.h>
 
 namespace lsp
@@ -99,7 +102,7 @@ namespace lsp
 
             // Allocate buffer for I/O
             size_t min_buf_size = ifmt.channels * sizeof(float);
-            buf_size            = lsp_max(min_buf_size, buf_size - (buf_size) % min_buf_size);
+            buf_size            = lsp_max(min_buf_size, buf_size - (buf_size % min_buf_size));
             float *data         = static_cast<float *>(malloc(buf_size));
             if (data == NULL)
                 return STATUS_NO_MEM;
@@ -155,6 +158,184 @@ namespace lsp
             // Return success result
             if (chunk_id != NULL)
                 *chunk_id           = res_chunk_id;
+            return STATUS_OK;
+        }
+
+        status_t copy_frames(mm::IOutAudioStream *os, lspc::AudioReader *is, const audio_parameters_t *params, size_t buf_size)
+        {
+            // Allocate buffer for I/O
+            size_t min_buf_size = params->channels * sizeof(float);
+            buf_size            = lsp_max(min_buf_size, buf_size - (buf_size % min_buf_size));
+            float *data         = static_cast<float *>(malloc(buf_size));
+            if (data == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally { free(data); };
+            size_t max_frames   = buf_size / (params->channels * sizeof(float));
+
+            // Perform data copy
+            for (wsize_t frame = 0; frame < params->frames; )
+            {
+                size_t to_do        = lsp_min(max_frames, params->frames - frame);
+                ssize_t nread       = is->read_frames(data, to_do);
+                if (nread < 0)
+                    return -nread;
+                ssize_t nwritten    = os->write(data, nread);
+                if (nwritten < 0)
+                    return -nwritten;
+                else if (nwritten < nread)
+                    return STATUS_IO_ERROR;
+                frame              += nread;
+            }
+
+            // Return success result
+            return STATUS_OK;
+        }
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_audio(
+            chunk_id_t chunk_id, File *file,
+            const char *path, size_t format, size_t codec, size_t buf_size)
+        {
+            io::Path tmp;
+            status_t res = tmp.set(path);
+            if (res != STATUS_OK)
+                return res;
+            return read_audio(chunk_id, file, &tmp, format, codec, buf_size);
+        }
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_audio(
+            chunk_id_t chunk_id, File *file,
+            const LSPString *path, size_t format, size_t codec, size_t buf_size)
+        {
+            io::Path tmp;
+            status_t res = tmp.set(path);
+            if (res != STATUS_OK)
+                return res;
+            return read_audio(chunk_id, file, &tmp, format, codec, buf_size);
+        }
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_audio(
+            chunk_id_t chunk_id, File *file,
+            const io::Path *path, size_t format, size_t codec, size_t buf_size)
+        {
+            if ((file == NULL) || (path == NULL))
+                return STATUS_BAD_ARGUMENTS;
+
+            // Read the chunk
+            lspc::AudioReader rd;
+            status_t res = rd.open(file, chunk_id);
+            if (res != STATUS_OK)
+                return res;
+            lsp_finally { rd.close(); };
+
+            // Get audio parameters and open output audio stream
+            audio_parameters_t aparams;
+            mm::audio_stream_t sparams;
+            mm::OutAudioFileStream os;
+            if ((res = rd.get_parameters(&aparams)) != STATUS_OK)
+                return res;
+
+            sparams.channels    = aparams.channels;
+            sparams.srate       = aparams.sample_rate;
+            sparams.frames      = aparams.frames;
+            sparams.format      = format;
+
+            if ((res = os.open(path, &sparams, codec)) != STATUS_OK)
+                return res;
+            lsp_finally { os.close(); };
+
+            // Copy data and close streams
+            if ((res = copy_frames(&os, &rd, &aparams, buf_size)) != STATUS_OK)
+                return res;
+            if ((res = os.close()) != STATUS_OK)
+                return res;
+            if ((res = rd.close()) != STATUS_OK)
+                return res;
+
+            // Return result
+            return STATUS_OK;
+        }
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_audio(
+            chunk_id_t chunk_id, File *file,
+            float **frames, audio_parameters_t *params)
+        {
+            if ((file == NULL) || (frames == NULL))
+                return STATUS_BAD_ARGUMENTS;
+
+            // Read the chunk
+            lspc::AudioReader rd;
+            status_t res = rd.open(file, chunk_id);
+            if (res != STATUS_OK)
+                return res;
+            lsp_finally { rd.close(); };
+
+            // Get audio parameters
+            audio_parameters_t aparams;
+            if ((res = rd.get_parameters(&aparams)) != STATUS_OK)
+                return res;
+
+            // Allocate the buffer of necessary size
+            size_t buf_size     = align_size(sizeof(float) * aparams.channels * aparams.frames, DEFAULT_ALIGN);
+            float *data         = static_cast<float *>(malloc(buf_size));
+            if (data == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally {
+                if (data != NULL)
+                    free(data);
+            };
+
+            // Read the contents and close stream
+            wssize_t read       = rd.read_frames(data, aparams.frames);
+            if (read < 0)
+                return -read;
+            else if (read < wssize_t(aparams.frames))
+                return STATUS_CORRUPTED;
+            if ((res = rd.close()) != STATUS_OK)
+                return res;
+
+            // Return the result
+            *frames             = data;
+            data                = NULL;
+            if (params != NULL)
+                *params             = aparams;
+            return STATUS_OK;
+        }
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_audio(
+            chunk_id_t chunk_id, File *file,
+            mm::IOutAudioStream *os, audio_parameters_t *params, size_t buf_size)
+        {
+            if ((file == NULL) || (os == NULL))
+                return STATUS_BAD_ARGUMENTS;
+
+            // Read the chunk
+            lspc::AudioReader rd;
+            status_t res = rd.open(file, chunk_id);
+            if (res != STATUS_OK)
+                return res;
+            lsp_finally { rd.close(); };
+
+            // Get audio parameters
+            audio_parameters_t aparams;
+            if ((res = rd.get_parameters(&aparams)) != STATUS_OK)
+                return res;
+            if (os->sample_rate() != aparams.sample_rate)
+                return STATUS_INCOMPATIBLE;
+
+            // Copy data and close streams
+            if ((res = copy_frames(os, &rd, &aparams, buf_size)) != STATUS_OK)
+                return res;
+            if ((res = rd.close()) != STATUS_OK)
+                return res;
+
+            // Return result
+            if (params != NULL)
+                *params             = aparams;
             return STATUS_OK;
         }
     } /* namespace lspc */

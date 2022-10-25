@@ -28,6 +28,7 @@
 #include <lsp-plug.in/fmt/lspc/File.h>
 #include <lsp-plug.in/fmt/lspc/IAudioFormatSelector.h>
 #include <lsp-plug.in/mm/IInAudioStream.h>
+#include <lsp-plug.in/mm/IOutAudioStream.h>
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 
@@ -80,9 +81,64 @@ namespace lsp
          * @param buf_size size of buffer for I/O operations
          * @return status of operation
          */
+        LSP_RUNTIME_LIB_PUBLIC
         status_t write_audio(
             chunk_id_t *chunk_id, File *file,
             mm::IInAudioStream *is, IAudioFormatSelector *selector = NULL, size_t buf_size = 0x1000);
+
+
+        /**
+         * Read audio entry from LSPC file to other file
+         * @param chunk_id chunk identifier
+         * @param file the LSPC file to read the chunk
+         * @param path path to destination file
+         * @param format output audio format (@see mm::IOutAudioStream specificaion)
+         * @param codec output audio codec (@see mm::IOutAudioStream specificaion)
+         * @param buf_size size of buffer of I/O operations
+         * @return status of operation
+         */
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_audio(
+            chunk_id_t chunk_id, File *file,
+            const char *path, size_t format, size_t codec, size_t buf_size = 0x1000);
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_audio(
+            chunk_id_t chunk_id, File *file,
+            const LSPString *path, size_t format, size_t codec, size_t buf_size = 0x1000);
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_audio(
+            chunk_id_t chunk_id, File *file,
+            const io::Path *path, size_t format, size_t codec, size_t buf_size = 0x1000);
+
+        /**
+         * Read audio entry to the memory buffer
+         * @param chunk_id chunk identifier
+         * @param file the LSPC file to read the chunk
+         * @param frames pointer to store audio frames converted to f32 sample format, should be free()'d by caller
+         * @param params audio parameters stored in the chunk
+         * @return status of operation
+         */
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_audio(
+            chunk_id_t chunk_id, File *file,
+            float **frames, audio_parameters_t *params);
+
+        /**
+         * Read audio entry to the output audio stream
+         * @param chunk_id chunk identifier
+         * @param file the LSPC file to read the chunk
+         * @param os pointer to the stream to commit sample data
+         * @param params audio parameters stored in the chunk
+         * @param buf_size size of buffer of I/O operations
+         * @return status of operation
+         */
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_audio(
+            chunk_id_t chunk_id, File *file,
+            mm::IOutAudioStream *os, audio_parameters_t *params, size_t buf_size = 0x1000);
+
     } /* namespace lspc */
 } /* namespace lsp */
 
