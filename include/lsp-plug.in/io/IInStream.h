@@ -60,6 +60,7 @@ namespace lsp
                 /** The number of bytes available
                  *
                  * @return number of bytes available or negative error code
+                 * @note some implementations can return STATUS_NOT_IMPLEMENTED error code
                  */
                 virtual wssize_t    avail();
 
@@ -104,6 +105,7 @@ namespace lsp
                  *
                  * @param position the specified position
                  * @return real position or negative value on error
+                 * @note some implementations can return STATUS_NOT_IMPLEMENTED error code
                  */
                 virtual wssize_t    seek(wsize_t position);
 

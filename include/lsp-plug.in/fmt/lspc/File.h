@@ -42,7 +42,7 @@ namespace lsp
                 File & operator = (const File &);
 
             protected:
-                Resource       *pFile;      // Shared resource
+                Resource           *pFile;      // Shared resource
                 bool                bWrite;     // Read/Write mode
                 size_t              nHdrSize;   // Size of header
 
@@ -128,16 +128,31 @@ namespace lsp
                 /**
                  * Find LSPC chunk in file by magic
                  * @param magic chunk magic
-                 * @param id pointer to return chunk number
-                 * @param start_id start identifier of chunk
+                 * @param id pointer to return chunk number that can be used in the search of
+                 *           next chunk with the same magic signature
+                 * @param start_id minimum accepted identifier of chunk
                  * @return pointer to chunk reader
                  */
                 ChunkReader     *find_chunk(uint32_t magic, uint32_t *id, uint32_t start_id = 1);
 
                 /**
+                 * Enumerate all chunk identifiers with the specified magic number
+                 * @param magic chunk magic number
+                 * @param list pointer to store the list of chunks, should be free()'d after use by caller
+                 * @return number of chunks in list or negative error code
+                 */
+                ssize_t         enumerate_chunks(uint32_t magic, chunk_id_t **list);
+
+                /**
+                 * Enumerate all chunk identifiers of any type present in the file
+                 * @param list pointer to store the list of chunks, should be free()'d after use by caller
+                 * @return number of chunks in list or negative error code
+                 */
+                ssize_t         enumerate_chunks(chunk_info_t **list);
+
+                /**
                  * Find LSPC chunk in file by magic
                  * @param magic chunk magic
-                 * @param id pointer to return chunk number
                  * @param start_id start identifier of chunk
                  * @return pointer to chunk reader
                  */

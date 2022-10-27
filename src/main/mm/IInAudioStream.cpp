@@ -180,7 +180,7 @@ namespace lsp
                 while (nframes > 0)
                 {
                     // Ensure capacity
-                    size_t to_read      = (nframes > IO_BUF_SIZE) ? IO_BUF_SIZE : nframes;
+                    size_t to_read      = lsp_min(nframes, IO_BUF_SIZE);
                     if (!ensure_capacity(to_read * asize))
                         return -set_error(STATUS_NO_MEM);
 
@@ -211,7 +211,7 @@ namespace lsp
                 while (nframes > 0)
                 {
                     // Select number of frames and perform read
-                    size_t to_read      = (nframes > IO_BUF_SIZE) ? IO_BUF_SIZE : nframes;
+                    size_t to_read      = lsp_min(nframes, IO_BUF_SIZE);
                     ssize_t read        = direct_read(dptr, to_read, afmt);
 
                     // Analyze read status

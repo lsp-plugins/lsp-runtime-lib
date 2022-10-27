@@ -24,6 +24,7 @@
 
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/fmt/lspc/ChunkAccessor.h>
+#include <lsp-plug.in/fmt/lspc/ChunkWriterStream.h>
 #include <lsp-plug.in/fmt/lspc/lspc.h>
 
 namespace lsp
@@ -46,6 +47,8 @@ namespace lsp
 
             protected:
                 size_t              nChunksOut;
+                wssize_t            nPosition;
+                ChunkWriterStream   sStream;
 
             protected:
                 status_t            do_flush(size_t flags);
@@ -55,6 +58,19 @@ namespace lsp
     
             public:
                 virtual ~ChunkWriter();
+
+            public:
+                /**
+                 * Obtain access to chunk writer as a stream.
+                 * @return pointer to the stream
+                 */
+                inline io::IOutStream  *stream()            { return &sStream;      }
+
+                /**
+                 * Get current write position in bytes
+                 * @return actual position from the beginning of the chunk including header
+                 */
+                inline wssize_t         position() const    { return nPosition;     }
 
             public:
                 /**
