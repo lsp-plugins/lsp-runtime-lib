@@ -160,7 +160,7 @@ UTEST_BEGIN("runtime.fmt.lspc", drumkit)
         float *buf = new float[is->channels() * 1024];
         if (buf == NULL)
             return - STATUS_NO_MEM;
-        lsp_finally { free(buf); };
+        lsp_finally { delete[] buf; };
 
         ssize_t n;
         ssize_t count = 0;
@@ -186,7 +186,9 @@ UTEST_BEGIN("runtime.fmt.lspc", drumkit)
 
         lspc::chunk_id_t *paths = NULL;
         ssize_t path_count = lspc.enumerate_chunks(LSPC_CHUNK_PATH, &paths);
+        UTEST_ASSERT(paths != NULL);
         UTEST_ASSERT(path_count == 5);
+        lsp_finally { free(paths); };
 
         // Process audio files
         LSPString rel_path;
@@ -221,7 +223,9 @@ UTEST_BEGIN("runtime.fmt.lspc", drumkit)
         // Find the text configuration chunk
         lspc::chunk_id_t *config = NULL;
         ssize_t config_count = lspc.enumerate_chunks(LSPC_CHUNK_TEXT_CONFIG, &config);
+        UTEST_ASSERT(config != NULL);
         UTEST_ASSERT(config_count == 1);
+        lsp_finally { free(config); };
 
         // Extract the text configuration
         UTEST_ASSERT(path.set(dst_dir, "drumkit.cfg") == STATUS_OK);
