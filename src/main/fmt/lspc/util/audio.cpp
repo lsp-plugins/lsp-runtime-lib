@@ -24,6 +24,7 @@
 #include <lsp-plug.in/fmt/lspc/AudioReader.h>
 #include <lsp-plug.in/fmt/lspc/AudioWriter.h>
 #include <lsp-plug.in/fmt/lspc/IAudioFormatSelector.h>
+#include <lsp-plug.in/fmt/lspc/InAudioStream.h>
 #include <lsp-plug.in/mm/InAudioFileStream.h>
 #include <lsp-plug.in/mm/OutAudioFileStream.h>
 #include <lsp-plug.in/stdlib/stdlib.h>
@@ -336,6 +337,49 @@ namespace lsp
             // Return result
             if (params != NULL)
                 *params             = aparams;
+            return STATUS_OK;
+        }
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_audio(
+            chunk_id_t chunk_id, File *file,
+            mm::IInAudioStream **is, size_t buf_size)
+        {
+            if ((file == NULL) || (is == NULL))
+                return STATUS_BAD_ARGUMENTS;
+
+            // Read the chunk
+            lspc::AudioReader *rd = new lspc::AudioReader();
+            if (rd == NULL)
+                return STATUS_NO_MEM;
+            status_t res = rd->open(file, chunk_id);
+            if (res != STATUS_OK)
+                return res;
+            lsp_finally {
+                if (rd != NULL)
+                    delete rd;
+            };
+
+            // Get audio parameters
+            mm::audio_stream_t sparams;
+            audio_parameters_t aparams;
+            if ((res = rd->get_parameters(&aparams)) != STATUS_OK)
+                return res;
+
+            sparams.srate       = aparams.sample_rate;
+            sparams.channels    = aparams.channels;
+            sparams.frames      = aparams.frames;
+            sparams.format      = mm::SFMT_F32_CPU;
+
+            // Create audio stream
+            InAudioStream *ias = new InAudioStream(rd, &sparams, true);
+            if (ias == NULL)
+                return STATUS_NO_MEM;
+
+            // Return result
+            *is                 = ias;
+            ias                 = NULL;
+            rd                  = NULL;
             return STATUS_OK;
         }
     } /* namespace lspc */

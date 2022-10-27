@@ -3,7 +3,7 @@
  *           (C) 2022 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
- * Created on: 21 окт. 2022 г.
+ * Created on: 27 окт. 2022 г.
  *
  * lsp-runtime-lib is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,47 +19,44 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LSP_PLUG_IN_FMT_LSPC_CHUNKREADERSTREAM_H_
-#define LSP_PLUG_IN_FMT_LSPC_CHUNKREADERSTREAM_H_
+#ifndef LSP_PLUG_IN_FMT_LSPC_INAUDIOSTREAM_H_
+#define LSP_PLUG_IN_FMT_LSPC_INAUDIOSTREAM_H_
 
 #include <lsp-plug.in/runtime/version.h>
-#include <lsp-plug.in/io/IInStream.h>
+
+#include <lsp-plug.in/fmt/lspc/AudioReader.h>
+#include <lsp-plug.in/mm/IInAudioStream.h>
 
 namespace lsp
 {
     namespace lspc
     {
-        class ChunkReader;
-
-        class ChunkReaderStream: public io::IInStream
+        class InAudioStream: public mm::IInAudioStream
         {
             private:
-                ChunkReaderStream & operator = (const ChunkReaderStream &);
+                InAudioStream(const InAudioStream &);
+                InAudioStream &operator = (const InAudioStream &);
 
-            private:
-                ChunkReader        *pReader;
+            protected:
+                AudioReader        *pReader;
                 bool                bDelete;
 
-            private:
-                void            do_close();
+            protected:
+                status_t            do_close();
+
+            protected:
+                virtual ssize_t     direct_read(void *dst, size_t nframes, size_t fmt) override;
+                virtual size_t      select_format(size_t fmt) override;
 
             public:
-                ChunkReaderStream(ChunkReader *reader, bool free = false);
-                virtual ~ChunkReaderStream();
+                InAudioStream(AudioReader *in, const mm::audio_stream_t *fmt, bool free = false);
+                virtual ~InAudioStream();
 
-            public:
-                virtual wssize_t    position() override;
-                virtual ssize_t     read_byte() override;
-                virtual ssize_t     read(void *dst, size_t count) override;
-                virtual wssize_t    skip(wsize_t amount) override;
                 virtual status_t    close() override;
+                virtual wssize_t    skip(wsize_t nframes) override;
         };
 
     } /* namespace lspc */
 } /* namespace lsp */
 
-// Definition of lsp::lspc::ChunkReader
-#include <lsp-plug.in/fmt/lspc/ChunkReader.h>
-
-
-#endif /* LSP_PLUG_IN_FMT_LSPC_CHUNKREADERSTREAM_H_ */
+#endif /* LSP_PLUG_IN_FMT_LSPC_INAUDIOSTREAM_H_ */

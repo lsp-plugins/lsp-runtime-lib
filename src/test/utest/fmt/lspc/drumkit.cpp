@@ -144,6 +144,39 @@ UTEST_BEGIN("runtime.fmt.lspc", drumkit)
         UTEST_ASSERT(lspc.close() == STATUS_OK);
     }
 
+    ssize_t read_audio_stream(lspc::chunk_id_t chunk_id, lspc::File *lspc, const io::Path *path)
+    {
+        mm::IInAudioStream *is = NULL;
+        status_t res = lspc::read_audio(chunk_id, lspc, &is);
+        if (res < 0)
+            return - res;
+        else if (is == NULL)
+            return - STATUS_NO_MEM;
+        lsp_finally {
+            if (is != NULL)
+                delete is;
+        };
+
+        float *buf = new float[is->channels() * 1024];
+        if (buf == NULL)
+            return - STATUS_NO_MEM;
+        lsp_finally { free(buf); };
+
+        ssize_t n;
+        ssize_t count = 0;
+        while ((n = is->read(buf, 1024)) >= 0)
+            count += n;
+
+        if ((n < 0) && (n != -STATUS_EOF))
+            return n;
+        if ((res = is->close()) != STATUS_OK)
+            return res;
+        delete is;
+        is      = NULL;
+
+        return count;
+    };
+
     void extract_drumkit_file(io::Path *dst_dir, io::Path *drumkit)
     {
         lspc::File lspc;
@@ -177,6 +210,12 @@ UTEST_BEGIN("runtime.fmt.lspc", drumkit)
             UTEST_ASSERT(path.get_parent(&dir) == STATUS_OK);
             UTEST_ASSERT(dir.mkdir(true) == STATUS_OK);
             UTEST_ASSERT(lspc::read_audio(ref_id, &lspc, &path, mm::SFMT_S24_DFL, mm::AFMT_WAV | mm::CFMT_PCM) == STATUS_OK);
+
+            // Test reading as audio stream
+            printf("  testing reading audio stream from chunk id=%d...\n", int(ref_id));
+            ssize_t res = read_audio_stream(ref_id, &lspc, &path);
+            UTEST_ASSERT(res >= 0);
+            printf("  read %d frames\n", int(res));
         }
 
         // Find the text configuration chunk

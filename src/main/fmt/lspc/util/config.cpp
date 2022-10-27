@@ -324,6 +324,43 @@ namespace lsp
 
             return (written < 0) ? -written : res;
         }
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_config(chunk_id_t chunk_id, File *file, io::IInStream **is, size_t buf_size)
+        {
+            if ((file == NULL) || (is == NULL))
+                return STATUS_BAD_ARGUMENTS;
+
+            // Open the reader
+            ChunkReader *rd = file->read_chunk(chunk_id, LSPC_CHUNK_TEXT_CONFIG);
+            if (rd == NULL)
+                return STATUS_NOT_FOUND;
+            lsp_finally {
+                if (rd != NULL)
+                    delete rd;
+            };
+
+            // Read the header
+            lspc::chunk_text_config_t hdr;
+            ssize_t nread = rd->read_header(&hdr, sizeof(hdr));
+            if (nread < 0)
+                return -nread;
+            else if (nread != sizeof(hdr))
+                return STATUS_CORRUPTED;
+            else if (hdr.common.version != 0)
+                return STATUS_NOT_SUPPORTED;
+
+            // Wrap with the input stream
+            ChunkReaderStream *cs = new ChunkReaderStream(rd, true);
+            if (cs == NULL)
+                return STATUS_NO_MEM;
+
+            // Return he result
+            *is         = cs;
+            rd          = NULL;
+
+            return STATUS_OK;
+        }
     } /* namespace lspc */
 } /* namespace lsp */
 

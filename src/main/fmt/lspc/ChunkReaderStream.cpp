@@ -25,13 +25,23 @@ namespace lsp
 {
     namespace lspc
     {
-        ChunkReaderStream::ChunkReaderStream(ChunkReader *reader)
+        ChunkReaderStream::ChunkReaderStream(ChunkReader *reader, bool free)
         {
             pReader = reader;
+            bDelete = free;
         }
 
         ChunkReaderStream::~ChunkReaderStream()
         {
+            do_close();
+        }
+
+        void ChunkReaderStream::do_close()
+        {
+            if (pReader == NULL)
+                return;
+            if (bDelete)
+                delete pReader;
             pReader = NULL;
         }
 
@@ -94,7 +104,7 @@ namespace lsp
 
         status_t ChunkReaderStream::close()
         {
-            pReader     = NULL;
+            do_close();
             return set_error(STATUS_OK);
         }
     } /* namespace lspc */

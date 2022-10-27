@@ -139,6 +139,19 @@ namespace lsp
             chunk_id_t chunk_id, File *file,
             mm::IOutAudioStream *os, audio_parameters_t *params, size_t buf_size = 0x1000);
 
+        /**
+         * Read audio entry and return the pointer to the multimedia input stream
+         * @param chunk_id chunk identifier
+         * @param file the LSPC file to read the chunk
+         * @param is pointer to store the multimedia audio stream
+         * @param buf_size size of buffer of I/O operations
+         * @return status of operation
+         */
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_audio(
+            chunk_id_t chunk_id, File *file,
+            mm::IInAudioStream **is, size_t buf_size = 0x1000);
+
     } /* namespace lspc */
 } /* namespace lsp */
 

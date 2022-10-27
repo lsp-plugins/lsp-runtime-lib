@@ -132,12 +132,23 @@ namespace lsp
          * Read configuration chunk to the output stream
          * @param chunk_id chunk identifier
          * @param file the LSPC file to read the chunk
-         * @param path target file name
+         * @param os target output stream to read data
          * @param buf_size size of buffer for I/O operations
          * @return status of operation
          */
         LSP_RUNTIME_LIB_PUBLIC
         status_t read_config(chunk_id_t chunk_id, File *file, io::IOutStream *os, size_t buf_size = 0x1000);
+
+        /**
+         * Read configuration chunk and return pointer to the input stream
+         * @param chunk_id chunk identifier
+         * @param file the LSPC file to read the chunk
+         * @param is pointer to store the resulting stream, should be deleted after use
+         * @param buf_size size of buffer for I/O operations
+         * @return status of operation
+         */
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t read_config(chunk_id_t chunk_id, File *file, io::IInStream **is, size_t buf_size = 0x1000);
 
         /**
          * Read configuration chunk into the memory and return pointer to the allocated string
