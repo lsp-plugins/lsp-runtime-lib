@@ -341,9 +341,7 @@ namespace lsp
         }
 
         LSP_RUNTIME_LIB_PUBLIC
-        status_t read_audio(
-            chunk_id_t chunk_id, File *file,
-            mm::IInAudioStream **is, size_t buf_size)
+        status_t read_audio(chunk_id_t chunk_id, File *file, mm::IInAudioStream **is)
         {
             if ((file == NULL) || (is == NULL))
                 return STATUS_BAD_ARGUMENTS;

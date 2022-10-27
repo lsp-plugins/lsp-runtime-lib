@@ -148,9 +148,7 @@ namespace lsp
          * @return status of operation
          */
         LSP_RUNTIME_LIB_PUBLIC
-        status_t read_audio(
-            chunk_id_t chunk_id, File *file,
-            mm::IInAudioStream **is, size_t buf_size = 0x1000);
+        status_t read_audio(chunk_id_t chunk_id, File *file, mm::IInAudioStream **is);
 
     } /* namespace lspc */
 } /* namespace lsp */
