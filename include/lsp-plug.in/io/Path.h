@@ -54,6 +54,10 @@ namespace lsp
             wsize_t     atime;      // Access time in milliseconds
         } fattr_t;
 
+        /**
+         * Path object. All char * pointers are treated as UTF-8 strings unless the
+         * special case is described.
+         */
         class Path
         {
             private:
@@ -72,11 +76,30 @@ namespace lsp
                 Path           *clone() const;
 
             public:
+                // Setting and getting the path value
+                /**
+                 * Set the native-encoded string path to the Path object
+                 * @param path path to set
+                 * @param charset character set to use
+                 * @return status of operation
+                 */
                 status_t        set_native(const char *path, const char *charset = NULL);
+
+                /**
+                 * Assign string path to the Path object
+                 * @param path path to set
+                 * @return status of operation
+                 */
                 status_t        set(const char *path);
                 status_t        set(const LSPString *path);
                 status_t        set(const Path *path);
 
+                /**
+                 * Construct path of two parts
+                 * @param path path to set
+                 * @param child the child element to append to the path
+                 * @return status of operation
+                 */
                 status_t        set(const char *path, const char *child);
                 status_t        set(const char *path, const LSPString *child);
                 status_t        set(const char *path, const Path *child);
@@ -89,31 +112,190 @@ namespace lsp
                 status_t        set(const Path *path, const LSPString *child);
                 status_t        set(const Path *path, const Path *child);
 
+                /**
+                 * Get the current path value
+                 * @return current path value
+                 */
                 inline const char *get() const                          { return sPath.get_utf8();  }
+
+                /**
+                 * Store the path value in the provided character buffer
+                 * @param path target buffer to store value
+                 * @param maxlen maximum length of character buffer
+                 * @return status of operation
+                 */
                 status_t        get(char *path, size_t maxlen) const;
+                /**
+                 * Store the path value in the string
+                 * @param path target string object to store value
+                 * @return status of operation
+                 */
                 status_t        get(LSPString *path) const;
+                /**
+                 * Store the path value in the string
+                 * @param path target Path object to store value
+                 * @return status of operation
+                 */
                 status_t        get(Path *path) const;
 
+            public:
+                // Operations with last element in the path
+                /**
+                 * Replace last element of the path with the new value
+                 * @param path new value to use as the end of the path
+                 * @return status of operation
+                 */
                 status_t        set_last(const char *path);
+                /**
+                 * Replace last element of the path with the new value
+                 * @param path new value to use as the end of the path
+                 * @return status of operation
+                 */
                 status_t        set_last(const LSPString *path);
+                /**
+                 * Replace last element of the path with the new value
+                 * @param path new value to use as the end of the path
+                 * @return status of operation
+                 */
                 status_t        set_last(const Path *path);
 
+                /**
+                 * Get last element of the path
+                 * @param path character buffer to store character data
+                 * @param maxlen maximum length of the buffer
+                 * @return status of operation
+                 */
                 status_t        get_last(char *path, size_t maxlen) const;
+                /**
+                 * Get last element of the path
+                 * @param path string object to store the value
+                 * @return status of operation
+                 */
                 status_t        get_last(LSPString *path) const;
+                /**
+                 * Get last element of the path
+                 * @param path Path object to store the value
+                 * @return status of operation
+                 */
                 status_t        get_last(Path *path) const;
 
-                status_t        pop_last(char *path, size_t maxlen);
-                status_t        pop_last(LSPString *path);
-                status_t        pop_last(Path *path);
+                /**
+                 * Remove last element from the path object
+                 * @return status of operation
+                 */
+                status_t        remove_last();
+                /**
+                 * Remove last element from the path object and return the removed element
+                 * @param path character buffer to store the value
+                 * @param maxlen maximum length of the buffer
+                 * @return status of operation
+                 */
+                status_t        remove_last(char *path, size_t maxlen);
+                /**
+                 * Remove last element from the path object and return the removed element
+                 * @param path string to store the value
+                 * @param maxlen maximum length of the buffer
+                 * @return status of operation
+                 */
+                status_t        remove_last(LSPString *path);
+                /**
+                 * Remove last element from the path object and return the removed element
+                 * @param path string to store the value
+                 * @param maxlen maximum length of the buffer
+                 * @return status of operation
+                 */
+                status_t        remove_last(Path *path);
 
+                /**
+                 * Remove the last element from the path object and return the result value
+                 * @param path character buffer to store the value
+                 * @param maxlen maximum length of the buffer
+                 * @return status of operation
+                 */
+                status_t        without_last(char *path, size_t maxlen) const;
+                /**
+                 * Remove the last element from the path object and return the result value
+                 * @param path string to store the value
+                 * @return status of operation
+                 */
+                status_t        without_last(LSPString *path) const;
+                /**
+                 * Remove the last element from the path object and return the result value
+                 * @param path path object to store the value
+                 * @return status of operation
+                 */
+                status_t        without_last(Path *path) const;
+
+            public:
+                // Operations with first element in the path
+                /**
+                 * Get first element of the path
+                 * @param path character buffer to store character data
+                 * @param maxlen maximum length of the buffer
+                 * @return status of operation
+                 */
                 status_t        get_first(char *path, size_t maxlen) const;
+                /**
+                 * Get first element of the path
+                 * @param path string object to store the value
+                 * @return status of operation
+                 */
                 status_t        get_first(LSPString *path) const;
+                /**
+                 * Get first element of the path
+                 * @param path Path object to store the value
+                 * @return status of operation
+                 */
                 status_t        get_first(Path *path) const;
 
-                status_t        pop_first(char *path, size_t maxlen);
-                status_t        pop_first(LSPString *path);
-                status_t        pop_first(Path *path);
+                /**
+                 * Remove first element from the path object
+                 * @return status of operation
+                 */
+                status_t        remove_first();
+                /**
+                 * Remove first element from the path object and return the removed element
+                 * @param path character buffer to store the value
+                 * @param maxlen maximum length of the buffer
+                 * @return status of operation
+                 */
+                status_t        remove_first(char *path, size_t maxlen);
+                /**
+                 * Remove first element from the path object and return the removed element
+                 * @param path string to store the value
+                 * @param maxlen maximum length of the buffer
+                 * @return status of operation
+                 */
+                status_t        remove_first(LSPString *path);
+                /**
+                 * Remove first element from the path object and return the removed element
+                 * @param path string to store the value
+                 * @param maxlen maximum length of the buffer
+                 * @return status of operation
+                 */
+                status_t        remove_first(Path *path);
 
+                /**
+                 * Remove the first element from the path object and return the result value
+                 * @param path character buffer to store the value
+                 * @param maxlen maximum length of the buffer
+                 * @return status of operation
+                 */
+                status_t        without_first(char *path, size_t maxlen) const;
+                /**
+                 * Remove the first element from the path object and return the result value
+                 * @param path string to store the value
+                 * @return status of operation
+                 */
+                status_t        without_first(LSPString *path) const;
+                /**
+                 * Remove the first element from the path object and return the result value
+                 * @param path path object to store the value
+                 * @return status of operation
+                 */
+                status_t        without_first(Path *path) const;
+
+            public:
                 status_t        get_ext(char *path, size_t maxlen) const;
                 status_t        get_ext(LSPString *path) const;
                 status_t        get_ext(Path *path) const;
@@ -141,16 +323,6 @@ namespace lsp
                 status_t        append(const char *path);
                 status_t        append(const LSPString *path);
                 status_t        append(const Path *path);
-
-                status_t        remove_last();
-                status_t        remove_last(char *path, size_t maxlen) const;
-                status_t        remove_last(LSPString *path) const;
-                status_t        remove_last(Path *path) const;
-
-                status_t        remove_first();
-                status_t        remove_first(char *path, size_t maxlen) const;
-                status_t        remove_first(LSPString *path) const;
-                status_t        remove_first(Path *path) const;
 
                 status_t        remove_base();
                 status_t        remove_base(const char *path);
@@ -203,25 +375,113 @@ namespace lsp
                 void            take(LSPString *src);
 
             public:
+                // Some kind of file operations
+                /**
+                 * Return information about the file
+                 * @param attr pointer to structure to store the information
+                 * @return status of operaiton
+                 */
                 status_t        stat(fattr_t *attr) const;
+
+                /**
+                 * Return information about the file, do not follow symbolic links
+                 * @param attr pointer to structure to store the information
+                 * @return status of operaiton
+                 */
                 status_t        sym_stat(fattr_t *attr) const;
+
+                /**
+                 * Obtain the size of the file
+                 * @return file size or negative error code
+                 */
                 wssize_t        size() const;
+
+                /**
+                 * Check that path entry exists on file system
+                 * @return true if path entry exists on file system
+                 */
                 bool            exists() const;
+                /**
+                 * Check that path entry exists on file system and is a regular file
+                 * @return true if path entry exists on file system and is a regular file
+                 */
                 bool            is_reg() const;
+                /**
+                 * Check that path entry exists on file system and is a directory
+                 * @return true if path entry exists on file system and is a directory
+                 */
                 bool            is_dir() const;
+                /**
+                 * Check that path entry exists on file system and is a block device
+                 * @return true if path entry exists on file system and is a block device
+                 */
                 bool            is_block_dev() const;
+                /**
+                 * Check that path entry exists on file system and is a character device
+                 * @return true if path entry exists on file system and is a character device
+                 */
                 bool            is_char_dev() const;
+                /**
+                 * Check that path entry exists on file system and is a FIFO
+                 * @return true if path entry exists on file system and is a FIFO
+                 */
                 bool            is_fifo() const;
+                /**
+                 * Check that path entry exists on file system and is a symbolic link
+                 * @return true if path entry exists on file system and is a symbolic link
+                 */
                 bool            is_symlink() const;
+                /**
+                 * Check that path entry exists on file system and is a socket
+                 * @return true if path entry exists on file system and is a socket
+                 */
                 bool            is_socket() const;
+
+                /**
+                 * Create directory associated with the path name
+                 * @return status of operation
+                 */
                 status_t        mkdir() const;
+                /**
+                 * Create directory associated with the path name
+                 * @param recursive flag that allows to perform recursive directory creation
+                 * @return status of operation
+                 */
                 status_t        mkdir(bool recursive) const;
+                /**
+                 * Create parent directory associated with the path name
+                 * @return status of operation
+                 */
                 status_t        mkparent() const;
+                /**
+                 * Create parent directory associated with the path name
+                 * @param recursive flag that allows to perform recursive directory creation
+                 * @return status of operation
+                 */
                 status_t        mkparent(bool recursive) const;
+                /**
+                 * Remove the file associated with the path
+                 * @return status of operation
+                 */
                 status_t        remove() const;
 
+                /**
+                 * Rename or move the file associated with the path name to another path
+                 * @param dst destination file name
+                 * @return status of operation
+                 */
                 status_t        rename(const char *dst) const;
+                /**
+                 * Rename or move the file associated with the path name to another path
+                 * @param dst destination file name
+                 * @return status of operation
+                 */
                 status_t        rename(const LSPString *dst) const;
+                /**
+                 * Rename or move the file associated with the path name to another path
+                 * @param dst destination file name
+                 * @return status of operation
+                 */
                 status_t        rename(const io::Path *dst) const;
 
             public:

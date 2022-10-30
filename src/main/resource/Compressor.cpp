@@ -115,7 +115,7 @@ namespace lsp
             while (true)
             {
                 // Get first item and remove it
-                if ((res = path->pop_first(&item)) != STATUS_OK)
+                if ((res = path->remove_first(&item)) != STATUS_OK)
                     return res;
 
                 // Lookup for existing directory/create yet another one
