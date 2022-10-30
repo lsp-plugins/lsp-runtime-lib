@@ -862,6 +862,9 @@ namespace lsp
 
         status_t Path::remove_first()
         {
+            if (is_root())
+                return STATUS_NOT_FOUND;
+
             ssize_t idx     = sPath.index_of(FILE_SEPARATOR_C);
             if (is_relative())
             {

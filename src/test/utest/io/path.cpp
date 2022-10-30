@@ -39,7 +39,7 @@
 #else
     #define TEST_PATH1          "/usr/local/bin"
     #define TEST_PATH2          "/usr/share/local/lib"
-    #define TEST_PATH2_FIRST    "/usr/share/locals"
+    #define TEST_PATH2_FIRST    "/usr/share/local"
     #define TEST_PATH2_LAST     "lib"
     #define TEST_PATH3          "/usr/share/local/bin"
     #define TEST_PATH3_FIRST    "/"
@@ -372,7 +372,7 @@ UTEST_BEGIN("runtime.io", path)
         UTEST_ASSERT(p.equals(TEST_PATH2_FIRST));
         UTEST_ASSERT(sstr.equals(&xstr));
 
-        UTEST_ASSERT(p.set(TEST_PATH2_LAST) == STATUS_OK);
+        UTEST_ASSERT(p.set(TEST_PATH2) == STATUS_OK);
         UTEST_ASSERT(p.remove_last(&spath) == STATUS_OK);
         UTEST_ASSERT(p.remove_last(pnull) == STATUS_BAD_ARGUMENTS);
         UTEST_ASSERT(p.equals(TEST_PATH2_FIRST));
@@ -425,10 +425,6 @@ UTEST_BEGIN("runtime.io", path)
 
         printf("Testing remove_first...\n");
 
-        UTEST_ASSERT(p.set(TEST_PATH2) == STATUS_OK);
-        UTEST_ASSERT(p.remove_first() == STATUS_OK);
-        UTEST_ASSERT(p.equals(TEST_PATH2_LAST));
-
         UTEST_ASSERT(p.set(TEST_PATH3) == STATUS_OK);
         UTEST_ASSERT(p.remove_first() == STATUS_OK);
         UTEST_ASSERT(p.equals(TEST_PATH3_LAST));
@@ -451,7 +447,7 @@ UTEST_BEGIN("runtime.io", path)
         UTEST_ASSERT(p.equals(TEST_PATH3_LAST));
         UTEST_ASSERT(sstr.equals(&xstr));
 
-        UTEST_ASSERT(p.set(TEST_PATH3_FIRST) == STATUS_OK);
+        UTEST_ASSERT(p.set(TEST_PATH3) == STATUS_OK);
         UTEST_ASSERT(p.remove_first(&spath) == STATUS_OK);
         UTEST_ASSERT(p.remove_first(pnull) == STATUS_BAD_ARGUMENTS);
         UTEST_ASSERT(p.equals(TEST_PATH3_LAST));
@@ -477,7 +473,7 @@ UTEST_BEGIN("runtime.io", path)
         UTEST_ASSERT(p.equals(TEST_PATH3));
         UTEST_ASSERT(strcmp(path, TEST_PATH3_LAST) == 0);
 
-        UTEST_ASSERT(xstr.set_utf8(TEST_PATH3_FIRST));
+        UTEST_ASSERT(xstr.set_utf8(TEST_PATH3_LAST));
         UTEST_ASSERT(p.set(TEST_PATH3) == STATUS_OK);
         UTEST_ASSERT(p.without_first(&sstr) == STATUS_OK);
         UTEST_ASSERT(p.without_first(snull) == STATUS_BAD_ARGUMENTS);
