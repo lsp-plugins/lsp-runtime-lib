@@ -149,9 +149,26 @@ namespace lsp
                     read = 0;
                 }
     #else
-                size_t read = pread(fd, bptr, count, pos);
+                ssize_t read    = pread(fd, bptr, count, pos);
     #endif /* PLATFORM_WINDOWS */
-                if (read < count)
+                if (read < 0)
+                {
+                    int error = errno;
+                    switch (error)
+                    {
+                        case EISDIR:    return -STATUS_IS_DIRECTORY;
+                        case EPERM:     return -STATUS_PERMISSION_DENIED;
+                        case EINTR:     continue;
+                        case EIO:       return -STATUS_IO_ERROR;
+                        case EBADF:     return -STATUS_BAD_STATE;
+                        case EINVAL:    return -STATUS_BAD_STATE;
+                        case EAGAIN:    break;
+                        default:        return -STATUS_IO_ERROR;
+                    }
+
+                    return total;
+                }
+                else if (read < ssize_t(count))
                     return total;
 
                 bptr       += read;

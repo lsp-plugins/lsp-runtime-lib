@@ -153,22 +153,15 @@ namespace lsp
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
+            // Convert path to unix-like path string
+            LSPString tmp;
+            if (!tmp.set_utf8(path))
+                return STATUS_NO_MEM;
+            tmp.replace_all('\\', '/');
+
+            // Write the entry
             path_entry_t pe;
-            pe.path     = const_cast<char *>(path);
-            pe.flags    = flags;
-            pe.chunk_id = reference_id;
-
-            return write_path(chunk_id, file, &pe);
-        }
-
-        LSP_RUNTIME_LIB_PUBLIC
-        status_t write_path(chunk_id_t *chunk_id, File *file, const io::Path *path, size_t flags, chunk_id_t reference_id)
-        {
-            if (path == NULL)
-                return STATUS_BAD_ARGUMENTS;
-
-            path_entry_t pe;
-            pe.path     = const_cast<char *>(path->as_utf8());
+            pe.path     = const_cast<char *>(tmp.get_utf8());
             pe.flags    = flags;
             pe.chunk_id = reference_id;
 
@@ -181,8 +174,37 @@ namespace lsp
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
+            // Convert path to unix-like path string
+            LSPString tmp;
+            if (!tmp.set(path))
+                return STATUS_NO_MEM;
+            tmp.replace_all('\\', '/');
+
+            // Write the entry
             path_entry_t pe;
-            pe.path     = const_cast<char *>(path->get_utf8());
+            pe.path     = const_cast<char *>(tmp.get_utf8());
+            pe.flags    = flags;
+            pe.chunk_id = reference_id;
+
+            return write_path(chunk_id, file, &pe);
+        }
+
+        LSP_RUNTIME_LIB_PUBLIC
+        status_t write_path(chunk_id_t *chunk_id, File *file, const io::Path *path, size_t flags, chunk_id_t reference_id)
+        {
+            if (path == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            // Convert path to unix-like path string
+            LSPString tmp;
+            status_t res = path->get(&tmp);
+            if (res != STATUS_OK)
+                return res;
+            tmp.replace_all('\\', '/');
+
+            // Write the entry
+            path_entry_t pe;
+            pe.path     = const_cast<char *>(tmp.get_utf8());
             pe.flags    = flags;
             pe.chunk_id = reference_id;
 

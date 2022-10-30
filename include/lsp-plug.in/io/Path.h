@@ -152,10 +152,10 @@ namespace lsp
                 status_t        remove_first(LSPString *path) const;
                 status_t        remove_first(Path *path) const;
 
+                status_t        remove_base();
                 status_t        remove_base(const char *path);
                 status_t        remove_base(const LSPString *path);
                 status_t        remove_base(const Path *path);
-                status_t        remove_base();
 
                 status_t        remove_root();
 

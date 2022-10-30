@@ -56,6 +56,7 @@ namespace lsp
             protected:
                 // Platform-specific parameters
                 handle_t           *hHandle;
+                audio_stream_t      sFormat;
                 bool                bSeekable;
 
             protected:
@@ -98,10 +99,15 @@ namespace lsp
                  */
                 virtual status_t    open(const io::Path *path);
 
+            public:
+                virtual status_t    info(mm::audio_stream_t *dst) const override;
+                virtual size_t      sample_rate() const override;
+                virtual size_t      channels() const override;
+                virtual wssize_t    length() const override;
+                virtual size_t      format() const;
+
                 virtual status_t    close() override;
-
                 virtual wssize_t    skip(wsize_t nframes) override;
-
                 virtual wssize_t    seek(wsize_t nframes) override;
         };
     

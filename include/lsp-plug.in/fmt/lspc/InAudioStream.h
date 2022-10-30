@@ -39,6 +39,7 @@ namespace lsp
 
             protected:
                 AudioReader        *pReader;
+                mm::audio_stream_t  sFormat;
                 bool                bDelete;
 
             protected:
@@ -51,6 +52,13 @@ namespace lsp
             public:
                 InAudioStream(AudioReader *in, const mm::audio_stream_t *fmt, bool free = false);
                 virtual ~InAudioStream();
+
+            public:
+                virtual status_t    info(mm::audio_stream_t *dst) const override;
+                virtual size_t      sample_rate() const override;
+                virtual size_t      channels() const override;
+                virtual wssize_t    length() const override;
+                virtual size_t      format() const;
 
                 virtual status_t    close() override;
                 virtual wssize_t    skip(wsize_t nframes) override;

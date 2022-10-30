@@ -68,6 +68,7 @@ namespace lsp
             ssize_t nskipped = pReader->skip_frames(nframes);
             if (nskipped < 0)
                 set_error(-nskipped);
+            set_error(STATUS_OK);
             return nskipped;
         }
 
@@ -85,7 +86,37 @@ namespace lsp
                 set_error(-nread);
             else if (nread == 0)
                 return -set_error(STATUS_EOF);
+
+            set_error(STATUS_OK);
             return nread;
+        }
+
+        status_t InAudioStream::info(mm::audio_stream_t *dst) const
+        {
+            if (dst == NULL)
+                return STATUS_BAD_ARGUMENTS;
+            *dst                = sFormat;
+            return STATUS_OK;
+        }
+
+        size_t InAudioStream::sample_rate() const
+        {
+            return sFormat.srate;
+        }
+
+        size_t InAudioStream::channels() const
+        {
+            return sFormat.channels;
+        }
+
+        wssize_t InAudioStream::length() const
+        {
+            return sFormat.frames;
+        }
+
+        size_t InAudioStream::format() const
+        {
+            return sFormat.format;
         }
 
     } /* namespace lspc */

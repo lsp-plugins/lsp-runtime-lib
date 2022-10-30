@@ -47,7 +47,6 @@ namespace lsp
                 status_t            nErrorCode;         // Last error code
                 uint8_t            *pBuffer;            // Buffer for sample format conversion
                 size_t              nBufSize;           // Size of buffer
-                audio_stream_t      sFormat;            // Audio stream format
 
             protected:
                 void                do_close();
@@ -109,32 +108,32 @@ namespace lsp
                  * @param dst destination to store the audio stream information
                  * @return status of operation
                  */
-                status_t            info(audio_stream_t *dst) const;
+                virtual status_t    info(audio_stream_t *dst) const;
 
                 /**
                  * Get sample rate
                  * @return sample rate
                  */
-                inline size_t       sample_rate() const         { return sFormat.srate;         }
+                virtual size_t      sample_rate() const;
 
                 /**
                  * Get number of channels
                  * @return number of channels
                  */
-                inline size_t       channels() const            { return sFormat.channels;      }
+                virtual size_t      channels() const;
 
                 /**
                  * Get overall duration
                  * @return overall number of frames available in audio stream,
                  * negative if number of frames can not be estimated
                  */
-                inline wssize_t     length() const              { return sFormat.frames;        }
+                virtual wssize_t    length() const;
 
                 /**
                  * Get sample format
                  * @return sample format
                  */
-                inline size_t       format() const              { return sFormat.format;        }
+                virtual size_t      format() const;
 
                 /**
                  * Close audio stream
@@ -157,11 +156,12 @@ namespace lsp
 
                 /**
                  * Try to seek stream at the specified position
-                 * @return actual position in frames from beginnin of the stream
+                 * @param offset the offset from the beginning of the stream
+                 * @return actual position in frames from beginnig of the stream
                  *   or negative error code on error (STATUS_NOT_SUPPORTED if stream
                  *   positioning is not supported)
                  */
-                virtual wssize_t    seek(wsize_t nframes);
+                virtual wssize_t    seek(wsize_t offset);
 
                 /**
                  * Different reads
