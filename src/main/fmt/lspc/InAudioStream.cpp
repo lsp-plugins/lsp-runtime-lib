@@ -40,6 +40,7 @@ namespace lsp
 
         status_t InAudioStream::do_close()
         {
+            nOffset         = -1;
             if (pReader == NULL)
                 return STATUS_OK;
 
