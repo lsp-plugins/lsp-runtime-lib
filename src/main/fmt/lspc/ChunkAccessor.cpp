@@ -168,7 +168,7 @@ namespace lsp
 
                     return total;
                 }
-                else if (read < ssize_t(count))
+                else if (ssize_t(read) < ssize_t(count))
                     return total;
 
                 bptr       += read;
