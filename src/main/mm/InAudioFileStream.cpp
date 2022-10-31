@@ -291,6 +291,9 @@ namespace lsp
             handle_t *h     = static_cast<handle_t *>(malloc(sizeof(handle_t)));
             if (h == NULL)
                 return set_error(STATUS_NO_MEM);
+            h->pMMIO            = NULL;
+            h->pACM             = NULL;
+            h->pFormat          = NULL;
             lsp_finally { close_handle(h);  };
 
             // Try to load data using MMIO
