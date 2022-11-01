@@ -675,7 +675,7 @@ namespace lsp
             return write_bool(value, flags);
         }
 
-        status_t Serializer::write_string(const LSPString *key, const LSPString *v, size_t flags)
+        status_t Serializer::write_string_impl(const LSPString *key, const LSPString *v, size_t flags)
         {
             if (pOut == NULL)
                 return STATUS_CLOSED;
@@ -695,12 +695,17 @@ namespace lsp
             return pOut->write('\n');
         }
 
+        status_t Serializer::write_string(const LSPString *key, const LSPString *v, size_t flags)
+        {
+            return write_string_impl(key, v, flags);
+        }
+
         status_t Serializer::write_string(const LSPString *key, const char *v, size_t flags)
         {
             LSPString tmp;
             if (!tmp.set_utf8(v))
                 return STATUS_NO_MEM;
-            return write_string(key, &tmp, flags);
+            return write_string_impl(key, &tmp, flags);
         }
 
         status_t Serializer::write_string(const char *key, const LSPString *v, size_t flags)
@@ -708,7 +713,7 @@ namespace lsp
             LSPString tmp;
             if (!tmp.set_utf8(key))
                 return STATUS_NO_MEM;
-            return write_string(&tmp, v, flags);
+            return write_string_impl(&tmp, v, flags);
         }
 
         status_t Serializer::write_string(const char *key, const char *v, size_t flags)
@@ -716,7 +721,7 @@ namespace lsp
             LSPString tmp1, tmp2;
             if ((!tmp1.set_utf8(key)) || (!tmp2.set_utf8(v)))
                 return STATUS_NO_MEM;
-            return write_string(&tmp1, &tmp2, flags);
+            return write_string_impl(&tmp1, &tmp2, flags);
         }
 
         status_t Serializer::write_blob(const LSPString *key, const blob_t *v, size_t flags)
