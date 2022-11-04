@@ -41,23 +41,22 @@ namespace lsp
 
         static const type_t all_types[] =
         {
-            { "i32:", SF_TYPE_I32 },
-            { "u32:", SF_TYPE_U32 },
-            { "f32:", SF_TYPE_F32 },
-            { "i64:", SF_TYPE_I64 },
-            { "u64:", SF_TYPE_U64 },
-            { "f64:", SF_TYPE_F64 },
-            { "bool:", SF_TYPE_BOOL },
-            { "str:", SF_TYPE_STR },
-            { "blob:", SF_TYPE_BLOB },
-            { NULL, 0 }
+            { "i32:",   SF_TYPE_I32     },
+            { "u32:",   SF_TYPE_U32     },
+            { "f32:",   SF_TYPE_F32     },
+            { "i64:",   SF_TYPE_I64     },
+            { "u64:",   SF_TYPE_U64     },
+            { "f64:",   SF_TYPE_F64     },
+            { "bool:",  SF_TYPE_BOOL    },
+            { "str:",   SF_TYPE_STR     },
+            { "blob:",  SF_TYPE_BLOB    },
+            { NULL,     0               }
         };
         
         PullParser::PullParser()
         {
             pIn         = NULL;
             nWFlags     = 0;
-            nFlags      = 0;
         }
         
         PullParser::~PullParser()
@@ -260,10 +259,11 @@ namespace lsp
                     break;
 
                 // Parse the line
-                result = parse_line();
+                size_t flags    = 0;
+                result          = parse_line(flags);
                 if (result == STATUS_OK)
                 {
-                    result  = commit_param();
+                    result  = commit_param(&sKey, &sValue, flags);
                     if ((result == STATUS_OK) && (param != NULL))
                         result = (param->copy(&sParam)) ? STATUS_OK : STATUS_NO_MEM;
                     break;
@@ -345,14 +345,14 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t PullParser::read_type(size_t &off)
+        status_t PullParser::read_type(size_t &off, size_t &flags)
         {
             // Check type prefix
             for (const type_t *p = all_types; p->prefix != NULL; ++p)
             {
                 if (sLine.contains_at_ascii(off, p->prefix))
                 {
-                    nFlags     |= p->flags | SF_TYPE_SET;
+                    flags      |= p->flags | SF_TYPE_SET;
                     off        += ::strlen(p->prefix);
                     return STATUS_OK;
                 }
@@ -361,7 +361,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t PullParser::read_value(size_t &off)
+        status_t PullParser::read_value(size_t &off, size_t &flags)
         {
             size_t len      = sLine.length();
             ssize_t trim    = -1;
@@ -369,7 +369,7 @@ namespace lsp
             // Check that value is quoted
             if (sLine.char_at(off) == '"')
             {
-                nFlags         |= SF_QUOTED;
+                flags          |= SF_QUOTED;
                 ++off;
             }
 
@@ -409,7 +409,7 @@ namespace lsp
 
                     // Comment
                     case '#':
-                        if (nFlags & SF_QUOTED)
+                        if (flags & SF_QUOTED)
                         {
                             if (!sValue.append(ch))
                                 return STATUS_NO_MEM;
@@ -423,7 +423,7 @@ namespace lsp
                     // Spaces
                     case ' ':
                     case '\t':
-                        if ((!(nFlags & SF_QUOTED)) && (trim < 0))
+                        if ((!(flags & SF_QUOTED)) && (trim < 0))
                             trim    = sValue.length();
 
                         if (!sValue.append(ch))
@@ -432,13 +432,13 @@ namespace lsp
 
                     // Quotes
                     case '\"':
-                        if (!(nFlags & SF_QUOTED))
+                        if (!(flags & SF_QUOTED))
                             return STATUS_BAD_FORMAT;
                         return (skip_spaces(off)) ? STATUS_OK : STATUS_BAD_FORMAT;
 
                     // End of line
                     case '\n':
-                        if (nFlags & SF_QUOTED)
+                        if (flags & SF_QUOTED)
                             return STATUS_BAD_FORMAT;
                         return STATUS_OK;
 
@@ -451,7 +451,7 @@ namespace lsp
                 }
             }
 
-            if (nFlags & SF_QUOTED)
+            if (flags & SF_QUOTED)
                 return STATUS_BAD_FORMAT;
             else if (trim >= 0)
                 sValue.set_length(trim);
@@ -459,11 +459,11 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t PullParser::parse_line()
+        status_t PullParser::parse_line(size_t &flags)
         {
             sKey.clear();
             sValue.clear();
-            nFlags          = 0;
+            flags           = 0;
 
             // Empty line?
             size_t off=0;
@@ -485,14 +485,14 @@ namespace lsp
             // Fetch the value type
             if (skip_spaces(off))
                 return STATUS_OK;
-            res             = read_type(off);
+            res             = read_type(off, flags);
             if (res != STATUS_OK)
                 return res;
 
             // Fetch the value's value
             if (skip_spaces(off))
                 return STATUS_OK;
-            res             = read_value(off);
+            res             = read_value(off, flags);
             if (res != STATUS_OK)
                 return res;
 
@@ -500,81 +500,81 @@ namespace lsp
             return (skip_spaces(off)) ? STATUS_OK : STATUS_BAD_FORMAT;
         }
 
-        status_t PullParser::commit_param()
+        status_t PullParser::commit_param(const LSPString *key, const LSPString *value, size_t flags)
         {
             param_t tmp;
             status_t res    = STATUS_OK;
 
             // Copy parameter name
-            if (!tmp.name.set(&sKey))
+            if (!tmp.name.set(key))
                 return STATUS_NO_MEM;
             tmp.comment.clear();
 
             // If type is explicitly set
-            if (nFlags & SF_TYPE_SET)
+            if (flags & SF_TYPE_SET)
             {
-                switch (nFlags & SF_TYPE_MASK)
+                switch (flags & SF_TYPE_MASK)
                 {
-                    case SF_TYPE_I32: res = parse_int32(&sValue, &tmp.v.i32); break;
-                    case SF_TYPE_U32: res = parse_uint32(&sValue, &tmp.v.u32); break;
-                    case SF_TYPE_F32: res = parse_float(&sValue, &tmp.v.f32, &nFlags); break;
-                    case SF_TYPE_I64: res = parse_int64(&sValue, &tmp.v.i64); break;
-                    case SF_TYPE_U64: res = parse_uint64(&sValue, &tmp.v.u64); break;
-                    case SF_TYPE_F64: res = parse_double(&sValue, &tmp.v.f64, &nFlags); break;
-                    case SF_TYPE_BOOL: res = parse_bool(&sValue, &tmp.v.bval); break;
+                    case SF_TYPE_I32: res = parse_int32(value, &tmp.v.i32); break;
+                    case SF_TYPE_U32: res = parse_uint32(value, &tmp.v.u32); break;
+                    case SF_TYPE_F32: res = parse_float(value, &tmp.v.f32, &flags); break;
+                    case SF_TYPE_I64: res = parse_int64(value, &tmp.v.i64); break;
+                    case SF_TYPE_U64: res = parse_uint64(value, &tmp.v.u64); break;
+                    case SF_TYPE_F64: res = parse_double(value, &tmp.v.f64, &flags); break;
+                    case SF_TYPE_BOOL: res = parse_bool(value, &tmp.v.bval); break;
                     case SF_TYPE_STR:
-                        if ((tmp.v.str = sValue.clone_utf8()) == NULL)
+                        if ((tmp.v.str = value->clone_utf8()) == NULL)
                             res     = STATUS_NO_MEM;
                         break;
                     case SF_TYPE_BLOB:
                         tmp.v.blob.ctype  = NULL;
                         tmp.v.blob.data   = NULL;
-                        res = parse_blob(&sValue, &tmp.v.blob);
+                        res = parse_blob(value, &tmp.v.blob);
                         break;
                     default:
                         return STATUS_UNKNOWN_ERR;
                 }
-                tmp.flags       = nFlags;
+                tmp.flags       = flags;
                 if (res == STATUS_OK)
                     sParam.swap(&tmp);
                 return res;
             }
 
             // Type is not explicitly set
-            if (!(nFlags & SF_QUOTED))
+            if (!(flags & SF_QUOTED))
             {
-                if (sValue.index_of('.') < 0)
+                if (value->index_of('.') < 0)
                 {
                     // Try to parse as boolean
-                    if ((res = parse_bool(&sValue, &tmp.v.bval)) == STATUS_OK)
+                    if ((res = parse_bool(value, &tmp.v.bval)) == STATUS_OK)
                     {
-                        tmp.flags     = nFlags | SF_TYPE_BOOL;
+                        tmp.flags     = flags | SF_TYPE_BOOL;
                         sParam.swap(&tmp);
                         return STATUS_OK;
                     }
 
                     // Try to parse as integer
-                    if ((res = parse_int32(&sValue, &tmp.v.i32)) == STATUS_OK)
+                    if ((res = parse_int32(value, &tmp.v.i32)) == STATUS_OK)
                     {
-                        tmp.flags     = nFlags | SF_TYPE_I32;
+                        tmp.flags     = flags | SF_TYPE_I32;
                         sParam.swap(&tmp);
                         return STATUS_OK;
                     }
                 }
 
                 // Try to parse as float
-                if ((res = parse_float(&sValue, &tmp.v.f32, &nFlags)) == STATUS_OK)
+                if ((res = parse_float(value, &tmp.v.f32, &flags)) == STATUS_OK)
                 {
-                    tmp.flags     = nFlags | SF_TYPE_F32;
+                    tmp.flags     = flags | SF_TYPE_F32;
                     sParam.swap(&tmp);
                     return STATUS_OK;
                 }
             }
 
             // Return as a string
-            if ((tmp.v.str = sValue.clone_utf8()) == NULL)
+            if ((tmp.v.str = value->clone_utf8()) == NULL)
                 res     = STATUS_NO_MEM;
-            tmp.flags   = nFlags | SF_TYPE_STR;
+            tmp.flags   = flags | SF_TYPE_STR;
 
             sParam.swap(&tmp);
             return STATUS_OK;
