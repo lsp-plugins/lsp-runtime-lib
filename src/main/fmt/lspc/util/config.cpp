@@ -326,7 +326,7 @@ namespace lsp
         }
 
         LSP_RUNTIME_LIB_PUBLIC
-        status_t read_config(chunk_id_t chunk_id, File *file, io::IInStream **is, size_t buf_size)
+        status_t read_config(chunk_id_t chunk_id, File *file, io::IInStream **is)
         {
             if ((file == NULL) || (is == NULL))
                 return STATUS_BAD_ARGUMENTS;
