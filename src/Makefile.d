@@ -391,32 +391,6 @@ $(LSP_RUNTIME_LIB_BIN)/main/mm/IOutAudioStream.o: \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h
-$(LSP_RUNTIME_LIB_BIN)/main/mm/InAudioStream.o: main/mm/InAudioStream.cpp \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/InAudioStream.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/AudioReader.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/finally.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/File.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
- $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
- $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
- $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/ChunkReader.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/ChunkAccessor.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/lspc.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/ChunkReaderStream.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/ChunkWriter.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/ChunkWriterStream.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutStream.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IInAudioStream.h \
- $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h
 $(LSP_RUNTIME_LIB_BIN)/main/mm/InAudioFileStream.o: \
  main/mm/InAudioFileStream.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
@@ -1266,6 +1240,33 @@ $(LSP_RUNTIME_LIB_BIN)/main/fmt/lspc/util/audio.o: \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/InAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/InAudioFileStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/OutAudioFileStream.h
+$(LSP_RUNTIME_LIB_BIN)/main/fmt/lspc/InAudioStream.o: \
+ main/fmt/lspc/InAudioStream.cpp \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/InAudioStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/AudioReader.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/finally.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/File.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/ChunkReader.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/ChunkAccessor.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/lspc.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/ChunkReaderStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/ChunkWriter.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/ChunkWriterStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IInAudioStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h
 $(LSP_RUNTIME_LIB_BIN)/main/fmt/lspc/IAudioFormatSelector.o: \
  main/fmt/lspc/IAudioFormatSelector.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/IAudioFormatSelector.h \
