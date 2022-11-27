@@ -9,6 +9,7 @@
   when writing to LSPC file.
 * Added several utility functions for easier work with LSPC file format.
 * Fixed bug related to reading audio files with 24-bit audio format under Windows.
+* Updated build scripts.
 
 === 1.0.9 ===
 * Updated build scripts.
