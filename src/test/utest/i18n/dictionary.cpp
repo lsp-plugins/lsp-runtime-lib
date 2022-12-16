@@ -49,11 +49,14 @@ UTEST_BEGIN("runtime.i18n", dictionary)
         ck_lookup(xd, "k1", "v1");
         ck_lookup(xd, "k8.k1.k2", "z2");
         ck_lookup(xd, "k7.a3", "x3");
+        ck_lookup(xd, "k2", "special_case");
+        ck_lookup(xd, "k8.k1", "special_case2");
 
         printf("Testing parameter access...\n");
         LSPString v;
         UTEST_ASSERT(d.lookup("i18n", &v) == STATUS_NOT_FOUND);
         UTEST_ASSERT(d.lookup("i18n.valid", &v) == STATUS_NOT_FOUND);
+        UTEST_ASSERT(d.lookup("i18n.valid.k3", &v) == STATUS_NOT_FOUND);
 
         ck_lookup(&d, "i18n.valid.k1", "v1");
         ck_lookup(&d, "i18n.valid.k8.k1.k2", "z2");
@@ -61,6 +64,9 @@ UTEST_BEGIN("runtime.i18n", dictionary)
 
         UTEST_ASSERT(d.lookup("x.a", &v) == STATUS_NOT_FOUND);
         UTEST_ASSERT(d.lookup("x.a", &v) == STATUS_NOT_FOUND);
+
+        ck_lookup(&d, "i18n.valid.k2", "special_case");
+        ck_lookup(&d, "i18n.valid.k8.k1", "special_case2");
     }
 
 UTEST_END

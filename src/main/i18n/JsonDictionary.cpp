@@ -307,8 +307,19 @@ namespace lsp
                 node = curr->find_node(key);
 
             // Analyze node
-            if ((node == NULL) || (node->pChild != NULL))
+            if (node == NULL)
                 return STATUS_NOT_FOUND;
+            else if (node->pChild != NULL)
+            {
+                // Special case: if the last node is a sub-dictionary, then try to lookup
+                // for the empty key inside of the sub-dictionary.
+                LSPString empty;
+                node = node->pChild->find_node(&empty);
+                if ((node == NULL) || (node->pChild != NULL))
+                    return STATUS_NOT_FOUND;
+            }
+
+            // Set the value
             if ((value != NULL) && (!value->set(&node->sValue)))
                 return STATUS_NO_MEM;
 
