@@ -51,14 +51,14 @@ namespace lsp
 
             public:
                 InAudioStream(AudioReader *in, const mm::audio_stream_t *fmt, bool free = false);
-                virtual ~InAudioStream();
+                virtual ~InAudioStream() override;
 
             public:
                 virtual status_t    info(mm::audio_stream_t *dst) const override;
                 virtual size_t      sample_rate() const override;
                 virtual size_t      channels() const override;
                 virtual wssize_t    length() const override;
-                virtual size_t      format() const;
+                virtual size_t      format() const override;
 
                 virtual status_t    close() override;
                 virtual wssize_t    skip(wsize_t nframes) override;
