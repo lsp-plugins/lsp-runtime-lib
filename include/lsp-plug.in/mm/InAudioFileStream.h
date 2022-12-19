@@ -75,7 +75,7 @@ namespace lsp
 
             public:
                 explicit InAudioFileStream();
-                virtual ~InAudioFileStream();
+                virtual ~InAudioFileStream() override;
 
             public:
                 /**
@@ -104,7 +104,7 @@ namespace lsp
                 virtual size_t      sample_rate() const override;
                 virtual size_t      channels() const override;
                 virtual wssize_t    length() const override;
-                virtual size_t      format() const;
+                virtual size_t      format() const override;
 
                 virtual status_t    close() override;
                 virtual wssize_t    skip(wsize_t nframes) override;
