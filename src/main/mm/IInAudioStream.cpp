@@ -34,10 +34,6 @@ namespace lsp
             pBuffer             = NULL;
             nBufSize            = 0;
             nErrorCode          = STATUS_CLOSED;
-            sFormat.srate       = 0;
-            sFormat.channels    = 0;
-            sFormat.frames      = -1;
-            sFormat.format      = SFMT_NONE;
         }
         
         IInAudioStream::~IInAudioStream()
@@ -56,19 +52,44 @@ namespace lsp
 
             nOffset     = -1;   // Mark as closed
         }
-    
-        status_t IInAudioStream::info(audio_stream_t *dst) const
-        {
-            if (dst == NULL)
-                return STATUS_BAD_ARGUMENTS;
-            *dst    = sFormat;
-            return STATUS_OK;
-        }
 
         status_t IInAudioStream::close()
         {
             do_close();
             return set_error(STATUS_OK);
+        }
+    
+        status_t IInAudioStream::info(audio_stream_t *dst) const
+        {
+            if (dst == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            dst->srate          = sample_rate();
+            dst->channels       = channels();
+            dst->frames         = length();
+            dst->format         = format();
+
+            return STATUS_OK;
+        }
+
+        size_t IInAudioStream::sample_rate() const
+        {
+            return 0;
+        }
+
+        size_t IInAudioStream::channels() const
+        {
+            return 0;
+        }
+
+        wssize_t IInAudioStream::length() const
+        {
+            return -1;
+        }
+
+        size_t IInAudioStream::format() const
+        {
+            return SFMT_NONE;
         }
 
         wssize_t IInAudioStream::skip(wsize_t nframes)
@@ -81,7 +102,7 @@ namespace lsp
 
             // Select format and check frame size
             size_t afmt     = select_format(0);
-            size_t asize    = sformat_size_of(afmt) * sFormat.channels;
+            size_t asize    = sformat_size_of(afmt) * channels();
             if (asize <= 0)
                 return -set_error(STATUS_UNSUPPORTED_FORMAT);
 
@@ -119,14 +140,14 @@ namespace lsp
             return (nOffset >= 0) ? nOffset : -set_error(STATUS_CLOSED);
         }
 
-        wssize_t IInAudioStream::seek(wsize_t nframes)
+        wssize_t IInAudioStream::seek(wsize_t offset)
         {
             if (nOffset < 0)
                 return -set_error(STATUS_CLOSED);
-            else if (nOffset > wssize_t(nframes))
+            if (nOffset > wssize_t(offset))
                 return -set_error(STATUS_NOT_SUPPORTED);
 
-            return skip(nframes - nOffset);
+            return skip(offset - nOffset);
         }
 
         ssize_t IInAudioStream::direct_read(void *dst, size_t nframes, size_t fmt)
@@ -162,12 +183,13 @@ namespace lsp
                 return -set_error(STATUS_CLOSED);
 
             // Prepare pointers and remember frame size
-            size_t fsize    = sformat_size_of(fmt) * sFormat.channels;
+            size_t nchan    = channels();
+            size_t fsize    = sformat_size_of(fmt) * nchan;
             if (fsize <= 0)
                 return -set_error(STATUS_BAD_FORMAT);
 
             size_t afmt     = select_format(fmt);
-            size_t asize    = sformat_size_of(afmt) * sFormat.channels;
+            size_t asize    = sformat_size_of(afmt) * nchan;
             if (asize <= 0)
                 return -set_error(STATUS_UNSUPPORTED_FORMAT);
 
@@ -180,7 +202,7 @@ namespace lsp
                 while (nframes > 0)
                 {
                     // Ensure capacity
-                    size_t to_read      = (nframes > IO_BUF_SIZE) ? IO_BUF_SIZE : nframes;
+                    size_t to_read      = lsp_min(nframes, IO_BUF_SIZE);
                     if (!ensure_capacity(to_read * asize))
                         return -set_error(STATUS_NO_MEM);
 
@@ -197,7 +219,7 @@ namespace lsp
                     }
 
                     // Data is stored in pBuffer which can be updated, perform sample conversion
-                    if (!convert_samples(dptr, pBuffer, read * sFormat.channels, fmt, afmt))
+                    if (!convert_samples(dptr, pBuffer, read * nchan, fmt, afmt))
                         return -set_error(STATUS_UNSUPPORTED_FORMAT);
 
                     // Update position and pointers
@@ -211,7 +233,7 @@ namespace lsp
                 while (nframes > 0)
                 {
                     // Select number of frames and perform read
-                    size_t to_read      = (nframes > IO_BUF_SIZE) ? IO_BUF_SIZE : nframes;
+                    size_t to_read      = lsp_min(nframes, IO_BUF_SIZE);
                     ssize_t read        = direct_read(dptr, to_read, afmt);
 
                     // Analyze read status

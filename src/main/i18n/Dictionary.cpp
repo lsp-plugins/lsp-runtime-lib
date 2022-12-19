@@ -106,15 +106,20 @@ namespace lsp
             if (key == NULL)
                 return STATUS_INVALID_VALUE;
 
+            LSPString id, subkey;
             ssize_t idx = key->index_of('.');
             if (idx < 0)
-                return STATUS_NOT_FOUND;
-
-            LSPString id, subkey;
-            if (!id.set(key, 0, idx))
-                return STATUS_NO_MEM;
-            if (!subkey.set(key, idx+1))
-                return STATUS_NO_MEM;
+            {
+                if (!id.set(key))
+                    return STATUS_NO_MEM;
+            }
+            else
+            {
+                if (!id.set(key, 0, idx))
+                    return STATUS_NO_MEM;
+                if (!subkey.set(key, idx+1))
+                    return STATUS_NO_MEM;
+            }
 
             // Perform binary search of the item
             ssize_t first = 0, last = vNodes.size()-1;
@@ -129,8 +134,16 @@ namespace lsp
                 else if (cmp < 0)
                     first   = curr + 1;
                 else
+                {
+                    if (id.is_empty())
+                        return STATUS_NOT_FOUND;
                     return (node->pDict != NULL) ? node->pDict->lookup(&subkey, value) : STATUS_NOT_FOUND;
+                }
             }
+
+            // Dictionary identifier was specified?
+            if (id.is_empty())
+                return STATUS_NOT_FOUND;
 
             // Dictionary not found, try to create new one
             IDictionary *dict = NULL;

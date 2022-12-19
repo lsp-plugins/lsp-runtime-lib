@@ -19,15 +19,14 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <lsp-plug.in/test-fw/utest.h>
-#include <lsp-plug.in/test-fw/FloatBuffer.h>
-#include <lsp-plug.in/runtime/LSPString.h>
-#include <lsp-plug.in/fmt/lspc/lspc.h>
 #include <lsp-plug.in/fmt/lspc/AudioWriter.h>
 #include <lsp-plug.in/fmt/lspc/AudioReader.h>
+#include <lsp-plug.in/fmt/lspc/lspc.h>
 #include <lsp-plug.in/lltl/parray.h>
-
-#include <stdlib.h>
+#include <lsp-plug.in/runtime/LSPString.h>
+#include <lsp-plug.in/stdlib/stdlib.h>
+#include <lsp-plug.in/test-fw/utest.h>
+#include <lsp-plug.in/test-fw/FloatBuffer.h>
 
 #define TOTAL_FRAMES        0xfffff
 #define CHANNELS            5
@@ -40,26 +39,26 @@ static const float cvalues[CHANNELS] = { -1.0f, -0.5f, 0.0f, 0.5f, 1.0f };
 
 static const size_t formats[] =
 {
-    LSPC_SAMPLE_FMT_U8LE,
-    LSPC_SAMPLE_FMT_U8BE,
-    LSPC_SAMPLE_FMT_S8LE,
-    LSPC_SAMPLE_FMT_S8BE,
-    LSPC_SAMPLE_FMT_U16LE,
-    LSPC_SAMPLE_FMT_U16BE,
-    LSPC_SAMPLE_FMT_S16LE,
-    LSPC_SAMPLE_FMT_S16BE,
-    LSPC_SAMPLE_FMT_U24LE,
-    LSPC_SAMPLE_FMT_U24BE,
-    LSPC_SAMPLE_FMT_S24LE,
-    LSPC_SAMPLE_FMT_S24BE,
-    LSPC_SAMPLE_FMT_U32LE,
-    LSPC_SAMPLE_FMT_U32BE,
-    LSPC_SAMPLE_FMT_S32LE,
-    LSPC_SAMPLE_FMT_S32BE,
-    LSPC_SAMPLE_FMT_F32LE,
-    LSPC_SAMPLE_FMT_F32BE,
-    LSPC_SAMPLE_FMT_F64LE,
-    LSPC_SAMPLE_FMT_F64BE
+    lspc::SAMPLE_FMT_U8LE,
+    lspc::SAMPLE_FMT_U8BE,
+    lspc::SAMPLE_FMT_S8LE,
+    lspc::SAMPLE_FMT_S8BE,
+    lspc::SAMPLE_FMT_U16LE,
+    lspc::SAMPLE_FMT_U16BE,
+    lspc::SAMPLE_FMT_S16LE,
+    lspc::SAMPLE_FMT_S16BE,
+    lspc::SAMPLE_FMT_U24LE,
+    lspc::SAMPLE_FMT_U24BE,
+    lspc::SAMPLE_FMT_S24LE,
+    lspc::SAMPLE_FMT_S24BE,
+    lspc::SAMPLE_FMT_U32LE,
+    lspc::SAMPLE_FMT_U32BE,
+    lspc::SAMPLE_FMT_S32LE,
+    lspc::SAMPLE_FMT_S32BE,
+    lspc::SAMPLE_FMT_F32LE,
+    lspc::SAMPLE_FMT_F32BE,
+    lspc::SAMPLE_FMT_F64LE,
+    lspc::SAMPLE_FMT_F64BE
 };
 
 UTEST_BEGIN("runtime.fmt.lspc", audio)
@@ -83,7 +82,7 @@ UTEST_BEGIN("runtime.fmt.lspc", audio)
         p.channels          = v.size();
         p.sample_format     = fmt;
         p.sample_rate       = 48000;
-        p.codec             = LSPC_CODEC_PCM;
+        p.codec             = lspc::CODEC_PCM;
         p.frames            = TOTAL_FRAMES;
 
         res = aw.open(&fd, &p);
@@ -144,7 +143,7 @@ UTEST_BEGIN("runtime.fmt.lspc", audio)
         UTEST_ASSERT(p.channels == v.size());
         UTEST_ASSERT(p.sample_format == fmt);
         UTEST_ASSERT(p.sample_rate == 48000);
-        UTEST_ASSERT(p.codec == LSPC_CODEC_PCM);
+        UTEST_ASSERT(p.codec == lspc::CODEC_PCM);
         UTEST_ASSERT(p.frames == TOTAL_FRAMES)
 
         // Initialize channel pointers

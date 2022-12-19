@@ -67,9 +67,9 @@ UTEST_BEGIN("runtime.fmt.lspc", lspc)
             ahdr2.common.version    = 2;
             ahdr2.common.size       = sizeof(lspc_chunk_audio_header_v2_t);
             ahdr2.channels          = 1;
-            ahdr2.sample_format     = LSPC_SAMPLE_FMT_F32LE;
+            ahdr2.sample_format     = lspc::SAMPLE_FMT_F32LE;
             ahdr2.sample_rate       = 48000;
-            ahdr2.codec             = LSPC_CODEC_PCM;
+            ahdr2.codec             = lspc::CODEC_PCM;
             ahdr2.frames            = (content.size() / sizeof(float));
 
             ahdr2.channels          = BE_TO_CPU(ahdr2.channels);
@@ -92,9 +92,9 @@ UTEST_BEGIN("runtime.fmt.lspc", lspc)
             ahdr1.common.version    = 1;
             ahdr1.common.size       = sizeof(lspc::chunk_audio_header_t);
             ahdr1.channels          = 1;
-            ahdr1.sample_format     = LSPC_SAMPLE_FMT_F32LE;
+            ahdr1.sample_format     = lspc::SAMPLE_FMT_F32LE;
             ahdr1.sample_rate       = 48000;
-            ahdr1.codec             = LSPC_CODEC_PCM;
+            ahdr1.codec             = lspc::CODEC_PCM;
             ahdr1.frames            = (content.size() / sizeof(float));
 
             ahdr1.channels          = BE_TO_CPU(ahdr1.channels);
@@ -333,9 +333,9 @@ UTEST_BEGIN("runtime.fmt.lspc", lspc)
             ahdr2.frames            = BE_TO_CPU(ahdr2.frames);
 
             UTEST_ASSERT(ahdr2.channels == 1);
-            UTEST_ASSERT(ahdr2.sample_format == LSPC_SAMPLE_FMT_F32LE);
+            UTEST_ASSERT(ahdr2.sample_format == lspc::SAMPLE_FMT_F32LE);
             UTEST_ASSERT(ahdr2.sample_rate == 48000);
-            UTEST_ASSERT(ahdr2.codec == LSPC_CODEC_PCM);
+            UTEST_ASSERT(ahdr2.codec == lspc::CODEC_PCM);
             UTEST_ASSERT(ahdr2.frames == (content.size() / sizeof(float)));
 
             if (ahdr2.common.version == 1)
@@ -373,9 +373,9 @@ UTEST_BEGIN("runtime.fmt.lspc", lspc)
             ahdr1.frames            = BE_TO_CPU(ahdr1.frames);
 
             UTEST_ASSERT(ahdr1.channels == 1);
-            UTEST_ASSERT(ahdr1.sample_format == LSPC_SAMPLE_FMT_F32LE);
+            UTEST_ASSERT(ahdr1.sample_format == lspc::SAMPLE_FMT_F32LE);
             UTEST_ASSERT(ahdr1.sample_rate == 48000);
-            UTEST_ASSERT(ahdr1.codec == LSPC_CODEC_PCM);
+            UTEST_ASSERT(ahdr1.codec == lspc::CODEC_PCM);
             UTEST_ASSERT(ahdr1.frames == (content.size() / sizeof(float)));
 
             UTEST_ASSERT(ahdr1.common.size == sizeof(lspc::chunk_audio_header_t));

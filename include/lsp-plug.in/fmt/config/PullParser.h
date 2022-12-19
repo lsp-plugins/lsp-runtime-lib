@@ -49,15 +49,13 @@ namespace lsp
                 LSPString               sLine;
                 LSPString               sKey;
                 LSPString               sValue;
-                size_t                  nFlags;
 
             protected:
                 bool                skip_spaces(size_t &off);
                 status_t            read_key(size_t &off);
-                status_t            read_type(size_t &off);
-                status_t            read_value(size_t &off);
-                status_t            parse_line();
-                status_t            commit_param();
+                status_t            read_type(size_t &off, size_t &flags);
+                status_t            read_value(size_t &off, size_t &flags);
+                status_t            parse_line(size_t &flags);
 
                 static status_t     parse_int32(const LSPString *str, int32_t *dst);
                 static status_t     parse_uint32(const LSPString *str, uint32_t *dst);
@@ -67,6 +65,9 @@ namespace lsp
                 static status_t     parse_double(const LSPString *str, double *dst, size_t *flags);
                 static status_t     parse_bool(const LSPString *str, bool *dst);
                 static status_t     parse_blob(const LSPString *str, blob_t *dst);
+
+            protected:
+                virtual status_t    commit_param(const LSPString *key, const LSPString *value, size_t flags);
 
             public:
                 explicit PullParser();
@@ -79,7 +80,7 @@ namespace lsp
                  * @param charset character set
                  * @return status of operation
                  */
-                status_t            open(const char *path, const char *charset = NULL);
+                virtual status_t            open(const char *path, const char *charset = NULL);
 
                 /**
                  * Open parser
@@ -87,7 +88,7 @@ namespace lsp
                  * @param charset character set
                  * @return status of operation
                  */
-                status_t            open(const LSPString *path, const char *charset = NULL);
+                virtual status_t            open(const LSPString *path, const char *charset = NULL);
 
                 /**
                  * Open parser
@@ -95,7 +96,7 @@ namespace lsp
                  * @param charset character set
                  * @return status of operation
                  */
-                status_t            open(const io::Path *path, const char *charset = NULL);
+                virtual status_t            open(const io::Path *path, const char *charset = NULL);
 
                 /**
                  * Wrap string with parser
@@ -103,21 +104,21 @@ namespace lsp
                  * @param charset character set
                  * @return status of operation
                  */
-                status_t            wrap(const char *str, const char *charset = NULL);
+                virtual status_t            wrap(const char *str, const char *charset = NULL);
 
                 /**
                  * Wrap string with parser
                  * @param str string to wrap
                  * @return status of operation
                  */
-                status_t            wrap(const LSPString *str);
+                virtual status_t            wrap(const LSPString *str);
 
                 /**
                  * Wrap input sequence with parser
                  * @param seq sequence to use for reads
                  * @return status of operation
                  */
-                status_t            wrap(io::IInSequence *seq, size_t flags = WRAP_NONE);
+                virtual status_t            wrap(io::IInSequence *seq, size_t flags = WRAP_NONE);
 
                 /**
                  * Wrap input stream with parser
@@ -126,13 +127,13 @@ namespace lsp
                  * @param charset character set
                  * @return status of operation
                  */
-                status_t            wrap(io::IInStream *is, size_t flags = WRAP_NONE, const char *charset = NULL);
+                virtual status_t            wrap(io::IInStream *is, size_t flags = WRAP_NONE, const char *charset = NULL);
 
                 /**
                  * Close parser
                  * @return status of operation
                  */
-                status_t            close();
+                virtual status_t            close();
 
             public:
                 /**
@@ -140,21 +141,21 @@ namespace lsp
                  * @param ev pointer to structure to store the event
                  * @return status of operation
                  */
-                status_t            next(param_t *param = NULL);
+                virtual status_t            next(param_t *param = NULL);
 
                 /**
                  * Get current event
                  * @param ev pointer to structure to store the event
                  * @return NULL if there is no current event
                  */
-                const param_t      *current() const;
+                virtual const param_t      *current() const;
 
                 /**
                  * Get current event
                  * @param ev pointer to structure to store the event
                  * @return NULL if there is no current event
                  */
-                status_t           current(param_t *ev) const;
+                virtual status_t           current(param_t *ev) const;
         };
     
     } /* namespace config */

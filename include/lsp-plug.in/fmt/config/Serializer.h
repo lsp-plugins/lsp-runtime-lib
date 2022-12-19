@@ -55,6 +55,7 @@ namespace lsp
                 status_t    write_int(int64_t v, size_t flags);
                 status_t    write_float(double v, size_t flags);
                 status_t    write_bool(bool v, size_t flags);
+                status_t    write_string_impl(const LSPString *key, const LSPString *v, size_t flags);
 
             public:
                 explicit Serializer();
@@ -67,7 +68,7 @@ namespace lsp
                  * @param charset character set
                  * @return status of operation
                  */
-                status_t    open(const char *path, const char *charset = NULL);
+                virtual status_t    open(const char *path, const char *charset = NULL);
 
                 /**
                  * Open parser
@@ -75,7 +76,7 @@ namespace lsp
                  * @param charset character set
                  * @return status of operation
                  */
-                status_t    open(const LSPString *path, const char *charset = NULL);
+                virtual status_t    open(const LSPString *path, const char *charset = NULL);
 
                 /**
                  * Open parser
@@ -83,14 +84,14 @@ namespace lsp
                  * @param charset character set
                  * @return status of operation
                  */
-                status_t    open(const io::Path *path, const char *charset = NULL);
+                virtual status_t    open(const io::Path *path, const char *charset = NULL);
 
                 /**
                  * Wrap string with parser
                  * @param str string to wrap
                  * @return status of operation
                  */
-                status_t    wrap(LSPString *str);
+                virtual status_t    wrap(LSPString *str);
 
                 /**
                  * Wrap input sequence with parser
@@ -98,7 +99,7 @@ namespace lsp
                  * @param flags wrapping flags
                  * @return status of operation
                  */
-                status_t    wrap(io::IOutSequence *seq, size_t flags = WRAP_NONE);
+                virtual status_t    wrap(io::IOutSequence *seq, size_t flags = WRAP_NONE);
 
                 /**
                  * Wrap input stream with parser
@@ -108,13 +109,13 @@ namespace lsp
                  * @param charset character set
                  * @return status of operation
                  */
-                status_t    wrap(io::IOutStream *os, size_t flags = WRAP_NONE, const char *charset = NULL);
+                virtual status_t    wrap(io::IOutStream *os, size_t flags = WRAP_NONE, const char *charset = NULL);
 
                 /**
                  * Close parser
                  * @return status of operation
                  */
-                status_t    close();
+                virtual status_t    close();
 
             public:
                 /**
@@ -123,7 +124,7 @@ namespace lsp
                  * @param v comment
                  * @return status of operation
                  */
-                status_t    write_comment(const LSPString *v);
+                virtual status_t    write_comment(const LSPString *v);
 
                 /**
                  * Write comment to the output stream
@@ -131,13 +132,13 @@ namespace lsp
                  * @param v UTF-8 encoded comment
                  * @return status of operation
                  */
-                status_t    write_comment(const char *v);
+                virtual status_t    write_comment(const char *v);
 
                 /**
                  * Write empty line to the output file
                  * @return status of operation
                  */
-                status_t    writeln();
+                virtual status_t    writeln();
 
                 /**
                  * Write value to the output stream
@@ -146,8 +147,8 @@ namespace lsp
                  * @param flags value flags
                  * @return status of operation
                  */
-                status_t    write(const LSPString *key, const value_t *v, size_t flags);
-                status_t    write(const char *key, const value_t *v, size_t flags);
+                virtual status_t    write(const LSPString *key, const value_t *v, size_t flags);
+                virtual status_t    write(const char *key, const value_t *v, size_t flags);
 
                 /**
                  * Write 32-bit signed integer to the output stream
@@ -156,8 +157,8 @@ namespace lsp
                  * @param flags value flags
                  * @return status of operation
                  */
-                status_t    write_i32(const LSPString *key, int32_t value, size_t flags);
-                status_t    write_i32(const char *key, int32_t value, size_t flags);
+                virtual status_t    write_i32(const LSPString *key, int32_t value, size_t flags);
+                virtual status_t    write_i32(const char *key, int32_t value, size_t flags);
 
                 /**
                  * Write 32-bit unsigned integer to the output stream
@@ -166,8 +167,8 @@ namespace lsp
                  * @param flags value flags
                  * @return status of operation
                  */
-                status_t    write_u32(const LSPString *key, uint32_t value, size_t flags);
-                status_t    write_u32(const char *key, uint32_t value, size_t flags);
+                virtual status_t    write_u32(const LSPString *key, uint32_t value, size_t flags);
+                virtual status_t    write_u32(const char *key, uint32_t value, size_t flags);
 
                 /**
                  * Write 32-bit floating-point to the output stream
@@ -176,8 +177,8 @@ namespace lsp
                  * @param flags value flags
                  * @return status of operation
                  */
-                status_t    write_f32(const LSPString *key, float value, size_t flags);
-                status_t    write_f32(const char *key, float value, size_t flags);
+                virtual status_t    write_f32(const LSPString *key, float value, size_t flags);
+                virtual status_t    write_f32(const char *key, float value, size_t flags);
 
                 /**
                  * Write 64-bit signed integer to the output stream
@@ -186,8 +187,8 @@ namespace lsp
                  * @param flags value flags
                  * @return status of operation
                  */
-                status_t    write_i64(const LSPString *key, int64_t value, size_t flags);
-                status_t    write_i64(const char *key, int64_t value, size_t flags);
+                virtual status_t    write_i64(const LSPString *key, int64_t value, size_t flags);
+                virtual status_t    write_i64(const char *key, int64_t value, size_t flags);
 
                 /**
                  * Write 64-bit unsigned integer to the output stream
@@ -196,8 +197,8 @@ namespace lsp
                  * @param flags value flags
                  * @return status of operation
                  */
-                status_t    write_u64(const LSPString *key, uint64_t value, size_t flags);
-                status_t    write_u64(const char *key, uint64_t value, size_t flags);
+                virtual status_t    write_u64(const LSPString *key, uint64_t value, size_t flags);
+                virtual status_t    write_u64(const char *key, uint64_t value, size_t flags);
 
                 /**
                  * Write 64-bit floating-point to the output stream
@@ -206,8 +207,8 @@ namespace lsp
                  * @param flags value flags
                  * @return status of operation
                  */
-                status_t    write_f64(const LSPString *key, double value, size_t flags);
-                status_t    write_f64(const char *key, double value, size_t flags);
+                virtual status_t    write_f64(const LSPString *key, double value, size_t flags);
+                virtual status_t    write_f64(const char *key, double value, size_t flags);
 
                 /**
                  * Write boolean value to the output stream
@@ -216,8 +217,8 @@ namespace lsp
                  * @param flags value flags
                  * @return status of operation
                  */
-                status_t    write_bool(const LSPString *key, bool value, size_t flags);
-                status_t    write_bool(const char *key, bool value, size_t flags);
+                virtual status_t    write_bool(const LSPString *key, bool value, size_t flags);
+                virtual status_t    write_bool(const char *key, bool value, size_t flags);
 
                 /**
                  * Write text string
@@ -226,10 +227,10 @@ namespace lsp
                  * @param flags value flags
                  * @return status of operation
                  */
-                status_t    write_string(const LSPString *key, const LSPString *v, size_t flags);
-                status_t    write_string(const LSPString *key, const char *v, size_t flags);
-                status_t    write_string(const char *key, const LSPString *v, size_t flags);
-                status_t    write_string(const char *key, const char *v, size_t flags);
+                virtual status_t    write_string(const LSPString *key, const LSPString *v, size_t flags);
+                virtual status_t    write_string(const LSPString *key, const char *v, size_t flags);
+                virtual status_t    write_string(const char *key, const LSPString *v, size_t flags);
+                virtual status_t    write_string(const char *key, const char *v, size_t flags);
 
                 /**
                  * Write blob data
@@ -238,8 +239,8 @@ namespace lsp
                  * @param flags value flags
                  * @return status of operation
                  */
-                status_t    write_blob(const LSPString *key, const blob_t *v, size_t flags);
-                status_t    write_blob(const char *key, const blob_t *v, size_t flags);
+                virtual status_t    write_blob(const LSPString *key, const blob_t *v, size_t flags);
+                virtual status_t    write_blob(const char *key, const blob_t *v, size_t flags);
         };
     
     } /* namespace config */

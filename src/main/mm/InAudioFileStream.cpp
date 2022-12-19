@@ -85,8 +85,12 @@ namespace lsp
         
         InAudioFileStream::InAudioFileStream()
         {
-            hHandle     = NULL;
-            bSeekable   = false;
+            hHandle         = NULL;
+            sFormat.srate   = 0;
+            sFormat.channels= 0;
+            sFormat.frames  = 0;
+            sFormat.format  = mm::SFMT_NONE;
+            bSeekable       = false;
         }
         
         InAudioFileStream::~InAudioFileStream()
@@ -102,6 +106,12 @@ namespace lsp
             hHandle         = NULL;
             bSeekable       = false;
             nOffset         = -1;       // Mark as closed
+
+            // Cleanup format
+            sFormat.srate   = 0;
+            sFormat.channels= 0;
+            sFormat.frames  = 0;
+            sFormat.format  = mm::SFMT_NONE;
 
             return set_error(res);
         }
@@ -281,6 +291,9 @@ namespace lsp
             handle_t *h     = static_cast<handle_t *>(malloc(sizeof(handle_t)));
             if (h == NULL)
                 return set_error(STATUS_NO_MEM);
+            h->pMMIO            = NULL;
+            h->pACM             = NULL;
+            h->pFormat          = NULL;
             lsp_finally { close_handle(h);  };
 
             // Try to load data using MMIO
@@ -505,6 +518,34 @@ namespace lsp
 
             return -set_error(STATUS_NOT_SUPPORTED);
         #endif /* USE_LIBSNDFILE */
+        }
+
+        status_t InAudioFileStream::info(mm::audio_stream_t *dst) const
+        {
+            if (dst == NULL)
+                return STATUS_BAD_ARGUMENTS;
+            *dst                = sFormat;
+            return STATUS_OK;
+        }
+
+        size_t InAudioFileStream::sample_rate() const
+        {
+            return sFormat.srate;
+        }
+
+        size_t InAudioFileStream::channels() const
+        {
+            return sFormat.channels;
+        }
+
+        wssize_t InAudioFileStream::length() const
+        {
+            return sFormat.frames;
+        }
+
+        size_t InAudioFileStream::format() const
+        {
+            return sFormat.format;
         }
     
     } /* namespace mm */

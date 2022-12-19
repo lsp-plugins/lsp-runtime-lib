@@ -56,6 +56,7 @@ namespace lsp
             protected:
                 // Platform-specific parameters
                 handle_t           *hHandle;
+                audio_stream_t      sFormat;
                 bool                bSeekable;
 
             protected:
@@ -65,16 +66,16 @@ namespace lsp
                 ssize_t             read_acm_convert(void *dst, size_t nframes, size_t fmt);
             #endif
 
-                virtual ssize_t     direct_read(void *dst, size_t nframes, size_t fmt);
+                virtual ssize_t     direct_read(void *dst, size_t nframes, size_t fmt) override;
 
-                virtual size_t      select_format(size_t fmt);
+                virtual size_t      select_format(size_t fmt) override;
 
                 status_t            do_close();
                 static status_t     close_handle(handle_t *h);
 
             public:
                 explicit InAudioFileStream();
-                virtual ~InAudioFileStream();
+                virtual ~InAudioFileStream() override;
 
             public:
                 /**
@@ -98,11 +99,16 @@ namespace lsp
                  */
                 virtual status_t    open(const io::Path *path);
 
-                virtual status_t    close();
+            public:
+                virtual status_t    info(mm::audio_stream_t *dst) const override;
+                virtual size_t      sample_rate() const override;
+                virtual size_t      channels() const override;
+                virtual wssize_t    length() const override;
+                virtual size_t      format() const override;
 
-                virtual wssize_t    skip(wsize_t nframes);
-
-                virtual wssize_t    seek(wsize_t nframes);
+                virtual status_t    close() override;
+                virtual wssize_t    skip(wsize_t nframes) override;
+                virtual wssize_t    seek(wsize_t nframes) override;
         };
     
     } /* namespace mm */

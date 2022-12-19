@@ -36,7 +36,7 @@ UTEST_BEGIN("runtime.i18n", json_dictionary)
         UTEST_ASSERT(v.equals_utf8(value));
     }
 
-    void ck_child(i18n::IDictionary *d, size_t index, const char *name)
+    void ck_child(i18n::IDictionary *d, size_t index, const char *name, bool special = false)
     {
         LSPString k;
         i18n::IDictionary *c = NULL;
@@ -45,9 +45,12 @@ UTEST_BEGIN("runtime.i18n", json_dictionary)
         UTEST_ASSERT(d->get_child(index, &k, &c) == STATUS_OK);
         UTEST_ASSERT(k.equals_utf8(name));
 
-        ck_att(c, 0, "a1", "x1");
-        ck_att(c, 1, "a2", "x2");
-        ck_att(c, 2, "a3", "x3");
+        size_t idx = 0;
+        if (special)
+            ck_att(c, idx++, "", "special_case");
+        ck_att(c, idx++, "a1", "x1");
+        ck_att(c, idx++, "a2", "x2");
+        ck_att(c, idx++, "a3", "x3");
     }
 
     void ck_lookup(i18n::IDictionary *d, const char *name, const char *value)
@@ -62,7 +65,7 @@ UTEST_BEGIN("runtime.i18n", json_dictionary)
     void validate(i18n::IDictionary *d)
     {
         ck_att(d, 0, "k1", "v1");
-        ck_child(d, 1, "k2");
+        ck_child(d, 1, "k2", true);
         ck_child(d, 2, "k3");
         ck_child(d, 3, "k4");
         ck_child(d, 4, "k5");
@@ -72,6 +75,8 @@ UTEST_BEGIN("runtime.i18n", json_dictionary)
         ck_lookup(d, "k1", "v1");
         ck_lookup(d, "k2.a3", "x3");
         ck_lookup(d, "k8.k1.k2", "z2");
+        ck_lookup(d, "k2", "special_case");
+        ck_lookup(d, "k8.k1", "special_case2");
     }
 
     UTEST_MAIN
@@ -88,11 +93,13 @@ UTEST_BEGIN("runtime.i18n", json_dictionary)
 
         UTEST_ASSERT(d.lookup("lalala", &xd) == STATUS_NOT_FOUND);
         UTEST_ASSERT(d.lookup("k2", &xd) == STATUS_OK);
-        ck_att(xd, 0, "a1", "x1");
-        ck_att(xd, 1, "a2", "x2");
-        ck_att(xd, 2, "a3", "x3");
+        ck_att(xd, 0, "", "special_case");
+        ck_att(xd, 1, "a1", "x1");
+        ck_att(xd, 2, "a2", "x2");
+        ck_att(xd, 3, "a3", "x3");
         UTEST_ASSERT(d.lookup("k8.k1", &xd) == STATUS_OK);
-        ck_att(xd, 0, "k2", "z2");
+        ck_att(xd, 0, "", "special_case2");
+        ck_att(xd, 1, "k2", "z2");
 
         printf("Validating dictionary...\n");
         validate(&d);

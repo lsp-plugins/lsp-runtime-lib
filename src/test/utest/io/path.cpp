@@ -27,7 +27,11 @@
 #ifdef PLATFORM_WINDOWS
     #define TEST_PATH1          "C:\\Windows\\system32"
     #define TEST_PATH2          "C:\\Windows\\system\\lib"
+    #define TEST_PATH2_FIRST    "C:\\Windows\\system"
+    #define TEST_PATH2_LAST     "lib"
     #define TEST_PATH3          "C:\\Windows\\system\\bin"
+    #define TEST_PATH3_FIRST    "C:\\"
+    #define TEST_PATH3_LAST     "Windows\\system\\bin"
     #define TEST_PATH4          "C:\\Windows\\system"
     #define TEST_PATH4_LAST     "system"
     #define TEST_PATH5          "C:\\Windows"
@@ -35,7 +39,11 @@
 #else
     #define TEST_PATH1          "/usr/local/bin"
     #define TEST_PATH2          "/usr/share/local/lib"
+    #define TEST_PATH2_FIRST    "/usr/share/local"
+    #define TEST_PATH2_LAST     "lib"
     #define TEST_PATH3          "/usr/share/local/bin"
+    #define TEST_PATH3_FIRST    "/"
+    #define TEST_PATH3_LAST     "usr/share/local/bin"
     #define TEST_PATH4          "/usr/share/local"
     #define TEST_PATH4_LAST     "local"
     #define TEST_PATH5          "/usr"
@@ -112,6 +120,8 @@ UTEST_BEGIN("runtime.io", path)
         char path[PATH_MAX];
         LSPString spath, dpath;
 
+        printf("Testing get_parent and set_parent...\n");
+
         UTEST_ASSERT(bp.set(TEST_PATH2) == STATUS_OK);
         UTEST_ASSERT(bp.get_parent(path, PATH_MAX) == STATUS_OK);
         UTEST_ASSERT(bp.get_parent(path, 2) == STATUS_TOO_BIG);
@@ -147,6 +157,8 @@ UTEST_BEGIN("runtime.io", path)
         Path bp, dp, p;
         char path[PATH_MAX];
         LSPString spath, dpath, t1;
+
+        printf("Testing get_last and set_last...\n");
 
         UTEST_ASSERT(dp.set(TEST_PATH2) == STATUS_OK);
         UTEST_ASSERT(dp.set_last("bin") == STATUS_OK);
@@ -205,6 +217,8 @@ UTEST_BEGIN("runtime.io", path)
         char path[PATH_MAX];
         LSPString spath, dpath;
 
+        printf("Testing get and set...\n");
+
         UTEST_ASSERT(p.set(TEST_PATH1) == STATUS_OK);
         UTEST_ASSERT(p.set(cnull) == STATUS_BAD_ARGUMENTS);
         UTEST_ASSERT(p.get(cnull, PATH_MAX) == STATUS_BAD_ARGUMENTS);
@@ -238,6 +252,8 @@ UTEST_BEGIN("runtime.io", path)
         Path p;
         LSPString sstr;
         Path spath;
+
+        printf("Testing concat...\n");
 
         UTEST_ASSERT(p.set(TEST_PATH4) == STATUS_OK);
         UTEST_ASSERT(p.concat(FILE_SEPARATOR_S "bin") == STATUS_OK);
@@ -281,6 +297,8 @@ UTEST_BEGIN("runtime.io", path)
         Path p;
         LSPString sstr;
         Path spath;
+
+        printf("Testing append_child...\n");
 
         UTEST_ASSERT(p.set(TEST_PATH4) == STATUS_OK);
         UTEST_ASSERT(p.append_child("bin") == STATUS_OK);
@@ -326,25 +344,7 @@ UTEST_BEGIN("runtime.io", path)
         LSPString sstr, xstr;
         Path spath;
 
-        UTEST_ASSERT(p.set(TEST_PATH2) == STATUS_OK);
-        UTEST_ASSERT(p.remove_last(path, PATH_MAX) == STATUS_OK);
-        UTEST_ASSERT(p.remove_last(cnull, PATH_MAX) == STATUS_BAD_ARGUMENTS);
-        UTEST_ASSERT(p.remove_last(path, 3) == STATUS_TOO_BIG);
-        UTEST_ASSERT(p.equals(TEST_PATH2));
-        UTEST_ASSERT(strcmp(path, TEST_PATH4) == 0);
-
-        UTEST_ASSERT(xstr.set_utf8(TEST_PATH4));
-        UTEST_ASSERT(p.set(TEST_PATH2) == STATUS_OK);
-        UTEST_ASSERT(p.remove_last(&sstr) == STATUS_OK);
-        UTEST_ASSERT(p.remove_last(snull) == STATUS_BAD_ARGUMENTS);
-        UTEST_ASSERT(p.equals(TEST_PATH2));
-        UTEST_ASSERT(sstr.equals(&xstr));
-
-        UTEST_ASSERT(p.set(TEST_PATH2) == STATUS_OK);
-        UTEST_ASSERT(p.remove_last(&spath) == STATUS_OK);
-        UTEST_ASSERT(p.remove_last(pnull) == STATUS_BAD_ARGUMENTS);
-        UTEST_ASSERT(p.equals(TEST_PATH2));
-        UTEST_ASSERT(spath.equals(&xstr));
+        printf("Testing remove_last...\n");
 
         UTEST_ASSERT(p.set(TEST_PATH2) == STATUS_OK);
         UTEST_ASSERT(p.remove_last() == STATUS_OK);
@@ -357,6 +357,134 @@ UTEST_BEGIN("runtime.io", path)
         UTEST_ASSERT(p.set(TEST_ROOT) == STATUS_OK);
         UTEST_ASSERT(p.remove_last() == STATUS_OK);
         UTEST_ASSERT(p.equals(TEST_ROOT));
+
+        UTEST_ASSERT(p.set(TEST_PATH2) == STATUS_OK);
+        UTEST_ASSERT(p.remove_last(path, PATH_MAX) == STATUS_OK);
+        UTEST_ASSERT(p.remove_last(cnull, PATH_MAX) == STATUS_BAD_ARGUMENTS);
+        UTEST_ASSERT(p.remove_last(path, 3) == STATUS_TOO_BIG);
+        UTEST_ASSERT(p.equals(TEST_PATH2_FIRST));
+        UTEST_ASSERT(strcmp(path, TEST_PATH2_LAST) == 0);
+
+        UTEST_ASSERT(xstr.set_utf8(TEST_PATH2_LAST));
+        UTEST_ASSERT(p.set(TEST_PATH2) == STATUS_OK);
+        UTEST_ASSERT(p.remove_last(&sstr) == STATUS_OK);
+        UTEST_ASSERT(p.remove_last(snull) == STATUS_BAD_ARGUMENTS);
+        UTEST_ASSERT(p.equals(TEST_PATH2_FIRST));
+        UTEST_ASSERT(sstr.equals(&xstr));
+
+        UTEST_ASSERT(p.set(TEST_PATH2) == STATUS_OK);
+        UTEST_ASSERT(p.remove_last(&spath) == STATUS_OK);
+        UTEST_ASSERT(p.remove_last(pnull) == STATUS_BAD_ARGUMENTS);
+        UTEST_ASSERT(p.equals(TEST_PATH2_FIRST));
+        UTEST_ASSERT(spath.equals(&xstr));
+    }
+
+//    status_t    without_last(char *path, size_t maxlen);
+//    status_t    without_last(LSPString *path);
+//    status_t    without_last(Path *path);
+    void test_without_last()
+    {
+        Path p;
+        char path[PATH_MAX];
+        LSPString sstr, xstr;
+        Path spath;
+
+        printf("Testing without_last...\n");
+
+        UTEST_ASSERT(p.set(TEST_PATH2) == STATUS_OK);
+        UTEST_ASSERT(p.without_last(path, PATH_MAX) == STATUS_OK);
+        UTEST_ASSERT(p.without_last(cnull, PATH_MAX) == STATUS_BAD_ARGUMENTS);
+        UTEST_ASSERT(p.without_last(path, 3) == STATUS_TOO_BIG);
+        UTEST_ASSERT(p.equals(TEST_PATH2));
+        UTEST_ASSERT(strcmp(path, TEST_PATH4) == 0);
+
+        UTEST_ASSERT(xstr.set_utf8(TEST_PATH4));
+        UTEST_ASSERT(p.set(TEST_PATH2) == STATUS_OK);
+        UTEST_ASSERT(p.without_last(&sstr) == STATUS_OK);
+        UTEST_ASSERT(p.without_last(snull) == STATUS_BAD_ARGUMENTS);
+        UTEST_ASSERT(p.equals(TEST_PATH2));
+        UTEST_ASSERT(sstr.equals(&xstr));
+
+        UTEST_ASSERT(p.set(TEST_PATH2) == STATUS_OK);
+        UTEST_ASSERT(p.without_last(&spath) == STATUS_OK);
+        UTEST_ASSERT(p.without_last(pnull) == STATUS_BAD_ARGUMENTS);
+        UTEST_ASSERT(p.equals(TEST_PATH2));
+        UTEST_ASSERT(spath.equals(&xstr));
+    }
+
+    //    status_t    remove_first();
+    //    status_t    remove_first(char *path, size_t maxlen);
+    //    status_t    remove_first(LSPString *path);
+    //    status_t    remove_first(Path *path);
+    void test_remove_first()
+    {
+        Path p;
+        char path[PATH_MAX];
+        LSPString sstr, xstr;
+        Path spath;
+
+        printf("Testing remove_first...\n");
+
+        UTEST_ASSERT(p.set(TEST_PATH3) == STATUS_OK);
+        UTEST_ASSERT(p.remove_first() == STATUS_OK);
+        UTEST_ASSERT(p.equals(TEST_PATH3_LAST));
+
+        UTEST_ASSERT(p.set(TEST_ROOT) == STATUS_OK);
+        UTEST_ASSERT(p.remove_first() == STATUS_NOT_FOUND);
+        UTEST_ASSERT(p.equals(TEST_ROOT));
+
+        UTEST_ASSERT(p.set(TEST_PATH3) == STATUS_OK);
+        UTEST_ASSERT(p.remove_first(path, PATH_MAX) == STATUS_OK);
+        UTEST_ASSERT(p.remove_first(cnull, PATH_MAX) == STATUS_BAD_ARGUMENTS);
+        UTEST_ASSERT(p.remove_first(path, 3) == STATUS_TOO_BIG);
+        UTEST_ASSERT(p.equals(TEST_PATH3_LAST));
+        UTEST_ASSERT(strcmp(path, TEST_PATH3_FIRST) == 0);
+
+        UTEST_ASSERT(xstr.set_utf8(TEST_PATH3_FIRST));
+        UTEST_ASSERT(p.set(TEST_PATH3) == STATUS_OK);
+        UTEST_ASSERT(p.remove_first(&sstr) == STATUS_OK);
+        UTEST_ASSERT(p.remove_first(snull) == STATUS_BAD_ARGUMENTS);
+        UTEST_ASSERT(p.equals(TEST_PATH3_LAST));
+        UTEST_ASSERT(sstr.equals(&xstr));
+
+        UTEST_ASSERT(p.set(TEST_PATH3) == STATUS_OK);
+        UTEST_ASSERT(p.remove_first(&spath) == STATUS_OK);
+        UTEST_ASSERT(p.remove_first(pnull) == STATUS_BAD_ARGUMENTS);
+        UTEST_ASSERT(p.equals(TEST_PATH3_LAST));
+        UTEST_ASSERT(spath.equals(&xstr));
+    }
+
+    //    status_t    without_first(char *path, size_t maxlen);
+    //    status_t    without_first(LSPString *path);
+    //    status_t    without_first(Path *path);
+    void test_without_first()
+    {
+        Path p;
+        char path[PATH_MAX];
+        LSPString sstr, xstr;
+        Path spath;
+
+        printf("Testing without_first...\n");
+
+        UTEST_ASSERT(p.set(TEST_PATH3) == STATUS_OK);
+        UTEST_ASSERT(p.without_first(path, PATH_MAX) == STATUS_OK);
+        UTEST_ASSERT(p.without_first(cnull, PATH_MAX) == STATUS_BAD_ARGUMENTS);
+        UTEST_ASSERT(p.without_first(path, 1) == STATUS_TOO_BIG);
+        UTEST_ASSERT(p.equals(TEST_PATH3));
+        UTEST_ASSERT(strcmp(path, TEST_PATH3_LAST) == 0);
+
+        UTEST_ASSERT(xstr.set_utf8(TEST_PATH3_LAST));
+        UTEST_ASSERT(p.set(TEST_PATH3) == STATUS_OK);
+        UTEST_ASSERT(p.without_first(&sstr) == STATUS_OK);
+        UTEST_ASSERT(p.without_first(snull) == STATUS_BAD_ARGUMENTS);
+        UTEST_ASSERT(p.equals(TEST_PATH3));
+        UTEST_ASSERT(sstr.equals(&xstr));
+
+        UTEST_ASSERT(p.set(TEST_PATH3) == STATUS_OK);
+        UTEST_ASSERT(p.without_first(&spath) == STATUS_OK);
+        UTEST_ASSERT(p.without_first(pnull) == STATUS_BAD_ARGUMENTS);
+        UTEST_ASSERT(p.equals(TEST_PATH3));
+        UTEST_ASSERT(spath.equals(&xstr));
     }
 
 //    status_t    remove_base(const char *path);
@@ -366,6 +494,8 @@ UTEST_BEGIN("runtime.io", path)
     {
         Path p, xp;
         LSPString xs;
+
+        printf("Testing remove_base...\n");
 
         UTEST_ASSERT(p.set(TEST_PATH3) == STATUS_OK);
         UTEST_ASSERT(p.remove_base(TEST_PATH4) == STATUS_OK);
@@ -417,6 +547,8 @@ UTEST_BEGIN("runtime.io", path)
     {
         Path p;
 
+        printf("Testing flags...\n");
+
         UTEST_ASSERT(!p.is_absolute());
         UTEST_ASSERT(p.is_relative());
         UTEST_ASSERT(p.is_empty());
@@ -461,6 +593,8 @@ UTEST_BEGIN("runtime.io", path)
         LSPString xs;
         char path[PATH_MAX];
 
+        printf("Testing canonical paths...\n");
+
 //        UTEST_ASSERT(p.set(TEST_PATH1) == STATUS_OK);
 //        UTEST_ASSERT(p.is_canonical());
 //        UTEST_ASSERT(p.set(TEST_ROOT) == STATUS_OK);
@@ -470,7 +604,7 @@ UTEST_BEGIN("runtime.io", path)
 
         for (const char **cp=cpaths; *cp != NULL; cp += 2)
         {
-            printf("Testing \"%s\" -> \"%s\"\n", cp[0], cp[1]);
+            printf("  testing \"%s\" -> \"%s\"\n", cp[0], cp[1]);
             UTEST_ASSERT(p.set(cp[0]) == STATUS_OK);
             UTEST_ASSERT(!p.is_canonical());
 
@@ -670,6 +804,9 @@ UTEST_BEGIN("runtime.io", path)
         test_concat();
         test_append_child();
         test_remove_last();
+        test_without_last();
+        test_remove_first();
+        test_without_first();
         test_remove_base();
         test_flags();
         test_canonical();

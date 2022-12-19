@@ -2,6 +2,16 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.10 ===
+* Fixed bug in io::Path::as_relative() call.
+* Fixed bug in lspc::AudioWriter::write_frames() method.
+* Added lspc::IAudioFormatSelector interface class for selecting audio format
+  when writing to LSPC file.
+* Added several utility functions for easier work with LSPC file format.
+* Fixed bug related to reading audio files with 24-bit audio format under Windows.
+* Added empty key support in the i18n dictionary configuration file.
+* Updated build scripts.
+
 === 1.0.9 ===
 * Updated build scripts.
 

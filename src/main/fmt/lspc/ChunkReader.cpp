@@ -29,11 +29,13 @@ namespace lsp
     namespace lspc
     {
         ChunkReader::ChunkReader(Resource *fd, uint32_t magic, uint32_t uid):
-            ChunkAccessor(fd, magic)
+            ChunkAccessor(fd, magic),
+            sStream(this)
         {
             nUnread     = 0;
             nBufTail    = 0;
             nFileOff    = 0;
+            nPosition   = 0;
             nUID        = uid;
             bLast       = false;
         }
@@ -67,6 +69,7 @@ namespace lsp
                     // Update pointer
                     dst        += to_read;
                     nBufPos    += to_read;
+                    nPosition  += to_read;
                     count      -= to_read;
                     total      += to_read;
                 }
@@ -85,6 +88,7 @@ namespace lsp
                         total      += n;
                         nUnread    -= n;
                         nFileOff   += n;
+                        nPosition  += n;
                     }
                     else // Fill buffer
                     {
@@ -112,13 +116,13 @@ namespace lsp
                     }
 
                     // Read chunk header
-                    ssize_t n   = pFile->read(nFileOff, &hdr, sizeof(chunk_header_t));
+                    ssize_t n       = pFile->read(nFileOff, &hdr, sizeof(chunk_header_t));
                     if (n < ssize_t(sizeof(chunk_header_t)))
                     {
                         set_error(STATUS_EOF);
                         return total;
                     }
-                    nFileOff   += sizeof(chunk_header_t);
+                    nFileOff       += sizeof(chunk_header_t);
 
                     hdr.magic       = BE_TO_CPU(hdr.magic);
                     hdr.flags       = BE_TO_CPU(hdr.flags);
@@ -163,8 +167,8 @@ namespace lsp
             size                       -= sizeof(header_t);
 
             // Read header contents
-            ssize_t to_read = (size > hdr_size) ? hdr_size : size;
-            count           = read(&dhdr->data, to_read);
+            ssize_t to_read             = lsp_min(size, hdr_size);
+            count                       = read(&dhdr->data, to_read);
             if (count < 0)
                 return count;
             else if (count < to_read)

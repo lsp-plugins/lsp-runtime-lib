@@ -179,7 +179,8 @@ namespace lsp
             public:
 
                 /**
-                 * Obtain file information, do not follow symlinks
+                 * Obtain file information. If the file is symbolic link,
+                 * return information about the symbolic link
                  * @param path UTF-8 encoded path to file
                  * @param attr structure to return file attributes
                  * @return status of operation
@@ -187,7 +188,8 @@ namespace lsp
                 static status_t stat(const char *path, fattr_t *attr);
 
                 /**
-                 * Obtain file information, do not follow symlinks
+                 * Obtain file information. If the file is symbolic link,
+                 * return information about the symbolic link
                  * @param path path to file
                  * @param attr structure to return file attributes
                  * @return status of operation
@@ -195,7 +197,8 @@ namespace lsp
                 static status_t stat(const LSPString *path, fattr_t *attr);
 
                 /**
-                 * Obtain file information, do not follow symlinks
+                 * Obtain file information. If the file is symbolic link,
+                 * return information about the symbolic link
                  * @param path path to file
                  * @param attr structure to return file attributes
                  * @return status of operation
@@ -219,7 +222,8 @@ namespace lsp
                 static status_t stat(FILE *fd, fattr_t *attr);
 
                 /**
-                 * Obtain file information, follow symlinks
+                 * Obtain file information. If the file is symbolic link,
+                 * return information about the file the link refers to
                  * @param path UTF-8 encoded path to file
                  * @param attr structure to return file attributes
                  * @return status of operation
@@ -227,7 +231,8 @@ namespace lsp
                 static status_t sym_stat(const char *path, fattr_t *attr);
 
                 /**
-                 * Obtain file information, follow symlinks
+                 * Obtain file information. If the file is symbolic link,
+                 * return information about the file the link refers to
                  * @param path path to file
                  * @param attr structure to return file attributes
                  * @return status of operation
@@ -235,7 +240,8 @@ namespace lsp
                 static status_t sym_stat(const LSPString *path, fattr_t *attr);
 
                 /**
-                 * Obtain file information, follow symlinks
+                 * Obtain file information. If the file is symbolic link,
+                 * return information about the file the link refers to
                  * @param path path to file
                  * @param attr structure to return file attributes
                  * @return status of operation
