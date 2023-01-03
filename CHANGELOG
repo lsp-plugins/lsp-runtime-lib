@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.11 ===
-
+* Added io::InMemoryStream::size() method for obtaining the size of the wrapped buffer.
 
 === 1.0.10 ===
 * Fixed bug in io::Path::as_relative() call.

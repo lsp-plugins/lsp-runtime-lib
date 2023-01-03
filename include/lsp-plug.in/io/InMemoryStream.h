@@ -36,7 +36,7 @@ namespace lsp
                 uint8_t        *pData;
                 size_t          nOffset;
                 size_t          nSize;
-                lsp_memdrop_t  enDrop;
+                lsp_memdrop_t   enDrop;
 
             public:
                 explicit InMemoryStream();
@@ -92,6 +92,12 @@ namespace lsp
                  * @return true if data has been dropped
                  */
                 inline bool drop() { return drop(enDrop); };
+
+                /**
+                 * Obtain the size of memory buffer wrapped by the memory stream
+                 * @return the size of memory buffer in bytes
+                 */
+                inline size_t       size() const { return nSize;    }
 
             public:
 
