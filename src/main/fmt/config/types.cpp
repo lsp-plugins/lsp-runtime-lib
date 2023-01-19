@@ -365,15 +365,15 @@ namespace lsp
                 case SF_TYPE_U32:   return v.u32;
                 case SF_TYPE_I64:   return v.i64;
                 case SF_TYPE_U64:   return v.u64;
-                case SF_TYPE_F32:   return fabs(v.f32) > 0.5f;
-                case SF_TYPE_F64:   return abs(v.f64) > 0.5f;
+                case SF_TYPE_F32:   return fabsf(v.f32) > 0.5f;
+                case SF_TYPE_F64:   return fabs(v.f64) > 0.5;
                 case SF_TYPE_BOOL:  return v.bval;
                 default:
                     break;
             }
             return 0;
         }
-    }
-}
+    } /* namespace config */
+} /* namespace lsp */
 
 
