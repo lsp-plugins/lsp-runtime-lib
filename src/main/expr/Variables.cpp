@@ -289,6 +289,7 @@ namespace lsp
             // Resolve from underlying resolver
             value_t v;
             init_value(&v);
+            lsp_finally { destroy_value(&v); };
             status_t res = pResolver->resolve(&v, name, num_indexes, indexes);
             if (res != STATUS_OK)
                 return res;
@@ -298,7 +299,6 @@ namespace lsp
             if ((res == STATUS_OK) && (value != NULL))
                 res = copy_value(value, &v);
 
-            destroy_value(&v);
             return res;
         }
 
