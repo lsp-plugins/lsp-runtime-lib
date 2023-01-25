@@ -84,8 +84,16 @@ namespace lsp
             public:
                 /**
                  * Parse the expression
+                 * @param expr string containing expression in UTF-8
+                 * @param flags additional flags
+                 * @return status of operation
+                 */
+                status_t    parse(const char *expr, size_t flags = FLAG_NONE);
+
+                /**
+                 * Parse the expression
                  * @param expr string containing expression
-                 * @param charset character set, may be NULL for default character set
+                 * @param charset character set, UTF-8 if NULL
                  * @param flags additional flags
                  * @return status of operation
                  */

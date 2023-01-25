@@ -4,6 +4,7 @@
 
 === 1.0.11 ===
 * Added io::InMemoryStream::size() method for obtaining the size of the wrapped buffer.
+* Additional expr::Expression::parse() method that takes UTF-8 strings at input. 
 
 === 1.0.10 ===
 * Fixed bug in io::Path::as_relative() call.

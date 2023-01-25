@@ -134,12 +134,27 @@ namespace lsp
 
             return res;
         }
+
+        status_t Expression::parse(const char *expr, size_t flags)
+        {
+            io::InStringSequence is;
+
+            status_t res = is.wrap(expr, "UTF-8");
+            if (res == STATUS_OK)
+                res = parse(&is, flags);
+            if (res == STATUS_OK)
+                res = is.close();
+            else
+                is.close();
+
+            return res;
+        }
     
         status_t Expression::parse(const char *expr, const char *charset, size_t flags)
         {
             io::InStringSequence is;
 
-            status_t res = is.wrap(expr, "UTF-8");
+            status_t res = is.wrap(expr, (charset != NULL) ? charset : "UTF-8");
             if (res == STATUS_OK)
                 res = parse(&is, flags);
             if (res == STATUS_OK)
