@@ -37,6 +37,7 @@ namespace lsp
         {
             public:
                 explicit EnvResolver();
+                virtual ~EnvResolver() override;
 
             public:
                 virtual status_t resolve(value_t *value, const char *name, size_t num_indexes = 0, const ssize_t *indexes = NULL) override;

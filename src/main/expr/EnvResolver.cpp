@@ -31,6 +31,10 @@ namespace lsp
         {
         }
 
+        EnvResolver::~EnvResolver()
+        {
+        }
+
         status_t EnvResolver::resolve(value_t *value, const char *name, size_t num_indexes, const ssize_t *indexes)
         {
             if (num_indexes > 0)
