@@ -778,9 +778,9 @@ UTEST_BEGIN("runtime.io", path)
 
             // noext()
             printf("  testing noext('%s') \n", f->path);
-            UTEST_ASSERT(tmp.get_noext(&spath) == STATUS_OK);
-            UTEST_ASSERT(tmp.get_noext(&ipath) == STATUS_OK);
-            UTEST_ASSERT(tmp.get_noext(cpath, sizeof(cpath)) == STATUS_OK);
+            UTEST_ASSERT(tmp.get_last_noext(&spath) == STATUS_OK);
+            UTEST_ASSERT(tmp.get_last_noext(&ipath) == STATUS_OK);
+            UTEST_ASSERT(tmp.get_last_noext(cpath, sizeof(cpath)) == STATUS_OK);
             UTEST_ASSERT(spath.equals_ascii(f->noext));
             UTEST_ASSERT(ipath.as_string()->equals_ascii(f->noext));
             UTEST_ASSERT(strcmp(cpath, f->noext) == 0);

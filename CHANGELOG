@@ -6,6 +6,7 @@
 * Added io::InMemoryStream::size() method for obtaining the size of the wrapped buffer.
 * Additional expr::Expression::parse() method that takes UTF-8 strings at input.
 * Added expr::EnvResolver variable resolver that reads environment variables.
+* Added io::Path::get_noext() and io::Path::get_last_noext().
 
 === 1.0.10 ===
 * Fixed bug in io::Path::as_relative() call.
