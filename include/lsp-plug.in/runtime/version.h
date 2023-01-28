@@ -24,7 +24,7 @@
 
 #define LSP_RUNTIME_LIB_MAJOR       1
 #define LSP_RUNTIME_LIB_MINOR       0
-#define LSP_RUNTIME_LIB_MICRO       110
+#define LSP_RUNTIME_LIB_MICRO       11
 
 #if defined(LSP_RUNTIME_LIB_PUBLISHER)
     #define LSP_RUNTIME_LIB_PUBLIC          LSP_EXPORT_MODIFIER
