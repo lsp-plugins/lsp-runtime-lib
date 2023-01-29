@@ -355,7 +355,7 @@ namespace lsp
             // Detect format
             h->pFormat          = h->pACM->in_format();
             ssize_t sfmt        = decode_sample_format(h->pFormat);
-            if (fmt <= 0)
+            if (sfmt <= 0)
                 return set_error(STATUS_UNSUPPORTED_FORMAT);
 
             // Now open MMIO with specified output format
