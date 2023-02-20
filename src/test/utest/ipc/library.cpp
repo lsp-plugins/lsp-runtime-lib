@@ -22,10 +22,17 @@
 #include <lsp-plug.in/test-fw/utest.h>
 #include <lsp-plug.in/ipc/Library.h>
 
+namespace
+{
+    static const uint32_t tag = 0;
+} /* namespace */
+
 UTEST_BEGIN("runtime.ipc", library)
 
-    UTEST_MAIN
+    void test_library_name()
     {
+        printf("Testing validity of library file name\n");
+
         static const char *lib1 = "library.dll";
         static const char *lib2 = "library.so";
         static const char *lib3 = "path/to/library.dll";
@@ -50,6 +57,21 @@ UTEST_BEGIN("runtime.ipc", library)
 
         UTEST_ASSERT(ipc::Library::valid_library_name(lib5));
         UTEST_ASSERT(ipc::Library::valid_library_name(lib6));
+    }
+
+    void test_module_filename()
+    {
+        printf("Testing obtaining module file name\n");
+
+        LSPString path;
+        UTEST_ASSERT(ipc::Library::get_module_file(&path, &tag) == STATUS_OK);
+        printf("Module file name is: %s\n", path.get_native());
+    }
+
+    UTEST_MAIN
+    {
+        test_library_name();
+        test_module_filename();
     }
 
 UTEST_END

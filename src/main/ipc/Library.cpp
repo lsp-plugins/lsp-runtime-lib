@@ -159,25 +159,49 @@ namespace lsp
                 return STATUS_BAD_ARGUMENTS;
 
 #ifdef PLATFORM_WINDOWS
-            WCHAR *xpath = reinterpret_cast<WCHAR *>(::malloc((PATH_MAX + 1) * sizeof(WCHAR)));
-            if (xpath == NULL)
-                return STATUS_NO_MEM;
-            lsp_finally { free(xpath); };
-
+            // Get module handle
             HMODULE hm = NULL;
 
             if (!::GetModuleHandleExW(
-                    GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-                    GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                    reinterpret_cast<LPCWSTR>(ptr),
-                    &hm)
-               )
+                GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                reinterpret_cast<LPCWSTR>(ptr),
+                &hm))
                 return STATUS_NOT_FOUND;
 
-            if (::GetModuleFileNameW(hm, xpath, sizeof(path)) == 0)
-                return STATUS_NOT_FOUND;
+            // Get the path to the module
+            DWORD capacity = PATH_MAX + 1, length = 0;
+            WCHAR *xpath = NULL;
+            lsp_finally {
+                if (xpath != NULL)
+                    ::free(xpath);
+            };
 
-            if (!path->set_utf16(xpath))
+            while (true)
+            {
+                // Allocate the buffer
+                WCHAR *new_xpath = reinterpret_cast<WCHAR *>(::realloc(xpath, capacity * sizeof(WCHAR)));
+                if (new_xpath == NULL)
+                    return STATUS_NO_MEM;
+                xpath   = new_xpath;
+
+                // Try to obtain the file name
+                length = ::GetModuleFileNameW(hm, xpath, capacity);
+                if (length == 0)
+                    return STATUS_NOT_FOUND;
+
+                // Analyze result
+                DWORD error = GetLastError();
+                if (error == ERROR_SUCCESS)
+                    break;
+                else if (error != ERROR_INSUFFICIENT_BUFFER)
+                    return STATUS_UNKNOWN_ERR;
+
+                // Increase capacity by 1.5
+                capacity += (capacity >> 1);
+            }
+
+            if (!path->set_utf16(xpath, length))
                 return STATUS_NO_MEM;
 #else
             Dl_info dli;
