@@ -6,6 +6,7 @@
 * Updated the implementation of io::StdioFile::size() method for Windows.
 * Fixed ipc::Library::get_module_file function for Windows.
 * Added test build for Windows using MSYS2.
+* Implemented io::InSharedMemoryStream class for shared access to the data.
 
 === 1.0.11 ===
 * Added io::InMemoryStream::size() method for obtaining the size of the wrapped buffer.

@@ -125,6 +125,13 @@ namespace lsp
             return count;
         }
 
+        ssize_t InMemoryStream::read_byte()
+        {
+            if (pData == NULL)
+                return -set_error(STATUS_NO_DATA);
+            return (nOffset < nSize) ? pData[nOffset++] : -STATUS_EOF;
+        }
+
         wssize_t InMemoryStream::seek(wsize_t position)
         {
             if (pData == NULL)

@@ -226,6 +226,7 @@ namespace lsp
                 event->type         = sCurrent.type;
                 event->name.swap(&name);
                 event->value.swap(&value);
+                event->blob.wrap(sCurrent.blob, 0);
             }
 
             return STATUS_OK;

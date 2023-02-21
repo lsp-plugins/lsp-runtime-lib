@@ -24,6 +24,7 @@
 
 #include <lsp-plug.in/runtime/version.h>
 
+#include <lsp-plug.in/io/InSharedMemoryStream.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 
 namespace lsp
@@ -68,10 +69,10 @@ namespace lsp
          */
         typedef struct event_t
         {
-            event_type_t    type;       // Type of event
-            LSPString       name;       // The name of the header or the opcode
-            LSPString       value;      // The value of the opcode or text of the comment
-            io::IInStream   blob;       // Blob data for the <sample> header
+            event_type_t                type;       // Type of event
+            LSPString                   name;       // The name of the header or the opcode
+            LSPString                   value;      // The value of the opcode or text of the comment
+            io::InSharedMemoryStream    blob;       // Blob data for the <sample> header
         } event_t;
 
     } /* namespace sfz */
