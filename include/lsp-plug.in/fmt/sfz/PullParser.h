@@ -60,6 +60,7 @@ namespace lsp
                 status_t            read_opcode_value(LSPString *value);
                 status_t            read_sample_file_name(LSPString *value);
                 status_t            read_comment(event_t *ev);
+                status_t            read_include(event_t *ev);
                 status_t            set_error(status_t code);
 
             public:

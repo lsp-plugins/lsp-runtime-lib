@@ -93,6 +93,16 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
                 pTest->printf("  comment \"%s\"\n", value);
                 return *this;
             }
+            Verifier &include(const char *value)
+            {
+                sfz::event_t ev;
+                UTEST_ASSERT(sParser.next(&ev) == STATUS_OK);
+                UTEST_ASSERT(ev.type == sfz::EVENT_INCLUDE);
+                UTEST_ASSERT(ev.name.is_empty());
+                UTEST_ASSERT(ev.value.equals_ascii(value));
+                pTest->printf("  include \"%s\"\n", value);
+                return *this;
+            }
 
             Verifier &status(status_t code)
             {
@@ -321,8 +331,9 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
             "<region>\n"
             "sample=path/to//sample/1 opcode=value1\n"
             "sample=path to sample 2    opcode=value2\n"
+            "#include \"some file.sfz\"\n"
             "sample=path to sample 3 // opcode=value3\n"
-            "sample=path to sample 4 opcode=value4 // comment\n"
+            "sample=path to sample 4 opcode=value4 #include \"some file 2.sfz\" // comment\n"
             "//sample=path to sample 5 opcode=value5\r\n";
 
         printf("Checking special cases...\n");
@@ -334,10 +345,12 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
             v.opcode("opcode", "value1");
             v.opcode("sample", "path to sample 2");
             v.opcode("opcode", "value2");
+            v.include("some file.sfz");
             v.opcode("sample", "path to sample 3 //");
             v.opcode("opcode", "value3");
             v.opcode("sample", "path to sample 4");
             v.opcode("opcode", "value4");
+            v.include("some file 2.sfz");
             v.comment(" comment");
             v.comment("sample=path to sample 5 opcode=value5");
         v.status(STATUS_EOF);

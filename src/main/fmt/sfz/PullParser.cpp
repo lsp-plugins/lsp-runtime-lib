@@ -295,6 +295,8 @@ namespace lsp
                         return set_error(read_header(ev));
                     case '/':
                         return set_error(read_comment(ev));
+                    case '#':
+                        return set_error(read_include(ev));
                     default:
                         if (is_space(ch))
                             break;
@@ -327,7 +329,7 @@ namespace lsp
                     return STATUS_NO_MEM;
             }
 
-            return STATUS_CORRUPTED;
+            return (ch == -STATUS_EOF) ? STATUS_CORRUPTED : -ch;
         }
 
         status_t PullParser::read_opcode_name(lsp_swchar_t ch, LSPString *name)
@@ -348,7 +350,7 @@ namespace lsp
                     return STATUS_NO_MEM;
             }
 
-            return STATUS_CORRUPTED;
+            return (ch == -STATUS_EOF) ? STATUS_CORRUPTED : -ch;
         }
 
         status_t PullParser::read_opcode_value(LSPString *value)
@@ -479,6 +481,53 @@ namespace lsp
             }
 
             ev->type        = EVENT_COMMENT;
+            ev->name.clear();
+            ev->value.swap(&text);
+
+            return STATUS_OK;
+        }
+
+        status_t PullParser::read_include(event_t *ev)
+        {
+            static const char *pattern="include";
+            lsp_swchar_t ch;
+
+            // Read the 'include' string from the file
+            for (const char *p=pattern; *p != '\0'; ++p)
+            {
+                if ((ch = get_char()) < 0)
+                    return -ch;
+                if (ch != *p)
+                    return STATUS_CORRUPTED;
+            }
+
+            // Skip the spaces
+            while (true)
+            {
+                if ((ch = get_char()) < 0)
+                    return (ch == -STATUS_EOF) ? -STATUS_CORRUPTED : -ch;
+
+                if (ch == '\"')
+                    break;
+                else if (!is_space(ch))
+                    return STATUS_CORRUPTED;
+            }
+
+            // Read the entire string until the end quote occurs
+            LSPString text;
+            while (true)
+            {
+                if ((ch = get_char()) < 0)
+                    return (ch == -STATUS_EOF) ? -STATUS_CORRUPTED : -ch;
+
+                if (ch == '\"')
+                    break;
+                if (!text.append(ch))
+                    return STATUS_NO_MEM;
+            }
+
+            // Commit the result
+            ev->type        = EVENT_INCLUDE;
             ev->name.clear();
             ev->value.swap(&text);
 

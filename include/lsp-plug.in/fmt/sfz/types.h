@@ -58,7 +58,8 @@ namespace lsp
             EVENT_NONE,         // No event
             EVENT_COMMENT,      // Comment event
             EVENT_HEADER,       // Header event
-            EVENT_OPCODE        // Opcode event
+            EVENT_OPCODE,       // Opcode event
+            EVENT_INCLUDE       // Include event
         };
 
         /**
