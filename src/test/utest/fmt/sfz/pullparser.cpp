@@ -93,6 +93,7 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
                 pTest->printf("  comment \"%s\"\n", value);
                 return *this;
             }
+
             Verifier &include(const char *value)
             {
                 sfz::event_t ev;
@@ -101,6 +102,17 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
                 UTEST_ASSERT(ev.name.is_empty());
                 UTEST_ASSERT(ev.value.equals_ascii(value));
                 pTest->printf("  include \"%s\"\n", value);
+                return *this;
+            }
+
+            Verifier &define(const char *name, const char *value)
+            {
+                sfz::event_t ev;
+                UTEST_ASSERT(sParser.next(&ev) == STATUS_OK);
+                UTEST_ASSERT(ev.type == sfz::EVENT_DEFINE);
+                UTEST_ASSERT(ev.name.equals_ascii(name));
+                UTEST_ASSERT(ev.value.equals_ascii(value));
+                pTest->printf("  define %s %s\n", name, value);
                 return *this;
             }
 
@@ -114,7 +126,7 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
 
     void check_valid_sfz1()
     {
-        const char *text =
+        static const char *text =
             "<control>\n"
             "\n"
             "<global>\n"
@@ -152,7 +164,7 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
 
     void check_valid_sfz2()
     {
-        const char *text =
+        static const char *text =
             "<group>\r\n"
             "lovel=64 // enter stuff here if you want to apply it to all regions\r\n"
             "hivel=127\r\n"
@@ -192,7 +204,7 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
 
     void check_valid_sfz3()
     {
-        const char *text =
+        static const char *text =
             "<region> sample=piano_D4_vl1.wav lokey=62 hikey=63 pitch_keycenter=62 lovel=1 hivel=50\n"
             "<region> sample=piano_E4_vl1.wav lokey=64 hikey=65 pitch_keycenter=64 lovel=1 hivel=50\n"
             "<region> sample=piano_F#4_vl1.wav lokey=66 hikey=67 pitch_keycenter=66 lovel=11 hivel=50\n"
@@ -236,7 +248,10 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
 
     void check_valid_sfz4()
     {
-        const char *text =
+        static const char *text =
+            "<control>\n"
+            "#define $KEY1 36 // comment\n"
+            "#define $KEY2 38\n"
             "<global>\n"
             "loop_mode=one_shot\n"
             "ampeg_attack=0.001\n"
@@ -247,7 +262,7 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
             "amplitude_cc30=100\n"
             "offset_cc33=3000\n"
             "ampeg_sustain_oncc33=-100\n"
-            "<group> key=36\n"
+            "<group> key=$KEY1\n"
             "<region>\n"
             "sample=../Samples/bobobo/bobobo_bass_vl1_rr1.wav hirand=0.250\n"
             "<region>\n"
@@ -261,7 +276,7 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
             "amplitude_cc35=100\n"
             "offset_cc38=1500\n"
             "ampeg_sustain_oncc38=-100\n"
-            "<group>key=38\n"
+            "<group>key=$KEY2\n"
             "<region>\n"
             "sample=../Samples/bobobo/bobobo_tenor_l_vl1_rr1.wav hirand=0.250\n"
             "<region>\n"
@@ -275,6 +290,10 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
 
         Verifier v(this);
         v.wrap(text);
+        v.header("control");
+            v.define("$KEY1", "36");
+            v.comment(" comment");
+            v.define("$KEY2", "38");
         v.header("global");
             v.opcode("loop_mode", "one_shot");
             v.opcode("ampeg_attack", "0.001");
@@ -285,7 +304,7 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
                 v.opcode("offset_cc33", "3000");
                 v.opcode("ampeg_sustain_oncc33", "-100");
                 v.header("group");
-                    v.opcode("key", "36");
+                    v.opcode("key", "$KEY1");
                     v.header("region");
                         v.opcode("sample", "../Samples/bobobo/bobobo_bass_vl1_rr1.wav");
                         v.opcode("hirand", "0.250");
@@ -305,7 +324,7 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
                 v.opcode("offset_cc38", "1500");
                 v.opcode("ampeg_sustain_oncc38", "-100");
                 v.header("group");
-                    v.opcode("key", "38");
+                    v.opcode("key", "$KEY2");
                     v.header("region");
                         v.opcode("sample", "../Samples/bobobo/bobobo_tenor_l_vl1_rr1.wav");
                         v.opcode("hirand", "0.250");
@@ -327,7 +346,7 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
 
     void check_special_cases()
     {
-        const char *text =
+        static const char *text =
             "<region>\n"
             "sample=path/to//sample/1 opcode=value1\n"
             "sample=path to sample 2    opcode=value2\n"

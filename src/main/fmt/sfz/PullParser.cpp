@@ -296,7 +296,7 @@ namespace lsp
                     case '/':
                         return set_error(read_comment(ev));
                     case '#':
-                        return set_error(read_include(ev));
+                        return set_error(read_preprocessor(ev));
                     default:
                         if (is_space(ch))
                             break;
@@ -452,6 +452,7 @@ namespace lsp
             ev->type        = EVENT_OPCODE;
             ev->name.swap(&name);
             ev->value.swap(&value);
+            ev->blob.close();
 
             return STATUS_OK;
         }
@@ -483,37 +484,140 @@ namespace lsp
             ev->type        = EVENT_COMMENT;
             ev->name.clear();
             ev->value.swap(&text);
+            ev->blob.close();
+
+            return STATUS_OK;
+        }
+
+        status_t PullParser::expect_string(const char *text)
+        {
+            // Read the expected string from the file
+            lsp_swchar_t ch;
+            for (const char *p=text; *p != '\0'; ++p)
+            {
+                if ((ch = get_char()) < 0)
+                    return (ch == -STATUS_EOF) ? STATUS_CORRUPTED : -ch;
+                if (ch != *p)
+                    return STATUS_CORRUPTED;
+            }
+
+            return STATUS_OK;
+        }
+
+        status_t PullParser::expect_char(lsp_swchar_t expected)
+        {
+            lsp_swchar_t ch;
+            while ((ch = get_char()) >= 0)
+            {
+                if (ch == expected)
+                    return STATUS_OK;
+                if (!is_space(ch))
+                    return STATUS_CORRUPTED;
+            }
+
+            return (ch == -STATUS_EOF) ? STATUS_CORRUPTED : -ch;
+        }
+
+        status_t PullParser::read_variable_name(LSPString *value)
+        {
+            lsp_swchar_t ch;
+            if (!value->append('$'))
+                return STATUS_NO_MEM;
+
+            while ((ch = get_char()) >= 0)
+            {
+                if (is_space(ch))
+                    break;
+                if (!is_identifier(ch, value->length() == 1))
+                    return STATUS_CORRUPTED;
+                if (!value->append(ch))
+                    return STATUS_NO_MEM;
+            }
+            if ((ch < 0) && (ch != -STATUS_EOF))
+                return -ch;
+
+            // The variable name should be of at least 1 character after '$' sign
+            return (value->length() >= 2) ? STATUS_OK : STATUS_CORRUPTED;
+        }
+
+        status_t PullParser::read_variable_value(LSPString *value)
+        {
+            lsp_swchar_t ch;
+
+            // Read first character
+            while ((ch = get_char()) >= 0)
+            {
+                if (!is_space(ch))
+                    break;
+            }
+            if (ch < 0)
+                return (ch != -STATUS_EOF) ? -ch : STATUS_OK;
+
+            if (!value->append(ch))
+                return STATUS_NO_MEM;
+
+            // Read the last variable definition
+            while ((ch = get_char()) >= 0)
+            {
+                switch (ch)
+                {
+                    case '<': // header?
+                    case '/': // comment?
+                        nUnget = 0;
+                        sUnget.clear();
+                        if (!sUnget.append(ch))
+                            return STATUS_NO_MEM;
+                        return STATUS_OK;
+
+                    default:
+                        if (is_space(ch))
+                            return STATUS_OK;
+                        if (!value->append(ch))
+                            return STATUS_NO_MEM;
+                        break;
+                }
+            }
+
+            return (ch == -STATUS_EOF) ? STATUS_OK : -ch;
+        }
+
+        status_t PullParser::read_define(event_t *ev)
+        {
+            status_t res;
+            if ((res = expect_string("efine")) != STATUS_OK) // 'd' already was read
+                return res;
+            if ((res = expect_char('$')) != STATUS_OK)
+                return res;
+
+            // Read the variable name
+            LSPString name;
+            if ((res = read_variable_name(&name) != STATUS_OK))
+                return res;
+
+            // Read the variable value
+            LSPString value;
+            if ((res = read_variable_value(&value) != STATUS_OK))
+                return res;
+
+            // Commit the result
+            ev->type        = EVENT_DEFINE;
+            ev->name.swap(&name);
+            ev->value.swap(&value);
+            ev->blob.close();
 
             return STATUS_OK;
         }
 
         status_t PullParser::read_include(event_t *ev)
         {
-            static const char *pattern="include";
-            lsp_swchar_t ch;
-
-            // Read the 'include' string from the file
-            for (const char *p=pattern; *p != '\0'; ++p)
-            {
-                if ((ch = get_char()) < 0)
-                    return -ch;
-                if (ch != *p)
-                    return STATUS_CORRUPTED;
-            }
-
-            // Skip the spaces
-            while (true)
-            {
-                if ((ch = get_char()) < 0)
-                    return (ch == -STATUS_EOF) ? -STATUS_CORRUPTED : -ch;
-
-                if (ch == '\"')
-                    break;
-                else if (!is_space(ch))
-                    return STATUS_CORRUPTED;
-            }
+            status_t res;
+            if ((res = expect_string("nclude")) != STATUS_OK) // 'i' already was read
+                return res;
+            if ((res = expect_char('\"')) != STATUS_OK)
+                return res;
 
             // Read the entire string until the end quote occurs
+            lsp_swchar_t ch;
             LSPString text;
             while (true)
             {
@@ -530,8 +634,22 @@ namespace lsp
             ev->type        = EVENT_INCLUDE;
             ev->name.clear();
             ev->value.swap(&text);
+            ev->blob.close();
 
             return STATUS_OK;
+        }
+
+        status_t PullParser::read_preprocessor(event_t *ev)
+        {
+            lsp_swchar_t ch = get_char();
+            switch (ch)
+            {
+                case 'd': return read_define(ev);
+                case 'i': return read_include(ev);
+                default: break;
+            }
+
+            return ((ch < 0) && (ch != -STATUS_EOF)) ? -ch : STATUS_CORRUPTED;
         }
 
         status_t PullParser::set_error(status_t code)

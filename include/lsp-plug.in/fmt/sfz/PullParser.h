@@ -53,14 +53,21 @@ namespace lsp
 
             protected:
                 lsp_swchar_t        get_char();
-                status_t            read_next_event(event_t *ev);
-                status_t            read_header(event_t *ev);
+                status_t            expect_string(const char *text);
+                status_t            expect_char(lsp_swchar_t expected);
                 status_t            read_opcode(lsp_wchar_t ch, event_t *ev);
                 status_t            read_opcode_name(lsp_swchar_t ch, LSPString *name);
                 status_t            read_opcode_value(LSPString *value);
                 status_t            read_sample_file_name(LSPString *value);
+                status_t            read_variable_name(LSPString *value);
+                status_t            read_variable_value(LSPString *value);
+
+                status_t            read_next_event(event_t *ev);
+                status_t            read_header(event_t *ev);
                 status_t            read_comment(event_t *ev);
+                status_t            read_define(event_t *ev);
                 status_t            read_include(event_t *ev);
+                status_t            read_preprocessor(event_t *ev);
                 status_t            set_error(status_t code);
 
             public:

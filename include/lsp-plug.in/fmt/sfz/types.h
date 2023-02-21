@@ -59,7 +59,8 @@ namespace lsp
             EVENT_COMMENT,      // Comment event
             EVENT_HEADER,       // Header event
             EVENT_OPCODE,       // Opcode event
-            EVENT_INCLUDE       // Include event
+            EVENT_INCLUDE,      // Include event
+            EVENT_DEFINE,       // Define event
         };
 
         /**
@@ -70,6 +71,7 @@ namespace lsp
             event_type_t    type;       // Type of event
             LSPString       name;       // The name of the header or the opcode
             LSPString       value;      // The value of the opcode or text of the comment
+            io::IInStream   blob;       // Blob data for the <sample> header
         } event_t;
 
     } /* namespace sfz */
