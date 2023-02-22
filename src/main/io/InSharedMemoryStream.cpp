@@ -289,6 +289,52 @@ namespace lsp
             lsp::swap(nOffset, src->nOffset);
         }
 
+        void InSharedMemoryStream::take(InSharedMemoryStream &src)
+        {
+            release_shared();
+
+            pShared         = src.pShared;
+            nOffset         = src.nOffset;
+
+            src.pShared     = NULL;
+            src.nOffset     = 0;
+        }
+
+        void InSharedMemoryStream::take(InSharedMemoryStream *src)
+        {
+            release_shared();
+
+            pShared         = src->pShared;
+            nOffset         = src->nOffset;
+
+            src->pShared    = NULL;
+            src->nOffset    = 0;
+        }
+
+        status_t InSharedMemoryStream::take(OutMemoryStream &src)
+        {
+            release_shared();
+            if (src.data() == NULL)
+                return STATUS_OK;
+
+            status_t res = wrap(const_cast<uint8_t *>(src.data()), src.size(), MEMDROP_FREE);
+            if (res == STATUS_OK)
+                src.release();
+            return res;
+        }
+
+        status_t InSharedMemoryStream::take(OutMemoryStream *src)
+        {
+            release_shared();
+            if (src->data() == NULL)
+                return STATUS_OK;
+
+            status_t res = wrap(const_cast<uint8_t *>(src->data()), src->size(), MEMDROP_FREE);
+            if (res == STATUS_OK)
+                src->release();
+            return res;
+        }
+
     } /* namespace io */
 } /* namespace lsp */
 

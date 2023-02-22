@@ -62,6 +62,7 @@ namespace lsp
             EVENT_OPCODE,       // Opcode event
             EVENT_INCLUDE,      // Include event
             EVENT_DEFINE,       // Define event
+            EVENT_SAMPLE,       // The sample blob embedded into SFZ
         };
 
         /**

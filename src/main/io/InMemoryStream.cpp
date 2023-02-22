@@ -158,6 +158,26 @@ namespace lsp
             drop(enDrop);
             return STATUS_OK;
         }
+
+        void InMemoryStream::take(OutMemoryStream &src)
+        {
+            drop(enDrop);
+
+            pData   = const_cast<uint8_t *>(src.data());
+            nOffset = 0;
+            nSize   = src.size();
+            enDrop  = (pData != NULL) ? MEMDROP_FREE : MEMDROP_NONE;
+        }
+
+        void InMemoryStream::take(OutMemoryStream *src)
+        {
+            drop(enDrop);
+
+            pData   = const_cast<uint8_t *>(src->data());
+            nOffset = 0;
+            nSize   = src->size();
+            enDrop  = (pData != NULL) ? MEMDROP_FREE : MEMDROP_NONE;
+        }
     
     } /* namespace io */
 } /* namespace lsp */

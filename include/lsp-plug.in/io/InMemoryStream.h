@@ -24,6 +24,7 @@
 
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/io/IInStream.h>
+#include <lsp-plug.in/io/OutMemoryStream.h>
 
 namespace lsp
 {
@@ -100,6 +101,9 @@ namespace lsp
                  * @return the size of memory buffer in bytes
                  */
                 inline size_t       size() const { return nSize;    }
+
+                void                take(OutMemoryStream &src);
+                void                take(OutMemoryStream *src);
 
             public:
 

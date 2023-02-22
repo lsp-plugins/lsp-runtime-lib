@@ -68,6 +68,7 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
                 UTEST_ASSERT(ev.type == sfz::EVENT_HEADER);
                 UTEST_ASSERT(ev.name.equals_ascii(name));
                 UTEST_ASSERT(ev.value.is_empty());
+                UTEST_ASSERT(ev.blob.avail() == -STATUS_NO_DATA);
                 pTest->printf("  header \"%s\"\n", name);
                 return *this;
             }
@@ -79,6 +80,7 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
                 UTEST_ASSERT(ev.type == sfz::EVENT_OPCODE);
                 UTEST_ASSERT(ev.name.equals_ascii(name));
                 UTEST_ASSERT(ev.value.equals_ascii(value));
+                UTEST_ASSERT(ev.blob.avail() == -STATUS_NO_DATA);
                 pTest->printf("  opcode %s=\"%s\"\n", name, value);
                 return *this;
             }
@@ -90,6 +92,7 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
                 UTEST_ASSERT(ev.type == sfz::EVENT_COMMENT);
                 UTEST_ASSERT(ev.name.is_empty());
                 UTEST_ASSERT(ev.value.equals_ascii(value));
+                UTEST_ASSERT(ev.blob.avail() == -STATUS_NO_DATA);
                 pTest->printf("  comment \"%s\"\n", value);
                 return *this;
             }
@@ -112,7 +115,22 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
                 UTEST_ASSERT(ev.type == sfz::EVENT_DEFINE);
                 UTEST_ASSERT(ev.name.equals_ascii(name));
                 UTEST_ASSERT(ev.value.equals_ascii(value));
+                UTEST_ASSERT(ev.blob.avail() == -STATUS_NO_DATA);
                 pTest->printf("  define %s %s\n", name, value);
+                return *this;
+            }
+
+            Verifier &sample(const char *name, const char *data)
+            {
+                sfz::event_t ev;
+                UTEST_ASSERT(sParser.next(&ev) == STATUS_OK);
+                UTEST_ASSERT(ev.type == sfz::EVENT_SAMPLE);
+                UTEST_ASSERT(ev.name.equals_ascii(name));
+                UTEST_ASSERT(ev.value.is_empty());
+                UTEST_ASSERT(ev.blob.avail() == ssize_t(strlen(data)));
+                UTEST_ASSERT(memcmp(ev.blob.data(), data, ev.blob.avail()) == 0);
+
+                pTest->printf("  sample name=\"%s\" data=\"%s\"\n", name, data);
                 return *this;
             }
 
@@ -376,6 +394,37 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
         v.close();
     }
 
+    void check_blob_sfz()
+    {
+        static const char *text =
+            "<sample> name=foo.wav\n"
+            "some_opcode=value\n"
+            "data=gggJ~\x92\x93\x9dJ\x93\x9dJ\x8bJ\x9e\x8f\x9d\x9eJlvylJggg7444oyp7474$\r\n"
+            "some_opcode2=value2\n"
+            "<region> sample=foo.wav pitch_keycenter=69\r\n";
+
+        static const char *blob =
+            "=== This is a test BLOB ===\r\n"
+            "\n"
+            "\n"
+            "EOF\r\n"
+            "\r\n";
+
+        printf("Checking built-in blob case...\n");
+
+        Verifier v(this);
+        v.wrap(text);
+        v.header("sample");
+            v.opcode("some_opcode", "value");
+            v.opcode("some_opcode2", "value2");
+            v.sample("foo.wav", blob);
+            v.header("region");
+                v.opcode("sample", "foo.wav");
+                v.opcode("pitch_keycenter", "69");
+        v.status(STATUS_EOF);
+        v.close();
+    }
+
     void check_parse_file()
     {
         printf("Checking file parse...\n");
@@ -479,6 +528,7 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
         check_valid_sfz3();
         check_valid_sfz4();
         check_special_cases();
+        check_blob_sfz();
         check_parse_file();
     }
 

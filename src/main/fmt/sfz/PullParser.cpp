@@ -24,6 +24,7 @@
 #include <lsp-plug.in/io/InMemoryStream.h>
 #include <lsp-plug.in/io/InStringSequence.h>
 #include <lsp-plug.in/io/InSequence.h>
+#include <lsp-plug.in/io/OutMemoryStream.h>
 
 namespace lsp
 {
@@ -35,6 +36,7 @@ namespace lsp
             pIn             = NULL;
             nWFlags         = 0;
             sCurrent.type   = EVENT_NONE;
+            sSample.type    = EVENT_NONE;
             nUnget          = 0;
         }
 
@@ -43,7 +45,7 @@ namespace lsp
             close();
         }
 
-        status_t PullParser::open(const char *path, const char *charset)
+        status_t PullParser::open(const char *path)
         {
             if (pIn != NULL)
                 return STATUS_OPENED;
@@ -54,7 +56,7 @@ namespace lsp
 
             status_t res = ifs->open(path);
             if (res == STATUS_OK)
-                res         = wrap(ifs, WRAP_CLOSE | WRAP_DELETE, charset);
+                res         = wrap(ifs, WRAP_CLOSE | WRAP_DELETE);
             if (res != STATUS_OK)
             {
                 ifs->close();
@@ -64,7 +66,7 @@ namespace lsp
             return res;
         }
 
-        status_t PullParser::open(const LSPString *path, const char *charset)
+        status_t PullParser::open(const LSPString *path)
         {
             if (pIn != NULL)
                 return STATUS_OPENED;
@@ -75,7 +77,7 @@ namespace lsp
 
             status_t res = ifs->open(path);
             if (res == STATUS_OK)
-                res         = wrap(ifs, WRAP_CLOSE | WRAP_DELETE, charset);
+                res         = wrap(ifs, WRAP_CLOSE | WRAP_DELETE);
             if (res != STATUS_OK)
             {
                 ifs->close();
@@ -85,7 +87,7 @@ namespace lsp
             return res;
         }
 
-        status_t PullParser::open(const io::Path *path, const char *charset)
+        status_t PullParser::open(const io::Path *path)
         {
             if (pIn != NULL)
                 return STATUS_OPENED;
@@ -96,7 +98,7 @@ namespace lsp
 
             status_t res = ifs->open(path);
             if (res == STATUS_OK)
-                res         = wrap(ifs, WRAP_CLOSE | WRAP_DELETE, charset);
+                res         = wrap(ifs, WRAP_CLOSE | WRAP_DELETE);
             if (res != STATUS_OK)
             {
                 ifs->close();
@@ -106,16 +108,21 @@ namespace lsp
             return res;
         }
 
-        status_t PullParser::wrap(const char *str, const char *charset)
+        status_t PullParser::wrap(const char *str)
+        {
+            return wrap(str, strlen(str));
+        }
+
+        status_t PullParser::wrap(const void *buf, size_t len)
         {
             if (pIn != NULL)
                 return STATUS_OPENED;
 
-            io::InMemoryStream *ifs = new io::InMemoryStream(str, strlen(str));
+            io::InMemoryStream *ifs = new io::InMemoryStream(buf, len);
             if (ifs == NULL)
                 return STATUS_NO_MEM;
 
-            status_t res = wrap(ifs, WRAP_CLOSE | WRAP_DELETE, charset);
+            status_t res = wrap(ifs, WRAP_CLOSE | WRAP_DELETE);
             if (res != STATUS_OK)
             {
                 ifs->close();
@@ -143,40 +150,18 @@ namespace lsp
             return res;
         }
 
-        status_t PullParser::wrap(io::IInSequence *seq, size_t flags)
+        status_t PullParser::wrap(io::IInStream *is, size_t flags)
         {
             if (pIn != NULL)
                 return STATUS_OPENED;
 
-            pIn             = seq;
+            pIn             = is;
             nWFlags         = flags;
             sCurrent.type   = EVENT_NONE;
             sUnget.truncate();
             nUnget          = 0;
 
             return STATUS_OK;
-        }
-
-        status_t PullParser::wrap(io::IInStream *is, size_t flags, const char *charset)
-        {
-            if (pIn != NULL)
-                return STATUS_OPENED;
-
-            io::InSequence *isq = new io::InSequence();
-            if (isq == NULL)
-                return STATUS_NO_MEM;
-
-            status_t res = isq->wrap(is, flags, (charset == NULL) ? "UTF-8" : charset);
-            if (res == STATUS_OK)
-                res         = wrap(isq, WRAP_CLOSE | WRAP_DELETE);
-
-            if (res != STATUS_OK)
-            {
-                isq->close();
-                delete isq;
-            }
-
-            return res;
         }
 
         status_t PullParser::close()
@@ -281,7 +266,24 @@ namespace lsp
                     sUnget.truncate();
                 return ch;
             }
-            return pIn->read();
+            return pIn->read_byte();
+        }
+
+        status_t PullParser::peek_pending_event(event_t *ev)
+        {
+            if (sSample.type != EVENT_NONE)
+            {
+                ev->type = sSample.type;
+                ev->name.take(&sSample.name);
+                ev->value.take(sSample.value);
+                ev->blob.take(sSample.blob);
+
+                sSample.type    = EVENT_NONE;
+
+                return STATUS_OK;
+            }
+
+            return STATUS_EOF;
         }
 
         status_t PullParser::read_next_event(event_t *ev)
@@ -299,11 +301,20 @@ namespace lsp
                     case '#':
                         return set_error(read_preprocessor(ev));
                     default:
+                    {
                         if (is_space(ch))
                             break;
-                        return set_error(read_opcode(ch, ev));
+                        status_t res = read_opcode(ch, ev);
+                        if (res == STATUS_SKIP) // Special case?
+                            break;
+                        return set_error(res);
+                    }
                 }
             }
+
+            // Check if there is pending event
+            if (ch == -STATUS_EOF)
+                return set_error(peek_pending_event(ev));
 
             return set_error(-ch);
         }
@@ -313,6 +324,11 @@ namespace lsp
             lsp_swchar_t ch;
             LSPString header;
 
+            // If there is pending event, return it first
+            status_t res = peek_pending_event(ev);
+            if (res == STATUS_OK)
+                return (sUnget.append('<')) ? STATUS_OK : STATUS_NO_MEM;
+
             while ((ch = get_char()) >= 0)
             {
                 if (ch == '>')
@@ -320,6 +336,11 @@ namespace lsp
                     ev->type        = EVENT_HEADER;
                     ev->name.swap(&header);
                     ev->value.clear();
+                    ev->blob.close();
+
+                    // Special case: trigger pending event on '<sample>' header
+                    if (ev->name.equals_ascii(HDR_SAMPLE))
+                        sSample.type    = EVENT_SAMPLE;
 
                     return STATUS_OK;
                 }
@@ -430,6 +451,52 @@ namespace lsp
             return (ch == -STATUS_EOF) ? STATUS_OK : -ch;
         }
 
+        status_t PullParser::read_sample_data(io::IOutStream *os)
+        {
+            lsp_swchar_t ch;
+            status_t res;
+
+            // The decoding algorithm is as follows:
+            // Loop while there is an input byte b1
+            //    if b1 is the end marker $24, stop reading
+            //    if b1 is ‘\r’ ($0D) or ‘\n’ ($0A), discard it
+            //    if b1 is the escape character ‘=’ ($3D),
+            //        extract the next byte b2, and compute the next output byte as (b2+$C0)%256
+            //    otherwise, compute the next output byte as (b1+$D6)%256
+
+            while ((ch = get_char()) >= 0)
+            {
+                switch (ch)
+                {
+                    // If the character is the end marker 0x24, stop reading
+                    case '$':
+                        return STATUS_OK;
+
+                    // If the character is ‘\r’ (0x0D) or ‘\n’ (0x0A), discard it
+                    case '\n':
+                    case '\r':
+                        break;
+
+                    // If the character is the escape character ‘=’
+                    case '=':
+                        // Extract the next byte and compute the next output byte as (value + 0xC0)&0xff
+                        if ((ch = get_char()) < 0)
+                            return (ch == -STATUS_EOF) ? STATUS_CORRUPTED : -ch;
+                        if ((res = os->write_byte((ch + 0xc0) & 0xff)) != STATUS_OK)
+                            return res;
+                        break;
+
+                    // Otherwise, compute the next output byte as (value + 0xD6)&0xff
+                    default:
+                        if ((res = os->write_byte((ch + 0xd6) & 0xff)) != STATUS_OK)
+                            return res;
+                        break;
+                }
+            }
+
+            return (ch == -STATUS_EOF) ? STATUS_CORRUPTED : -ch;
+        }
+
         status_t PullParser::read_opcode(lsp_wchar_t ch, event_t *ev)
         {
             status_t res;
@@ -441,6 +508,28 @@ namespace lsp
             if (name.equals_ascii("sample"))
             {
                 if ((res = read_sample_file_name(&value)) != STATUS_OK)
+                    return res;
+            }
+            else if (sSample.type == EVENT_SAMPLE)
+            {
+                // Special case: the <sample> header is pending
+                if (name.equals_ascii("name"))
+                {
+                    if ((res = read_sample_file_name(&value)) != STATUS_OK)
+                        return res;
+                    sSample.name.swap(&value);
+                    return STATUS_SKIP;
+                }
+                else if (name.equals_ascii("data"))
+                {
+                    io::OutMemoryStream os;
+                    if ((res = read_sample_data(&os)) != STATUS_OK)
+                        return res;
+
+                    sSample.blob.take(&os);
+                    return STATUS_SKIP;
+                }
+                else if ((res = read_opcode_value(&value)) != STATUS_OK)
                     return res;
             }
             else

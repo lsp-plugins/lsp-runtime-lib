@@ -339,6 +339,23 @@ namespace lsp
         src->nHash      = 0;
     }
 
+    void LSPString::take(LSPString &src)
+    {
+        drop_temp();
+        if (pData != NULL)
+            xfree(pData);
+
+        nLength         = src.nLength;
+        nCapacity       = src.nCapacity;
+        pData           = src.pData;
+        nHash           = src.nHash;
+
+        src.nLength     = 0;
+        src.nCapacity   = 0;
+        src.pData       = NULL;
+        src.nHash       = 0;
+    }
+
     LSPString *LSPString::copy() const
     {
         LSPString *s = new LSPString();

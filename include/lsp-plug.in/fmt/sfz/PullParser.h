@@ -26,6 +26,7 @@
 
 #include <lsp-plug.in/io/IInSequence.h>
 #include <lsp-plug.in/io/IInStream.h>
+#include <lsp-plug.in/io/IOutStream.h>
 #include <lsp-plug.in/io/Path.h>
 
 #include <lsp-plug.in/fmt/sfz/types.h>
@@ -40,9 +41,10 @@ namespace lsp
         class LSP_RUNTIME_LIB_PUBLIC PullParser
         {
             private:
-                io::IInSequence    *pIn;
+                io::IInStream      *pIn;
                 size_t              nWFlags;
                 event_t             sCurrent;
+                event_t             sSample;            // Pending sample event
                 LSPString           sUnget;             // Buffer for 'unget' operations
                 size_t              nUnget;             // Read offset relative to the beginning of the 'unget' buffer
 
@@ -61,7 +63,9 @@ namespace lsp
                 status_t            read_sample_file_name(LSPString *value);
                 status_t            read_variable_name(LSPString *value);
                 status_t            read_variable_value(LSPString *value);
+                status_t            read_sample_data(io::IOutStream *os);
 
+                status_t            peek_pending_event(event_t *ev);
                 status_t            read_next_event(event_t *ev);
                 status_t            read_header(event_t *ev);
                 status_t            read_comment(event_t *ev);
@@ -79,63 +83,60 @@ namespace lsp
                  * Open parser
                  * @param path UTF-8 path to the file
                  * @param version JSON version
-                 * @param charset character set, UTF-8 if not specified
                  * @return status of operation
                  */
-                status_t    open(const char *path, const char *charset = NULL);
+                status_t    open(const char *path);
 
                 /**
                  * Open parser
                  * @param path string representation of path to the file
                  * @param version JSON version
-                 * @param charset character set, UTF-8 if not specified
+                 * @param charset character set, ASCII if not specified
                  * @return status of operation
                  */
-                status_t    open(const LSPString *path, const char *charset = NULL);
+                status_t    open(const LSPString *path);
 
                 /**
                  * Open parser
                  * @param path path to the file
                  * @param version JSON version
-                 * @param charset character set, UTF-8 if not specified
                  * @return status of operation
                  */
-                status_t    open(const io::Path *path, const char *charset = NULL);
+                status_t    open(const io::Path *path);
 
                 /**
                  * Wrap string with parser
                  * @param str string to wrap
                  * @param version JSON version
-                 * @param charset character set, UTF-8 if not specified
                  * @return status of operation
                  */
-                status_t    wrap(const char *str, const char *charset = NULL);
+                status_t    wrap(const char *str);
+
+                /**
+                 * Wrap string with parser
+                 * @param buf buffer to wrap
+                 * @param len length of buffer to wrap
+                 * @param version JSON version
+                 * @return status of operation
+                 */
+                status_t    wrap(const void *buf, size_t len);
 
                 /**
                  * Wrap string with parser
                  * @param str string to wrap
-                 * @param version JSON version, UTF-8 if not specified
+                 * @param version JSON version, ASCII if not specified
                  * @return status of operation
                  */
                 status_t    wrap(const LSPString *str);
-
-                /**
-                 * Wrap input sequence with parser
-                 * @param seq sequence to use for reads
-                 * @param version JSON version
-                 * @return status of operation
-                 */
-                status_t    wrap(io::IInSequence *seq, size_t flags = WRAP_NONE);
 
                 /**
                  * Wrap input stream with parser
                  * @param is input stream
                  * @param version JSON version
                  * @param flags wrap flags
-                 * @param charset character set, UTF-8 if not specified
                  * @return status of operation
                  */
-                status_t    wrap(io::IInStream *is, size_t flags = WRAP_NONE, const char *charset = NULL);
+                status_t    wrap(io::IInStream *is, size_t flags = WRAP_NONE);
 
                 /**
                  * Close parser

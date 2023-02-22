@@ -72,9 +72,18 @@ namespace lsp
                 /**
                  * Write a single byte to underlying storage
                  * @param b byte to write
+                 * @deprecated use write_byte
                  * @return number of bytes actually written or negative error code
                  */
+                [[deprecated]]
                 virtual ssize_t     writeb(int v);
+
+                /**
+                 * Write a single byte to underlying storage
+                 * @param b byte to write
+                 * @return number of bytes actually written or negative error code
+                 */
+                virtual status_t    write_byte(int v);
 
                 /** Seek the stream to the specified position from the beginning
                  *

@@ -24,6 +24,7 @@
 
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/io/IInStream.h>
+#include <lsp-plug.in/io/OutMemoryStream.h>
 
 namespace lsp
 {
@@ -144,6 +145,12 @@ namespace lsp
                  */
                 void                swap(InSharedMemoryStream &src);
                 void                swap(InSharedMemoryStream *src);
+
+                void                take(InSharedMemoryStream &src);
+                void                take(InSharedMemoryStream *src);
+
+                status_t            take(OutMemoryStream &src);
+                status_t            take(OutMemoryStream *src);
 
             public:
 
