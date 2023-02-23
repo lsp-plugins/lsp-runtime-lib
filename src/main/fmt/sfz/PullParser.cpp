@@ -137,17 +137,7 @@ namespace lsp
             if (pIn != NULL)
                 return STATUS_OPENED;
 
-            io::IInSequence *is = new io::InStringSequence(str);
-            if (is == NULL)
-                return STATUS_NO_MEM;
-
-            status_t res = wrap(is, WRAP_CLOSE | WRAP_DELETE);
-            if (res != STATUS_OK)
-            {
-                is->close();
-                delete is;
-            }
-            return res;
+            return wrap(str->get_utf8());
         }
 
         status_t PullParser::wrap(io::IInStream *is, size_t flags)
