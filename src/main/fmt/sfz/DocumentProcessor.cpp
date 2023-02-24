@@ -47,7 +47,7 @@ namespace lsp
 
         status_t DocumentProcessor::open(const char *path)
         {
-            if (nScopes < 0)
+            if (nScopes >= 0)
                 return STATUS_OPENED;
 
             io::Path tmp;
@@ -60,7 +60,7 @@ namespace lsp
 
         status_t DocumentProcessor::open(const LSPString *path)
         {
-            if (nScopes < 0)
+            if (nScopes >= 0)
                 return STATUS_OPENED;
 
             io::Path tmp;
@@ -73,7 +73,7 @@ namespace lsp
 
         status_t DocumentProcessor::open(const io::Path *path)
         {
-            if (nScopes < 0)
+            if (nScopes >= 0)
                 return STATUS_OPENED;
 
             // Get last name of the file path
@@ -105,8 +105,11 @@ namespace lsp
             // Initialize document
             if ((doc->sPath = last.clone_utf8()) == NULL)
                 return STATUS_NO_MEM;
+            if (!vTree.add(doc))
+                return STATUS_NO_MEM;
             lsp::swap(doc->pParser, pp);
-            doc->nWFlags        = WRAP_CLOSE | WRAP_DELETE;
+            doc->nWFlags    = WRAP_CLOSE | WRAP_DELETE;
+            doc             = NULL;
 
             // Mark processor open
             nScopes         = 0;
@@ -116,7 +119,7 @@ namespace lsp
 
         status_t DocumentProcessor::wrap(const char *str)
         {
-            if (nScopes < 0)
+            if (nScopes >= 0)
                 return STATUS_OPENED;
             PullParser *pp = new PullParser();
             if (pp == NULL)
@@ -135,7 +138,7 @@ namespace lsp
 
         status_t DocumentProcessor::wrap(const void *buf, size_t len)
         {
-            if (nScopes < 0)
+            if (nScopes >= 0)
                 return STATUS_OPENED;
             PullParser *pp = new PullParser();
             if (pp == NULL)
@@ -154,7 +157,7 @@ namespace lsp
 
         status_t DocumentProcessor::wrap(const LSPString *str)
         {
-            if (nScopes < 0)
+            if (nScopes >= 0)
                 return STATUS_OPENED;
             PullParser *pp = new PullParser();
             if (pp == NULL)
@@ -173,7 +176,7 @@ namespace lsp
 
         status_t DocumentProcessor::wrap(io::IInStream *is, size_t flags)
         {
-            if (nScopes < 0)
+            if (nScopes >= 0)
                 return STATUS_OPENED;
             PullParser *pp = new PullParser();
             if (pp == NULL)
@@ -193,16 +196,21 @@ namespace lsp
 
         status_t DocumentProcessor::wrap(PullParser *parser, size_t flags)
         {
-            if (nScopes < 0)
+            if (nScopes >= 0)
                 return STATUS_OPENED;
 
             document_t *doc     = create_document();
             if (doc == NULL)
                 return STATUS_NO_MEM;
+            lsp_finally { destroy_document(doc); };
 
-            doc->pParser        = NULL;
-            doc->nWFlags        = 0;
+            // Initialize document
+            if (!vTree.add(doc))
+                return STATUS_NO_MEM;
+            doc->pParser        = parser;
+            doc->nWFlags        = flags;
             doc->sPath          = NULL;
+            doc                 = NULL;
 
             // Mark processor open
             nScopes             = 0;
@@ -271,7 +279,7 @@ namespace lsp
 
             // Complete the scope
             pScope->enOther     = other;
-            if (other == OT_CUSTOM)
+            if ((scope == SC_OTHER) && (other == OT_CUSTOM))
             {
                 if ((pScope->sName = ev->name.clone_utf8()) == NULL)
                     return STATUS_NO_MEM;
@@ -527,6 +535,9 @@ namespace lsp
             // Destroy hash data if present
             drop_hash(&document->vVars);
 
+            // Delete the document
+            delete document;
+
             return res;
         }
 
@@ -534,13 +545,13 @@ namespace lsp
         {
             clear_scope(scope);
             scope->enType   = type;
-            scope->pPrev    = NULL;
+            scope->pPrev    = prev;
 
             if (prev == NULL)
                 return STATUS_OK;
 
             // Do not copy contents from the CONTROL scope or to ANY scope
-            if ((type == SC_CONTROL) || (prev->enType == SC_OTHER))
+            if ((prev->enType == SC_CONTROL) || (prev->enType == SC_OTHER))
                 return STATUS_OK;
 
             // Copy the opcodes from the source scope
@@ -686,8 +697,11 @@ namespace lsp
             while ((pScope != NULL) && (pScope->enType >= scope))
             {
                 // Call the dispatcher
-                if ((res = dispatch_scope(handler, pScope)) != STATUS_OK)
-                    return res;
+                if (pScope->enType != SC_CONTROL)
+                {
+                    if ((res = dispatch_scope(handler, pScope)) != STATUS_OK)
+                        return res;
+                }
 
                 // Free the scope
                 scope_data_t *prev = pScope->pPrev;

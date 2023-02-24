@@ -495,7 +495,7 @@ namespace lsp
             if ((res = read_opcode_name(ch, &name)) != STATUS_OK)
                 return res;
 
-            if (name.equals_ascii("sample"))
+            if ((name.equals_ascii("sample")) || (name.equals_ascii("default_path")))
             {
                 if ((res = read_sample_file_name(&value)) != STATUS_OK)
                     return res;
