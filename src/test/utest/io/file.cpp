@@ -76,7 +76,7 @@ UTEST_BEGIN("runtime.io", file)
             UTEST_ASSERT(fd.write(tmpbuf, sizeof(tmpbuf)) == sizeof(tmpbuf));
             written += sizeof(tmpbuf);
         }
-        UTEST_ASSERT(fd.flush() == STATUS_OK)
+        UTEST_ASSERT(fd.flush() == STATUS_OK);
 
         // Get status
         io::fattr_t attr;
@@ -109,8 +109,8 @@ UTEST_BEGIN("runtime.io", file)
         UTEST_ASSERT(fd.position() == position);
 
         // Ensure that sync() and flush() work properly
-        UTEST_ASSERT(fd.flush() == STATUS_OK)
-        UTEST_ASSERT(fd.sync() == STATUS_OK)
+        UTEST_ASSERT(fd.flush() == STATUS_OK);
+        UTEST_ASSERT(fd.sync() == STATUS_OK);
 
         // Try to truncate file
         UTEST_ASSERT(fd.truncate(written) == STATUS_OK);
@@ -183,8 +183,8 @@ UTEST_BEGIN("runtime.io", file)
         UTEST_ASSERT(fd.position() == position);
 
         // Ensure that sync() and flush() do not work
-        UTEST_ASSERT(fd.flush() != STATUS_OK)
-        UTEST_ASSERT(fd.sync() != STATUS_OK)
+        UTEST_ASSERT(fd.flush() != STATUS_OK);
+        UTEST_ASSERT(fd.sync() != STATUS_OK);
 
         // Try to truncate file
         UTEST_ASSERT(fd.truncate(0x1000) != STATUS_OK);

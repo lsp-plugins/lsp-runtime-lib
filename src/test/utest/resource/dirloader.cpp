@@ -65,7 +65,7 @@ UTEST_BEGIN("runtime.resource", dirloader)
         io::IInSequence *is = loader->read_sequence(path, "UTF-8");
         UTEST_ASSERT(is != NULL);
         UTEST_ASSERT(is->read_line(&line, true) == STATUS_OK);
-        UTEST_ASSERT(is->read_line(&line, true) == STATUS_EOF)
+        UTEST_ASSERT(is->read_line(&line, true) == STATUS_EOF);
         UTEST_ASSERT(is->close() == STATUS_OK);
         delete is;
 

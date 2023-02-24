@@ -148,12 +148,12 @@ UTEST_BEGIN("runtime.io", bitstream)
         UTEST_ASSERT(v.u32 == 0xec90);
 
         // Check for EOF
-        UTEST_ASSERT(ibs.readb(&v.b) == -STATUS_EOF)
-        UTEST_ASSERT(ibs.readv(&v.b) == -STATUS_EOF)
-        UTEST_ASSERT(ibs.readv(&v.u8) == -STATUS_EOF)
-        UTEST_ASSERT(ibs.readv(&v.u16) == -STATUS_EOF)
-        UTEST_ASSERT(ibs.readv(&v.u32) == -STATUS_EOF)
-        UTEST_ASSERT(ibs.readv(&v.u64) == -STATUS_EOF)
+        UTEST_ASSERT(ibs.readb(&v.b) == -STATUS_EOF);
+        UTEST_ASSERT(ibs.readv(&v.b) == -STATUS_EOF);
+        UTEST_ASSERT(ibs.readv(&v.u8) == -STATUS_EOF);
+        UTEST_ASSERT(ibs.readv(&v.u16) == -STATUS_EOF);
+        UTEST_ASSERT(ibs.readv(&v.u32) == -STATUS_EOF);
+        UTEST_ASSERT(ibs.readv(&v.u64) == -STATUS_EOF);
 
         UTEST_ASSERT(ibs.close() == STATUS_OK);
     }

@@ -53,67 +53,67 @@ UTEST_BEGIN("runtime.protocol", midi)
         const uint8_t *b = message;
 
         UTEST_ASSERT(midi::decode(&ev, b) == 3);
-        UTEST_ASSERT((ev.type == midi::MIDI_MSG_NOTE_ON))
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_NOTE_ON));
         UTEST_ASSERT((ev.channel == 0x0c) && (ev.note.pitch == 0x3e) && (ev.note.velocity == 0x3c));
         b += 3;
 
         UTEST_ASSERT(midi::decode(&ev, b) == 3);
-        UTEST_ASSERT((ev.type == midi::MIDI_MSG_NOTE_OFF))
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_NOTE_OFF));
         UTEST_ASSERT((ev.channel == 0x03) && (ev.note.pitch == 0x5a) && (ev.note.velocity == 0x45));
         b += 3;
 
         UTEST_ASSERT(midi::decode(&ev, b) == 3);
-        UTEST_ASSERT((ev.type == midi::MIDI_MSG_NOTE_CONTROLLER))
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_NOTE_CONTROLLER));
         UTEST_ASSERT((ev.channel == 0x02) && (ev.ctl.control == midi::MIDI_CTL_MSB_BALANCE) && (ev.ctl.value == 0x7f));
         b += 3;
 
         UTEST_ASSERT(midi::decode(&ev, b) == 3);
-        UTEST_ASSERT((ev.type == midi::MIDI_MSG_NOTE_CONTROLLER))
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_NOTE_CONTROLLER));
         UTEST_ASSERT((ev.channel == 0x02) && (ev.ctl.control == midi::MIDI_CTL_LSB_BALANCE) && (ev.ctl.value == 0x7e));
         b += 3;
 
         UTEST_ASSERT(midi::decode(&ev, b) == 3);
-        UTEST_ASSERT((ev.type == midi::MIDI_MSG_NOTE_CONTROLLER))
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_NOTE_CONTROLLER));
         UTEST_ASSERT((ev.channel == 0x04) && (ev.ctl.control == midi::MIDI_CTL_SUSTAIN) && (ev.ctl.value == 0x0f));
         b += 3;
 
         UTEST_ASSERT(midi::decode(&ev, b) == 2);
-        UTEST_ASSERT((ev.type == midi::MIDI_MSG_MTC_QUARTER))
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_MTC_QUARTER));
         UTEST_ASSERT((ev.mtc.type == 0x05) && (ev.mtc.value == 0x0c));
         b += 2;
 
         UTEST_ASSERT(midi::decode(&ev, b) == 3);
-        UTEST_ASSERT((ev.type == midi::MIDI_MSG_NOTE_PRESSURE))
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_NOTE_PRESSURE));
         UTEST_ASSERT((ev.channel == 0x0e) && (ev.atouch.pitch == 0x40) && (ev.atouch.pressure = 0x44));
         b += 3;
 
         UTEST_ASSERT(midi::decode(&ev, b) == 2);
-        UTEST_ASSERT((ev.type == midi::MIDI_MSG_PROGRAM_CHANGE))
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_PROGRAM_CHANGE));
         UTEST_ASSERT((ev.channel == 0x03) && (ev.program == 0x63));
         b += 2;
 
         UTEST_ASSERT(midi::decode(&ev, b) == 2);
-        UTEST_ASSERT((ev.type == midi::MIDI_MSG_CHANNEL_PRESSURE))
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_CHANNEL_PRESSURE));
         UTEST_ASSERT((ev.channel == 0x08) && (ev.chn.pressure = 0x55));
         b += 2;
 
         UTEST_ASSERT(midi::decode(&ev, b) == 3);
-        UTEST_ASSERT((ev.type == midi::MIDI_MSG_PITCH_BEND))
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_PITCH_BEND));
         UTEST_ASSERT((ev.channel == 0x07) && (ev.bend = 0x113c));
         b += 3;
 
         UTEST_ASSERT(midi::decode(&ev, b) == 3);
-        UTEST_ASSERT((ev.type == midi::MIDI_MSG_SONG_POS))
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_SONG_POS));
         UTEST_ASSERT((ev.beats = 0x111e));
         b += 3;
 
         UTEST_ASSERT(midi::decode(&ev, b) == 2);
-        UTEST_ASSERT((ev.type == midi::MIDI_MSG_SONG_SELECT))
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_SONG_SELECT));
         UTEST_ASSERT((ev.song = 0x42));
         b += 2;
 
         UTEST_ASSERT(midi::decode(&ev, b) == 1);
-        UTEST_ASSERT((ev.type == midi::MIDI_MSG_CLOCK))
+        UTEST_ASSERT((ev.type == midi::MIDI_MSG_CLOCK));
         b += 1;
 
         UTEST_ASSERT(midi::decode(&ev, b) == -STATUS_CORRUPTED);
