@@ -333,7 +333,7 @@ namespace lsp
                 if (path == NULL)
                     continue;
                 if (strcmp(fname, path) == 0)
-                    return STATUS_CORRUPTED;
+                    return STATUS_OVERFLOW;
             }
 
             // Now we can allocate new document
@@ -386,7 +386,7 @@ namespace lsp
         status_t DocumentProcessor::process_sample_data(IDocumentHandler *handler, event_t *ev)
         {
             // This should happen only for specific state
-            if ((pScope == NULL) || (pScope->enType != SC_OTHER) || (pScope->enOther == OT_SAMPLE))
+            if ((pScope == NULL) || (pScope->enType != SC_OTHER) || (pScope->enOther != OT_SAMPLE))
                 return STATUS_CORRUPTED;
 
             // Already exists?
@@ -492,7 +492,8 @@ namespace lsp
                 res     = switch_scope(handler, SC_NONE);
 
             // Notify handler about end of document
-            res = handler->end(res);
+            if (res == STATUS_OK)
+                res = handler->end(res);
             handler = NULL;
             return res;
         }

@@ -36,6 +36,9 @@ namespace lsp
     {
         /**
          * SFZ document processor. Allows to perform easy context-aware processing of the SFZ document.
+         * The settings for headers <global>, <master>, <group> become merged into the <region> seciton.
+         * This allows to simplify parse due no need of parsing <global>, <master> and <group> headers
+         * by the document handler.
          */
         class LSP_RUNTIME_LIB_PUBLIC DocumentProcessor
         {

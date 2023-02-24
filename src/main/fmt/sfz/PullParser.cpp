@@ -253,7 +253,10 @@ namespace lsp
             {
                 lsp_wchar_t ch = sUnget.char_at(nUnget++);
                 if (nUnget >= sUnget.length())
+                {
                     sUnget.truncate();
+                    nUnget   = 0;
+                }
                 return ch;
             }
             return pIn->read_byte();
@@ -712,8 +715,8 @@ namespace lsp
 
             // Commit the result
             ev->type        = EVENT_INCLUDE;
-            ev->name.clear();
-            ev->value.swap(&text);
+            ev->name.swap(&text);
+            ev->value.clear();
             ev->blob.close();
 
             return STATUS_OK;

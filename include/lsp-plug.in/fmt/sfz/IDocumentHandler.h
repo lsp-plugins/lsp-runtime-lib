@@ -58,7 +58,8 @@ namespace lsp
                 virtual status_t control(const char **opcodes, const char **values);
 
                 /**
-                 * Handle the region header content
+                 * Handle the region header content. The merged values from <global>, <master>, <group> and <region>
+                 * are passed to the method.
                  * @param opcodes NULL-terminated list of all opcodes including the opcodes from parent headers
                  * @param values NULL-terminated list of all opcode values that match the opcodes
                  * @return status of operation
@@ -126,6 +127,7 @@ namespace lsp
 
                 /**
                  * Notify the handler about end of the document processing
+                 * This callback is only called if no one error occurred during the processing
                  * @param result the oveall status of processing
                  * @return status of operation
                  */

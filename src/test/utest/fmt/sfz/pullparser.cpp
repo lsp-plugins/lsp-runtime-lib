@@ -102,8 +102,8 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
                 sfz::event_t ev;
                 UTEST_ASSERT(sParser.next(&ev) == STATUS_OK);
                 UTEST_ASSERT(ev.type == sfz::EVENT_INCLUDE);
-                UTEST_ASSERT(ev.name.is_empty());
-                UTEST_ASSERT(ev.value.equals_ascii(value));
+                UTEST_ASSERT(ev.name.equals_ascii(value));
+                UTEST_ASSERT(ev.value.is_empty());
                 pTest->printf("  include \"%s\"\n", value);
                 return *this;
             }
@@ -425,6 +425,56 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
         v.close();
     }
 
+    void check_blob_sfz2()
+    {
+        static const char *text =
+            "<sample> name=foo.wav\n"
+            "some_opcode=value\n"
+            "data=gggJ~\x92\x93\x9dJ\x93\x9dJ\x8bJ\x9e\x8f\x9d\x9eJlvylJggg7444oyp7474$\r\n"
+            "some_opcode2=value2\n"
+            "<sample> name=bar.wav\n"
+            "some_opcode=value2\n"
+            "data=gggJ~\x92\x93\x9dJ\x94\x9eJ\x8bJ\x9e\x8f\x9d\x9eJlvylJggg7444oyp7474$\r\n"
+            "some_opcode2=value3\n"
+            "<region> sample=foo.wav pitch_keycenter=69\r\n"
+            "<region> sample=bar.wav pitch_keycenter=90\r\n";
+
+        static const char *blob1 =
+            "=== This is a test BLOB ===\r\n"
+            "\n"
+            "\n"
+            "EOF\r\n"
+            "\r\n";
+
+        static const char *blob2 =
+            "=== This jt a test BLOB ===\r\n"
+            "\n"
+            "\n"
+            "EOF\r\n"
+            "\r\n";
+
+        printf("Checking built-in blob case...\n");
+
+        Verifier v(this);
+        v.wrap(text);
+        v.header("sample");
+            v.opcode("some_opcode", "value");
+            v.opcode("some_opcode2", "value2");
+            v.sample("foo.wav", blob1);
+        v.header("sample");
+            v.opcode("some_opcode", "value2");
+            v.opcode("some_opcode2", "value3");
+            v.sample("bar.wav", blob2);
+        v.header("region");
+            v.opcode("sample", "foo.wav");
+            v.opcode("pitch_keycenter", "69");
+        v.header("region");
+            v.opcode("sample", "bar.wav");
+            v.opcode("pitch_keycenter", "90");
+        v.status(STATUS_EOF);
+        v.close();
+    }
+
     void check_parse_file()
     {
         printf("Checking file parse...\n");
@@ -529,6 +579,7 @@ UTEST_BEGIN("runtime.fmt.sfz", pullparser)
         check_valid_sfz4();
         check_special_cases();
         check_blob_sfz();
+        check_blob_sfz2();
         check_parse_file();
     }
 
