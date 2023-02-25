@@ -567,12 +567,12 @@ namespace lsp
                                 pc = '`';
                                 break;
                         }
-                        if (towlower(c) != towlower(pc))
+                        if (lsp::to_lower(c) != lsp::to_lower(pc))
                             return false;
                         break;
 
                     default:
-                        if (towlower(c) != towlower(pc))
+                        if (lsp::to_lower(c) != lsp::to_lower(pc))
                             return false;
                         break;
                 } // switch

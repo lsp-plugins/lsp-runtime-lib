@@ -2481,7 +2481,7 @@ namespace lsp
     {
         while (count--)
         {
-            int32_t retval = int32_t(towlower(*(s1++))) - int32_t(towlower(*(s2++)));
+            int32_t retval = int32_t(to_lower(*(s1++))) - int32_t(to_lower(*(s2++)));
             if (retval != 0)
                 return (retval > 0) ? 1 : -1;
         }
