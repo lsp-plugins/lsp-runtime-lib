@@ -8,6 +8,9 @@
 * Added test build for Windows using MSYS2.
 * Added lsp::to_lower and lsp::to_upper character conversion routines
   (system locale independent support of Latin and Cyrillic characters).
+* Implemented io::InSharedMemoryStream class for shared access to the data.
+* Deprecated io::IOutStream::writeb() function, use io::IOutStream::write_byte() instead.
+* Added support of SFZ file format parsing.
 
 === 1.0.11 ===
 * Added io::InMemoryStream::size() method for obtaining the size of the wrapped buffer.

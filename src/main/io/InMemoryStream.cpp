@@ -125,6 +125,13 @@ namespace lsp
             return count;
         }
 
+        ssize_t InMemoryStream::read_byte()
+        {
+            if (pData == NULL)
+                return -set_error(STATUS_NO_DATA);
+            return (nOffset < nSize) ? pData[nOffset++] : -STATUS_EOF;
+        }
+
         wssize_t InMemoryStream::seek(wsize_t position)
         {
             if (pData == NULL)
@@ -150,6 +157,26 @@ namespace lsp
         {
             drop(enDrop);
             return STATUS_OK;
+        }
+
+        void InMemoryStream::take(OutMemoryStream &src)
+        {
+            drop(enDrop);
+
+            pData   = const_cast<uint8_t *>(src.data());
+            nOffset = 0;
+            nSize   = src.size();
+            enDrop  = (pData != NULL) ? MEMDROP_FREE : MEMDROP_NONE;
+        }
+
+        void InMemoryStream::take(OutMemoryStream *src)
+        {
+            drop(enDrop);
+
+            pData   = const_cast<uint8_t *>(src->data());
+            nOffset = 0;
+            nSize   = src->size();
+            enDrop  = (pData != NULL) ? MEMDROP_FREE : MEMDROP_NONE;
         }
     
     } /* namespace io */

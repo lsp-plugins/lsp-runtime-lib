@@ -53,6 +53,15 @@ namespace lsp
             return write(&b, 1);
         }
 
+        status_t IOutStream::write_byte(int v)
+        {
+            uint8_t b = v;
+            ssize_t n = write(&b, 1);
+            if (n == 1)
+                return STATUS_OK;
+            return (n < 0) ? n : STATUS_IO_ERROR;
+        }
+
         wssize_t IOutStream::seek(wsize_t position)
         {
             return - set_error(STATUS_NOT_IMPLEMENTED);
