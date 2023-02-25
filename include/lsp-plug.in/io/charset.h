@@ -309,6 +309,20 @@ namespace lsp
 
     int                     wchar_casecmp(const lsp_wchar_t *s1, const lsp_wchar_t *s2, size_t count);
 
-}
+    /**
+     * Convert character to lower case
+     * @param c character to convert
+     * @return converted character
+     */
+    lsp_wchar_t             to_lower(lsp_wchar_t c);
+
+    /**
+     * Convert character to upper case
+     * @param c character to convert
+     * @return converted character
+     */
+    lsp_wchar_t             to_upper(lsp_wchar_t c);
+
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_IO_CHARSET_H_ */
