@@ -200,7 +200,7 @@ namespace lsp
             if (mode & FM_TRUNC)
                 oflags     |= O_TRUNC;
 
-            #ifdef __USE_GNU
+            #if defined(__USE_GNU) && defined(O_DIRECT)
                 if (mode & FM_DIRECT)
                     oflags     |= O_DIRECT;
             #endif /* __USE_GNU */
