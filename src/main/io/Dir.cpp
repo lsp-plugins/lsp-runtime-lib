@@ -30,6 +30,7 @@
     #include <errno.h>
     #include <fcntl.h>
     #include <unistd.h>
+    #include <limits.h>
 #endif /* PLATFORM_WINDOWS */
 
 namespace lsp
@@ -787,7 +788,11 @@ namespace lsp
             ::free(buf);
             return res;
         #else
-            char spath[PATH_MAX];
+            char *spath = reinterpret_cast<char *>(malloc(PATH_MAX * sizeof(char)));
+            if (spath == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally { free(spath); };
+
             char *p = ::getcwd(spath, PATH_MAX);
             if (p == NULL)
             {
