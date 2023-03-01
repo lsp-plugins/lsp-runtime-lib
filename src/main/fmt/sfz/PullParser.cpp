@@ -358,7 +358,7 @@ namespace lsp
             {
                 if (ch == '=')
                     return STATUS_OK;
-                else if (!is_identifier(ch, name->is_empty()))
+                else if ((ch != '$') && (!is_identifier(ch, name->is_empty())))
                     return STATUS_CORRUPTED;
 
                 if (!name->append(ch))

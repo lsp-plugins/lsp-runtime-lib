@@ -70,7 +70,6 @@ namespace lsp
                     char                       *sPath;      // Path to the original file or NULL
                     PullParser                 *pParser;    // Parser of the associated file
                     size_t                      nWFlags;    // Wrapping flags for the processor
-                    lltl::pphash<char, char>    vVars;      // Variables defined inside of the file
                 } document_t;
 
                 typedef struct scope_data_t
@@ -87,6 +86,7 @@ namespace lsp
 
             protected:
                 lltl::parray<document_t>        vTree;
+                lltl::pphash<char, char>        vVars;      // Variables defined
                 scope_data_t                    vScopes[SC_TOTAL];
                 scope_data_t                   *pScope;
                 ssize_t                         nScopes;
@@ -108,7 +108,7 @@ namespace lsp
                 status_t            process_define(IDocumentHandler *handler, document_t *doc, event_t *ev);
                 status_t            process_sample_data(IDocumentHandler *handler, event_t *ev);
                 status_t            main_loop(IDocumentHandler *handler);
-                const char         *process_value(const char *value);
+                char               *process_value(const LSPString *value);
 
             public:
                 DocumentProcessor();

@@ -364,7 +364,7 @@ UTEST_BEGIN("runtime.fmt.sfz", documentprocessor)
             "sample=../Samples/bobobo/bobobo_tenor_l_vl1_rr1.wav hirand=0.250\n"
             "<region>\n"
             "sample=../Samples/bobobo/bobobo_tenor_l_vl1_rr2.wav lorand=0.250 hirand=0.500\n"
-            "<group>key=$KEY3\n"
+            "<group>key=$KEY4\n"
             "<region>\n"
             "sample=../Samples/bobobo/bobobo_tenor_l_vl1_rr3.wav lorand=0.500 hirand=0.750\n"
             "<region>\n"
@@ -443,13 +443,13 @@ UTEST_BEGIN("runtime.fmt.sfz", documentprocessor)
             "<control>\n"
             "default_path=../Samples/bobobo/\n"
             "<region>\n"
-            "ampeg_sustain_oncc38=-100 amplitude_cc35=100 hirand=0.250 key=38 offset_cc38=1500 sample=../Samples/bobobo/bobobo_tenor_l_vl1_rr1.wav\n"
+            "ampeg_sustain_oncc38=-100 amplitude_cc35=100 hirand=0.250 key=42 offset_cc38=1500 sample=../Samples/bobobo/bobobo_tenor_l_vl1_rr1.wav\n"
             "<region>\n"
-            "ampeg_sustain_oncc38=-100 amplitude_cc35=100 hirand=0.500 key=38 lorand=0.250 offset_cc38=1500 sample=../Samples/bobobo/bobobo_tenor_l_vl1_rr2.wav\n"
+            "ampeg_sustain_oncc38=-100 amplitude_cc35=100 hirand=0.500 key=42 lorand=0.250 offset_cc38=1500 sample=../Samples/bobobo/bobobo_tenor_l_vl1_rr2.wav\n"
             "<region>\n"
-            "ampeg_sustain_oncc38=-100 amplitude_cc35=100 hirand=0.750 key=38 lorand=0.500 offset_cc38=1500 sample=../Samples/bobobo/bobobo_tenor_l_vl1_rr3.wav\n"
+            "ampeg_sustain_oncc38=-100 amplitude_cc35=100 hirand=0.750 key=43 lorand=0.500 offset_cc38=1500 sample=../Samples/bobobo/bobobo_tenor_l_vl1_rr3.wav\n"
             "<region>\n"
-            "ampeg_sustain_oncc38=-100 amplitude_cc35=100 key=38 lorand=0.750 offset_cc38=1500 sample=../Samples/bobobo/bobobo_tenor_l_vl1_rr4.wav\n"
+            "ampeg_sustain_oncc38=-100 amplitude_cc35=100 key=43 lorand=0.750 offset_cc38=1500 sample=../Samples/bobobo/bobobo_tenor_l_vl1_rr4.wav\n"
             "// end\n";
 
         printf("Checking nested file includes...\n");
@@ -466,6 +466,81 @@ UTEST_BEGIN("runtime.fmt.sfz", documentprocessor)
 
         printf("Source document 1:\n%s\n", data1);
         printf("Source document 2:\n%s\n", data2);
+        printf("Processed document:\n%s\n", processed);
+        if (strcmp(processed, expected) != 0)
+            UTEST_FAIL_MSG("Expected document:\n%s\n", expected);
+    }
+
+    void check_multiple_vars()
+    {
+        static const char *instr =
+            "#define $instr Crash_left_shank\n"
+            "#define $mic center\n"
+            "<group>\n"
+            "group_label=$instr\n"
+            "group=$grp_cl_shk\n"
+            "off_by=$off_cl\n"
+            "\n"
+            "<region> lovel=$v41l hivel=$v41h amp_velcurve_$v41h=1 region_label=1 sample=$instr/1-$instr-$mic.$ext seq_length=3 seq_position=1\n"
+            "<region> lovel=$v41l hivel=$v41h amp_velcurve_$v41h=1 region_label=2 sample=$instr/2-$instr-$mic.$ext seq_length=3 seq_position=2\n"
+            "<region> lovel=$v41l hivel=$v41h amp_velcurve_$v41h=1 region_label=3 sample=$instr/3-$instr-$mic.$ext seq_length=3 seq_position=3\n"
+            "\n"
+            "<region> lovel=$v42l hivel=$v42h amp_velcurve_$v42h=1 region_label=4 sample=$instr/4-$instr-$mic.$ext seq_length=3 seq_position=1\n"
+            "<region> lovel=$v42l hivel=$v42h amp_velcurve_$v42h=1 region_label=5 sample=$instr/5-$instr-$mic.$ext seq_length=3 seq_position=2\n"
+            "<region> lovel=$v42l hivel=$v42h amp_velcurve_$v42h=1 region_label=6 sample=$instr/6-$instr-$mic.$ext seq_length=3 seq_position=3\n"
+            "\n"
+            "<region> sample=$not_found_var$$instr\n";
+
+        static const char *velocity =
+            "#define $v11l 1        #define $v11h 127\n"
+            "#define $v41l 1        #define $v41h 31\n"
+            "#define $v42l 32       #define $v42h 63\n";
+
+        static const char *macro =
+            "#define $ext flac\n";
+
+        static const char *data =
+            "#include \"macro.txt\"\n"
+            "#include \"velocity.txt\"\n"
+            "#include \"crash-left.txt\"\n";
+
+        static const char *expected =
+            "// begin\n"
+            "// #include \"macro.txt\"\n"
+            "// #include \"velocity.txt\"\n"
+            "// #include \"crash-left.txt\"\n"
+            "<region>\n"
+            "amp_velcurve_31=1 group=$grp_cl_shk group_label=Crash_left_shank hivel=31 lovel=1 off_by=$off_cl region_label=1 sample=Crash_left_shank/1-Crash_left_shank-center.flac seq_length=3 seq_position=1\n"
+            "<region>\n"
+            "amp_velcurve_31=1 group=$grp_cl_shk group_label=Crash_left_shank hivel=31 lovel=1 off_by=$off_cl region_label=2 sample=Crash_left_shank/2-Crash_left_shank-center.flac seq_length=3 seq_position=2\n"
+            "<region>\n"
+            "amp_velcurve_31=1 group=$grp_cl_shk group_label=Crash_left_shank hivel=31 lovel=1 off_by=$off_cl region_label=3 sample=Crash_left_shank/3-Crash_left_shank-center.flac seq_length=3 seq_position=3\n"
+            "<region>\n"
+            "amp_velcurve_63=1 group=$grp_cl_shk group_label=Crash_left_shank hivel=63 lovel=32 off_by=$off_cl region_label=4 sample=Crash_left_shank/4-Crash_left_shank-center.flac seq_length=3 seq_position=1\n"
+            "<region>\n"
+            "amp_velcurve_63=1 group=$grp_cl_shk group_label=Crash_left_shank hivel=63 lovel=32 off_by=$off_cl region_label=5 sample=Crash_left_shank/5-Crash_left_shank-center.flac seq_length=3 seq_position=2\n"
+            "<region>\n"
+            "amp_velcurve_63=1 group=$grp_cl_shk group_label=Crash_left_shank hivel=63 lovel=32 off_by=$off_cl region_label=6 sample=Crash_left_shank/6-Crash_left_shank-center.flac seq_length=3 seq_position=3\n"
+            "<region>\n"
+            "group=$grp_cl_shk group_label=Crash_left_shank off_by=$off_cl sample=$not_found_var$Crash_left_shank\n"
+            "// end\n";
+
+        printf("Checking namespace parameter overriding...\n");
+
+        SFZHandler handler;
+        handler.add_file("macro.txt", macro);
+        handler.add_file("velocity.txt", velocity);
+        handler.add_file("crash-left.txt", instr);
+
+        sfz::DocumentProcessor processor;
+
+        UTEST_ASSERT(processor.wrap(data) == STATUS_OK);
+        UTEST_ASSERT_MSG(processor.process(&handler) == STATUS_OK, "Processed data: %s\n", handler.data()->get_utf8());
+        UTEST_ASSERT(processor.close() == STATUS_OK);
+
+        const char *processed = handler.data()->get_utf8();
+
+        printf("Source document:\n%s\n", data);
         printf("Processed document:\n%s\n", processed);
         if (strcmp(processed, expected) != 0)
             UTEST_FAIL_MSG("Expected document:\n%s\n", expected);
@@ -713,6 +788,7 @@ UTEST_BEGIN("runtime.fmt.sfz", documentprocessor)
         check_namespaces_simple();
         check_namespaces_overrides();
         check_includes_and_defines();
+        check_multiple_vars();
         check_other_headers();
         check_read_file();
         check_invalid_include();

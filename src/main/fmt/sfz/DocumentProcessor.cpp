@@ -233,6 +233,9 @@ namespace lsp
             }
             vTree.flush();
 
+            // Destroy defined variables if present
+            drop_hash(&vVars);
+
             // Cleanup scopes
             for (size_t i=0; i<SC_TOTAL; ++i)
                 clear_scope(&vScopes[i]);
@@ -294,27 +297,26 @@ namespace lsp
             if (pScope == NULL)
                 return STATUS_CORRUPTED;
 
-            const char *opcode  = ev->name.get_utf8();
-            const char *value   = process_value(ev->value.get_utf8());
-
-            // Copy the value first
-            char *processed     = strdup(value);
-            if (processed == NULL)
+            // Process the opcode and the value
+            char *opcode        = process_value(&ev->name);
+            if (opcode == NULL)
                 return STATUS_NO_MEM;
-            if (!pScope->vAllocated.add(processed))
+            lsp_finally { free(opcode); };
+
+            char *value         = process_value(&ev->value);
+            if (value == NULL)
+                return STATUS_NO_MEM;
+            if (!pScope->vAllocated.add(value))
             {
-                free(processed);
+                free(value);
                 return STATUS_NO_MEM;
             }
 
             // Put the opcode to the list
             char *old_value     = NULL;
-            if (!pScope->vOpcodes.put(opcode, processed, &old_value))
+            if (!pScope->vOpcodes.put(opcode, value, &old_value))
                 return STATUS_NO_MEM;
 
-            // Duplicated opcode?
-//            if (old_value != NULL)
-//                return STATUS_CORRUPTED;
             return STATUS_OK;
         }
 
@@ -380,7 +382,7 @@ namespace lsp
                     free(var_value);
             };
 
-            return (doc->vVars.put(var_name, var_value, &var_value)) ? STATUS_OK : STATUS_NO_MEM;
+            return (vVars.put(var_name, var_value, &var_value)) ? STATUS_OK : STATUS_NO_MEM;
         }
 
         status_t DocumentProcessor::process_sample_data(IDocumentHandler *handler, event_t *ev)
@@ -492,10 +494,9 @@ namespace lsp
                 res     = switch_scope(handler, SC_NONE);
 
             // Notify handler about end of document
-            if (res == STATUS_OK)
-                res = handler->end(res);
+            status_t res2 = handler->end(res);
             handler = NULL;
-            return res;
+            return (res == STATUS_OK) ? res2 : res;
         }
 
         DocumentProcessor::document_t *DocumentProcessor::create_document()
@@ -532,9 +533,6 @@ namespace lsp
                 free(document->sPath);
                 document->sPath     = NULL;
             }
-
-            // Destroy hash data if present
-            drop_hash(&document->vVars);
 
             // Delete the document
             delete document;
@@ -742,26 +740,52 @@ namespace lsp
             return STATUS_OK;
         }
 
-        const char *DocumentProcessor::process_value(const char *value)
+        char *DocumentProcessor::process_value(const LSPString *value)
         {
-            if ((value == NULL) || (*value != '$'))
-                return value;
+            LSPString res;
 
-            // Remove the '$' character from beginning
-            const char *var = &value[1];
-
-            // Lookup the document tree for the specific variable
-            for (size_t i=vTree.size(); i > 0; )
+            for (size_t i=0, n=value->length(); i < n; )
             {
-                document_t *document = vTree.uget(--i);
-                if (document == NULL)
-                    continue;
-                const char *val = document->vVars.get(var);
-                if (val != NULL)
-                    return val;
+                lsp_wchar_t ch = value->char_at(i++);
+                if (ch == '$')
+                {
+                    // Substitute variable
+                    size_t first = i;
+                    bool found = false;
+                    while (i < n)
+                    {
+                        // New variable name?
+                        char ch = value->char_at(i);
+                        if (ch == '$')
+                            break;
+
+                        // Find the variable and substitute if it was found
+                        const char *var = value->get_utf8(first, ++i);
+                        const char *val = vVars.get(var);
+                        if (val != NULL)
+                        {
+                            if (!res.append_utf8(val))
+                                return NULL;
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    // No substitution was made?
+                    if (!found)
+                    {
+                        if (!res.append(value, first-1, i))
+                            return NULL;
+                    }
+                }
+                else
+                {
+                    if (!res.append(ch))
+                        return NULL;
+                }
             }
 
-            return value;
+            return res.clone_utf8();
         }
 
     } /* namespace sfz */
