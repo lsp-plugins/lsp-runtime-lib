@@ -19,6 +19,7 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/fmt/sfz/DocumentProcessor.h>
 
 namespace lsp

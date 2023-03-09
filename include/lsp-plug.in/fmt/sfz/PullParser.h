@@ -52,6 +52,7 @@ namespace lsp
                 static bool         is_identifier(lsp_wchar_t ch, bool first);
                 static bool         is_space(lsp_wchar_t ch);
                 static void         trim_right(LSPString *value);
+                static bool         is_string_opcode(const LSPString *name);
 
             protected:
                 lsp_swchar_t        get_char();
@@ -60,7 +61,7 @@ namespace lsp
                 status_t            read_opcode(lsp_wchar_t ch, event_t *ev);
                 status_t            read_opcode_name(lsp_swchar_t ch, LSPString *name);
                 status_t            read_opcode_value(LSPString *value);
-                status_t            read_sample_file_name(LSPString *value);
+                status_t            read_string_opcode(LSPString *value);
                 status_t            read_variable_name(LSPString *value);
                 status_t            read_variable_value(LSPString *value);
                 status_t            read_sample_data(io::IOutStream *os);

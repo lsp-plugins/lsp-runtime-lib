@@ -19,6 +19,7 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/fmt/sfz/PullParser.h>
 #include <lsp-plug.in/io/InFileStream.h>
 #include <lsp-plug.in/io/InMemoryStream.h>
@@ -396,7 +397,7 @@ namespace lsp
             return (ch == -STATUS_EOF) ? STATUS_OK : -ch;
         }
 
-        status_t PullParser::read_sample_file_name(LSPString *value)
+        status_t PullParser::read_string_opcode(LSPString *value)
         {
             lsp_swchar_t ch;
 
@@ -490,6 +491,71 @@ namespace lsp
             return (ch == -STATUS_EOF) ? STATUS_CORRUPTED : -ch;
         }
 
+        bool PullParser::is_string_opcode(const LSPString *name)
+        {
+            ssize_t first, last;
+
+            // sorted list of parameter names
+            static const char *names[] =
+            {
+                "default_path",
+                "delay_filter",
+                "filter_type",
+                "global_label",
+                "group_label",
+                "image",
+                "master_label",
+                "region_label",
+                "sample",
+                "script",
+                "static_filter",
+                "sw_label",
+                "vendor_specific"
+            };
+
+            // sorted list of parameter prefixes
+            static const char *prefixes[] =
+            {
+                "label_cc",
+                "label_key"
+            };
+
+            // Perform binary search by full match
+            first = 0;
+            last = sizeof(names) / sizeof(names[0]) - 1;
+            while (first <= last)
+            {
+                ssize_t mid = (first + last) / 2;
+                const char *text = names[mid];
+
+                ssize_t res = name->compare_to_ascii(text);
+                if (res == 0)
+                    return true;
+                if (res < 0)
+                    last  = mid - 1;
+                else
+                    first = mid + 1;
+            }
+
+            // Perform binary search by prefx match
+            first = 0;
+            last = sizeof(prefixes) / sizeof(prefixes[0]) - 1;
+            while (first <= last)
+            {
+                ssize_t mid = (first + last) / 2;
+                const char *text = prefixes[mid];
+
+                if (name->starts_with_ascii(text))
+                    return true;
+                if (name->compare_to_ascii(text) < 0)
+                    last  = mid - 1;
+                else
+                    first = mid + 1;
+            }
+
+            return false;
+        }
+
         status_t PullParser::read_opcode(lsp_wchar_t ch, event_t *ev)
         {
             status_t res;
@@ -498,17 +564,17 @@ namespace lsp
             if ((res = read_opcode_name(ch, &name)) != STATUS_OK)
                 return res;
 
-            if ((name.equals_ascii("sample")) || (name.equals_ascii("default_path")))
+            if (is_string_opcode(&name))
             {
-                if ((res = read_sample_file_name(&value)) != STATUS_OK)
+                if ((res = read_string_opcode(&value)) != STATUS_OK)
                     return res;
             }
             else if (sSample.type == EVENT_SAMPLE)
             {
                 // Special case: the <sample> header is pending
-                if (name.equals_ascii("name"))
+                if ((is_string_opcode(&name)) || (name.equals_ascii("name")))
                 {
-                    if ((res = read_sample_file_name(&value)) != STATUS_OK)
+                    if ((res = read_string_opcode(&value)) != STATUS_OK)
                         return res;
                     sSample.name.swap(&value);
                     return STATUS_SKIP;
@@ -640,19 +706,34 @@ namespace lsp
                 return STATUS_NO_MEM;
 
             // Read the last variable definition
+            size_t slashes = 0;
+
             while ((ch = get_char()) >= 0)
             {
                 switch (ch)
                 {
                     case '<': // header?
-                    case '/': // comment?
                         nUnget = 0;
                         sUnget.clear();
                         if (!sUnget.append(ch))
                             return STATUS_NO_MEM;
                         return STATUS_OK;
 
+                    case '/': // possible comment?
+                        if ((++slashes) >= 2)
+                        {
+                            nUnget = 0;
+                            sUnget.clear();
+                            if (!sUnget.append_ascii("//", 2))
+                                return STATUS_NO_MEM;
+                            return STATUS_OK;
+                        }
+                        if (!value->append(ch))
+                            return STATUS_NO_MEM;
+                        break;
+
                     default:
+                        slashes = 0;
                         if (is_space(ch))
                             return STATUS_OK;
                         if (!value->append(ch))
