@@ -167,6 +167,8 @@ namespace lsp
             nOffset = 0;
             nSize   = src.size();
             enDrop  = (pData != NULL) ? MEMDROP_FREE : MEMDROP_NONE;
+
+            src.release();
         }
 
         void InMemoryStream::take(OutMemoryStream *src)
@@ -177,6 +179,8 @@ namespace lsp
             nOffset = 0;
             nSize   = src->size();
             enDrop  = (pData != NULL) ? MEMDROP_FREE : MEMDROP_NONE;
+
+            src->release();
         }
     
     } /* namespace io */

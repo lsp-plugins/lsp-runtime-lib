@@ -11,6 +11,7 @@
 * Implemented io::InSharedMemoryStream class for shared access to the data.
 * Deprecated io::IOutStream::writeb() function, use io::IOutStream::write_byte() instead.
 * Added possibility to create temporary files for io::NativeFile and io::OutFileStream.
+* The io::InMemoryStream::take() now releases data associated with io::OutMemoryStream.
 * Added support of SFZ file format parsing.
 * Updated build scripts.
 
