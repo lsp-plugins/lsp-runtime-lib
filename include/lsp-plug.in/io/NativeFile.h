@@ -84,6 +84,43 @@ namespace lsp
                 status_t    open(const Path *path, size_t mode);
 
                 /**
+                 * Create temporary file and open it for writing.
+                 * The caller is responsible for deleting the file.
+                 * @param path output pointer to store the file name
+                 * @param prefix optional file name prefix in UTF-8
+                 * @return status of operation
+                 */
+                status_t    open_temp(io::Path *path, const char *prefix = NULL);
+
+                /**
+                 * Create temporary file and open it for writing.
+                 * The caller is responsible for deleting the file.
+                 * @param path output pointer to store the file name
+                 * @param prefix optional file name prefix
+                 * @return status of operation
+                 */
+                status_t    open_temp(io::Path *path, const LSPString *prefix);
+
+                /**
+                 * Create temporary file and open it for writing.
+                 * The caller is responsible for deleting the file.
+                 * @param path output pointer to store the file name
+                 * @param prefix optional file name prefix in UTF-8
+                 * @return status of operation
+                 */
+                status_t    open_temp(LSPString *path, const char *prefix = NULL);
+
+                /**
+                 * Create temporary file and open it for writing.
+                 * The caller is responsible for deleting the file.
+                 * @param path output pointer to store the file name
+                 * @param prefix file name prefix
+                 * @param prefix optional file name prefix in UTF-8
+                 * @return status of operation
+                 */
+                status_t    open_temp(LSPString *path, const LSPString *prefix);
+
+                /**
                  * Wrap the standard file descriptor and allow both read
                  * and write operations
                  * @param fd file descriptor to wrap

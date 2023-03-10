@@ -20,6 +20,7 @@
  */
 
 #include <lsp-plug.in/io/NativeFile.h>
+#include <lsp-plug.in/runtime/system.h>
 
 #if defined(PLATFORM_WINDOWS)
     #include <windows.h>
@@ -108,7 +109,7 @@ namespace lsp
                 return set_error(STATUS_INVALID_VALUE);
 
             if (mode & FM_CREATE)
-                cmode       = (mode & FM_TRUNC) ? CREATE_ALWAYS : CREATE_NEW;
+                cmode       = (mode & FM_EXCL) ? CREATE_NEW : CREATE_ALWAYS;
             else if (mode & FM_TRUNC)
                 cmode       = TRUNCATE_EXISTING;
             else
@@ -148,8 +149,10 @@ namespace lsp
                         break;
                     case ERROR_FILE_EXISTS:
                     case ERROR_ALREADY_EXISTS:
-                    case ERROR_DIRECTORY:
                         res = STATUS_ALREADY_EXISTS;
+                        break;
+                    case ERROR_DIRECTORY:
+                        res = STATUS_IS_DIRECTORY;
                         break;
                     case ERROR_BUFFER_OVERFLOW:
                         res = STATUS_OVERFLOW;
@@ -199,6 +202,8 @@ namespace lsp
                 oflags     |= O_CREAT;
             if (mode & FM_TRUNC)
                 oflags     |= O_TRUNC;
+            if (mode & FM_EXCL)
+                oflags     |= O_EXCL;
 
             #if defined(__USE_GNU) && defined(O_DIRECT)
                 if (mode & FM_DIRECT)
@@ -701,6 +706,97 @@ namespace lsp
 
             return set_error(STATUS_OK);
         }
-    
+
+        status_t NativeFile::open_temp(io::Path *path, const char *prefix)
+        {
+            if (prefix == NULL)
+                return open_temp(path, static_cast<LSPString *>(NULL));
+
+            LSPString p;
+            if (!p.set_utf8(prefix))
+                return STATUS_NO_MEM;
+            return open_temp(path, &p);
+        }
+
+        status_t NativeFile::open_temp(LSPString *path, const char *prefix)
+        {
+            if (prefix == NULL)
+                return open_temp(path, static_cast<LSPString *>(NULL));
+
+            LSPString p;
+            if (!p.set_utf8(prefix))
+                return STATUS_NO_MEM;
+            return open_temp(path, &p);
+        }
+
+        status_t NativeFile::open_temp(LSPString *path, const LSPString *prefix)
+        {
+            if (path == NULL)
+                return set_error(STATUS_BAD_ARGUMENTS);
+
+            // Open file
+            io::Path out;
+            status_t res = open_temp(&out, prefix);
+            if (res != STATUS_OK)
+                return res;
+            if ((res = out.get(path)) != STATUS_OK)
+            {
+                // Close the file and remove it on error
+                close();
+                out.remove();
+            }
+
+            return res;
+        }
+
+        status_t NativeFile::open_temp(io::Path *path, const LSPString *prefix)
+        {
+            if (hFD != BAD_FD)
+                return set_error(STATUS_BAD_STATE);
+            else if (path == NULL)
+                return set_error(STATUS_BAD_ARGUMENTS);
+
+            // Make the prefix
+            status_t res;
+            LSPString name;
+            if (prefix != NULL)
+            {
+                if (!name.set(prefix))
+                    return STATUS_NO_MEM;
+                if (!name.append('-'))
+                    return STATUS_NO_MEM;
+            }
+
+            // Obtain the temporary directory
+            io::Path tempdir;
+            if ((res = system::get_temporary_dir(&tempdir)) != STATUS_OK)
+                return res;
+
+            // Create the file in the loop
+            io::Path full_path;
+            size_t len = name.length();
+
+            while (true)
+            {
+                // Generate the name of the file
+                name.set_length(len);
+                int seed = int(system::get_time_millis()) ^ int(rand());
+                if (!name.fmt_append_ascii("%08x.tmp", seed))
+                    return STATUS_NO_MEM;
+                if ((res = full_path.set(&tempdir, &name)) != STATUS_OK)
+                    return res;
+
+                // Open temporary file
+                res = open(&full_path, io::File::FM_WRITE_NEW | io::File::FM_EXCL);
+                if (res == STATUS_OK)
+                {
+                    full_path.swap(path);
+                    return res;
+                }
+                if (res != STATUS_ALREADY_EXISTS)
+                    return res;
+            }
+        }
+
     } /* namespace io */
 } /* namespace lsp */
