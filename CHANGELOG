@@ -12,6 +12,8 @@
 * Deprecated io::IOutStream::writeb() function, use io::IOutStream::write_byte() instead.
 * Added possibility to create temporary files for io::NativeFile and io::OutFileStream.
 * The io::InMemoryStream::take() now releases data associated with io::OutMemoryStream.
+* Added possibility to attach automatically managed user data to mm::IInAudioStream
+  and mm::IOutAudioStream.
 * Added support of SFZ file format parsing.
 * Updated build scripts.
 

@@ -47,6 +47,8 @@ namespace lsp
                 status_t            nErrorCode;         // Last error code
                 uint8_t            *pBuffer;            // Buffer for sample format conversion
                 size_t              nBufSize;           // Size of buffer
+                void               *pUserData;          // User data
+                user_data_deleter_t pDeleter;           // User data deleter
 
             protected:
                 void                do_close();
@@ -191,6 +193,20 @@ namespace lsp
                 inline ssize_t      read_s32(void *dst, size_t nframes)     { return read(static_cast<int32_t *>(dst), nframes);    }
                 inline ssize_t      read_f32(void *dst, size_t nframes)     { return read(static_cast<f32_t *>(dst), nframes);      }
                 inline ssize_t      read_f64(void *dst, size_t nframes)     { return read(static_cast<f64_t *>(dst), nframes);      }
+
+            public:
+                /**
+                 * Set user data. If previous user data has been set, it will be removed
+                 * if the deleter was provided
+                 * @param data data to set
+                 * @param deleter deleter to remove the data
+                 */
+                void                set_user_data(void *data, user_data_deleter_t deleter = NULL);
+
+                /** Get user data
+                 * @return user data currently bound to the object
+                 */
+                inline void        *user_data()                 { return pUserData;     }
         };
     
     } /* namespace mm */

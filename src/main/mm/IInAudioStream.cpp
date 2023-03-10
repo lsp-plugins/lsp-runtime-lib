@@ -34,11 +34,22 @@ namespace lsp
             pBuffer             = NULL;
             nBufSize            = 0;
             nErrorCode          = STATUS_CLOSED;
+            pUserData           = NULL;
+            pDeleter            = NULL;
         }
         
         IInAudioStream::~IInAudioStream()
         {
             do_close();
+            set_user_data(NULL);
+        }
+
+        void IInAudioStream::set_user_data(void *data, user_data_deleter_t deleter)
+        {
+            if (pDeleter != NULL)
+                pDeleter(pUserData);
+            pUserData   = data;
+            pDeleter    = deleter;
         }
 
         void IInAudioStream::do_close()

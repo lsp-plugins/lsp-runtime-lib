@@ -44,6 +44,8 @@ namespace lsp
                 uint8_t            *pBuffer;            // Buffer for sample format conversion
                 size_t              nBufSize;           // Size of buffer
                 audio_stream_t      sFormat;            // Audio stream format
+                void               *pUserData;          // User data
+                user_data_deleter_t pDeleter;           // User data deleter
 
             protected:
                 void                do_close();
@@ -186,6 +188,20 @@ namespace lsp
                 inline ssize_t      write_s32(const void *dst, size_t nframes)    { return write(static_cast<const int32_t *>(dst), nframes);   }
                 inline ssize_t      write_f32(const void *dst, size_t nframes)    { return write(static_cast<const f32_t *>(dst), nframes);     }
                 inline ssize_t      write_f64(const void *dst, size_t nframes)    { return write(static_cast<const f64_t *>(dst), nframes);     }
+
+            public:
+                /**
+                 * Set user data. If previous user data has been set, it will be removed
+                 * if the deleter was provided
+                 * @param data data to set
+                 * @param deleter deleter to remove the data
+                 */
+                void                set_user_data(void *data, user_data_deleter_t deleter = NULL);
+
+                /** Get user data
+                 * @return user data currently bound to the object
+                 */
+                inline void        *user_data()                 { return pUserData;     }
         };
     
     } /* namespace mm */
