@@ -183,7 +183,10 @@ namespace lsp
         ssize_t         sformat_signed(size_t fmt);
         ssize_t         sformat_unsigned(size_t fmt);
         size_t          sformat_size_of(size_t fmt);
-    }
-}
+
+        typedef         void (*user_data_deleter_t)(void *data);
+
+    } /* namespace mm */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_MM_TYPES_H_ */

@@ -102,6 +102,17 @@ namespace lsp
         }
 
 #elif defined(PLATFORM_LINUX)
+        static inline int futex(
+            volatile int *addr,
+            int futex_op,
+            int val,
+            const struct timespec *timeout,
+            volatile int *addr2,
+            int val3)
+        {
+            return syscall(SYS_futex, addr, futex_op, val, timeout, addr2, val3);
+        }
+
         bool Mutex::lock() const
         {
             int res;
@@ -114,52 +125,69 @@ namespace lsp
                 return true;
             }
 
-            while (true)
+            // Perform the wait until another thread releases the mutex
+            while (!atomic_cas(&nLock, 1, 0))
             {
-                if (atomic_cas(&nLock, 1, 0))
-                {
-                    if (!(nLocks++))
-                        nThreadId       = tid; // Save thread identifier
-                    return true;
-                }
-
                 // Issue wait
-                res = syscall(SYS_futex, &nLock, FUTEX_WAIT, 0, NULL, 0, 0);
+                res = futex(
+                    &nLock,         // addr: address
+                    FUTEX_WAIT,     // futex_op: WAIT for the notification related to the address
+                    0,              // val: value to test for
+                    NULL,           // timeout: infinite wait
+                    NULL,           // addr2: unused
+                    0);             // val3: unused
                 if ((res == ENOSYS) || (res == EAGAIN))
                     sched_yield();
             }
+
+            // Update lock state
+            nThreadId       = tid;
+            ++nLocks;
+
+            return true;
         }
 
         bool Mutex::try_lock() const
         {
             // Check that we already own the mutex
             pthread_t tid   = pthread_self();
-            if (nThreadId == pthread_self())
+            if (nThreadId == tid)
             {
                 ++nLocks;
                 return true;
             }
 
-            if (atomic_cas(&nLock, 1, 0))
-            {
-                if (!(nLocks++))
-                    nThreadId       = tid; // Save thread identifier
-                return true;
-            }
+            if (!atomic_cas(&nLock, 1, 0))
+                return false;
 
-            return false;
+            // Update lock state
+            nThreadId       = tid;
+            ++nLocks;
+
+            return true;
         }
 
         bool Mutex::unlock() const
         {
             if (nThreadId != pthread_self())
                 return false;
-            if (!(--nLocks))
+
+            // Update the lock state
+            if (--nLocks)
+                return true;
+            nThreadId       = -1;
+
+            if (atomic_cas(&nLock, 0, 1))
             {
-                nThreadId       = -1;
-                atomic_cas(&nLock, 0, 1);
-                syscall(SYS_futex, &nLock, FUTEX_WAKE, 1, NULL, 0, 0);
+                futex(
+                    &nLock,         // addr: address
+                    FUTEX_WAKE,     // futex_op: WAKEUP listeners at the specified address
+                    1,              // val: Number of listeners to wake up
+                    NULL,           // timeout: unused
+                    0,              // addr2: unused
+                    0);             // val3: unused
             }
+
             return true;
         }
 

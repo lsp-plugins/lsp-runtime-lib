@@ -198,7 +198,7 @@ UTEST_BEGIN("runtime.io", pathpattern)
                 p.dump();
                 UTEST_FAIL_MSG("Falied direct match for pattern \"%s\", value=\"%s\", match=%s",
                     m->pattern, m->value, (m->match) ? "true" : "false"
-                )
+                );
             }
 
             // Test inverse
@@ -208,7 +208,7 @@ UTEST_BEGIN("runtime.io", pathpattern)
                 p.dump();
                 UTEST_FAIL_MSG("Falied inverse match for pattern \"%s\", value=\"%s\", match=%s",
                     m->pattern, m->value, (m->match) ? "true" : "false"
-                )
+                );
             }
         }
     }

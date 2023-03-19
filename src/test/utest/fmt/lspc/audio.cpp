@@ -144,7 +144,7 @@ UTEST_BEGIN("runtime.fmt.lspc", audio)
         UTEST_ASSERT(p.sample_format == fmt);
         UTEST_ASSERT(p.sample_rate == 48000);
         UTEST_ASSERT(p.codec == lspc::CODEC_PCM);
-        UTEST_ASSERT(p.frames == TOTAL_FRAMES)
+        UTEST_ASSERT(p.frames == TOTAL_FRAMES);
 
         // Initialize channel pointers
         float **vp = reinterpret_cast<float **>(alloca(sizeof(float *) * v.size()));

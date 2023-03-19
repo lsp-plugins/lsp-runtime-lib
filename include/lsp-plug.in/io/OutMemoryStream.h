@@ -42,7 +42,7 @@ namespace lsp
             public:
                 explicit OutMemoryStream();
                 explicit OutMemoryStream(size_t quantity);
-                virtual ~OutMemoryStream();
+                virtual ~OutMemoryStream() override;
 
             public:
                 /**
@@ -98,15 +98,17 @@ namespace lsp
                 status_t        reserve(size_t amount);
 
             public:
-                virtual ssize_t     write(const void *buf, size_t count);
+                virtual ssize_t     write(const void *buf, size_t count) override;
 
-                virtual ssize_t     writeb(int v);
+                virtual ssize_t     writeb(int v) override;
 
-                virtual wssize_t    seek(wsize_t position);
+                virtual status_t    write_byte(int v) override;
 
-                virtual status_t    flush();
+                virtual wssize_t    seek(wsize_t position) override;
 
-                virtual status_t    close();
+                virtual status_t    flush() override;
+
+                virtual status_t    close() override;
         };
     
     } /* namespace io */

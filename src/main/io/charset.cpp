@@ -2481,10 +2481,104 @@ namespace lsp
     {
         while (count--)
         {
-            int32_t retval = int32_t(towlower(*(s1++))) - int32_t(towlower(*(s2++)));
+            int32_t retval = int32_t(to_lower(*(s1++))) - int32_t(to_lower(*(s2++)));
             if (retval != 0)
                 return (retval > 0) ? 1 : -1;
         }
         return 0;
     }
-}
+
+    lsp_wchar_t to_lower(lsp_wchar_t c)
+    {
+        // Latin codepoints
+        if (c <= 0x7f)
+        {
+            if ((c >= 'A') && (c <= 'Z'))
+                return c - 'A' + 'a';
+
+            return c;
+        }
+
+        // Cyrillic + Cyrillic supplement codepoints
+        if ((c >= 0x400) && (c <= 0x52f))
+        {
+            if (c <= 0x40f)
+                return c + 0x50;
+            if ((c >= 0x410) && (c <= 0x42f))
+                return c + 0x20;
+            if (!(c & 0x01))
+            {
+                if ((c >= 0x460) && (c <= 0x481))
+                    return c + 1;
+                if (c >= 0x48a)
+                    return c + 1;
+            }
+
+            return c;
+        }
+
+        // Cyrillic extended B
+        if ((c >= 0xa640) && (c <= 0xa69f))
+        {
+            if (!(c & 0x01))
+            {
+                if (c <= 0xa66d)
+                    return c + 1;
+                if ((c >= 0xa680) && (c <= 0xa69b))
+                    return c + 1;
+            }
+            return c;
+        }
+
+        // Other possible locales
+        return towlower(c);
+    }
+
+    lsp_wchar_t to_upper(lsp_wchar_t c)
+    {
+        // Latin codepoints
+        if (c <= 0x7f)
+        {
+            if ((c >= 'a') && (c <= 'z'))
+                return c - 'a' + 'A';
+
+            return c;
+        }
+
+        // Cyrillic + Cyrillic supplement codepoints
+        if ((c >= 0x400) && (c <= 0x52f))
+        {
+            if ((c >= 0x450) && (c <= 0x45f))
+                return c - 0x50;
+            if ((c >= 0x430) && (c <= 0x44f))
+                return c - 0x20;
+            if (c & 0x01)
+            {
+                if ((c >= 0x460) && (c <= 0x481))
+                    return c - 1;
+                if (c >= 0x48a)
+                    return c - 1;
+            }
+
+            return c;
+        }
+
+        // Cyrillic extended B
+        if ((c >= 0xa640) && (c <= 0xa69f))
+        {
+            if (c & 0x01)
+            {
+                if (c <= 0xa66d)
+                    return c - 1;
+                if ((c >= 0xa680) && (c <= 0xa69b))
+                    return c - 1;
+            }
+
+            return c;
+        }
+
+        // Other possible locales
+        return towupper(c);
+    }
+
+} /* namespace lsp */

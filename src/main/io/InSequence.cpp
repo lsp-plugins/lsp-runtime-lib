@@ -330,7 +330,7 @@ namespace lsp
                 if (ch == '\n')
                 {
                     if (sLine.last() == '\r')
-                        sLine.set_length(sLine.length() - 1);
+                        sLine.remove_last();
                     s->take(&sLine);
                     return set_error(STATUS_OK);
                 }

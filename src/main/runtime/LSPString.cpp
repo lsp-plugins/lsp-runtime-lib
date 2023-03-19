@@ -118,7 +118,7 @@ namespace lsp
     {
         while (n--)
         {
-            int32_t retval = int32_t(towlower(*(a++))) - int32_t(towlower(*(b++)));
+            int32_t retval = int32_t(lsp::to_lower(*(a++))) - int32_t(lsp::to_lower(*(b++)));
             if (retval != 0)
                 return (retval > 0) ? 1 : -1;
         }
@@ -337,6 +337,23 @@ namespace lsp
         src->nCapacity  = 0;
         src->pData      = NULL;
         src->nHash      = 0;
+    }
+
+    void LSPString::take(LSPString &src)
+    {
+        drop_temp();
+        if (pData != NULL)
+            xfree(pData);
+
+        nLength         = src.nLength;
+        nCapacity       = src.nCapacity;
+        pData           = src.pData;
+        nHash           = src.nHash;
+
+        src.nLength     = 0;
+        src.nCapacity   = 0;
+        src.pData       = NULL;
+        src.nHash       = 0;
     }
 
     LSPString *LSPString::copy() const
@@ -855,7 +872,7 @@ namespace lsp
     {
         if (nLength <= 0)
             return false;
-        return towlower(pData[nLength-1]) == towlower(ch);
+        return lsp::to_lower(pData[nLength-1]) == lsp::to_lower(ch);
     }
 
     bool LSPString::ends_with(const LSPString *src) const
@@ -903,7 +920,7 @@ namespace lsp
     {
         if (offset > nLength)
             return false;
-        return towlower(pData[offset]) == towlower(ch);
+        return lsp::to_lower(pData[offset]) == lsp::to_lower(ch);
     }
 
     bool LSPString::starts_with(const LSPString *src, size_t offset) const
@@ -954,7 +971,7 @@ namespace lsp
             lsp_wchar_t c = uint8_t(*(str++));
             if (c == 0)
                 return true;
-            else if (towlower(c) != towlower(pData[i]))
+            else if (lsp::to_lower(c) != lsp::to_lower(pData[i]))
                 return false;
         }
         return (*str == '\0');
@@ -1480,7 +1497,7 @@ namespace lsp
         {
             if (src[i] == '\0')
                 return pData[i];
-            int retval = int(::towlower(pData[i])) - ::towlower(uint8_t(src[i]));
+            int retval = int(::lsp::to_lower(pData[i])) - ::lsp::to_lower(uint8_t(src[i]));
             if (retval != 0)
                 return retval;
         }
@@ -1494,7 +1511,7 @@ namespace lsp
 
         while (n--)
         {
-            int retval = int(::towlower(*(a++))) - int(::towlower(*(b++)));
+            int retval = int(::lsp::to_lower(*(a++))) - int(::lsp::to_lower(*(b++)));
             if (retval != 0)
                 return retval;
         }
@@ -1527,7 +1544,7 @@ namespace lsp
     size_t LSPString::tolower()
     {
         for (size_t i=0; i<nLength; ++i)
-            pData[i] = towlower(pData[i]);
+            pData[i] = lsp::to_lower(pData[i]);
         nHash       = 0;
         return nLength;
     }
@@ -1541,7 +1558,7 @@ namespace lsp
 
         lsp_wchar_t *ptr = &pData[first];
         for (ssize_t i=0; i<n; ++i)
-            ptr[i] = towlower(ptr[i]);
+            ptr[i] = lsp::to_lower(ptr[i]);
 
         nHash       = 0;
         return n;
@@ -1561,7 +1578,7 @@ namespace lsp
         ssize_t n = last - first;
         lsp_wchar_t *ptr = &pData[first];
         for (; first < last; ++first)
-            ptr[first] = towlower(ptr[first]);
+            ptr[first] = lsp::to_lower(ptr[first]);
         nHash       = 0;
         return n;
     }
@@ -1569,7 +1586,7 @@ namespace lsp
     size_t LSPString::toupper()
     {
         for (size_t i=0; i<nLength; ++i)
-            pData[i] = towupper(pData[i]);
+            pData[i] = lsp::to_upper(pData[i]);
         nHash       = 0;
         return nLength;
     }
@@ -1583,7 +1600,7 @@ namespace lsp
 
         lsp_wchar_t *ptr = &pData[first];
         for (ssize_t i=0; i<n; ++i)
-            ptr[i] = towupper(ptr[i]);
+            ptr[i] = lsp::to_upper(ptr[i]);
         nHash       = 0;
         return n;
     }
@@ -1601,7 +1618,7 @@ namespace lsp
         ssize_t n   = last - first;
         lsp_wchar_t *ptr = &pData[first];
         for (; first < last; ++first)
-            ptr[first] = towupper(ptr[first]);
+            ptr[first] = lsp::to_upper(ptr[first]);
         nHash       = 0;
         return n;
     }
@@ -1637,7 +1654,7 @@ namespace lsp
         const lsp_wchar_t *a = pData, *b = src;
         for (size_t i=nLength; i>0; --i)
         {
-            if (towlower(*(a++)) != towlower(*(b++)))
+            if (lsp::to_lower(*(a++)) != lsp::to_lower(*(b++)))
                 return false;
         }
 
@@ -2219,7 +2236,7 @@ namespace lsp
 
         for (; i < n; ++i)
         {
-            if (towlower(pData[i]) != towlower(s->pData[i]))
+            if (lsp::to_lower(pData[i]) != lsp::to_lower(s->pData[i]))
                 return i;
         }
         return i;

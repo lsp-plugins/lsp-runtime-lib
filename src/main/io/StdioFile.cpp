@@ -379,7 +379,9 @@ namespace lsp
 
             #ifdef PLATFORM_WINDOWS
                 LARGE_INTEGER sizebuf;
-                if (!GetFileSizeEx((HANDLE)_fileno(pFD), &sizebuf))
+                int fd = _fileno(pFD);
+                intptr_t hfd = _get_osfhandle(fd);
+                if (!GetFileSizeEx(reinterpret_cast<HANDLE>(hfd), &sizebuf))
                     return -set_error(STATUS_IO_ERROR);
                 wssize_t pos    = sizebuf.QuadPart;
             #else

@@ -1194,7 +1194,7 @@ UTEST_BEGIN("runtime.protocol", osc)
         UTEST_ASSERT(osc::parse_begin(&dframe, &parser, packet.data, packet.size) == STATUS_OK);
         UTEST_ASSERT(osc::parse_token(&dframe, &token) == STATUS_OK);
         UTEST_ASSERT(token == osc::PT_BUNDLE);
-        UTEST_ASSERT(osc::parse_begin_bundle(&dbundle1, &dframe, &xptr.u64) == STATUS_OK)
+        UTEST_ASSERT(osc::parse_begin_bundle(&dbundle1, &dframe, &xptr.u64) == STATUS_OK);
         UTEST_ASSERT(xptr.u64 == uint64_t(0x1122334455667788ULL));
         {
             // Sub-bundle 1
@@ -1299,7 +1299,7 @@ UTEST_BEGIN("runtime.protocol", osc)
 
         // Test skipping
         UTEST_ASSERT(osc::parse_begin(&dframe, &parser, packet.data, packet.size) == STATUS_OK);
-        UTEST_ASSERT(osc::parse_begin_bundle(&dbundle1, &dframe, NULL) == STATUS_OK)
+        UTEST_ASSERT(osc::parse_begin_bundle(&dbundle1, &dframe, NULL) == STATUS_OK);
         {
             // Sub-bundle 1
             UTEST_ASSERT(osc::parse_begin_bundle(&dbundle2, &dbundle1, NULL) == STATUS_OK);

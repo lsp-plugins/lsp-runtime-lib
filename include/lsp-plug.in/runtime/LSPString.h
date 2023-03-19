@@ -169,6 +169,7 @@ namespace lsp
              * @param src source string
              */
             void take(LSPString *src);
+            void take(LSPString &src);
 
             /** Give data to another string and empty self
              *

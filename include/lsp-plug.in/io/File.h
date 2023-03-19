@@ -54,6 +54,7 @@ namespace lsp
                     FM_CREATE   = 1 << 2,       // Create file if not exists
                     FM_TRUNC    = 1 << 3,       // Truncate file
                     FM_DIRECT   = 1 << 4,       // Do not use buffered input/output if possible
+                    FM_EXCL     = 1 << 5,       // Do not create file if it already exists, return STATUS_ALREADY_EXISTS as error
 
                     FM_READWRITE = FM_READ | FM_WRITE,
                     FM_WRITE_NEW = FM_CREATE | FM_WRITE | FM_TRUNC,

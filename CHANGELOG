@@ -2,6 +2,22 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.12 ===
+* Updated the implementation of io::StdioFile::size() method for Windows.
+* Fixed ipc::Library::get_module_file function for Windows.
+* Added test build for Windows using MSYS2.
+* Added lsp::to_lower and lsp::to_upper character conversion routines
+  (system locale independent support of Latin and Cyrillic characters).
+* Implemented io::InSharedMemoryStream class for shared access to the data.
+* Deprecated io::IOutStream::writeb() function, use io::IOutStream::write_byte() instead.
+* Added possibility to create temporary files for io::NativeFile and io::OutFileStream.
+* The io::InMemoryStream::take() now releases data associated with io::OutMemoryStream.
+* Added possibility to attach automatically managed user data to mm::IInAudioStream
+  and mm::IOutAudioStream.
+* Added support of SFZ file format parsing.
+* Updated build scripts.
+* Updated module versions in dependencies.
+
 === 1.0.11 ===
 * Added io::InMemoryStream::size() method for obtaining the size of the wrapped buffer.
 * Additional expr::Expression::parse() method that takes UTF-8 strings at input.

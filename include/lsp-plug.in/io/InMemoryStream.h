@@ -24,12 +24,15 @@
 
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/io/IInStream.h>
+#include <lsp-plug.in/io/OutMemoryStream.h>
 
 namespace lsp
 {
     namespace io
     {
-        
+        /**
+         * Input stream around the flat chunk of memory.
+         */
         class InMemoryStream: public IInStream
         {
             protected:
@@ -56,7 +59,7 @@ namespace lsp
                  */
                 explicit InMemoryStream(void *data, size_t size, lsp_memdrop_t drop);
 
-                virtual ~InMemoryStream();
+                virtual ~InMemoryStream() override;
 
             public:
                 /**
@@ -99,19 +102,24 @@ namespace lsp
                  */
                 inline size_t       size() const { return nSize;    }
 
+                void                take(OutMemoryStream &src);
+                void                take(OutMemoryStream *src);
+
             public:
 
-                virtual wssize_t    avail();
+                virtual wssize_t    avail() override;
 
-                virtual wssize_t    position();
+                virtual wssize_t    position() override;
 
-                virtual ssize_t     read(void *dst, size_t count);
+                virtual ssize_t     read(void *dst, size_t count) override;
 
-                virtual wssize_t    seek(wsize_t position);
+                virtual ssize_t     read_byte() override;
 
-                virtual wssize_t    skip(wsize_t amount);
+                virtual wssize_t    seek(wsize_t position) override;
 
-                virtual status_t    close();
+                virtual wssize_t    skip(wsize_t amount) override;
+
+                virtual status_t    close() override;
         };
     
     } /* namespace io */

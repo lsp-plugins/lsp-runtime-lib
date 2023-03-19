@@ -44,30 +44,28 @@ namespace lsp
 
             public:
                 explicit OutFileStream();
-                virtual ~OutFileStream();
+                virtual ~OutFileStream() override;
 
             public:
                 status_t wrap(FILE *fd, bool close);
-
                 status_t wrap_native(fhandle_t fd, bool close);
-
                 status_t wrap(File *fd, size_t flags);
 
                 status_t open(const char *path, size_t mode);
-
                 status_t open(const LSPString *path, size_t mode);
-
                 status_t open(const Path *path, size_t mode);
 
-                virtual wssize_t    position();
+                status_t open_temp(io::Path *path, const char *prefix = NULL);
+                status_t open_temp(io::Path *path, const LSPString *prefix);
+                status_t open_temp(LSPString *path, const char *prefix = NULL);
+                status_t open_temp(LSPString *path, const LSPString *prefix);
 
-                virtual ssize_t     write(const void *buf, size_t count);
-
-                virtual wssize_t    seek(wsize_t position);
-
-                virtual status_t    flush();
-
-                virtual status_t    close();
+            public:
+                virtual wssize_t    position() override;
+                virtual ssize_t     write(const void *buf, size_t count) override;
+                virtual wssize_t    seek(wsize_t position) override;
+                virtual status_t    flush() override;
+                virtual status_t    close() override;
         };
     
     } /* namespace io */

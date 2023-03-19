@@ -109,7 +109,7 @@ UTEST_BEGIN("runtime.io", dir)
             printf("Temporary path is: %s\n", p.as_native());
         }
 
-        UTEST_ASSERT(bp.set(&p) == STATUS_OK)
+        UTEST_ASSERT(bp.set(&p) == STATUS_OK);
         UTEST_ASSERT(p.append_child(full_name()) == STATUS_OK);
 
         printf("Creating directory: %s\n", p.as_native());

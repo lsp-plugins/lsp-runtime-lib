@@ -203,6 +203,94 @@ namespace lsp
             return pos;
         }
 
+        status_t OutFileStream::open_temp(io::Path *path, const char *prefix)
+        {
+            if (pFD != NULL)
+                return set_error(STATUS_BAD_STATE);
+            else if (path == NULL)
+                return set_error(STATUS_BAD_ARGUMENTS);
+
+            NativeFile *f = new NativeFile();
+            if (f == NULL)
+                return set_error(STATUS_NO_MEM);
+
+            status_t res = f->open_temp(path, prefix);
+            if (res != STATUS_OK)
+            {
+                f->close();
+                delete f;
+                return set_error(res);
+            }
+
+            return wrap(f, WRAP_CLOSE | WRAP_DELETE);
+        }
+
+        status_t OutFileStream::open_temp(io::Path *path, const LSPString *prefix)
+        {
+            if (pFD != NULL)
+                return set_error(STATUS_BAD_STATE);
+            else if (path == NULL)
+                return set_error(STATUS_BAD_ARGUMENTS);
+
+            NativeFile *f = new NativeFile();
+            if (f == NULL)
+                return set_error(STATUS_NO_MEM);
+
+            status_t res = f->open_temp(path, prefix);
+            if (res != STATUS_OK)
+            {
+                f->close();
+                delete f;
+                return set_error(res);
+            }
+
+            return wrap(f, WRAP_CLOSE | WRAP_DELETE);
+        }
+
+        status_t OutFileStream::open_temp(LSPString *path, const char *prefix)
+        {
+            if (pFD != NULL)
+                return set_error(STATUS_BAD_STATE);
+            else if (path == NULL)
+                return set_error(STATUS_BAD_ARGUMENTS);
+
+            NativeFile *f = new NativeFile();
+            if (f == NULL)
+                return set_error(STATUS_NO_MEM);
+
+            status_t res = f->open_temp(path, prefix);
+            if (res != STATUS_OK)
+            {
+                f->close();
+                delete f;
+                return set_error(res);
+            }
+
+            return wrap(f, WRAP_CLOSE | WRAP_DELETE);
+        }
+
+        status_t OutFileStream::open_temp(LSPString *path, const LSPString *prefix)
+        {
+            if (pFD != NULL)
+                return set_error(STATUS_BAD_STATE);
+            else if (path == NULL)
+                return set_error(STATUS_BAD_ARGUMENTS);
+
+            NativeFile *f = new NativeFile();
+            if (f == NULL)
+                return set_error(STATUS_NO_MEM);
+
+            status_t res = f->open_temp(path, prefix);
+            if (res != STATUS_OK)
+            {
+                f->close();
+                delete f;
+                return set_error(res);
+            }
+
+            return wrap(f, WRAP_CLOSE | WRAP_DELETE);
+        }
+
         status_t OutFileStream::flush()
         {
             if (pFD == NULL)

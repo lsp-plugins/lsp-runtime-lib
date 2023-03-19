@@ -40,11 +40,22 @@ namespace lsp
             sFormat.channels    = 0;
             sFormat.frames      = -1;
             sFormat.format      = SFMT_NONE;
+            pUserData           = NULL;
+            pDeleter            = NULL;
         }
         
         IOutAudioStream::~IOutAudioStream()
         {
             do_close();
+            set_user_data(NULL);
+        }
+
+        void IOutAudioStream::set_user_data(void *data, user_data_deleter_t deleter)
+        {
+            if (pDeleter != NULL)
+                pDeleter(pUserData);
+            pUserData   = data;
+            pDeleter    = deleter;
         }
 
         void IOutAudioStream::do_close()
