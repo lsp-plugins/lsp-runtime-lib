@@ -712,7 +712,9 @@ $(LSP_RUNTIME_LIB_BIN)/main/io/NativeFile.o: main/io/NativeFile.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/File.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/system.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h
 $(LSP_RUNTIME_LIB_BIN)/main/io/IOutStream.o: main/io/IOutStream.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IOutStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
@@ -1104,12 +1106,13 @@ $(LSP_RUNTIME_LIB_BIN)/main/fmt/url.o: main/fmt/url.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h
 $(LSP_RUNTIME_LIB_BIN)/main/fmt/sfz/PullParser.o: \
  main/fmt/sfz/PullParser.cpp \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/finally.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/sfz/PullParser.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/finally.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \
@@ -1165,13 +1168,14 @@ $(LSP_RUNTIME_LIB_BIN)/main/fmt/sfz/IDocumentHandler.o: \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutMemoryStream.h
 $(LSP_RUNTIME_LIB_BIN)/main/fmt/sfz/DocumentProcessor.o: \
  main/fmt/sfz/DocumentProcessor.cpp \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/finally.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/sfz/DocumentProcessor.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/sfz/IDocumentHandler.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/finally.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/sfz/PullParser.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
