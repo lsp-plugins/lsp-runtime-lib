@@ -120,7 +120,7 @@ namespace lsp
         {
             if (pShared == NULL)
                 return;
-            if ((--pShared->nRefs == 0))
+            if ((--pShared->nRefs) == 0)
             {
                 switch (pShared->enDrop)
                 {
