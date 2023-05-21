@@ -6,6 +6,7 @@
 * Fixed improper expression parsing under certain conditions.
 * Removed Makefile.d. Dependencies are now automatically generated at the build stage.
 * Updated build scripts.
+* Updated module versions in dependencies.
 
 === 1.0.13 ===
 * Updated module versions in dependencies.
