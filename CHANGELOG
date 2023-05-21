@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.15 ===
-
+* Updated build scripts.
 
 === 1.0.14 ===
 * Fixed improper expression parsing under certain conditions.
