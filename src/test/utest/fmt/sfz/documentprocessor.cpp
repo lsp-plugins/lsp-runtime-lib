@@ -92,7 +92,7 @@ UTEST_BEGIN("runtime.fmt.sfz", documentprocessor)
                 return STATUS_OK;
             }
 
-            virtual status_t control(const char **opcodes, const char **values)
+            virtual status_t control(const char **opcodes, const char **values) override
             {
                 sData.append_ascii("<control>\n");
                 dump_opcodes(opcodes, values);
@@ -100,7 +100,7 @@ UTEST_BEGIN("runtime.fmt.sfz", documentprocessor)
                 return STATUS_OK;
             }
 
-            virtual status_t region(const char **opcodes, const char **values)
+            virtual status_t region(const char **opcodes, const char **values) override
             {
                 sData.append_ascii("<region>\n");
                 dump_opcodes(opcodes, values);
@@ -110,7 +110,7 @@ UTEST_BEGIN("runtime.fmt.sfz", documentprocessor)
 
             virtual status_t sample(
                 const char *name, io::IInStream *data,
-                const char **opcodes, const char **values)
+                const char **opcodes, const char **values) override
             {
                 sData.append_ascii("<sample>\n");
                 sData.fmt_append_ascii("name=%s data=0x%08x", name, int(hash_data(data)));
@@ -121,7 +121,7 @@ UTEST_BEGIN("runtime.fmt.sfz", documentprocessor)
                 return STATUS_OK;
             }
 
-            virtual status_t effect(const char **opcodes, const char **values)
+            virtual status_t effect(const char **opcodes, const char **values) override
             {
                 sData.append_ascii("<effect>\n");
                 dump_opcodes(opcodes, values);
@@ -129,7 +129,7 @@ UTEST_BEGIN("runtime.fmt.sfz", documentprocessor)
                 return STATUS_OK;
             }
 
-            virtual status_t midi(const char **opcodes, const char **values)
+            virtual status_t midi(const char **opcodes, const char **values) override
             {
                 sData.append_ascii("<midi>\n");
                 dump_opcodes(opcodes, values);
@@ -137,7 +137,7 @@ UTEST_BEGIN("runtime.fmt.sfz", documentprocessor)
                 return STATUS_OK;
             }
 
-            virtual status_t curve(const char **opcodes, const char **values)
+            virtual status_t curve(const char **opcodes, const char **values) override
             {
                 sData.append_ascii("<curve>\n");
                 dump_opcodes(opcodes, values);
@@ -145,7 +145,7 @@ UTEST_BEGIN("runtime.fmt.sfz", documentprocessor)
                 return STATUS_OK;
             }
 
-            virtual status_t custom_header(const char *name, const char **opcodes, const char **values)
+            virtual status_t custom_header(const char *name, const char **opcodes, const char **values) override
             {
                 sData.fmt_append_ascii("<%s>\n", name);
                 dump_opcodes(opcodes, values);
@@ -153,7 +153,7 @@ UTEST_BEGIN("runtime.fmt.sfz", documentprocessor)
                 return STATUS_OK;
             }
 
-            virtual status_t include(sfz::PullParser *parser, const char *name)
+            virtual status_t include(sfz::PullParser *parser, const char *name) override
             {
                 sData.fmt_append_ascii("// #include \"%s\"\n", name);
                 for (size_t i=0, n=vFiles.size(); i<n; ++i)
@@ -171,7 +171,7 @@ UTEST_BEGIN("runtime.fmt.sfz", documentprocessor)
                 return "test.sfz";
             }
 
-            virtual status_t end(status_t result)
+            virtual status_t end(status_t result) override
             {
                 sData.append_ascii("// end\n");
                 return STATUS_OK;
