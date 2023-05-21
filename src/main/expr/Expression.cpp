@@ -207,7 +207,11 @@ namespace lsp
                 token_t tok     = t.get_token(TF_NONE);
                 if (tok != TT_SEMICOLON)
                 {
-                    res = (tok == TT_EOF) ? STATUS_OK : t.error();
+                    res = t.error();
+                    if (tok == TT_EOF)
+                        res = STATUS_OK;
+                    else if (res == STATUS_OK)
+                        res = STATUS_INVALID_VALUE;
                     break;
                 }
                 else if (!(flags & FLAG_MULTIPLE))

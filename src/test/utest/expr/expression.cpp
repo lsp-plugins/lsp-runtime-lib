@@ -175,6 +175,14 @@ UTEST_BEGIN("runtime.expr", expression)
 
     }
 
+    void test_invalid(const char *expr)
+    {
+        printf("Testing invalid expression: %s\n", expr);
+
+        Expression e;
+        UTEST_ASSERT(e.parse(expr, Expression::FLAG_NONE) != STATUS_OK);
+    }
+
     UTEST_MAIN
     {
         Variables v;
@@ -251,6 +259,8 @@ UTEST_BEGIN("runtime.expr", expression)
         test_substitution("${ia}+${:ie}-${:ic}=${:ia+:ie-:ic}", &v, "1+10-5=6");
 
         test_dependencies(&v);
+
+        test_invalid("(:a ge 0 db) : -1 : 1");
     }
 
 UTEST_END;
