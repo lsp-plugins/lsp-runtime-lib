@@ -52,6 +52,8 @@ namespace lsp
             TT_FALSE,       // false
             TT_NULL,        // null
             TT_UNDEF,       // undef
+            TT_PI,          // pi
+            TT_E,           // e
 
             // Logical operations
             TT_AND,         // &, &&, and

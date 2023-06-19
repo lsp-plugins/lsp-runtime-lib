@@ -138,7 +138,7 @@ UTEST_BEGIN("runtime.expr", tokenizer)
     void test_text_tokens()
     {
         static const char *tokens =
-                "true false null undef "
+                "true false null undef pi e "
                 "and or not xor "
                 "band bor bnot bxor "
                 "add sub mul pow div fmod "
@@ -165,6 +165,8 @@ UTEST_BEGIN("runtime.expr", tokenizer)
         ck_token(t, "false", TT_FALSE);
         ck_token(t, "null", TT_NULL);
         ck_token(t, "undef", TT_UNDEF);
+        ck_token(t, "pi", TT_PI);
+        ck_token(t, "e", TT_E);
 
         ck_token(t, "and", TT_AND);
         ck_token(t, "or", TT_OR);

@@ -251,6 +251,8 @@ namespace lsp
                 case TT_STRING:
                 case TT_TRUE:
                 case TT_FALSE:
+                case TT_PI:
+                case TT_E:
                 case TT_NULL:
                 case TT_UNDEF:
                 {
@@ -276,6 +278,14 @@ namespace lsp
                         case TT_FALSE:
                             bind->value.type        = VT_BOOL;
                             bind->value.v_bool      = false;
+                            break;
+                        case TT_PI:
+                            bind->value.type        = VT_FLOAT;
+                            bind->value.v_float     = M_PI;
+                            break;
+                        case TT_E:
+                            bind->value.type        = VT_FLOAT;
+                            bind->value.v_float     = M_E;
                             break;
                         case TT_NULL:
                             bind->value.type        = VT_NULL;
@@ -342,6 +352,20 @@ namespace lsp
                 case TT_FLOAT:
                 case TT_BOOL:
                 case TT_STR:
+                case TT_SIN:
+                case TT_COS:
+                case TT_TAN:
+                case TT_ASIN:
+                case TT_ACOS:
+                case TT_ATAN:
+                case TT_LOGE:
+                case TT_LOGD:
+                case TT_LOG2:
+                case TT_EXP:
+                case TT_SQRT:
+                case TT_RAD:
+                case TT_DEG:
+                case TT_ABS:
                     res = parse_func(&right, t, TF_GET);
                     break;
                 default:
@@ -369,6 +393,20 @@ namespace lsp
                 case TT_FLOAT:          bind->eval  = eval_float_cast; break;
                 case TT_BOOL:           bind->eval  = eval_bool_cast; break;
                 case TT_STR:            bind->eval  = eval_string_cast; break;
+                case TT_SIN:            bind->eval  = eval_sin; break;
+                case TT_COS:            bind->eval  = eval_cos; break;
+                case TT_TAN:            bind->eval  = eval_tan; break;
+                case TT_ASIN:           bind->eval  = eval_asin; break;
+                case TT_ACOS:           bind->eval  = eval_acos; break;
+                case TT_ATAN:           bind->eval  = eval_atan; break;
+                case TT_LOGE:           bind->eval  = eval_loge; break;
+                case TT_LOGD:           bind->eval  = eval_logd; break;
+                case TT_LOG2:           bind->eval  = eval_log2; break;
+                case TT_EXP:            bind->eval  = eval_exp; break;
+                case TT_SQRT:           bind->eval  = eval_sqrt; break;
+                case TT_RAD:            bind->eval  = eval_rad; break;
+                case TT_DEG:            bind->eval  = eval_deg; break;
+                case TT_ABS:            bind->eval  = eval_abs; break;
                 default:                bind->eval  = NULL; break;
             }
             bind->type          = ET_CALC;
