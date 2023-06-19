@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.15 ===
+* Extended expression language with basic mathematic functions.
 * Updated build scripts.
 
 === 1.0.14 ===
