@@ -149,6 +149,9 @@ UTEST_BEGIN("runtime.expr", tokenizer)
                 "int float fp bool str "
                 "ex db "
                 "bareword "
+                "sin cos tan tg asin acos atan arcsin arccos arctg "
+                "ln log loge lg logd log10 logb log2 "
+                "exp sqrt rad deg abs "
                 "true false null " // Parse this as barewords
                 "@112233 #123 " // Parse this as colors
             ;
@@ -233,6 +236,32 @@ UTEST_BEGIN("runtime.expr", tokenizer)
         ck_token(t, "ex", TT_EX);
         ck_token(t, "db", TT_DB);
         ck_token(t, "bareword", TT_BAREWORD);
+
+        ck_token(t, "sin", TT_SIN);
+        ck_token(t, "cos", TT_COS);
+        ck_token(t, "tan", TT_TAN);
+        ck_token(t, "tg", TT_TAN);
+        ck_token(t, "asin", TT_ASIN);
+        ck_token(t, "acos", TT_ACOS);
+        ck_token(t, "atan", TT_ATAN);
+        ck_token(t, "arcsin", TT_ASIN);
+        ck_token(t, "arccos", TT_ACOS);
+        ck_token(t, "arctg", TT_ATAN);
+
+        ck_token(t, "ln", TT_LOGE);
+        ck_token(t, "log", TT_LOGE);
+        ck_token(t, "loge", TT_LOGE);
+        ck_token(t, "lg", TT_LOGD);
+        ck_token(t, "logd", TT_LOGD);
+        ck_token(t, "log10", TT_LOGD);
+        ck_token(t, "logb", TT_LOG2);
+        ck_token(t, "log2", TT_LOG2);
+
+        ck_token(t, "exp", TT_EXP);
+        ck_token(t, "sqrt", TT_SQRT);
+        ck_token(t, "rad", TT_RAD);
+        ck_token(t, "deg", TT_DEG);
+        ck_token(t, "abs", TT_ABS);
 
         ck_bareword(t, "true");
         ck_bareword(t, "false");

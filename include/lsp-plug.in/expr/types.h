@@ -137,7 +137,7 @@ namespace lsp
         status_t    cast_string_ext(value_t *v);
 
         status_t    cast_numeric(value_t *v);
-    }
-}
+    } /* namespace expr */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_EXPR_TYPES_H_ */

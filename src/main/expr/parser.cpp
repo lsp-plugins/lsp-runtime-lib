@@ -1156,7 +1156,8 @@ namespace lsp
         {
             return parse_ternary(expr, t, flags);
         }
-    }
-}
+
+    } /* namespace expr */
+} /* namespace lsp */
 
 

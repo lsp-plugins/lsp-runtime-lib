@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 16 сент. 2019 г.
@@ -114,6 +114,22 @@ namespace lsp
             TT_STR,         // Cast to string
             TT_BOOL,        // Cast to bool
 
+            // Math functions
+            TT_SIN,         // Sine
+            TT_COS,         // Cosine
+            TT_TAN,         // Tangent
+            TT_ASIN,        // Arcsine
+            TT_ACOS,        // Arccosine
+            TT_ATAN,        // Arctangent
+            TT_LOGE,        // Natural logarithm
+            TT_LOGD,        // Decimal logarithm
+            TT_LOG2,        // Binary logarithm
+            TT_EXP,         // Exponent
+            TT_SQRT,        // Square root
+            TT_RAD,         // Radians to degrees
+            TT_DEG,         // Degrees to radians
+            TT_ABS,         // Absolute value
+
             // Misc operations
             TT_EX,          // ex
 
@@ -141,7 +157,7 @@ namespace lsp
             TF_XKEYWORDS        = 1 << 3,   // Exclude keywords, treat all keywords as TT_BAREWORD
             TF_COLOR            = 1 << 4    // Lookup for colors (@HSL and #RGB)
         };
-    }
-}
+    } /* namespace expr */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_EXPR_TOKEN_H_ */

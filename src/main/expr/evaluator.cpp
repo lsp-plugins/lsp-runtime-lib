@@ -58,7 +58,7 @@ namespace lsp
                 { \
                     case VT_INT: value->v_int = value->v_int oper right.v_int; break; \
                     case VT_NULL: value->type = VT_UNDEF; break; \
-                    case VT_UNDEF: break; \
+                    case VT_UNDEF: value->type = VT_UNDEF; break; \
                     default: res = STATUS_BAD_TYPE; break; \
                 } \
                 \
@@ -1462,7 +1462,81 @@ namespace lsp
 
             return res;
         }
-    }
-}
+
+    #define MATH_OP(eval_name, var, operation) \
+        status_t eval_name(value_t *value, const expr_t *expr, eval_env_t *env) \
+        { \
+            status_t res = expr->calc.left->eval(value, expr->calc.left, env); \
+            if (res != STATUS_OK) \
+                return res; \
+            \
+            res = cast_float(value); \
+            if (value->type == VT_UNDEF) \
+                return STATUS_OK; \
+            else if (value->type == VT_NULL) \
+            { \
+                value->type = VT_UNDEF; \
+                return STATUS_OK; \
+            } \
+            const double var = value->v_float; \
+            value->v_float = (operation); \
+            \
+            return res; \
+        }
+
+        MATH_OP(eval_sin, x, sin(x))
+        MATH_OP(eval_cos, x, cos(x))
+        MATH_OP(eval_tan, x, tan(x))
+        MATH_OP(eval_asin, x, asin(x))
+        MATH_OP(eval_acos, x, acos(x))
+        MATH_OP(eval_atan, x, atan(x))
+        MATH_OP(eval_loge, x, log(x))
+        MATH_OP(eval_logd, x, log(x) / M_LN10)
+        MATH_OP(eval_log2, x, log(x) / M_LN2)
+        MATH_OP(eval_exp, x, exp(x))
+        MATH_OP(eval_sqrt, x, sqrt(x))
+        MATH_OP(eval_rad, x, (x * M_PI) / 180.0)
+        MATH_OP(eval_deg, x, (x * 180.0) / M_PI)
+
+        status_t eval_abs(value_t *value, const expr_t *expr, eval_env_t *env)
+        {
+            status_t res = expr->calc.left->eval(value, expr->calc.left, env);
+            if (res != STATUS_OK)
+                return res;
+
+            cast_numeric(value);
+            if (value->type == VT_UNDEF)
+                return STATUS_OK;
+            else if (value->type == VT_NULL)
+            {
+                value->type = VT_UNDEF;
+                return STATUS_OK;
+            }
+
+            switch (value->type)
+            {
+                case VT_INT:
+                    if (value->v_int < 0)
+                        value->v_int    = - value->v_int;
+                    break;
+                case VT_FLOAT:
+                    if (value->v_float < 0)
+                        value->v_float  = - value->v_float;
+                    break;
+                case VT_NULL:
+                    value->type = VT_UNDEF;
+                    break;
+                case VT_UNDEF: break;
+                default: res = STATUS_BAD_TYPE; break;
+            }
+
+            if (res != STATUS_OK)
+                destroy_value(value);
+
+            return res;
+        }
+
+    } /* namespace expr */
+} /* namespace lsp */
 
 
