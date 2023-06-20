@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 26 февр. 2020 г.
@@ -98,7 +98,10 @@ namespace lsp
 
             // Prefer builtin over external
             lsp_debug("Trying to load file %s...", path.as_native());
-            return load_json(dict, &path);
+            res = load_json(dict, &path);
+            lsp_debug("Overall status = %d", int(res));
+
+            return res;
         }
 
         status_t Dictionary::lookup(const LSPString *key, LSPString *value)
@@ -293,6 +296,6 @@ namespace lsp
 
             vNodes.flush();
         }
-    }
 
+    } /* namespace i18n */
 } /* namespace lsp */

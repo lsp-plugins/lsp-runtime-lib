@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 15 мар. 2021 г.
@@ -19,6 +19,7 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/lltl/darray.h>
 #include <lsp-plug.in/resource/BuiltinLoader.h>
 #include <lsp-plug.in/resource/Decompressor.h>
@@ -82,6 +83,7 @@ namespace lsp
                 for (size_t i=0; i<nCatSize; ++i)
                 {
                     const raw_resource_t *ent   = &pCatalog[i];
+
                     if ((ent == NULL) || (ent->parent != index) || (ent->name == NULL))
                         continue;
                     if (item.equals_utf8(ent->name))
@@ -194,7 +196,7 @@ namespace lsp
             *list = xlist.release();
             return index;
         }
-    }
-}
+    } /* namespace resource */
+} /* namespace lsp */
 
 
