@@ -5,6 +5,7 @@
 === 1.0.15 ===
 * Extended expression language with basic mathematic functions.
 * Updated build scripts.
+* Updated module versions in dependencies.
 
 === 1.0.14 ===
 * Fixed improper expression parsing under certain conditions.
