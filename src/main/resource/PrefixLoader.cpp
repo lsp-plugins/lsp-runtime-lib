@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 8 июн. 2021 г.
@@ -19,6 +19,7 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/resource/PrefixLoader.h>
 
 namespace lsp
@@ -49,6 +50,28 @@ namespace lsp
             vLoaders.flush();
         }
 
+        bool PrefixLoader::match_prefix(const LSPString *str, const LSPString *prefix)
+        {
+            if (str->length() < prefix->length())
+                return false;
+
+            // We need to match prefix respective to the possible mix of '/' and '\' characters
+            for (size_t i=0, n=prefix->length(); i<n; ++i)
+            {
+                lsp_wchar_t ch = prefix->char_at(i);
+                lsp_wchar_t sc = str->char_at(i);
+                if (sc != ch)
+                {
+                    if ((ch != '/') && (ch != '\\'))
+                        return false;
+                    if ((sc != '/') && (sc != '\\'))
+                        return false;
+                }
+            }
+
+            return true;
+        }
+
         ILoader *PrefixLoader::lookup_prefix(LSPString *dst, const LSPString *path)
         {
             // Check path
@@ -69,13 +92,18 @@ namespace lsp
                     continue;
 
                 // Match found?
-                if (path->starts_with(&p->sPrefix))
+                if (match_prefix(path, &p->sPrefix))
                 {
-                    if (dst->set(path, p->sPrefix.length()))
-                        return p->pLoader;
+                    if (!dst->set(path, p->sPrefix.length()))
+                    {
+                        set_error(STATUS_NO_MEM);
+                        return NULL;
+                    }
 
-                    set_error(STATUS_NO_MEM);
-                    return NULL;
+//                    lsp_trace("Matched prefix '%s', delegating path '%s' to loader %p",
+//                        p->sPrefix.get_utf8(), dst->get_utf8(), p->pLoader);
+
+                    return p->pLoader;
                 }
             }
 
@@ -313,7 +341,7 @@ namespace lsp
             return (last_error() == STATUS_OK) ? ILoader::enumerate(path, list) : -last_error();
         }
 
-    }
-}
+    } /* namespace resource */
+} /* namespace lsp */
 
 

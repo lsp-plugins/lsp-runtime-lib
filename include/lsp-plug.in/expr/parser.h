@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 18 сент. 2019 г.
@@ -87,7 +87,8 @@ namespace lsp
         status_t parse_identifier(expr_t **expr, Tokenizer *t, size_t flags);
 
         status_t parse_expression(expr_t **expr, Tokenizer *t, size_t flags);
-    }
-}
+
+    } /* namespace expr */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_EXPR_PARSER_H_ */

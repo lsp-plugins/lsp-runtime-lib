@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 16 сент. 2019 г.
@@ -130,7 +130,7 @@ namespace lsp
                 inline status_t         error() const { return nError; }
         };
     
-    } /* namespace calc */
+    } /* namespace expr */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_EXPR_TOKENIZER_H_ */

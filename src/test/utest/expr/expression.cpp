@@ -19,10 +19,11 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <lsp-plug.in/test-fw/utest.h>
-#include <lsp-plug.in/test-fw/helpers.h>
 #include <lsp-plug.in/expr/Expression.h>
 #include <lsp-plug.in/expr/Variables.h>
+#include <lsp-plug.in/stdlib/math.h>
+#include <lsp-plug.in/test-fw/helpers.h>
+#include <lsp-plug.in/test-fw/utest.h>
 
 #define GAIN_AMP_P_12_DB                    3.98107             /* +12 dB       */
 #define GAIN_AMP_M_12_DB                    0.25119             /* -12 dB       */
@@ -196,6 +197,21 @@ UTEST_BEGIN("runtime.expr", expression)
         test_float(":ic ** :ib", &v, 125.0f);
         test_float("fp (:ie + :id)", &v, 17.0);
 
+        test_float("sqrt 4 * 25", &v, 50.0);
+        test_float("sqrt (4 * 25)", &v, 10.0);
+        test_float("lg 100", &v, 2.0);
+        test_float("log2 256", &v, 8.0);
+        test_float("ln exp 11", &v, 11.0);
+        test_float("deg pi", &v, 180.0f);
+        test_float("rad deg pi", &v, M_PI);
+        test_float("sin(pi / 6)", &v, 0.5);
+        test_float("cos(pi / 3)", &v, 0.5);
+        test_float("tg(pi / 4)", &v, 1.0);
+        test_float("arctg 1", &v, M_PI / 4);
+        test_float("arcsin 0.5", &v, M_PI / 6);
+        test_float("arccos 0.5", &v, M_PI / 3);
+        test_float("abs -10.1 - abs 4", &v, 6.1);
+
         test_int("0b1011_0010", &v, 0xb2);
         test_int("0o1_1", &v, 9);
         test_int("0d12_34", &v, 1234);
@@ -213,6 +229,7 @@ UTEST_BEGIN("runtime.expr", expression)
         test_int("undef <=> :za", &v, -1);
         test_int("undef <=> :za", &v, -1);
         test_int("int :ba + int :fg", &v, 15);
+        test_int("abs -10 - abs 4", &v, 6);
 
         test_bool(":zoom1 le -9 db", &v, true);
         test_bool(":zoom2 le -9 db", &v, false);

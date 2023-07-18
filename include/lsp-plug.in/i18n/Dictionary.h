@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 26 февр. 2020 г.
@@ -90,8 +90,8 @@ namespace lsp
                 void        clear();
 
         };
-    }
 
+    } /* namespace i18n */
 } /* namespace lsp */
 
-#endif /* CORE_I18N_ROOTDICTIONARY_H_ */
+#endif /* LSP_PLUG_IN_I18N_DICTIONARY_H_ */

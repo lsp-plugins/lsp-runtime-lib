@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 18 сент. 2019 г.
@@ -97,7 +97,23 @@ namespace lsp
 
         status_t eval_resolve(value_t *value, const expr_t *expr, eval_env_t *env);
         status_t eval_value(value_t *value, const expr_t *expr, eval_env_t *env);
-    }
-}
+
+        status_t eval_sin(value_t *value, const expr_t *expr, eval_env_t *env);
+        status_t eval_cos(value_t *value, const expr_t *expr, eval_env_t *env);
+        status_t eval_tan(value_t *value, const expr_t *expr, eval_env_t *env);
+        status_t eval_asin(value_t *value, const expr_t *expr, eval_env_t *env);
+        status_t eval_acos(value_t *value, const expr_t *expr, eval_env_t *env);
+        status_t eval_atan(value_t *value, const expr_t *expr, eval_env_t *env);
+        status_t eval_loge(value_t *value, const expr_t *expr, eval_env_t *env);
+        status_t eval_logd(value_t *value, const expr_t *expr, eval_env_t *env);
+        status_t eval_log2(value_t *value, const expr_t *expr, eval_env_t *env);
+        status_t eval_exp(value_t *value, const expr_t *expr, eval_env_t *env);
+        status_t eval_sqrt(value_t *value, const expr_t *expr, eval_env_t *env);
+        status_t eval_rad(value_t *value, const expr_t *expr, eval_env_t *env);
+        status_t eval_deg(value_t *value, const expr_t *expr, eval_env_t *env);
+        status_t eval_abs(value_t *value, const expr_t *expr, eval_env_t *env);
+
+    } /* namespace expr */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_EXPR_EVALUATOR_H_ */

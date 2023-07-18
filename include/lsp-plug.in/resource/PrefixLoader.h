@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 8 июн. 2021 г.
@@ -52,6 +52,9 @@ namespace lsp
                 ILoader                    *pDefault;
 
             protected:
+                static bool                 match_prefix(const LSPString *str, const LSPString *prefix);
+
+            protected:
                 ILoader                    *lookup_prefix(LSPString *dst, const LSPString *path);
                 ILoader                    *lookup_prefix(LSPString *dst, const char *path);
                 ILoader                    *lookup_prefix(LSPString *dst, const io::Path *path);
@@ -85,8 +88,8 @@ namespace lsp
                 virtual ssize_t             enumerate(const LSPString *path, resource_t **list);
                 virtual ssize_t             enumerate(const io::Path *path, resource_t **list);
         };
-    }
-}
+    } /* namespace resource */
+} /* namespace lsp */
 
 
 
