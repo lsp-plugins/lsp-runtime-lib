@@ -1051,7 +1051,7 @@ namespace lsp
             {
                 case CMD_PATTERN:
                 {
-                    matcher_t *m = new matcher_t();
+                    matcher_t *m        = new matcher_t();
                     if (m == NULL)
                         return NULL;
 
@@ -1067,7 +1067,7 @@ namespace lsp
 
                 case CMD_ANY:
                 {
-                    any_matcher_t *m = new any_matcher_t();
+                    any_matcher_t *m    = new any_matcher_t();
                     if (m == NULL)
                         return NULL;
 
@@ -1085,7 +1085,7 @@ namespace lsp
 
                 case CMD_ANYPATH:
                 {
-                    matcher_t *m = new matcher_t();
+                    matcher_t *m        = new matcher_t();
                     if (m == NULL)
                         return NULL;
 
@@ -1102,7 +1102,7 @@ namespace lsp
                 case CMD_AND:
                 case CMD_OR:
                 {
-                    bool_matcher_t *m = new bool_matcher_t();
+                    bool_matcher_t *m   = new bool_matcher_t();
                     if (m == NULL)
                         return NULL;
 
@@ -1236,10 +1236,16 @@ namespace lsp
             {
                 // Pattern matcher
                 case M_PATTERN:
-                case M_ANY:
                 case M_ANYPATH:
                 {
                     delete m;
+                    break;
+                }
+
+                case M_ANY:
+                {
+                    any_matcher_t *am       = static_cast<any_matcher_t *>(m);
+                    delete am;
                     break;
                 }
 

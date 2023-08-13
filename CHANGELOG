@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.16 ===
+* Fixed potential problem with invalid delete in io::PathPattern.
 * Updated build scripts.
 
 === 1.0.15 ===
