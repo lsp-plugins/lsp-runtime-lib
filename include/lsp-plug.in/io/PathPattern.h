@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 15 окт. 2020 г.
@@ -250,7 +250,7 @@ namespace lsp
                 void                        swap(PathPattern *dst);
                 inline void                 swap(PathPattern &dst)                                      { swap(&dst);                               }
         };
-    }
+    } /* namespace io */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_IO_PATHPATTERN_H_ */
