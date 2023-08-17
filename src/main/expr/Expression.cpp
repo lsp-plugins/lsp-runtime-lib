@@ -414,6 +414,9 @@ namespace lsp
             if (res == STATUS_OK)
                 res     = post_process();
 
+            if (res != STATUS_OK)
+                destroy_all_data();
+
             return res;
         }
 
