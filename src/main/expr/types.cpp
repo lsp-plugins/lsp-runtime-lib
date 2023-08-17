@@ -57,18 +57,21 @@ namespace lsp
         {
             destroy_value_internal(dst);
             dst->type       = VT_NULL;
+            dst->v_str      = NULL;
         }
 
         void set_value_undef(value_t *dst)
         {
             destroy_value_internal(dst);
             dst->type       = VT_UNDEF;
+            dst->v_str      = NULL;
         }
 
         void set_value_int(value_t *dst, ssize_t value)
         {
             destroy_value_internal(dst);
             dst->type       = VT_INT;
+            dst->v_str      = NULL;
             dst->v_int      = value;
         }
 
@@ -76,6 +79,7 @@ namespace lsp
         {
             destroy_value_internal(dst);
             dst->type       = VT_FLOAT;
+            dst->v_str      = NULL;
             dst->v_float    = value;
         }
 
@@ -83,6 +87,7 @@ namespace lsp
         {
             destroy_value_internal(dst);
             dst->type       = VT_BOOL;
+            dst->v_str      = NULL;
             dst->v_bool     = value;
         }
 

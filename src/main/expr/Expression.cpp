@@ -96,8 +96,7 @@ namespace lsp
                     res     = r->expr->eval(&r->result, r->expr, pResolver);
                 else
                 {
-                    r->result.type  = VT_UNDEF;
-                    r->result.v_str = NULL;
+                    set_value_undef(&r->result);
                     res             = STATUS_OK;
                 }
 
@@ -123,8 +122,7 @@ namespace lsp
                 res     = r->expr->eval(&r->result, r->expr, pResolver);
             else
             {
-                r->result.type  = VT_UNDEF;
-                r->result.v_str = NULL;
+                set_value_undef(&r->result);
                 res             = STATUS_OK;
             }
 
@@ -197,8 +195,7 @@ namespace lsp
 
                 // Parse expression
                 root->expr          = NULL;
-                root->result.type   = VT_UNDEF;
-                root->result.v_str  = NULL;
+                init_value(&root->result);
                 res                 = parse_expression(&root->expr, &t, TF_GET);
                 if (res != STATUS_OK)
                     break;
@@ -396,6 +393,7 @@ namespace lsp
             else
             {
                 root->expr          = expr;
+                init_value(&root->result);
                 root->result.type   = VT_UNDEF;
                 root->result.v_str  = NULL;
             }
@@ -406,6 +404,7 @@ namespace lsp
         status_t Expression::parse(io::IInSequence *seq, size_t flags)
         {
             status_t res = STATUS_OK;
+            destroy_all_data();
 
             if (flags & FLAG_STRING)
                 res = parse_string(seq, flags & (~FLAG_STRING));
@@ -414,9 +413,6 @@ namespace lsp
 
             if (res == STATUS_OK)
                 res     = post_process();
-
-            if (res != STATUS_OK)
-                destroy_all_data();
 
             return res;
         }
