@@ -88,17 +88,20 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
 
         UTEST_ASSERT(os.open(&path, &info, codec) == STATUS_OK);
 
-        for (ssize_t off=0; off<FRAMES; off += BUF_SAMPLES)
+        for (ssize_t off=0; off<FRAMES; )
         {
+            size_t to_write     = lsp_min(FRAMES - off, BUF_SAMPLES);
+
             // Check position
             UTEST_ASSERT(os.position() == off);
-            ByteBuffer buf(&src[off * 2], BUF_SAMPLES * 2 * sizeof(float));
-            size_t to_write = ((FRAMES - off) > BUF_SAMPLES) ? BUF_SAMPLES : FRAMES-off;
+            ByteBuffer buf(&src[off * 2], to_write * 2 * sizeof(float));
 
             // Write frames
             ssize_t written = os.write(buf.data<mm::f32_t>(), to_write);
             UTEST_ASSERT(written >= 0);
             UTEST_ASSERT(buf.valid());
+
+            off                += to_write;
         }
 
         UTEST_ASSERT(os.close() == STATUS_OK);
@@ -121,12 +124,13 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
 
         UTEST_ASSERT(os.open(&path, &info, codec) == STATUS_OK);
 
-        for (ssize_t off=0; off<FRAMES; off += BUF_SAMPLES)
+        for (ssize_t off=0; off<FRAMES; )
         {
+            size_t to_write     = lsp_min(FRAMES - off, BUF_SAMPLES);
+
             // Check position
             UTEST_ASSERT(os.position() == off);
-            ByteBuffer buf(BUF_SAMPLES * 2 * sizeof(int16_t));
-            size_t to_write = ((FRAMES - off) > BUF_SAMPLES) ? BUF_SAMPLES : FRAMES-off;
+            ByteBuffer buf(to_write * 2 * sizeof(int16_t));
 
             int16_t *dst = buf.data<int16_t>();
             for (size_t i=0, j=off*2; i<to_write*2; ++i, ++j)
@@ -139,6 +143,8 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
             ssize_t written = os.write(dst, to_write);
             UTEST_ASSERT(written >= 0);
             UTEST_ASSERT(buf.valid());
+
+            off                += to_write;
         }
 
         UTEST_ASSERT(os.close() == STATUS_OK);
@@ -161,12 +167,13 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
 
         UTEST_ASSERT(os.open(&path, &info, codec) == STATUS_OK);
 
-        for (ssize_t off=0; off<FRAMES; off += BUF_SAMPLES)
+        for (ssize_t off=0; off<FRAMES; )
         {
+            size_t to_write     = lsp_min(FRAMES - off, BUF_SAMPLES);
+
             // Check position
             UTEST_ASSERT(os.position() == off);
-            ByteBuffer buf(BUF_SAMPLES * 2 * sizeof(uint16_t));
-            size_t to_write = ((FRAMES - off) > BUF_SAMPLES) ? BUF_SAMPLES : FRAMES-off;
+            ByteBuffer buf(to_write * 2 * sizeof(uint16_t));
 
             uint16_t *dst = buf.data<uint16_t>();
             for (size_t i=0, j=off*2; i<to_write*2; ++i, ++j)
@@ -179,6 +186,8 @@ UTEST_BEGIN("runtime.mm", outaudiofilestream)
             ssize_t written = os.write(dst, to_write);
             UTEST_ASSERT(written >= 0);
             UTEST_ASSERT(buf.valid());
+
+            off                += to_write;
         }
 
         UTEST_ASSERT(os.close() == STATUS_OK);

@@ -502,15 +502,13 @@ namespace lsp
 
             if (value->type == VT_UNDEF)
             {
-                value->type     = VT_INT;
-                value->v_int    = (right.type == VT_UNDEF) ? 0 : -1;
+                set_value_int(value, (right.type == VT_UNDEF) ? 0 : -1);
                 destroy_value(&right);
                 return STATUS_OK;
             }
             else if (right.type == VT_UNDEF)
             {
-                value->type     = VT_INT;
-                value->v_int    = 1;
+                set_value_int(value, 1);
                 destroy_value(&right);
                 return STATUS_OK;
             }
@@ -518,15 +516,13 @@ namespace lsp
             // Prevent from NULLs
             if (value->type == VT_NULL)
             {
-                value->type     = VT_INT;
-                value->v_int    = (right.type == VT_NULL) ? 0 : -1;
+                set_value_int(value, (right.type == VT_NULL) ? 0 : -1);
                 destroy_value(&right);
                 return STATUS_OK;
             }
             else if (right.type == VT_NULL)
             {
-                value->type     = VT_INT;
-                value->v_int    = 1;
+                set_value_int(value, 1);
                 destroy_value(&right);
                 return STATUS_OK;
             }
@@ -672,9 +668,7 @@ namespace lsp
                     if (res == STATUS_OK)
                     {
                         ssize_t ivalue  = value->v_str->compare_to(right.v_str);
-                        destroy_value(value);
-                        value->type     = VT_INT;
-                        value->v_int    = ivalue;
+                        set_value_int(value, ivalue);
                     }
                     break;
                 }
@@ -799,15 +793,13 @@ namespace lsp
             cast_int(&right);
             if (value->type == VT_UNDEF)
             {
-                value->type     = VT_INT;
-                value->v_int    = (right.type == VT_UNDEF) ? 0 : -1;
+                set_value_int(value, (right.type == VT_UNDEF) ? 0 : -1);
                 destroy_value(&right);
                 return STATUS_OK;
             }
             else if (right.type == VT_UNDEF)
             {
-                value->type     = VT_INT;
-                value->v_int    = 1;
+                set_value_int(value, 1);
                 destroy_value(&right);
                 return STATUS_OK;
             }
@@ -815,23 +807,21 @@ namespace lsp
             // Prevent from NULLs
             if (value->type == VT_NULL)
             {
-                value->type     = VT_INT;
-                value->v_int    = (right.type == VT_NULL) ? 0 : -1;
+                set_value_int(value, (right.type == VT_NULL) ? 0 : -1);
                 destroy_value(&right);
                 return STATUS_OK;
             }
             else if (right.type == VT_NULL)
             {
-                value->type     = VT_INT;
-                value->v_int    = 1;
+                set_value_int(value, 1);
                 destroy_value(&right);
                 return STATUS_OK;
             }
 
             // Perform compare
-            value->v_int =
-                    (value->v_int < right.v_int) ? -1 :
-                    (value->v_int > right.v_int) ? 1 : 0;
+            set_value_int(value,
+                (value->v_int < right.v_int) ? -1 :
+                (value->v_int > right.v_int) ? 1 : 0);
             return STATUS_OK;
         }
 
@@ -1121,8 +1111,7 @@ namespace lsp
             status_t res;
             if (env == NULL)
             {
-                value->type     = VT_UNDEF;
-                value->v_str    = NULL;
+                set_value_undef(value);
                 return STATUS_OK;
             }
 
@@ -1133,8 +1122,7 @@ namespace lsp
                 if (res != STATUS_NOT_FOUND)
                     return res;
 
-                value->type     = VT_UNDEF;
-                value->v_str    = NULL;
+                set_value_undef(value);
                 return STATUS_OK;
             }
 
@@ -1313,7 +1301,7 @@ namespace lsp
                 case VT_UNDEF:
                     break;
                 default:
-                    res = STATUS_BAD_TYPE;
+                    res             = STATUS_BAD_TYPE;
                     break;
             }
 
@@ -1340,7 +1328,7 @@ namespace lsp
                 case VT_UNDEF:
                     break;
                 default:
-                    res = STATUS_BAD_TYPE;
+                    res             = STATUS_BAD_TYPE;
                     break;
             }
 
@@ -1372,7 +1360,7 @@ namespace lsp
                 case VT_UNDEF:
                     break;
                 default:
-                    res = STATUS_BAD_TYPE;
+                    res             = STATUS_BAD_TYPE;
                     break;
             }
 
@@ -1401,7 +1389,7 @@ namespace lsp
                 case VT_UNDEF:
                     break;
                 default:
-                    res = STATUS_BAD_TYPE;
+                    res             = STATUS_BAD_TYPE;
                     break;
             }
 
