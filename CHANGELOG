@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.17 ===
-
+* Fixed invalid memory read on OSC protocol pattern matching.
 
 === 1.0.16 ===
 * Fixed potential problem with invalid delete in io::PathPattern.
