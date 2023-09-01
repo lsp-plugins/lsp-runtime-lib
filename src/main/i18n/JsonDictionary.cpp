@@ -19,6 +19,7 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/i18n/JsonDictionary.h>
 
 namespace lsp
@@ -97,7 +98,7 @@ namespace lsp
             json::Parser p;
             JsonDictionary tmp;
 
-            status_t res = p.wrap(is, json::JSON_VERSION5, WRAP_NONE);
+            status_t res = p.wrap(is, json::JSON_VERSION5, WRAP_NONE, "UTF-8");
             if (res == STATUS_OK)
                 res = tmp.parse_json(&p);
 
@@ -226,7 +227,10 @@ namespace lsp
 
                         node.pChild = NULL;
                         if ((res = curr->add_node(&node)) != STATUS_OK)
+                        {
+                            lsp_trace("Added node: '%s' = '%s'", node.sKey.get_utf8(), node.sValue.get_utf8());
                             return res;
+                        }
                         break;
 
                     // Other values are invalid
