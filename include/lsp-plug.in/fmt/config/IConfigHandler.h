@@ -35,12 +35,14 @@ namespace lsp
          */
         class IConfigHandler
         {
-            private:
-                IConfigHandler & operator = (const IConfigHandler &);
-
             public:
                 explicit IConfigHandler();
+                IConfigHandler(const IConfigHandler &) = delete;
+                IConfigHandler(IConfigHandler &&) = delete;
                 virtual ~IConfigHandler();
+
+                IConfigHandler & operator = (const IConfigHandler &) = delete;
+                IConfigHandler & operator = (IConfigHandler &&) = delete;
 
             public:
                 /**

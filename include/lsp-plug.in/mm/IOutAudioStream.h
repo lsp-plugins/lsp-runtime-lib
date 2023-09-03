@@ -32,9 +32,6 @@ namespace lsp
     {
         class IOutAudioStream
         {
-            private:
-                IOutAudioStream & operator = (const IOutAudioStream &);
-
             public:
                 static const size_t IO_BUF_SIZE         = 0x1000;
 
@@ -87,7 +84,12 @@ namespace lsp
 
             public:
                 explicit IOutAudioStream();
+                IOutAudioStream (const IOutAudioStream &) = delete;
+                IOutAudioStream (IOutAudioStream &&) = delete;
                 virtual ~IOutAudioStream();
+
+                IOutAudioStream & operator = (const IOutAudioStream &) = delete;
+                IOutAudioStream & operator = (IOutAudioStream &&) = delete;
 
             public:
                 /**

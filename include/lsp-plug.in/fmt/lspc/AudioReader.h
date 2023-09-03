@@ -38,9 +38,6 @@ namespace lsp
         class AudioReader
         {
             private:
-                AudioReader & operator = (const AudioReader &);
-
-            private:
                 enum flags_t
                 {
                     F_OPENED        = 1 << 0,
@@ -92,7 +89,12 @@ namespace lsp
 
             public:
                 explicit AudioReader();
+                AudioReader(const AudioReader &) = delete;
+                AudioReader(AudioReader &&) = delete;
                 ~AudioReader();
+
+                AudioReader & operator = (const AudioReader &) = delete;
+                AudioReader & operator = (AudioReader &&) = delete;
 
             public:
                 /**

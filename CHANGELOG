@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.17 ===
+* Fixed several issues reported by PVS Studio static analyzer.
 * Fixed invalid memory read on OSC protocol pattern matching.
 * The i18n JsonDictionary is forced to be UTF-8. 
 

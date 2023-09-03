@@ -40,9 +40,6 @@ namespace lsp
         class AudioWriter
         {
             private:
-                AudioWriter & operator = (const AudioWriter &);
-
-            private:
                 enum flags_t
                 {
                     F_OPENED            = 1 << 0,
@@ -88,7 +85,12 @@ namespace lsp
 
             public:
                 explicit AudioWriter();
+                AudioWriter(const AudioWriter &) = delete;
+                AudioWriter(AudioWriter &&) = delete;
                 ~AudioWriter();
+
+                AudioWriter & operator = (const AudioWriter &) = delete;
+                AudioWriter & operator = (AudioWriter &&) = delete;
 
             public:
                 /**

@@ -38,9 +38,6 @@ namespace lsp
         
         class PullParser
         {
-            private:
-                PullParser & operator = (const PullParser &);
-
             protected:
                 io::IInSequence        *pIn;
                 size_t                  nWFlags;
@@ -71,7 +68,12 @@ namespace lsp
 
             public:
                 explicit PullParser();
+                PullParser(const PullParser &) = delete;
+                PullParser(PullParser &&) = delete;
                 virtual ~PullParser();
+
+                PullParser & operator = (const PullParser &) = delete;
+                PullParser & operator = (PullParser &&) = delete;
 
             public:
                 /**

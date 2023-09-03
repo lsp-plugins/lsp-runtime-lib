@@ -38,9 +38,6 @@ namespace lsp
     {
         class PullParser
         {
-            private:
-                PullParser & operator = (const PullParser &);
-
             public:
                 static const size_t IO_BUF_SIZE         = 8192;
 
@@ -77,7 +74,12 @@ namespace lsp
 
             public:
                 explicit PullParser();
+                PullParser(const PullParser &) = delete;
+                PullParser(PullParser &&) = delete;
                 ~PullParser();
+
+                PullParser & operator = (const PullParser &) = delete;
+                PullParser & operator = (PullParser &&) = delete;
 
             public:
                 /**

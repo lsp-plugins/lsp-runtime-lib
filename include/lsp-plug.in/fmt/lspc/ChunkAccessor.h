@@ -50,9 +50,6 @@ namespace lsp
 
         class ChunkAccessor
         {
-            private:
-                ChunkAccessor & operator = (const ChunkAccessor &);
-
             protected:
                 friend class File;
 
@@ -79,7 +76,12 @@ namespace lsp
                 explicit ChunkAccessor(Resource *fd, uint32_t magic);
 
             public:
+                ChunkAccessor(const ChunkAccessor &) = delete;
+                ChunkAccessor(ChunkAccessor &&) = delete;
                 virtual ~ChunkAccessor();
+
+                ChunkAccessor & operator = (const ChunkAccessor &) = delete;
+                ChunkAccessor & operator = (ChunkAccessor &&) = delete;
 
             public:
                 inline size_t       buffer_size() const     { return nBufSize;      }
@@ -94,8 +96,8 @@ namespace lsp
                  */
                 virtual status_t    close();
         };
-    }
 
+    } /* namespace lspc */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_FMT_LSPC_CHUNKACCESSOR_H_ */

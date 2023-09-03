@@ -43,9 +43,6 @@ namespace lsp
 
         class InAudioFileStream: public IInAudioStream
         {
-            private:
-                InAudioFileStream & operator = (const InAudioFileStream &);
-
             protected:
             #ifdef USE_LIBSNDFILE
                 typedef SNDFILE                 handle_t;
@@ -75,7 +72,12 @@ namespace lsp
 
             public:
                 explicit InAudioFileStream();
+                InAudioFileStream(const InAudioFileStream &) = delete;
+                InAudioFileStream(InAudioFileStream &&) = delete;
                 virtual ~InAudioFileStream() override;
+
+                InAudioFileStream & operator = (const InAudioFileStream &) = delete;
+                InAudioFileStream & operator = (InAudioFileStream &&) = delete;
 
             public:
                 /**
