@@ -60,13 +60,13 @@ namespace lsp
                 status_t                wrap(const char *s);
 
             public:
-                virtual ssize_t         read(lsp_wchar_t *dst, size_t count);
-                virtual lsp_swchar_t    read();
-                virtual status_t        read_line(LSPString *s, bool force = false);
-                virtual ssize_t         skip(size_t count);
-                virtual status_t        close();
-                virtual status_t        mark(ssize_t limit);
-                virtual status_t        reset();
+                virtual ssize_t         read(lsp_wchar_t *dst, size_t count) override;
+                virtual lsp_swchar_t    read() override;
+                virtual status_t        read_line(LSPString *s, bool force = false) override;
+                virtual ssize_t         skip(size_t count) override;
+                virtual status_t        close() override;
+                virtual status_t        mark(ssize_t limit) override;
+                virtual status_t        reset() override;
         };
     } /* namespace io */
 } /* namespace lsp */
