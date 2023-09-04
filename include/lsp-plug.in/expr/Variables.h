@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 19 сент. 2019 г.
@@ -33,9 +33,6 @@ namespace lsp
     {
         class Variables: public Resolver
         {
-            private:
-                Variables & operator = (const Variables &);
-
             protected:
                 typedef struct variable_t
                 {
@@ -53,7 +50,12 @@ namespace lsp
             public:
                 explicit Variables();
                 explicit Variables(Resolver *r);
+                Variables(const Variables &) = delete;
+                Variables(Variables &&) = delete;
                 virtual ~Variables();
+
+                Variables & operator = (const Variables &) = delete;
+                Variables & operator = (Variables &&) = delete;
 
             public:
                 virtual status_t    resolve(value_t *value, const char *name, size_t num_indexes = 0, const ssize_t *indexes = NULL);
@@ -94,7 +96,7 @@ namespace lsp
                 inline void         set_resolver(Resolver *resolver) { pResolver = resolver; }
         };
     
-    } /* namespace calc */
+    } /* namespace expr */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_EXPR_VARIABLES_H_ */

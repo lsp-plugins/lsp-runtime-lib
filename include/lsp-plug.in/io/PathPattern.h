@@ -176,9 +176,6 @@ namespace lsp
                 cmd_t                      *pRoot;
                 size_t                      nFlags;
 
-            private:
-                PathPattern & operator = (const PathPattern &);
-
             protected:
                 status_t                    parse(const LSPString *pattern, size_t flags = NONE);
                 bool                        match_full(const LSPString *path) const;
@@ -222,7 +219,12 @@ namespace lsp
 
             public:
                 explicit PathPattern();
+                PathPattern(const PathPattern &) = delete;
+                PathPattern(PathPattern &&) = delete;
                 ~PathPattern();
+
+                PathPattern & operator = (const PathPattern &) = delete;
+                PathPattern & operator = (PathPattern &&) = delete;
 
             public:
                 status_t                    set(const PathPattern *src)                                 { return parse(&src->sMask, src->nFlags);   }

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 18 июн. 2018 г.
@@ -46,12 +46,14 @@ namespace lsp
             protected:
                 status_t        flush_buffer_internal(bool force);
 
-            private:
-                OutSequence & operator = (const OutSequence &);
-
             public:
                 explicit OutSequence();
-                virtual ~OutSequence();
+                OutSequence(const OutSequence &) = delete;
+                OutSequence(OutSequence &&) = delete;
+                virtual ~OutSequence() override;
+
+                OutSequence & operator = (const OutSequence &) = delete;
+                OutSequence & operator = (OutSequence &&) = delete;
 
             public:
                 using IOutSequence::write;
@@ -72,17 +74,15 @@ namespace lsp
 
                 status_t open(const Path *path, size_t mode, const char *charset = NULL);
 
-                virtual status_t write(lsp_wchar_t c);
-
-                virtual status_t write(const lsp_wchar_t *c, size_t count);
-
-                virtual status_t write_ascii(const char *s, size_t count);
-
-                virtual status_t flush();
-
-                virtual status_t close();
+            public:
+                virtual status_t write(lsp_wchar_t c) override;
+                virtual status_t write(const lsp_wchar_t *c, size_t count) override;
+                virtual status_t write_ascii(const char *s, size_t count) override;
+                virtual status_t flush() override;
+                virtual status_t close() override;
         };
-    }
+
+    } /* namespace io */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_IO_OUTSEQUENCE_H_ */

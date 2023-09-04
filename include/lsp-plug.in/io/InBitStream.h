@@ -40,16 +40,18 @@ namespace lsp
                 umword_t        nBuffer;        // Fixed-size buffer
                 size_t          nBits;          // Number of bits stored
 
-            private:
-                InBitStream & operator = (const InBitStream &);
-
             protected:
                 status_t        fill();
                 void            unread(umword_t v, size_t bits);
 
             public:
                 explicit InBitStream();
+                InBitStream(const InBitStream &) = delete;
+                InBitStream(InBitStream &&) = delete;
                 virtual ~InBitStream();
+
+                InBitStream & operator = (const InBitStream &) = delete;
+                InBitStream & operator = (InBitStream &&) = delete;
 
             public:
                 /** Wrap stdio file descriptor. The Reader should be in closed state.
@@ -127,8 +129,9 @@ namespace lsp
                 ssize_t             readv(uint64_t *value, size_t bits = sizeof(uint64_t)*8);
                 inline ssize_t      readv(int64_t *value, size_t bits = sizeof(int64_t)*8)      { return readv(reinterpret_cast<uint64_t *>(value), bits);      }
         };
-    }
-}
+
+    } /* namespace io */
+} /* namespace lsp */
 
 
 #endif /* LSP_PLUG_IN_IO_INBITSTREAM_H_ */

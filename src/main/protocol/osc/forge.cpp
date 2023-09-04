@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 29 мая 2019 г.
@@ -558,7 +558,7 @@ namespace lsp
         status_t forge_midi(forge_frame_t *ref, const midi::event_t *event)
         {
             uint8_t x[4];
-            size_t n        = midi::encode(x, event);
+            ssize_t n       = midi::encode(x, event);
             if (n < 0)
                 return -n;
             return forge_parameter(ref, FPT_MIDI_MESSAGE, &x, n);
@@ -687,11 +687,8 @@ namespace lsp
             if (ptr != NULL)
                 ::free(ptr);
         }
-    }
-}
 
-
-
-
+    } /* namespace osc */
+} /* namespace lsp */
 
 

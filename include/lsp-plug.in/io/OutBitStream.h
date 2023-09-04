@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 3 мар. 2021 г.
@@ -38,9 +38,6 @@ namespace lsp
         class OutBitStream: public IOutStream
         {
             private:
-                OutBitStream & operator = (const OutBitStream &);
-
-            private:
                 IOutStream     *pOS;            // Output stream for writing
                 size_t          nWrapFlags;     // Wrapping flags
                 umword_t        nBuffer;        // Fixed-size buffer
@@ -48,7 +45,12 @@ namespace lsp
 
             public:
                 explicit OutBitStream();
-                virtual ~OutBitStream();
+                OutBitStream(const OutBitStream &) = delete;
+                OutBitStream(OutBitStream &&) = delete;
+                virtual ~OutBitStream() override;
+
+                OutBitStream & operator = (const OutBitStream &) = delete;
+                OutBitStream & operator = (OutBitStream &&) = delete;
 
             protected:
                 status_t            do_flush_buffer();
@@ -64,11 +66,13 @@ namespace lsp
                 status_t            wrap(IOutStream *os, size_t flags = 0);
 
             public:
-                virtual ssize_t     write(const void *buf, size_t count);
                 virtual ssize_t     bwrite(const void *buf, size_t bits);
 
-                virtual status_t    flush();
-                virtual status_t    close();
+            public:
+                virtual ssize_t     write(const void *buf, size_t count) override;
+
+                virtual status_t    flush() override;
+                virtual status_t    close() override;
 
             public:
 
@@ -84,7 +88,8 @@ namespace lsp
                 status_t            writev(uint64_t value, size_t bits = sizeof(uint64_t)*8);
                 inline status_t     writev(int64_t value, size_t bits = sizeof(int64_t)*8)      { return writev(uint64_t(value), bits);  }
         };
-    }
-}
+
+    } /* namespace io */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_IO_OUTBITSTREAM_H_ */

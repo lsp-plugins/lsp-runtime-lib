@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 июн. 2018 г.
@@ -42,14 +42,16 @@ namespace lsp
             protected:
                 void    do_close();
 
-            private:
-                InStringSequence & operator = (const InStringSequence &);
-
             public:
                 explicit InStringSequence();
                 explicit InStringSequence(const LSPString *s);
                 explicit InStringSequence(LSPString *s, bool del = false);
-                virtual ~InStringSequence();
+                InStringSequence(const InStringSequence &) = delete;
+                InStringSequence(InStringSequence &&) = delete;
+                virtual ~InStringSequence() override;
+
+                InStringSequence & operator = (const InStringSequence &) = delete;
+                InStringSequence & operator = (InStringSequence &&) = delete;
 
             public:
                 status_t                wrap(const LSPString *in);
@@ -57,21 +59,16 @@ namespace lsp
                 status_t                wrap(const char *s, const char *charset);
                 status_t                wrap(const char *s);
 
+            public:
                 virtual ssize_t         read(lsp_wchar_t *dst, size_t count);
-
                 virtual lsp_swchar_t    read();
-
                 virtual status_t        read_line(LSPString *s, bool force = false);
-
                 virtual ssize_t         skip(size_t count);
-
                 virtual status_t        close();
-
                 virtual status_t        mark(ssize_t limit);
-
                 virtual status_t        reset();
         };
-    }
+    } /* namespace io */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_IO_STRINGREADER_H_ */

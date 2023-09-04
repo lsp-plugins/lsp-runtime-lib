@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 21 авг. 2019 г.
@@ -61,6 +61,12 @@ namespace lsp
 
                 virtual ~InMemoryStream() override;
 
+                InMemoryStream(const InMemoryStream &) = delete;
+                InMemoryStream(InMemoryStream &&) = delete;
+
+                InMemoryStream & operator = (const InMemoryStream &) = delete;
+                InMemoryStream & operator = (InMemoryStream &&) = delete;
+
             public:
                 /**
                  * Wrap the memory buffer, drop previous buffer using specified mechanism
@@ -108,17 +114,11 @@ namespace lsp
             public:
 
                 virtual wssize_t    avail() override;
-
                 virtual wssize_t    position() override;
-
                 virtual ssize_t     read(void *dst, size_t count) override;
-
                 virtual ssize_t     read_byte() override;
-
                 virtual wssize_t    seek(wsize_t position) override;
-
                 virtual wssize_t    skip(wsize_t amount) override;
-
                 virtual status_t    close() override;
         };
     

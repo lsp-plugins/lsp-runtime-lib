@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2022 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 24 окт. 2022 г.
@@ -87,18 +87,16 @@ namespace lsp
             res = (written < 0) ? -written : STATUS_OK;
 
             // Close stream, writer and exit
-            status_t res2 = os->close();
-            if (res == STATUS_OK)
-                res = res2;
-            res2 = wr->close();
-            if (res == STATUS_OK)
-                res = res2;
+            res = update_status(res, os->close());
+            res = update_status(res, wr->close());
 
             // Return result
             if (res != STATUS_OK)
                 return res;
+
             if (chunk_id != NULL)
                 *chunk_id = res_chunk_id;
+
             return STATUS_OK;
         }
 
@@ -248,9 +246,8 @@ namespace lsp
             status_t res = read_config(chunk_id, file, &os, buf_size);
             if (res == STATUS_OK)
                 res         = os.writeb('\0');
-            status_t res2 = os.close();
-            if (res == STATUS_OK)
-                res         = res2;
+
+            res         = update_status(res, os.close());
 
             // Return result
             *data       = reinterpret_cast<char *>(os.release());

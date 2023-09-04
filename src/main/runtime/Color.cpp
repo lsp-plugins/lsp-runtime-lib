@@ -199,6 +199,46 @@ namespace lsp
         A       = src.A;
     }
 
+    Color::Color(Color &&src)
+    {
+        rgb     = src.rgb;
+        hsl     = src.hsl;
+        xyz     = src.xyz;
+        lab     = src.lab;
+        lch     = src.lch;
+        cmyk    = src.cmyk;
+        mask    = src.mask;
+        A       = src.A;
+    }
+
+    Color &Color::operator = (const Color & src)
+    {
+        rgb     = src.rgb;
+        hsl     = src.hsl;
+        xyz     = src.xyz;
+        lab     = src.lab;
+        lch     = src.lch;
+        cmyk    = src.cmyk;
+        mask    = src.mask;
+        A       = src.A;
+
+        return *this;
+    }
+
+    Color &Color::operator = (Color && src)
+    {
+        rgb     = src.rgb;
+        hsl     = src.hsl;
+        xyz     = src.xyz;
+        lab     = src.lab;
+        lch     = src.lch;
+        cmyk    = src.cmyk;
+        mask    = src.mask;
+        A       = src.A;
+
+        return *this;
+    }
+
     Color::Color(const Color &src, float a)
     {
         rgb     = src.rgb;
@@ -241,6 +281,9 @@ namespace lsp
         hsl.H   = 0.0f;
         hsl.S   = 0.0f;
         hsl.L   = 0.0f;
+        xyz.X   = 0.0f;
+        xyz.Y   = 0.0f;
+        xyz.Z   = 0.0f;
         lab.L   = 0.0f;
         lab.A   = 0.0f;
         lab.B   = 0.0f;
@@ -259,6 +302,9 @@ namespace lsp
         hsl.H   = 0.0f;
         hsl.S   = 0.0f;
         hsl.L   = 0.0f;
+        xyz.X   = 0.0f;
+        xyz.Y   = 0.0f;
+        xyz.Z   = 0.0f;
         lab.L   = 0.0f;
         lab.A   = 0.0f;
         lab.B   = 0.0f;
@@ -331,6 +377,7 @@ namespace lsp
     {
         lsp::swap(rgb, c->rgb);
         lsp::swap(hsl, c->hsl);
+        lsp::swap(xyz, c->xyz);
         lsp::swap(lab, c->lab);
         lsp::swap(lch, c->lch);
         lsp::swap(cmyk, c->cmyk);

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 8 мар. 2019 г.
@@ -57,14 +57,17 @@ namespace lsp
 #endif /* PLATFORM_WINDOWS */
 
             private:
-                CharsetEncoder &operator = (const CharsetEncoder &);    // Prevent from copying
-
                 inline size_t   prepare_buffer();
                 ssize_t         encode_buffer();
 
             public:
                 explicit CharsetEncoder();
+                CharsetEncoder(const CharsetEncoder &) = delete;
+                CharsetEncoder(CharsetEncoder &&) = delete;
                 ~CharsetEncoder();
+
+                CharsetEncoder &operator = (const CharsetEncoder &) = delete;
+                CharsetEncoder &operator = (CharsetEncoder &&) = delete;
 
             public:
                 /**

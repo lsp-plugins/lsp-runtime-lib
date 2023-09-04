@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 6 мар. 2019 г.
@@ -204,12 +204,12 @@ namespace lsp
                 return -set_error(STATUS_PERMISSION_DENIED);
 
             // Store previous position
-            wsize_t save = ftello(pFD);
+            wssize_t save = ftello(pFD);
             if (save < 0)
                 return -set_error(STATUS_IO_ERROR);
 
             // Update position
-            if (pos != save)
+            if (pos != wsize_t(save))
             {
                 if (fseeko(pFD, pos, SEEK_SET) != 0)
                     return -set_error(STATUS_IO_ERROR);
@@ -236,7 +236,7 @@ namespace lsp
             }
 
             // Restore position
-            if (pos != save)
+            if (pos != wsize_t(save))
             {
                 if (fseeko(pFD, save, SEEK_SET) != 0)
                     return -set_error(STATUS_IO_ERROR);
@@ -291,12 +291,12 @@ namespace lsp
                 return -set_error(STATUS_PERMISSION_DENIED);
 
             // Store previous position
-            wsize_t save = ftello(pFD);
+            wssize_t save = ftello(pFD);
             if (save < 0)
                 return -set_error(STATUS_IO_ERROR);
 
             // Update position
-            if (pos != save)
+            if (pos != wsize_t(save))
             {
                 if (fseeko(pFD, pos, SEEK_SET) != 0)
                     return -set_error(STATUS_IO_ERROR);
@@ -319,7 +319,7 @@ namespace lsp
             }
 
             // Restore position
-            if (pos != save)
+            if (pos != wsize_t(save))
             {
                 if (fseeko(pFD, save, SEEK_SET) != 0)
                     return -set_error(STATUS_IO_ERROR);

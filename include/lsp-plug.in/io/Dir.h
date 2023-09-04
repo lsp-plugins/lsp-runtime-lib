@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 18 мар. 2019 г.
@@ -44,10 +44,6 @@ namespace lsp
 
         class Dir
         {
-            private:
-                Dir & operator = (const Dir &);
-                Dir(const Dir &);
-
             protected:
                 status_t        nErrorCode;
                 Path            sPath;
@@ -58,7 +54,12 @@ namespace lsp
 
             public:
                 explicit Dir();
+                Dir(const Dir &) = delete;
+                Dir(Dir &&) = delete;
                 virtual ~Dir();
+
+                Dir & operator = (const Dir &) = delete;
+                Dir & operator = (Dir &&) = delete;
 
             public:
                 /**

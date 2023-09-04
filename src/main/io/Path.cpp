@@ -2003,7 +2003,7 @@ namespace lsp
 
             return STATUS_OK;
         }
-    }
+    } /* namespace io */
 
     namespace lltl
     {
@@ -2028,5 +2028,5 @@ namespace lsp
         {
             delete (static_cast<io::Path *>(ptr));
         }
-    }
+    } /* namespace lltl */
 } /* namespace lsp */

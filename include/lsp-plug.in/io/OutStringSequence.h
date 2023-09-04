@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 июн. 2018 г.
@@ -35,38 +35,33 @@ namespace lsp
                 LSPString  *pOut;
                 bool        bDelete;
 
-            private:
-                OutStringSequence & operator = (const OutStringSequence &);
-
             public:
                 explicit OutStringSequence();
                 explicit OutStringSequence(LSPString *out, bool del = false);
-                virtual ~OutStringSequence();
+                OutStringSequence(const OutStringSequence &) = delete;
+                OutStringSequence(OutStringSequence &&) = delete;
+                virtual ~OutStringSequence() override;
+
+                OutStringSequence & operator = (const OutStringSequence &) = delete;
+                OutStringSequence & operator = (OutStringSequence &&) = delete;
     
             public:
                 status_t            wrap(LSPString *out, bool del);
 
-                virtual status_t    write(lsp_wchar_t c);
-
-                virtual status_t    write(const lsp_wchar_t *c, size_t count);
-
-                virtual status_t    write_ascii(const char *s);
-
-                virtual status_t    write_ascii(const char *s, size_t count);
-
-                virtual status_t    writeln_ascii(const char *s);
-
-                virtual status_t    write(const LSPString *s);
-
-                virtual status_t    write(const LSPString *s, ssize_t first);
-
-                virtual status_t    write(const LSPString *s, ssize_t first, ssize_t last);
-
-                virtual status_t    flush();
-
-                virtual status_t    close();
+            public:
+                virtual status_t    write(lsp_wchar_t c) override;
+                virtual status_t    write(const lsp_wchar_t *c, size_t count) override;
+                virtual status_t    write_ascii(const char *s) override;
+                virtual status_t    write_ascii(const char *s, size_t count) override;
+                virtual status_t    writeln_ascii(const char *s) override;
+                virtual status_t    write(const LSPString *s) override;
+                virtual status_t    write(const LSPString *s, ssize_t first) override;
+                virtual status_t    write(const LSPString *s, ssize_t first, ssize_t last) override;
+                virtual status_t    flush() override;
+                virtual status_t    close() override;
         };
-    }
+
+    } /* namespace io */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_IO_STRINWRITER_H_ */

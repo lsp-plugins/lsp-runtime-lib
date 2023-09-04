@@ -54,6 +54,8 @@ namespace lsp
                 status_t    write_bool(bool v, size_t flags);
                 status_t    write_string_impl(const LSPString *key, const LSPString *v, size_t flags);
 
+                status_t    do_close();
+
             public:
                 explicit Serializer();
                 Serializer(const Serializer &) = delete;

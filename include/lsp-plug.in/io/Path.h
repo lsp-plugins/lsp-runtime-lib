@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 8 февр. 2019 г.
@@ -64,15 +64,18 @@ namespace lsp
                 LSPString   sPath;
 
             private:
-                Path & operator = (const Path &);
-
                 inline void     fixup_path();
                 status_t        compute_relative(Path *base);
 
             public:
                 explicit Path();
+                Path(const Path &) = delete;
+                Path(Path &&) = delete;
                 ~Path();
                 
+                Path & operator = (const Path &) = delete;
+                Path & operator = (Path &&) = delete;
+
                 Path           *clone() const;
 
             public:
@@ -508,7 +511,7 @@ namespace lsp
                 static bool     valid_file_name(const LSPString *fname);
                 static bool     valid_path_name(const LSPString *fname);
         };
-    }
+    } /* namespace io */
 
     // LLTL specialization for Path class
     namespace lltl
@@ -547,7 +550,7 @@ namespace lsp
                     free        = free_func;
                 }
             };
-    }
+    } /* namespace lltl */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_IO_PATH_H_ */

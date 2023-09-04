@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 16 сент. 2019 г.
@@ -431,8 +431,8 @@ namespace lsp
                         break;
                     case 'd': // decimal
                     case 'D':
-                        radix       = 10;
-                        rradix      = 0.1;
+                        // radix       = 10;    // assigned above
+                        // rradix      = 0.1;   // assigned above
                         c           = commit_lookup(TT_UNKNOWN);
                         break;
                     case 'x': // hexadecimal
@@ -615,14 +615,14 @@ namespace lsp
                     if (!(flags & TF_COLOR))
                         return commit(TT_SHARP);
 
-                    c = commit_lookup(TT_SHARP);
+                    commit_lookup(TT_SHARP);
                     return lookup_color();
 
                 case '@': // TT_AT
                     if (!(flags & TF_COLOR))
                         return commit(TT_AT);
 
-                    c = commit_lookup(TT_AT);
+                    commit_lookup(TT_AT);
                     return lookup_color();
 
                 case '*': // TT_MUL, TT_POW
@@ -697,7 +697,7 @@ namespace lsp
 
                 case ':': // TT_COLON, TT_IDENTIFIER
                 {
-                    c = commit(TT_COLON);
+                    commit(TT_COLON);
                     return lookup_identifier(TT_IDENTIFIER);
                 }
 

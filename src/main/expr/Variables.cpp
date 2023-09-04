@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 19 сент. 2019 г.
@@ -306,7 +306,10 @@ namespace lsp
         {
             variable_t *var = new variable_t;
             if (!var->name.set(name))
+            {
+                delete var;
                 return STATUS_NO_MEM;
+            }
 
             init_value(&var->value);
             status_t res = copy_value(&var->value, value);
@@ -374,5 +377,5 @@ namespace lsp
             vVars.flush();
         }
 
-    } /* namespace calc */
+    } /* namespace expr */
 } /* namespace lsp */

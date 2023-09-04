@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 окт. 2019 г.
@@ -121,7 +121,8 @@ namespace lsp
          * @param dst object to initialize
          */
         void init_serial_flags(serial_flags_t *dst);
-    }
-}
+
+    } /* namespace json */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_FMT_JSON_TOKEN_H_ */

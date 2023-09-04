@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 23 окт. 2020 г.
@@ -108,22 +108,15 @@ namespace lsp
                 nError = isq->wrap(is, WRAP_CLOSE | WRAP_DELETE, charset);
                 if (nError == STATUS_OK)
                     return isq;
+
+                isq->close();
+                delete isq;
             }
             else
                 nError = STATUS_NO_MEM;
 
-            // Destroy allocated data
-            if (isq != NULL)
-            {
-                isq->close();
-                delete isq;
-            }
-
-            if (is != NULL)
-            {
-                is->close();
-                delete is;
-            }
+            is->close();
+            delete is;
 
             return NULL;
         }
@@ -195,5 +188,6 @@ namespace lsp
 
             return res;
         }
-    }
-}
+
+    } /* namespace resource */
+} /* namespace lsp */

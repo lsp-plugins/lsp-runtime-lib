@@ -81,11 +81,10 @@ namespace lsp
                  */
                 explicit InSharedMemoryStream(void *data, size_t size, lsp_memdrop_t drop);
 
-                virtual ~InSharedMemoryStream() override;
-
-            public:
                 InSharedMemoryStream & operator = (const InSharedMemoryStream &);
                 InSharedMemoryStream & operator = (InSharedMemoryStream &&);
+
+                virtual ~InSharedMemoryStream() override;
 
             public:
                 /**

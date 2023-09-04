@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 30 янв. 2021 г.
@@ -151,8 +151,8 @@ namespace lsp
                 inline void         undef()         { undef_node(pNode);                                            }
                 inline void         set_null()      { undef_node(pNode);                                            }
         };
-    }
-}
+    } /* namespace json */
+} /* namespace lsp */
 
 #include <lsp-plug.in/fmt/json/dom/Integer.h>
 #include <lsp-plug.in/fmt/json/dom/Double.h>

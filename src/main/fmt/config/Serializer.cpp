@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 1 мая 2020 г.
@@ -39,7 +39,7 @@ namespace lsp
         
         Serializer::~Serializer()
         {
-            close();
+            do_close();
         }
 
         status_t Serializer::write_key(const LSPString *key)
@@ -342,27 +342,26 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t Serializer::close()
+        status_t Serializer::do_close()
         {
-            status_t res = STATUS_OK;
+            if (pOut == NULL)
+                return STATUS_OK;
 
             // Close handles
-            if (pOut != NULL)
-            {
-                if (nWFlags & WRAP_CLOSE)
-                {
-                    status_t xres = pOut->close();
-                    if (res == STATUS_OK)
-                        res = xres;
-                }
+            status_t res = STATUS_OK;
+            if (nWFlags & WRAP_CLOSE)
+                res     = update_status(res, pOut->close());
+            if (nWFlags & WRAP_DELETE)
+                delete pOut;
 
-                if (nWFlags & WRAP_DELETE)
-                    delete pOut;
-
-                pOut = NULL;
-            }
+            pOut = NULL;
 
             return res;
+        }
+
+        status_t Serializer::close()
+        {
+            return do_close();
         }
 
         status_t Serializer::write_comment(const LSPString *v)

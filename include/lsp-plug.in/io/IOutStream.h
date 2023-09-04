@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 нояб. 2017 г.
@@ -32,9 +32,6 @@ namespace lsp
     {
         class IOutStream
         {
-            private:
-                IOutStream & operator = (const IOutStream &);
-
             protected:
                 status_t        nErrorCode;
 
@@ -43,7 +40,12 @@ namespace lsp
 
             public:
                 explicit IOutStream();
+                IOutStream(const IOutStream &) = delete;
+                IOutStream(IOutStream &&) = delete;
                 virtual ~IOutStream();
+
+                IOutStream & operator = (const IOutStream &) = delete;
+                IOutStream & operator = (IOutStream &&) = delete;
 
             public:
                 /** Get last I/O error code
@@ -105,7 +107,7 @@ namespace lsp
                 virtual status_t    close();
         };
     
-    } /* namespace ws */
+    } /* namespace io */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_IO_IOUTSTREAM_H_ */

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 13 февр. 2021 г.
@@ -62,13 +62,13 @@ namespace lsp
                  * Try to cast value to Double and return the casted value
                  * @return Double value or 0 if cast was unsuccessful
                  */
-                ssize_t get() const;
+                double get() const;
 
                 /**
                  * Strict get: check that value is of Double type and return it
                  * @return Double value or 0 if value is not Double
                  */
-                ssize_t sget() const;
+                double sget() const;
 
                 /**
                  * Cast value to Double
@@ -90,8 +90,9 @@ namespace lsp
                  */
                 status_t sset(double value);
         };
-    }
-}
+
+    } /* namespace json */
+} /* namespace lsp */
 
 
 

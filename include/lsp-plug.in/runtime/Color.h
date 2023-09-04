@@ -114,12 +114,17 @@ namespace lsp
             Color();
             explicit Color(const Color &src);
             explicit Color(const Color *src);
+            Color(Color &&src);
             explicit Color(uint32_t rgb);
+
             Color(float r, float g, float b);
             Color(float r, float g, float b, float a);
             Color(const Color &src, float a);
             Color(const Color *src, float a);
             Color(uint32_t rgb, float a);
+
+            Color &operator = (const Color & src);
+            Color &operator = (Color && src);
 
         // Copying and swapping
         public:

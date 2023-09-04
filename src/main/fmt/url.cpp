@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 21 дек. 2019 г.
@@ -53,6 +53,11 @@ namespace lsp
             size_t bcap=0, blen=0;
             LSPString tmp;
 
+            lsp_finally {
+                if (buf != NULL)
+                    free(buf);
+            };
+
             while (first < last)
             {
                 lsp_wchar_t c = src->char_at(first);
@@ -63,21 +68,17 @@ namespace lsp
                     {
                         // Check availability
                         if ((last - first) < 3)
-                        {
-                            if (buf != NULL)
-                                ::free(buf);
                             return STATUS_CORRUPTED;
-                        }
 
                         // Fetch byte code
-                        code    = decode_hex(src->char_at(++first)) << 4;
-                        code   |= decode_hex(src->char_at(++first));
-                        if (code < 0)
-                        {
-                            if (buf != NULL)
-                                ::free(buf);
+                        int hi  = decode_hex(src->char_at(++first));
+                        if (hi < 0)
                             return STATUS_CORRUPTED;
-                        }
+                        int lo  = decode_hex(src->char_at(++first));
+                        if (lo < 0)
+                            return STATUS_CORRUPTED;
+
+                        code    = (hi << 4) | lo;
 
                         // Append code to buffer
                         if (blen >= bcap)
@@ -85,11 +86,7 @@ namespace lsp
                             bcap           += ((blen + 0x10) & ~0xf);
                             char *nbuf      = reinterpret_cast<char *>(::realloc(buf, bcap * sizeof(char)));
                             if (nbuf == NULL)
-                            {
-                                if (buf != NULL)
-                                    ::free(buf);
                                 return STATUS_NO_MEM;
-                            }
                             buf             = nbuf;
                         }
                         buf[blen++]     = code;
@@ -100,39 +97,24 @@ namespace lsp
 
                     // Perform encoding
                     if (!tmp.set_utf8(buf, blen))
-                    {
-                        if (buf != NULL)
-                            ::free(buf);
                         return STATUS_CORRUPTED;
-                    }
 
                     // Append data
                     if (!dst->append(&tmp))
-                    {
-                        if (buf != NULL)
-                            ::free(buf);
                         return STATUS_NO_MEM;
-                    }
 
                     // Reset buffer length
                     blen    = 0;
                 }
                 else if (!dst->append(c))
-                {
-                    if (buf != NULL)
-                        ::free(buf);
                     return STATUS_NO_MEM;
-                }
                 else
                     ++first;
             }
 
-            // Destroy buffer
-            if (buf != NULL)
-                ::free(buf);
-
             return STATUS_OK;
         }
-    }
-}
+
+    } /* namespace url */
+} /* namespace lsp */
 

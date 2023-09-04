@@ -73,7 +73,7 @@ namespace lsp
             return res;
         }
 
-        ssize_t Double::get() const
+        double Double::get() const
         {
             if (pNode == NULL)
                 return 0.0;
@@ -111,9 +111,9 @@ namespace lsp
             return 0.0;
         }
 
-        ssize_t Double::sget() const
+        double Double::sget() const
         {
-            return (is_double()) ? pNode->nValue : 0;
+            return (is_double()) ? pNode->fValue : 0;
         }
 
         status_t Double::cast()
@@ -142,8 +142,9 @@ namespace lsp
             pNode->fValue   = value;
             return STATUS_OK;
         }
-    }
-}
+
+    } /* namespace json */
+} /* namespace lsp */
 
 
 
