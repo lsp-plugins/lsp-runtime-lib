@@ -59,7 +59,6 @@ namespace lsp
             private:
                 friend class ObjectStream;
                 friend class RawArray;
-                Object & operator = (const Object &);
 
             protected:
                 const char     *pClass;
@@ -80,7 +79,12 @@ namespace lsp
 
             public:
                 explicit Object(const char *class_name);
+                Object(const Object &) = delete;
+                Object(Object &&) = delete;
                 virtual ~Object();
+
+                Object & operator = (const Object &) = delete;
+                Object & operator = (Object &&) = delete;
 
             public:
                 inline const char *class_name() const { return pClass; }

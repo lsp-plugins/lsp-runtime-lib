@@ -46,7 +46,7 @@ namespace lsp
             nParVx          = 0;
             nTexVx          = 0;
             nNormVx         = 0;
-            sEvent.type     = event_type_t(-1);
+            sEvent.type     = EV_NONE;
         }
 
         PullParser::~PullParser()
@@ -216,7 +216,7 @@ namespace lsp
             nParVx          = 0;
             nTexVx          = 0;
             nNormVx         = 0;
-            sEvent.type     = event_type_t(-1);
+            sEvent.type     = EV_NONE;
 
             return STATUS_OK;
         }
@@ -240,12 +240,7 @@ namespace lsp
             if (pIn != NULL)
             {
                 if (nWFlags & WRAP_CLOSE)
-                {
-                    if (res == STATUS_OK)
-                        res = pIn->close();
-                    else
-                        pIn->close();
-                }
+                    res         = pIn->close();
 
                 if (nWFlags & WRAP_DELETE)
                     delete pIn;
@@ -258,14 +253,14 @@ namespace lsp
 
         const event_t *PullParser::current() const
         {
-            return (sEvent.type != event_type_t(-1)) ? &sEvent : NULL;
+            return (sEvent.type != EV_NONE) ? &sEvent : NULL;
         };
 
         status_t PullParser::current(event_t *ev) const
         {
             if (pIn == NULL)
                 return STATUS_CLOSED;
-            if (sEvent.type == event_type_t(-1))
+            if (sEvent.type == EV_NONE)
                 return STATUS_NO_DATA;
             return copy_event(ev);
         }
@@ -303,7 +298,7 @@ namespace lsp
             status_t res        = STATUS_OK;
 
             // Clear current event
-            sEvent.type         = event_type_t(-1);
+            sEvent.type         = EV_NONE;
             sEvent.vertex.x     = 0.0f;
             sEvent.vertex.y     = 0.0f;
             sEvent.vertex.z     = 0.0f;
@@ -326,7 +321,7 @@ namespace lsp
                     return res;
 
                 // Got event?
-                if (sEvent.type != event_type_t(-1))
+                if (sEvent.type != EV_NONE)
                     return STATUS_OK;
             }
 

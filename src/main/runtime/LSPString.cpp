@@ -1862,7 +1862,7 @@ namespace lsp
         if (cd == iconv_t(-1))
             return set_utf8(s, n);
 
-        size_t insize   = (n < 0) ? strlen(s) : n;
+        size_t insize   = n;
         size_t outsize  = BUF_SIZE;
         char *inbuf     = const_cast<char *>(s);
         char *outbuf    = buf;

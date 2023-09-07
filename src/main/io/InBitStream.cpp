@@ -39,7 +39,7 @@ namespace lsp
 
         InBitStream::~InBitStream()
         {
-            close();
+            do_close();
         }
 
         status_t InBitStream::wrap(FILE *fd, bool close)
@@ -179,7 +179,7 @@ namespace lsp
             return set_error(STATUS_OK);
         }
 
-        status_t InBitStream::close()
+        status_t InBitStream::do_close()
         {
             status_t res = STATUS_OK;
 
@@ -198,8 +198,12 @@ namespace lsp
             nBuffer     = 0;
             nBits       = 0;
 
-            // Return result
-            return set_error(res);
+            return res;
+        }
+
+        status_t InBitStream::close()
+        {
+            return set_error(do_close());
         }
 
         ssize_t InBitStream::read(void *dst, size_t count)

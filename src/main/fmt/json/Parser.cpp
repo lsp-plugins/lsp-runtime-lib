@@ -217,11 +217,7 @@ namespace lsp
             if (pSequence != NULL)
             {
                 if (nWFlags & WRAP_CLOSE)
-                {
-                    status_t xres = pSequence->close();
-                    if (res == STATUS_OK)
-                        res = xres;
-                }
+                    res     = update_status(res, pSequence->close());
 
                 if (nWFlags & WRAP_DELETE)
                     delete pSequence;

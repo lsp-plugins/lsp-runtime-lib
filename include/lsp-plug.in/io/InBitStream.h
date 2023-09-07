@@ -43,12 +43,13 @@ namespace lsp
             protected:
                 status_t        fill();
                 void            unread(umword_t v, size_t bits);
+                status_t        do_close();
 
             public:
                 explicit InBitStream();
                 InBitStream(const InBitStream &) = delete;
                 InBitStream(InBitStream &&) = delete;
-                virtual ~InBitStream();
+                virtual ~InBitStream() override;
 
                 InBitStream & operator = (const InBitStream &) = delete;
                 InBitStream & operator = (InBitStream &&) = delete;
@@ -109,12 +110,12 @@ namespace lsp
                 status_t open(const Path *path);
 
             public:
-                virtual ssize_t     read(void *dst, size_t count);
+                virtual ssize_t     read(void *dst, size_t count) override;
                 ssize_t             bread(void *buf, size_t bits);
 
                 virtual wssize_t    bskip(wsize_t amount);
 
-                virtual status_t    close();
+                virtual status_t    close() override;
 
             public:
                 ssize_t             readb(bool *value);

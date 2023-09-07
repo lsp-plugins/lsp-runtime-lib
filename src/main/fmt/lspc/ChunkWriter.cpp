@@ -31,10 +31,10 @@ namespace lsp
             ChunkAccessor(fd, magic),
             sStream(this)
         {
-            nPosition = 0;
+            nChunksOut      = 0;
+            nPosition       = 0;
             if (last_error() != STATUS_OK)
                 return;
-            nChunksOut      = 0;
             if (pFile != NULL)
                 set_error(pFile->allocate(&nUID));
         }

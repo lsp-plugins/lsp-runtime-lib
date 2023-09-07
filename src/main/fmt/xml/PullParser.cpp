@@ -39,9 +39,13 @@ namespace lsp
             nState      = PS_READ_MISC;
             enVersion   = XML_VERSION_1_0;
             nFlags      = 0;
-            nStates     = 0;
 
+            for (size_t i=0; i<4; ++i)
+                vUngetch[i]     = 0;
             nUngetch    = 0;
+            for (size_t i=0; i<4; ++i)
+                vStates[i]      = PS_END_DOCUMENT;
+            nStates     = 0;
         }
         
         PullParser::~PullParser()
@@ -234,17 +238,12 @@ namespace lsp
             if (pIn != NULL)
             {
                 if (nWFlags & WRAP_CLOSE)
-                {
-                    if (res == STATUS_OK)
-                        res = pIn->close();
-                    else
-                        pIn->close();
-                }
+                    res         = pIn->close();
 
                 if (nWFlags & WRAP_DELETE)
                     delete pIn;
 
-                pIn     = NULL;
+                pIn         = NULL;
             }
 
             return res;

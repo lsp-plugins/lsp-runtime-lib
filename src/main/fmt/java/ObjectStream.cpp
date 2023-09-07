@@ -204,9 +204,9 @@ namespace lsp
         {
             // Read stream header
             obj_stream_hdr_t hdr;
-            status_t res = is->read_fully(&hdr, sizeof(hdr));
-            if (res != sizeof(hdr))
-                return ((res >= 0) || (res == STATUS_EOF)) ? STATUS_BAD_FORMAT : res;
+            ssize_t nread = is->read_fully(&hdr, sizeof(hdr));
+            if (nread != sizeof(hdr))
+                return ((nread >= 0) || (nread == -STATUS_EOF)) ? STATUS_BAD_FORMAT : -nread;
             if (BE_TO_CPU(hdr.magic) != JAVA_STREAM_MAGIC)
                 return STATUS_BAD_FORMAT;
             uint8_t *block  = reinterpret_cast<uint8_t *>(::malloc(JAVA_MAX_BLOCK_SIZE));
@@ -769,31 +769,34 @@ namespace lsp
                     size_t extra = sBlock.unread + sBlock.size - sBlock.offset;
                     uint8_t *xptr = reinterpret_cast<uint8_t *>(::realloc(ptr, capacity + extra));
                     if (xptr == NULL)
-                        res     = STATUS_NO_MEM;
-                    if (res == STATUS_OK)
                     {
-                        // Copy data from block
-                        size_t gap      = sBlock.size - sBlock.offset;
-                        if (gap > 0)
-                        {
-                            ::memcpy(&xptr[capacity], &sBlock.data[sBlock.size], gap);
-                            capacity       += gap;
-                            sBlock.size     = sBlock.offset;
-                        }
-
-                        // Read the left data
-                        if (sBlock.unread > 0)
-                        {
-                            res             = pIS->read_fully(&xptr[capacity], sBlock.unread);
-                            if (res == ssize_t(sBlock.unread))
-                            {
-                                capacity       += res;
-                                sBlock.unread   = 0;
-                            }
-                            else
-                                res = STATUS_CORRUPTED;
-                        }
+                        res     = STATUS_NO_MEM;
+                        break;
                     }
+                    ptr             = xptr;
+
+                    // Copy data from block
+                    size_t gap      = sBlock.size - sBlock.offset;
+                    if (gap > 0)
+                    {
+                        ::memcpy(&xptr[capacity], &sBlock.data[sBlock.size], gap);
+                        capacity       += gap;
+                        sBlock.size     = sBlock.offset;
+                    }
+
+                    // Read the left data
+                    if (sBlock.unread > 0)
+                    {
+                        res             = pIS->read_fully(&xptr[capacity], sBlock.unread);
+                        if (res == ssize_t(sBlock.unread))
+                        {
+                            capacity       += res;
+                            sBlock.unread   = 0;
+                        }
+                        else
+                            res = STATUS_CORRUPTED;
+                    }
+
                     if (res == STATUS_OK)
                         res = set_block_mode(false, NULL);
                 }
@@ -815,7 +818,11 @@ namespace lsp
                         uint8_t blen;
                         res             = pIS->read_fully(&blen, sizeof(blen));
                         if (res != sizeof(blen))
+                        {
                             res = (res < 0) ? -res : STATUS_CORRUPTED;
+                            break;
+                        }
+
                         sBlock.enabled  = true;
                         sBlock.offset   = 0;
                         sBlock.size     = 0;
@@ -829,7 +836,11 @@ namespace lsp
                         int32_t blen;
                         res             = pIS->read_fully(&blen, sizeof(blen));
                         if (res != sizeof(blen))
+                        {
                             res = (res < 0) ? -res : STATUS_CORRUPTED;
+                            break;
+                        }
+
                         sBlock.enabled  = true;
                         sBlock.offset   = 0;
                         sBlock.size     = 0;
@@ -999,12 +1010,12 @@ namespace lsp
                 size_t slots = 0;
                 for (ObjectStreamClass *curr = desc; curr != NULL; curr = curr->pParent)
                     ++slots;
-                desc->vSlots    = reinterpret_cast<ObjectStreamClass **>(::malloc(slots * sizeof(ObjectStreamClass *)));
-                desc->nSlots    = slots;
-                if (desc->vSlots != NULL)
+                desc->vClasses    = reinterpret_cast<ObjectStreamClass **>(::malloc(slots * sizeof(ObjectStreamClass *)));
+                desc->nClasses    = slots;
+                if (desc->vClasses != NULL)
                 {
                     for (ObjectStreamClass *curr = desc; curr != NULL; curr = curr->pParent)
-                        desc->vSlots[--slots]   = curr;
+                        desc->vClasses[--slots]   = curr;
                 }
             }
 
@@ -1127,16 +1138,16 @@ namespace lsp
         status_t ObjectStream::parse_serial_data(Object *dst, ObjectStreamClass *desc)
         {
             // Initialize slots
-            dst->vSlots     = reinterpret_cast<object_slot_t *>(::malloc(desc->nSlots * sizeof(object_slot_t)));
+            dst->vSlots     = reinterpret_cast<object_slot_t *>(::malloc(desc->nClasses * sizeof(object_slot_t)));
             if (dst->vSlots == NULL)
                 return STATUS_NO_MEM;
-            dst->nSlots     = desc->nSlots;
+            dst->nSlots     = desc->nClasses;
 
             // Estimate number of initial data for allocation
             size_t allocated = 0, offset = 0;
-            for (size_t i=0, n=desc->nSlots; i<n; ++i)
+            for (size_t i=0, n=desc->nClasses; i<n; ++i)
             {
-                ObjectStreamClass *cl = desc->vSlots[i];
+                ObjectStreamClass *cl = desc->vClasses[i];
 //                if (cl->is_serializable()) // Skip serializable objects
 //                    continue;
                 allocated      += align_size(cl->nSizeOf, MINIMUM_ALIGN);
@@ -1150,9 +1161,9 @@ namespace lsp
 
             // Perform read of the object
             status_t res = STATUS_OK;
-            for (size_t i=0, n=desc->nSlots; i<n; ++i)
+            for (size_t i=0, n=desc->nClasses; i<n; ++i)
             {
-                ObjectStreamClass *cl   = desc->vSlots[i];
+                ObjectStreamClass *cl   = desc->vClasses[i];
                 object_slot_t *sl       = &dst->vSlots[i];
 
                 sl->desc            = cl;
@@ -1182,9 +1193,10 @@ namespace lsp
                         res = STATUS_NO_MEM;
                         break;
                     }
+                    dst->vData      = xdata;
 
                     // Copy data to the class structure
-                    ::memcpy(&xdata[offset], tmp, tail);
+                    ::memcpy(&dst->vData[offset], tmp, tail);
                     ::free(tmp);
                     offset         += space;
                 }

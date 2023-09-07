@@ -43,7 +43,7 @@ namespace lsp
                 case JFT_OBJECT:    return sizeof(Object *);
                 default:            break;
             }
-            return 0;
+            return sizeof(size_t);
         }
 
         size_t aligned_offset(size_t offset, ftype_t type)
