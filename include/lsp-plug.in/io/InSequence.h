@@ -45,13 +45,16 @@ namespace lsp
                 LSPString       sLine;
     
             private:
-                InSequence & operator = (const InSequence &);
-
                 lsp_swchar_t read_internal();
 
             public:
                 explicit InSequence();
+                InSequence(const InSequence &) = delete;
+                InSequence(InSequence &&) = delete;
                 virtual ~InSequence();
+
+                InSequence & operator = (const InSequence &) = delete;
+                InSequence & operator = (InSequence &&) = delete;
 
             public:
                 /** Wrap stdio file descriptor. The Sequence should be in closed state.

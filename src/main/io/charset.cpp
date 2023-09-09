@@ -2504,7 +2504,7 @@ namespace lsp
         {
             if (c <= 0x40f)
                 return c + 0x50;
-            if ((c >= 0x410) && (c <= 0x42f))
+            if (c <= 0x42f)
                 return c + 0x20;
             if (!(c & 0x01))
             {

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 29 апр. 2020 г.
@@ -61,7 +61,7 @@ namespace lsp
         
         PullParser::~PullParser()
         {
-            close();
+            do_close();
         }
 
         status_t PullParser::open(const char *path, const char *charset)
@@ -215,28 +215,27 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t PullParser::close()
+        status_t PullParser::do_close()
         {
-            status_t res = STATUS_OK;
-
             // Release input sequence
-            if (pIn != NULL)
-            {
-                if (nWFlags & WRAP_CLOSE)
-                {
-                    if (res == STATUS_OK)
-                        res = pIn->close();
-                    else
-                        pIn->close();
-                }
+            if (pIn == NULL)
+                return STATUS_OK;
 
-                if (nWFlags & WRAP_DELETE)
-                    delete pIn;
+            status_t res = STATUS_OK;
+            if (nWFlags & WRAP_CLOSE)
+                res         = update_status(res, pIn->close());
 
-                pIn     = NULL;
-            }
+            if (nWFlags & WRAP_DELETE)
+                delete pIn;
+
+            pIn     = NULL;
 
             return res;
+        }
+
+        status_t PullParser::close()
+        {
+            return do_close();
         }
 
         status_t PullParser::next(param_t *param)
@@ -393,10 +392,11 @@ namespace lsp
                             case 'n':   ch = '\n';  break;
                             case 'r':   ch = '\r';  break;
                             case 't':   ch = '\t';  break;
-                            case '\\':  ch = '\\';  break;
-                            case ' ':   ch = ' ';   break;
-                            case '\"':  ch = '\"';  break;
-                            case '#':   ch = '#';   break;
+                            case '\\':
+                            case ' ':
+                            case '\"':
+                            case '#':
+                                break;
                             default:
                                 if (!sValue.append('\\'))
                                     return STATUS_NO_MEM;

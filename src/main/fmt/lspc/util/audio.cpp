@@ -350,13 +350,14 @@ namespace lsp
             lspc::AudioReader *rd = new lspc::AudioReader();
             if (rd == NULL)
                 return STATUS_NO_MEM;
-            status_t res = rd->open(file, chunk_id);
-            if (res != STATUS_OK)
-                return res;
             lsp_finally {
                 if (rd != NULL)
                     delete rd;
             };
+
+            status_t res = rd->open(file, chunk_id);
+            if (res != STATUS_OK)
+                return res;
 
             // Get audio parameters
             mm::audio_stream_t sparams;

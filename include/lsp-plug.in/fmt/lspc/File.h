@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 янв. 2018 г.
@@ -38,9 +38,6 @@ namespace lsp
                 friend class ChunkReader;
                 friend class ChunkWriter;
 
-            private:
-                File & operator = (const File &);
-
             protected:
                 Resource           *pFile;      // Shared resource
                 bool                bWrite;     // Read/Write mode
@@ -51,7 +48,12 @@ namespace lsp
 
             public:
                 explicit File();
+                File(const File &) = delete;
+                File(File &&) = delete;
                 virtual ~File();
+
+                File & operator = (const File &) = delete;
+                File & operator = (File &&) = delete;
 
             public:
                 /** Open file for reading
@@ -158,8 +160,8 @@ namespace lsp
                  */
                 inline ChunkReader *find_chunk(uint32_t magic, uint32_t start_id = 1) { return find_chunk(magic, NULL, start_id); }
         };
-    }
 
+    } /* namespace lspc */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_FMT_LSPC_FILE_H_ */

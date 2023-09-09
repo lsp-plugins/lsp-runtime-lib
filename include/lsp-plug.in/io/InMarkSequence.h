@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 12 февр. 2021 г.
@@ -31,7 +31,7 @@ namespace lsp
     namespace io
     {
         /**
-         * Buffered sequence, extends the underlying sequenc with mark() and reset() methods
+         * Buffered sequence, extends the underlying sequence with mark() and reset() methods
          */
         class InMarkSequence: public IInSequence
         {
@@ -49,30 +49,28 @@ namespace lsp
                 ssize_t             grow_buffer(size_t amount);
                 void                clear_mark();
 
-            private:
-                InMarkSequence & operator = (const InMarkSequence &);
-
             public:
                 explicit InMarkSequence();
-                virtual ~InMarkSequence();
+                InMarkSequence(const InMarkSequence &) = delete;
+                InMarkSequence(InMarkSequence &&) = delete;
+                virtual ~InMarkSequence() override;
+
+                InMarkSequence & operator = (const InMarkSequence &) = delete;
+                InMarkSequence & operator = (InMarkSequence &&) = delete;
 
             public:
                 status_t                wrap(IInSequence *in, bool close = false);
 
-                virtual status_t        close();
-
             public:
-                virtual ssize_t         read(lsp_wchar_t *dst, size_t count);
-
-                virtual lsp_swchar_t    read();
-
-                virtual ssize_t         skip(size_t count);
-
-                virtual status_t        mark(ssize_t limit);
-
-                virtual status_t        reset();
+                virtual status_t        close() override;
+                virtual ssize_t         read(lsp_wchar_t *dst, size_t count) override;
+                virtual lsp_swchar_t    read() override;
+                virtual ssize_t         skip(size_t count) override;
+                virtual status_t        mark(ssize_t limit) override;
+                virtual status_t        reset() override;
         };
-    }
+
+    } /* namespace io */
 } /* namespace lsp */
 
 

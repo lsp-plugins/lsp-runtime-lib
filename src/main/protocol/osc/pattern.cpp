@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 29 мая 2019 г.
@@ -243,7 +243,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        static const char *pattern_match_range(const char **xpart, const char *address)
+        static const char *pattern_match_range(const char **xpart, const char *address, const char *end)
         {
             const char *part = *xpart;
             bool invert = false;
@@ -256,7 +256,7 @@ namespace lsp
             }
 
             // Immediate end of range?
-            if (*part == ']')
+            if ((*part == ']') || (address >= end))
                 return (invert) ? NULL : address;
 
             // Get character for check and validate
@@ -292,9 +292,9 @@ namespace lsp
             }
         }
 
-        static const char *pattern_match_list(const char **xpart, const char *address)
+        static const char *pattern_match_list(const char **xpart, const char *address, const char *end)
         {
-            size_t len = 0;
+            ssize_t len = 0;
             bool matched = false;
             const char *part = *xpart, *item = *xpart;
 
@@ -306,7 +306,7 @@ namespace lsp
                 {
                     // End of list?
                     case '}':
-                        if (!matched)
+                        if ((!matched) && ((end - address) >= len))
                         {
                             if ((matched = (::memcmp(item, address, len) == 0)))
                                 address    = &address[len];
@@ -318,8 +318,11 @@ namespace lsp
                     case ',':
                         if (matched)
                             break;
-                        else if ((matched = (::memcmp(item, address, len) == 0)))
-                            address    = &address[len];
+                        if ((end - address) >= len)
+                        {
+                            if ((matched = (::memcmp(item, address, len) == 0)))
+                                address    = &address[len];
+                        }
 
                         // Update list item parameters
                         item = part;
@@ -334,7 +337,7 @@ namespace lsp
             }
         }
 
-        static const char *pattern_match_part(const char *part, const char *address)
+        static const char *pattern_match_part(const char *part, const char *address, const char *end)
         {
             while (true)
             {
@@ -359,7 +362,7 @@ namespace lsp
                         do
                         {
                             // Do forward lookup
-                            const char *new_address = pattern_match_part(part, address);
+                            const char *new_address = pattern_match_part(part, address, end);
                             if (new_address)
                                 return new_address;
                             pch     = uint8_t(*(address++));
@@ -370,13 +373,13 @@ namespace lsp
 
                     // Start of character range?
                     case '[':
-                        if ((address = pattern_match_range(&part, address)))
+                        if ((address = pattern_match_range(&part, address, end)))
                             break;
                         return address;
 
                     // Start of string list?
                     case '{':
-                        if ((address = pattern_match_list(&part, address)))
+                        if ((address = pattern_match_list(&part, address, end)))
                             break;
                         return address;
 
@@ -397,6 +400,7 @@ namespace lsp
             uint8_t ch = uint8_t(*(address++));
             if (ch != '/')
                 return false;
+            const char *end     = address + strlen(address);
 
             for (size_t parts=0; parts < pattern->nparts; )
             {
@@ -408,7 +412,7 @@ namespace lsp
                     return false;
 
                 // Match address string with pattern
-                if (!(address = pattern_match_part(part, address)))
+                if (!(address = pattern_match_part(part, address, end)))
                     return false;
 
                 switch (*address)
@@ -433,7 +437,7 @@ namespace lsp
             *format = pattern->format;
             return STATUS_OK;
         }
-    }
-}
+    } /* namespace osc */
+} /* namespace lsp */
 
 

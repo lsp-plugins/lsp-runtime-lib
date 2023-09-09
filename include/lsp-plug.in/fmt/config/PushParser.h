@@ -35,9 +35,6 @@ namespace lsp
          */
         class PushParser
         {
-            private:
-                PushParser & operator = (const PushParser &);
-
             protected:
                 PullParser      sParser;
 
@@ -46,7 +43,12 @@ namespace lsp
 
             public:
                 explicit PushParser();
+                PushParser(const PushParser &) = delete;
+                PushParser(PushParser &&) = delete;
                 virtual ~PushParser();
+
+                PushParser & operator = (const PushParser &) = delete;
+                PushParser & operator = (PushParser &&) = delete;
 
             public:
                 /**

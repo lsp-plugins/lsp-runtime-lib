@@ -306,7 +306,7 @@ namespace lsp
                     predicate = false;
                     if (wc < 0)
                     {
-                        res = (wc == STATUS_EOF) ? STATUS_OK : -wc;
+                        res = (wc == -STATUS_EOF) ? STATUS_OK : -wc;
                         break;
                     }
                     else if (wc != '{')

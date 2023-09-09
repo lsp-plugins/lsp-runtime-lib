@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 окт. 2019 г.
@@ -35,8 +35,6 @@ namespace lsp
         class Tokenizer
         {
             private:
-                Tokenizer & operator = (const Tokenizer &);
-
                 friend class Serializer;
 
             protected:
@@ -82,7 +80,12 @@ namespace lsp
 
             public:
                 explicit Tokenizer(io::IInSequence *in);
+                Tokenizer(const Tokenizer &) = delete;
+                Tokenizer(Tokenizer &&) = delete;
                 virtual ~Tokenizer();
+
+                Tokenizer & operator = (const Tokenizer &) = delete;
+                Tokenizer & operator = (Tokenizer &&) = delete;
 
             public:
                 /**

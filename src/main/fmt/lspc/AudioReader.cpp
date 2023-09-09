@@ -193,21 +193,18 @@ namespace lsp
             status_t res = STATUS_OK;
             if (pRD != NULL)
             {
-                status_t xr     = (nFlags & F_CLOSE_READER) ? pRD->close() : STATUS_OK;
+                if (nFlags & F_CLOSE_READER)
+                    res         = update_status(res, pRD->close());
                 if (nFlags & F_DROP_READER)
                     delete pRD;
                 pRD             = NULL;
-                if (res == STATUS_OK)
-                    res             = xr;
             }
 
             // Close LSPC file (if required)
             if ((nFlags & F_CLOSE_FILE) && (pFD != NULL))
             {
-                status_t xr     = pFD->close();
+                res             = update_status(res, pFD->close());
                 pFD             = NULL;
-                if (res == STATUS_OK)
-                    res             = xr;
             }
 
             // Drop buffers
@@ -231,6 +228,7 @@ namespace lsp
             sBuf.nOff       = 0;
             sBuf.nSize      = 0;
             pDecode         = NULL;
+
             return res;
         }
 

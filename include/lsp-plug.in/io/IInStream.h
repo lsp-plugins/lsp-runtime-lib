@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 нояб. 2017 г.
@@ -37,9 +37,6 @@ namespace lsp
          */
         class IInStream
         {
-            private:
-                IInStream & operator = (const IInStream &);
-
             protected:
                 status_t        nErrorCode;
 
@@ -48,7 +45,12 @@ namespace lsp
 
             public:
                 explicit IInStream();
+                IInStream(const IInStream &) = delete;
+                IInStream(IInStream &&) = delete;
                 virtual ~IInStream();
+
+                IInStream & operator = (const IInStream &) = delete;
+                IInStream & operator = (IInStream &&) = delete;
 
             public:
                 /** Get last I/O error code
@@ -130,7 +132,7 @@ namespace lsp
                 virtual status_t    close();
         };
     
-    } /* namespace ws */
+    } /* namespace io */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_IO_IINSTREAM_H_ */

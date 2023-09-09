@@ -34,6 +34,7 @@ namespace lsp
     {
         enum event_type_t
         {
+            EV_NONE,        ///< No event, some error occurred
             EV_OBJECT,      ///< Start of the new object
             EV_VERTEX,      ///< New vertex coordinates
             EV_PVERTEX,     ///< New parametrized vertex coordinates

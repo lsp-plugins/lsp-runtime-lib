@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2022 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 24 окт. 2022 г.
@@ -182,10 +182,9 @@ namespace lsp
          */
         LSP_RUNTIME_LIB_PUBLIC
         status_t read_config_data(chunk_id_t chunk_id, File *file, void **data, size_t *size, size_t buf_size = 0x1000);
+
     } /* namespace lspc */
 } /* namespace lsp */
-
-
 
 
 #endif /* LSP_PLUG_IN_FMT_LSPC_UTIL_CONFIG_H_ */

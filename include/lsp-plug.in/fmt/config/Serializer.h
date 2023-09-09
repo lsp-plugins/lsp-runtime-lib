@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 1 мая 2020 г.
@@ -40,9 +40,6 @@ namespace lsp
          */
         class Serializer
         {
-            private:
-                Serializer & operator = (const Serializer &);
-
             protected:
                 io::IOutSequence       *pOut;
                 size_t                  nWFlags;
@@ -57,9 +54,16 @@ namespace lsp
                 status_t    write_bool(bool v, size_t flags);
                 status_t    write_string_impl(const LSPString *key, const LSPString *v, size_t flags);
 
+                status_t    do_close();
+
             public:
                 explicit Serializer();
+                Serializer(const Serializer &) = delete;
+                Serializer(Serializer &&) = delete;
                 virtual ~Serializer();
+
+                Serializer & operator = (const Serializer &) = delete;
+                Serializer & operator = (Serializer &&) = delete;
 
             public:
                 /**

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 13 мар. 2019 г.
@@ -40,12 +40,14 @@ namespace lsp
                 File           *pFD;
                 size_t          nWrapFlags;
 
-            private:
-                InFileStream & operator = (const InFileStream &);
-
             public:
                 explicit InFileStream();
+                InFileStream(const InFileStream &)=delete;
+                InFileStream(InFileStream &&)=delete;
                 virtual ~InFileStream();
+
+                InFileStream & operator = (const InFileStream &) = delete;
+                InFileStream & operator = (InFileStream &&) = delete;
 
             public:
                 /** Wrap stdio file descriptor. The Reader should be in closed state.

@@ -127,7 +127,11 @@ namespace lsp
                 return STATUS_NO_MEM;
             status_t res = pp->wrap(str);
             if (res != STATUS_OK)
+            {
+                pp->close();
+                delete pp;
                 return res;
+            }
             res = wrap(pp, WRAP_CLOSE | WRAP_DELETE);
             if (res != STATUS_OK)
             {
@@ -146,7 +150,11 @@ namespace lsp
                 return STATUS_NO_MEM;
             status_t res = pp->wrap(buf, len);
             if (res != STATUS_OK)
+            {
+                pp->close();
+                delete pp;
                 return res;
+            }
             res = wrap(pp, WRAP_CLOSE | WRAP_DELETE);
             if (res != STATUS_OK)
             {
@@ -165,7 +173,11 @@ namespace lsp
                 return STATUS_NO_MEM;
             status_t res = pp->wrap(str);
             if (res != STATUS_OK)
+            {
+                pp->close();
+                delete pp;
                 return res;
+            }
             res = wrap(pp, WRAP_CLOSE | WRAP_DELETE);
             if (res != STATUS_OK)
             {
@@ -184,7 +196,11 @@ namespace lsp
                 return STATUS_NO_MEM;
             status_t res = pp->wrap(is, flags);
             if (res != STATUS_OK)
+            {
+                pp->close();
+                delete pp;
                 return res;
+            }
             res = wrap(pp, WRAP_CLOSE | WRAP_DELETE);
             if (res != STATUS_OK)
             {
@@ -227,11 +243,7 @@ namespace lsp
             // Destroy documents
             status_t res = STATUS_OK;
             for (size_t i=vTree.size(); i > 0; )
-            {
-                status_t res2 = destroy_document(vTree.uget(--i));
-                if (res == STATUS_OK)
-                    res         = res2;
-            }
+                res = update_status(res, destroy_document(vTree.uget(--i)));
             vTree.flush();
 
             // Destroy defined variables if present

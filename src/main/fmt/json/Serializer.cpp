@@ -40,6 +40,8 @@ namespace lsp
             sState.mode     = WRITE_ROOT;
             sState.flags    = 0;
             sState.ident    = 0;
+
+            init_serial_flags(&sSettings);
         }
         
         Serializer::~Serializer()
@@ -192,11 +194,7 @@ namespace lsp
             if (pOut != NULL)
             {
                 if (nWFlags & WRAP_CLOSE)
-                {
-                    status_t xres = pOut->close();
-                    if (res == STATUS_OK)
-                        res = xres;
-                }
+                    res     = pOut->close();
 
                 if (nWFlags & WRAP_DELETE)
                     delete pOut;

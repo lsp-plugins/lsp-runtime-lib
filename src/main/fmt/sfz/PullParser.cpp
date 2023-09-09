@@ -755,12 +755,12 @@ namespace lsp
 
             // Read the variable name
             LSPString name;
-            if ((res = read_variable_name(&name) != STATUS_OK))
+            if ((res = read_variable_name(&name)) != STATUS_OK)
                 return res;
 
             // Read the variable value
             LSPString value;
-            if ((res = read_variable_value(&value) != STATUS_OK))
+            if ((res = read_variable_value(&value)) != STATUS_OK)
                 return res;
 
             // Commit the result

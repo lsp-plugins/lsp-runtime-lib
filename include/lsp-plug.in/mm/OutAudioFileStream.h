@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 20 апр. 2020 г.
@@ -43,9 +43,6 @@ namespace lsp
 
         class OutAudioFileStream: public IOutAudioStream
         {
-            private:
-                OutAudioFileStream & operator = (const OutAudioFileStream &);
-
             protected:
 
             #ifdef USE_LIBSNDFILE
@@ -79,7 +76,12 @@ namespace lsp
 
             public:
                 explicit OutAudioFileStream();
+                OutAudioFileStream(const OutAudioFileStream &) = delete;
+                OutAudioFileStream(OutAudioFileStream &&) = delete;
                 virtual ~OutAudioFileStream();
+
+                OutAudioFileStream & operator = (const OutAudioFileStream &) = delete;
+                OutAudioFileStream & operator = (OutAudioFileStream &&) = delete;
 
             public:
                 /**

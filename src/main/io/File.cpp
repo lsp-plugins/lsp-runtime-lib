@@ -48,7 +48,6 @@ namespace lsp
         
         File::~File()
         {
-            close();
         }
 
         ssize_t File::read(void *dst, size_t count)

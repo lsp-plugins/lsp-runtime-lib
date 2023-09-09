@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 24 апр. 2019 г.
@@ -52,12 +52,14 @@ namespace lsp
 
                 static  int hTag;
 
-            private:
-                Library & operator = (const Library &);
-
             public:
                 explicit Library();
+                Library(const Library &) = delete;
+                Library(Library &&) = delete;
                 ~Library();
+
+                Library & operator = (const Library &) = delete;
+                Library & operator = (Library &&) = delete;
 
             public:
                 /**
@@ -169,7 +171,7 @@ namespace lsp
                 static bool valid_library_name(const io::Path *path);
         };
     
-    } /* namespace io */
+    } /* namespace ipc */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_IPC_LIBRARY_H_ */

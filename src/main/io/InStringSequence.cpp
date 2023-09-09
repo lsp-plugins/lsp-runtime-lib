@@ -84,11 +84,11 @@ namespace lsp
                 return set_error(STATUS_BAD_ARGUMENTS);
 
             LSPString *str = new LSPString();
-            if (s == NULL)
+            if (str == NULL)
                 return set_error(STATUS_NO_MEM);
-            else if (!str->set_native(s, charset))
+            if (!str->set_native(s, charset))
             {
-                delete s;
+                delete str;
                 return set_error(STATUS_NO_MEM);
             }
 
@@ -103,15 +103,15 @@ namespace lsp
         {
             if (pString != NULL)
                 return set_error(STATUS_BAD_STATE);
-            else if (s == NULL)
+            if (s == NULL)
                 return set_error(STATUS_BAD_ARGUMENTS);
 
             LSPString *str = new LSPString();
-            if (s == NULL)
+            if (str == NULL)
                 return set_error(STATUS_NO_MEM);
-            else if (!str->set_utf8(s))
+            if (!str->set_utf8(s))
             {
-                delete s;
+                delete str;
                 return set_error(STATUS_NO_MEM);
             }
 

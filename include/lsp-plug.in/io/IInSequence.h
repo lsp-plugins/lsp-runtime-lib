@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 июн. 2018 г.
@@ -40,12 +40,14 @@ namespace lsp
             protected:
                 inline status_t set_error(status_t error) { return nErrorCode = error; }
 
-            private:
-                IInSequence & operator = (const IInSequence &);
-
             public:
                 explicit IInSequence();
+                IInSequence(const IInSequence &) = delete;
+                IInSequence(IInSequence &&) = delete;
                 virtual ~IInSequence();
+
+                IInSequence & operator = (const IInSequence &) = delete;
+                IInSequence & operator = (IInSequence &&) = delete;
 
             public:
                 /**
@@ -107,8 +109,8 @@ namespace lsp
                 virtual status_t    reset();
 
         };
-    }
-    
+
+    } /* namespace io */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_IO_IINSEQUENCE_H_ */

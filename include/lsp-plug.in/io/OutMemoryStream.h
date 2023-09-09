@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 19 авг. 2019 г.
@@ -42,7 +42,12 @@ namespace lsp
             public:
                 explicit OutMemoryStream();
                 explicit OutMemoryStream(size_t quantity);
+                OutMemoryStream(const OutMemoryStream &) = delete;
+                OutMemoryStream(OutMemoryStream &&) = delete;
                 virtual ~OutMemoryStream() override;
+
+                OutMemoryStream & operator = (const OutMemoryStream &) = delete;
+                OutMemoryStream & operator = (OutMemoryStream &&) = delete;
 
             public:
                 /**
@@ -99,15 +104,10 @@ namespace lsp
 
             public:
                 virtual ssize_t     write(const void *buf, size_t count) override;
-
                 virtual ssize_t     writeb(int v) override;
-
                 virtual status_t    write_byte(int v) override;
-
                 virtual wssize_t    seek(wsize_t position) override;
-
                 virtual status_t    flush() override;
-
                 virtual status_t    close() override;
         };
     

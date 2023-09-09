@@ -49,10 +49,10 @@ namespace lsp
                 uint64_t            nSuid;
                 size_t              nFlags;
                 size_t              nFields;
-                size_t              nSlots;
+                size_t              nClasses;
                 size_t              nSizeOf;
                 ObjectStreamField **vFields;
-                ObjectStreamClass **vSlots;
+                ObjectStreamClass **vClasses;
 
             public:
                 explicit ObjectStreamClass();
@@ -70,7 +70,7 @@ namespace lsp
                 inline bool is_externalizable() const       { return nFlags & JCF_EXTERNALIZABLE; }
                 inline bool is_serializable() const         { return nFlags & (JCF_EXTERNALIZABLE | JCF_SERIALIZABLE); }
                 inline const ObjectStreamField *field(size_t idx) const { return (idx < nFields) ? vFields[idx] : NULL; }
-                inline const ObjectStreamClass *slot(size_t idx) const { return (idx < nSlots) ? vSlots[idx] : NULL; }
+                inline const ObjectStreamClass *slot(size_t idx) const { return (idx < nClasses) ? vClasses[idx] : NULL; }
                 inline size_t fields() const                { return nFields; };
         };
     

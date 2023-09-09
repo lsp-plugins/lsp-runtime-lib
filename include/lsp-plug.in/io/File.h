@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 6 мар. 2019 г.
@@ -67,13 +67,15 @@ namespace lsp
             protected:
                 inline status_t set_error(status_t error) { return nErrorCode = error; }
 
-            private:
-                File & operator = (const File &);       // Deny copying
-
             public:
                 explicit File();
+                File(const File &) = delete;
+                File(File &&) = delete;
                 virtual ~File();
                 
+                File & operator = (const File &) = delete;
+                File & operator = (File &&) = delete;
+
             public:
                 /**
                  * Read binary file

@@ -35,10 +35,10 @@ namespace lsp
             nSuid       = 0;
             nFlags      = 0;
             nFields     = 0;
-            nSlots      = 0;
+            nClasses      = 0;
             nSizeOf     = 0;
             vFields     = NULL;
-            vSlots      = NULL;
+            vClasses      = NULL;
         }
         
         ObjectStreamClass::~ObjectStreamClass()
@@ -56,13 +56,13 @@ namespace lsp
                 ::free(vFields);
                 vFields = NULL;
             }
-            if (vSlots != NULL)
+            if (vClasses != NULL)
             {
-                for (size_t i=0; i<nSlots; ++i)
-                    if (vSlots[i] != NULL)
-                        vSlots[i] = NULL;
-                ::free(vSlots);
-                vSlots = NULL;
+                for (size_t i=0; i<nClasses; ++i)
+                    if (vClasses[i] != NULL)
+                        vClasses[i] = NULL;
+                ::free(vClasses);
+                vClasses = NULL;
             }
             if (pRawName != NULL)
             {

@@ -38,13 +38,15 @@ namespace lsp
             for (size_t i=0, n=vLoaders.size(); i<n; ++i)
             {
                 prefix_t *p = vLoaders.uget(i);
+                if (p == NULL)
+                    continue;
+
                 if ((p->bFree) && (p->pLoader != NULL))
                 {
                     delete p->pLoader;
                     p->pLoader = NULL;
                 }
-                if (p != NULL)
-                    delete p;
+                delete p;
             }
 
             vLoaders.flush();

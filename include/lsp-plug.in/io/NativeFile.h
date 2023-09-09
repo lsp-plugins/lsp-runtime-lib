@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 7 мар. 2019 г.
@@ -51,12 +51,14 @@ namespace lsp
                 fhandle_t       hFD;
                 size_t          nFlags;
 
-            private:
-                NativeFile &operator = (const NativeFile &fd);        // Deny copying
-
             public:
                 explicit NativeFile();
+                NativeFile(const NativeFile &) = delete;
+                NativeFile(NativeFile &&) = delete;
                 virtual ~NativeFile();
+
+                NativeFile &operator = (const NativeFile &) = delete;
+                NativeFile &operator = (NativeFile &&) = delete;
 
             public:
                 /**

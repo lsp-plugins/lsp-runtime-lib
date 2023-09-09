@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 29 апр. 2020 г.
@@ -38,9 +38,6 @@ namespace lsp
         
         class PullParser
         {
-            private:
-                PullParser & operator = (const PullParser &);
-
             protected:
                 io::IInSequence        *pIn;
                 size_t                  nWFlags;
@@ -56,6 +53,7 @@ namespace lsp
                 status_t            read_type(size_t &off, size_t &flags);
                 status_t            read_value(size_t &off, size_t &flags);
                 status_t            parse_line(size_t &flags);
+                status_t            do_close();
 
                 static status_t     parse_int32(const LSPString *str, int32_t *dst);
                 static status_t     parse_uint32(const LSPString *str, uint32_t *dst);
@@ -71,7 +69,12 @@ namespace lsp
 
             public:
                 explicit PullParser();
+                PullParser(const PullParser &) = delete;
+                PullParser(PullParser &&) = delete;
                 virtual ~PullParser();
+
+                PullParser & operator = (const PullParser &) = delete;
+                PullParser & operator = (PullParser &&) = delete;
 
             public:
                 /**

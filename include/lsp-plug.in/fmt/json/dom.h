@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 13 февр. 2021 г.
@@ -66,7 +66,8 @@ namespace lsp
         status_t    dom_write(io::IOutStream *os, const Node *node, const serial_flags_t *settings = NULL, size_t flags = 0, const char *charset = NULL);
         status_t    dom_write(LSPString *data, const Node *node, const serial_flags_t *settings = NULL);
         status_t    dom_write(io::IOutSequence *os, const Node *node, const serial_flags_t *settings = NULL, size_t flags = 0);
-    }
-}
+
+    } /* namespace json */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_FMT_JSON_DOM_H_ */

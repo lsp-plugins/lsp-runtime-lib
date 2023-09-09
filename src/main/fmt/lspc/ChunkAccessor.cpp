@@ -181,10 +181,13 @@ namespace lsp
 
         ChunkAccessor::ChunkAccessor(Resource *fd, uint32_t magic)
         {
+            pBuffer         = NULL;
             pFile           = fd;
             set_error((pFile != NULL) ? pFile->acquire() : STATUS_BAD_STATE);
             nMagic          = magic;
             nBufSize        = (pFile != NULL) ? pFile->bufsize : 0;
+            nBufPos         = 0;
+            nUID            = 0;
 
             if (nBufSize > 0)
             {
@@ -199,10 +202,7 @@ namespace lsp
                     set_error(STATUS_NO_MEM);
                     return;
                 }
-                nBufPos         = 0;
             }
-
-            nUID            = 0;
 
             set_error(STATUS_OK);
         }

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 24 июл. 2019 г.
@@ -483,8 +483,6 @@ namespace lsp
 
             if (nStatus != PSTATUS_CREATED)
                 return STATUS_BAD_STATE;
-            if (key == NULL)
-                return STATUS_BAD_ARGUMENTS;
 
             for (size_t i=0, n=vEnv.size(); i<n; ++i)
             {
@@ -931,6 +929,7 @@ namespace lsp
             io::OutFileStream *strm = new io::OutFileStream();
             if ((strm == NULL) || (strm->wrap_native(hWrite, true) != STATUS_OK))
             {
+                delete strm;
                 ::CloseHandle(hRead);
                 ::CloseHandle(hWrite);
                 return NULL;
@@ -956,6 +955,7 @@ namespace lsp
             io::InFileStream *strm = new io::InFileStream();
             if ((strm == NULL) || (strm->wrap_native(hRead, true) != STATUS_OK))
             {
+                delete strm;
                 ::CloseHandle(hRead);
                 ::CloseHandle(hWrite);
                 return NULL;
@@ -981,6 +981,7 @@ namespace lsp
             io::InFileStream *strm = new io::InFileStream();
             if ((strm == NULL) || (strm->wrap_native(hRead, true) != STATUS_OK))
             {
+                delete strm;
                 ::CloseHandle(hRead);
                 ::CloseHandle(hWrite);
                 return NULL;
@@ -1423,6 +1424,7 @@ namespace lsp
             io::OutFileStream *strm = new io::OutFileStream();
             if ((strm == NULL) || (strm->wrap_native(fd[1], true) != STATUS_OK))
             {
+                delete strm;
                 ::close(fd[0]);
                 ::close(fd[1]);
                 return NULL;
@@ -1448,6 +1450,7 @@ namespace lsp
             io::InFileStream *strm = new io::InFileStream();
             if ((strm == NULL) || (strm->wrap_native(fd[0], true) != STATUS_OK))
             {
+                delete strm;
                 ::close(fd[0]);
                 ::close(fd[1]);
                 return NULL;
@@ -1473,6 +1476,7 @@ namespace lsp
             io::InFileStream *strm = new io::InFileStream();
             if ((strm == NULL) || (strm->wrap_native(fd[0], true) != STATUS_OK))
             {
+                delete strm;
                 ::close(fd[0]);
                 ::close(fd[1]);
                 return NULL;

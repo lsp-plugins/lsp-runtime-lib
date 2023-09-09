@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 30 авг. 2017 г.
@@ -1123,12 +1123,17 @@ namespace lsp
     {
         XSAFE_TRANS(pos, nLength, false);
         XSAFE_TRANS(first, src->nLength, false);
-        ssize_t length = src->nLength - first;
+        XSAFE_TRANS(last, src->nLength, false);
+        ssize_t length = lsp_max(last - first, 0);
 
-        if (!cap_reserve(pos + length))
-            return false;
+        if (length > 0)
+        {
+            if (!cap_reserve(pos + length))
+                return false;
 
-        xmove(&pData[pos], &src->pData[first], length);
+            xmove(&pData[pos], &src->pData[first], length);
+        }
+
         nLength     = pos + length;
         nHash       = 0;
         return true;
@@ -1159,9 +1164,7 @@ namespace lsp
     {
         XSAFE_TRANS(first, nLength, false);
         XSAFE_TRANS(last, nLength, false);
-        ssize_t count = last - first;
-        if (count < 0)
-            count = 0;
+        ssize_t count = lsp_max(last - first, 0);
 
         if (!cap_reserve(nLength - count + n))
             return false;
@@ -1180,9 +1183,7 @@ namespace lsp
     {
         XSAFE_TRANS(first, nLength, false);
         XSAFE_TRANS(last, nLength, false);
-        ssize_t count = last - first;
-        if (count < 0)
-            count = 0;
+        ssize_t count = lsp_max(last - first, 0);
 
         if (!cap_reserve(nLength - count + src->nLength))
             return false;
@@ -1226,15 +1227,11 @@ namespace lsp
     {
         XSAFE_TRANS(first, nLength, false);
         XSAFE_TRANS(last, nLength, false);
-        ssize_t count = last - first;
-        if (count < 0)
-            count = 0;
+        ssize_t count = lsp_max(last - first, 0);
 
         XSAFE_TRANS(sfirst, src->nLength, false);
         XSAFE_TRANS(slast, src->nLength, false);
-        ssize_t scount = slast - sfirst;
-        if (scount < 0)
-            scount = 0;
+        ssize_t scount = lsp_max(slast - sfirst, 0);
 
         if (!cap_reserve(nLength - count + scount))
             return false;
@@ -1865,7 +1862,7 @@ namespace lsp
         if (cd == iconv_t(-1))
             return set_utf8(s, n);
 
-        size_t insize   = (n < 0) ? strlen(s) : n;
+        size_t insize   = n;
         size_t outsize  = BUF_SIZE;
         char *inbuf     = const_cast<char *>(s);
         char *outbuf    = buf;
@@ -2249,7 +2246,7 @@ namespace lsp
             return NULL;
 
         size_t offset = (pTemp != NULL) ? pTemp->nOffset : 0;
-        char *ptr = (utf8 != NULL) ? reinterpret_cast<char *>(lsp::memdup(utf8, offset)) : NULL;
+        char *ptr = reinterpret_cast<char *>(lsp::memdup(utf8, offset));
         if (bytes != NULL)
             *bytes = (ptr != NULL) ? offset : 0;
         return ptr;
@@ -2262,7 +2259,7 @@ namespace lsp
             return NULL;
 
         size_t offset = (pTemp != NULL) ? pTemp->nOffset : 0;
-        lsp_utf16_t *ptr = (utf16 != NULL) ? reinterpret_cast<lsp_utf16_t *>(lsp::memdup(utf16, offset)) : NULL;
+        lsp_utf16_t *ptr = reinterpret_cast<lsp_utf16_t *>(lsp::memdup(utf16, offset));
         if (bytes != NULL)
             *bytes = (ptr != NULL) ? offset : 0;
         return ptr;
@@ -2275,7 +2272,7 @@ namespace lsp
             return NULL;
 
         size_t offset = (pTemp != NULL) ? pTemp->nOffset : 0;
-        lsp_utf16_t *ptr = (utf16 != NULL) ? reinterpret_cast<lsp_utf16_t *>(lsp::memdup(utf16, offset)) : NULL;
+        lsp_utf16_t *ptr = reinterpret_cast<lsp_utf16_t *>(lsp::memdup(utf16, offset));
         if (bytes != NULL)
             *bytes = (ptr != NULL) ? offset : 0;
         return ptr;
@@ -2288,7 +2285,7 @@ namespace lsp
             return NULL;
 
         size_t offset = (pTemp != NULL) ? pTemp->nOffset : 0;
-        lsp_utf16_t *ptr = (utf16 != NULL) ? reinterpret_cast<lsp_utf16_t *>(lsp::memdup(utf16, offset)) : NULL;
+        lsp_utf16_t *ptr = reinterpret_cast<lsp_utf16_t *>(lsp::memdup(utf16, offset));
         if (bytes != NULL)
             *bytes = (ptr != NULL) ? offset : 0;
         return ptr;
@@ -2301,7 +2298,7 @@ namespace lsp
             return NULL;
 
         size_t offset = (pTemp != NULL) ? pTemp->nOffset : 0;
-        char *ptr = (ascii != NULL) ? reinterpret_cast<char *>(lsp::memdup(ascii, offset)) : NULL;
+        char *ptr = reinterpret_cast<char *>(lsp::memdup(ascii, offset));
         if (bytes != NULL)
             *bytes = (ptr != NULL) ? offset : 0;
         return ptr;
@@ -2314,7 +2311,7 @@ namespace lsp
             return NULL;
 
         size_t offset = (pTemp != NULL) ? pTemp->nOffset : 0;
-        char *ptr = (native != NULL) ? reinterpret_cast<char *>(lsp::memdup(native, offset)) : NULL;
+        char *ptr = reinterpret_cast<char *>(lsp::memdup(native, offset));
         if (bytes != NULL)
             *bytes = (ptr != NULL) ? offset : 0;
         return ptr;
@@ -2660,7 +2657,7 @@ namespace lsp
             {
                 if (*blk != '\n')
                     continue;
-                if ((blk <= pData) || (blk[-1] != '\r'))
+                if (blk[-1] != '\r')
                     break;
             }
 

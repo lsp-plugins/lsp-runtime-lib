@@ -49,21 +49,30 @@ namespace lsp
 
             // Copy keys and values
             Environment *env = new Environment();
+            if (env == NULL)
+                return NULL;
+            lsp_finally {
+                if (env != NULL)
+                    delete env;
+            };
+
             for (size_t i=0, n=vk.size(); i<n; ++i)
             {
                 // Obtain key and copy of the value
                 LSPString *k = vk.uget(i);
-                LSPString *v = vv.uget(i);
-                if ((k==NULL) || (v == NULL))
+                if (k == NULL)
                     continue;
+                LSPString *v = vv.uget(i);
+                if (v == NULL)
+                    continue;
+
+                // Add to collection
                 if (!(v = v->clone()))
                     return NULL;
 
-                // Add to collection
                 if (!env->vEnv.put(k, v, &v))
                 {
                     delete v;
-                    delete env;
                     return NULL;
                 }
 
@@ -72,7 +81,7 @@ namespace lsp
                     delete v;
             }
 
-            return env;
+            return release_ptr(env);
         }
 
         const LSPString *Environment::get(const char *key) const

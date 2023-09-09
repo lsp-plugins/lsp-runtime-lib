@@ -535,13 +535,11 @@ namespace lsp
                     switch (right.type)
                     {
                         case VT_INT:
-                            value->type     = VT_INT;
                             value->v_int    =
                                     (value->v_int < right.v_int) ? -1 :
                                     (value->v_int > right.v_int) ? 1 : 0;
                             break;
                         case VT_FLOAT:
-                            value->type     = VT_INT;
                             value->v_int    =
                                     (double(value->v_int) < right.v_float) ? -1 :
                                     (double(value->v_int) > right.v_float) ? 1 : 0;
@@ -549,7 +547,6 @@ namespace lsp
                         case VT_BOOL:
                         {
                             ssize_t ivalue  = (value->v_bool) ? 1 : 0;
-                            value->type     = VT_INT;
                             value->v_int    =
                                     (value->v_int < ivalue) ? -1 :
                                     (value->v_int > ivalue) ? 1 : 0;
@@ -970,15 +967,12 @@ namespace lsp
             switch (value->type)
             {
                 case VT_INT:
-                    value->type     = VT_INT;
                     value->v_int    = ~value->v_int;
                     break;
                 case VT_FLOAT:
-                    value->type     = VT_FLOAT;
                     value->v_float  = ~ssize_t(value->v_float);
                     break;
                 case VT_BOOL:
-                    value->type     = VT_BOOL;
                     value->v_bool   = !value->v_bool;
                     break;
                 case VT_NULL:
@@ -1040,11 +1034,9 @@ namespace lsp
             switch (value->type)
             {
                 case VT_INT:
-                    value->type     = VT_INT;
                     value->v_int    = -value->v_int;
                     break;
                 case VT_FLOAT:
-                    value->type     = VT_FLOAT;
                     value->v_float  = -value->v_float;
                     break;
                 case VT_NULL:

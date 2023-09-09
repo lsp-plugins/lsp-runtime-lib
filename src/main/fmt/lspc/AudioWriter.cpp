@@ -164,28 +164,19 @@ namespace lsp
             status_t res = STATUS_OK;
             if (pWD != NULL)
             {
-                status_t xr = STATUS_OK;
                 if (nFlags & F_CLOSE_WRITER)
-                    xr = pWD->close();
+                    res     = update_status(res, pWD->close());
                 if (nFlags & F_DROP_WRITER)
                     delete pWD;
                 pWD         = NULL;
-
-                if (res == STATUS_OK)
-                    res     = xr;
             }
 
             if (pFD != NULL)
             {
                 if (nFlags & F_CLOSE_FILE)
-                {
-                    status_t xr = pFD->close();
-                    if (res == STATUS_OK)
-                        res     = xr;
-                }
+                    res     = update_status(res, pFD->close());
                 if (nFlags & F_DROP_FILE)
                     delete pFD;
-
                 pFD         = NULL;
             }
 

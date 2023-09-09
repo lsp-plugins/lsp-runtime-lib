@@ -388,7 +388,7 @@ namespace lsp
             {
                 case JN_NULL:   bvalue = false; break;
                 case JN_INT:    bvalue = pNode->nValue != 0;  break;
-                case JN_DOUBLE: bvalue = (pNode->nValue >= 0.5) || (pNode->nValue <= -0.5); break;
+                case JN_DOUBLE: bvalue = (pNode->fValue >= 0.5) || (pNode->fValue <= -0.5); break;
                 case JN_BOOL:   return STATUS_OK;
                 case JN_STRING:
                 {
@@ -626,7 +626,8 @@ namespace lsp
 
             return "UNKNOWN (corrupted)";
         }
-    }
-}
+
+    } /* namespace json */
+} /* namespace lsp */
 
 

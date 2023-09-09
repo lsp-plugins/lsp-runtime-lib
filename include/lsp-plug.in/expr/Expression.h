@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 16 сент. 2019 г.
@@ -41,9 +41,6 @@ namespace lsp
         
         class Expression
         {
-            private:
-                Expression & operator = (const Expression &);
-
             public:
                 enum expr_flags
                 {
@@ -77,7 +74,12 @@ namespace lsp
             public:
                 explicit Expression();
                 explicit Expression(Resolver *res);
+                Expression(const Expression &) = delete;
+                Expression(Expression &&) = delete;
                 virtual ~Expression();
+
+                Expression & operator = (const Expression &) = delete;
+                Expression & operator = (Expression &&) = delete;
 
                 void destroy();
 

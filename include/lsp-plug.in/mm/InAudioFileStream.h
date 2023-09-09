@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 19 апр. 2020 г.
@@ -43,9 +43,6 @@ namespace lsp
 
         class InAudioFileStream: public IInAudioStream
         {
-            private:
-                InAudioFileStream & operator = (const InAudioFileStream &);
-
             protected:
             #ifdef USE_LIBSNDFILE
                 typedef SNDFILE                 handle_t;
@@ -75,7 +72,12 @@ namespace lsp
 
             public:
                 explicit InAudioFileStream();
+                InAudioFileStream(const InAudioFileStream &) = delete;
+                InAudioFileStream(InAudioFileStream &&) = delete;
                 virtual ~InAudioFileStream() override;
+
+                InAudioFileStream & operator = (const InAudioFileStream &) = delete;
+                InAudioFileStream & operator = (InAudioFileStream &&) = delete;
 
             public:
                 /**

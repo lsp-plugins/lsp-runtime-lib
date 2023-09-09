@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 1 мар. 2021 г.
@@ -74,12 +74,8 @@ namespace lsp
             sTemp.drop();
 
             status_t res    = sTemp.close();
-            status_t res2   = sOut.close();
-            if (res == STATUS_OK)
-                res         = res2;
-            res2            = sOS.close();
-            if (res == STATUS_OK)
-                res         = res2;
+            res             = update_status(res, sOut.close());
+            res             = update_status(res, sOS.close());
 
             return res;
         }

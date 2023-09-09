@@ -52,16 +52,14 @@ These modules provide currently:
   * Support of MIDI message encoding and decoding.
   * Support of OSC message encoding and decoding.
 
-Requirements
-======
+## Requirements
 
 The following packages need to be installed for building:
 
 * gcc >= 4.9
 * make >= 4.0
 
-Building
-======
+## Building
 
 To build the library, perform the following commands:
 
@@ -95,3 +93,7 @@ To clean the whole project tree including configuration files, run:
 ```bash
 make prune
 ```
+
+## SAST Tools
+
+* [PVS-Studio](https://pvs-studio.com/en/pvs-studio/?utm_source=website&utm_medium=github&utm_campaign=open_source) - static analyzer for C, C++, C#, and Java code.
