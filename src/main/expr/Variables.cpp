@@ -21,6 +21,7 @@
 
 #include <lsp-plug.in/expr/types.h>
 #include <lsp-plug.in/expr/Variables.h>
+#include <lsp-plug.in/common/debug.h>
 
 namespace lsp
 {
@@ -359,11 +360,14 @@ namespace lsp
             if (idx >= 0)
             {
                 variable_t *var = vVars.uget(idx);
-                if (var->name.equals(name))
+                int cmp = name->compare_to(&var->name);
+                if (cmp == 0)
                 {
                     destroy_value(&var->value);
                     return copy_value(&var->value, value);
                 }
+                else if (cmp > 0)
+                    ++idx;
             }
             else
                 idx = 0;
@@ -382,12 +386,15 @@ namespace lsp
             if (idx >= 0)
             {
                 variable_t *var = vVars.uget(idx);
-                if (var->name.equals(name))
+                int cmp = name->compare_to(&var->name);
+                if (cmp == 0)
                 {
                     vVars.remove(idx);
                     destroy_value(&var->value);
                     delete var;
                 }
+                else if (cmp > 0)
+                    ++idx;
             }
 
             return STATUS_OK;
