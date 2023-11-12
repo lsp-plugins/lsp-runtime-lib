@@ -250,6 +250,30 @@ namespace lsp
             return resolve(value, &key, num_indexes, indexes);
         }
 
+        ssize_t Variables::index_of(const LSPString *name)
+        {
+            const variable_t *var;
+            ssize_t first = 0, last = vVars.size() - 1, mid;
+            if (last < 0)
+                return -1;
+
+            while (first < last)
+            {
+                mid             = (first + last) >> 1;
+                var             = vVars.uget(mid);
+                int cmp         = name->compare_to(&var->name);
+
+                if (cmp < 0)
+                    last            = mid - 1;
+                else if (cmp > 0)
+                    first           = mid + 1;
+                else
+                    return mid;
+            }
+
+            return first;
+        }
+
         status_t Variables::resolve(value_t *value, const LSPString *name, size_t num_indexes, const ssize_t *indexes)
         {
             // Need to form indexes?
@@ -271,16 +295,19 @@ namespace lsp
                 search = name;
 
             // Lookup the cache
-            for (size_t i=0, n=vVars.size(); i<n; ++i)
+            ssize_t idx     = index_of(search);
+            if (idx >= 0)
             {
-                variable_t *var = vVars.uget(i);
-                if ((var != NULL) && (var->name.equals(search)))
+                variable_t *var = vVars.uget(idx);
+                if (var->name.equals(search))
                 {
                     if (value != NULL)
                         return copy_value(value, &var->value);
                     return STATUS_OK;
                 }
             }
+            else
+                idx = 0;
 
             // No Resolver?
             if (pResolver == NULL)
@@ -295,14 +322,14 @@ namespace lsp
                 return res;
 
             // Save variable to cache
-            res = add(search, &v);
+            res = insert(search, &v, idx);
             if ((res == STATUS_OK) && (value != NULL))
                 res = copy_value(value, &v);
 
             return res;
         }
 
-        status_t Variables::add(const LSPString *name, const value_t *value)
+        status_t Variables::insert(const LSPString *name, const value_t *value, size_t idx)
         {
             variable_t *var = new variable_t;
             if (!var->name.set(name))
@@ -314,7 +341,7 @@ namespace lsp
             init_value(&var->value);
             status_t res = copy_value(&var->value, value);
             if (res == STATUS_OK)
-                res = (vVars.add(var)) ? STATUS_OK : STATUS_NO_MEM;
+                res = (vVars.insert(idx, var)) ? STATUS_OK : STATUS_NO_MEM;
             if (res == STATUS_OK)
                 return res;
 
@@ -328,19 +355,21 @@ namespace lsp
             if (name == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
-            // Lookup for existing data
-            for (size_t i=0, n=vVars.size(); i<n; ++i)
+            ssize_t idx     = index_of(name);
+            if (idx >= 0)
             {
-                variable_t *var = vVars.uget(i);
+                variable_t *var = vVars.uget(idx);
                 if (var->name.equals(name))
                 {
                     destroy_value(&var->value);
                     return copy_value(&var->value, value);
                 }
             }
+            else
+                idx = 0;
 
             // Add non-existing value
-            return add(name, value);
+            return insert(name, value, idx);
         }
 
         status_t Variables::unset(const LSPString *name, value_t *value)
@@ -349,12 +378,13 @@ namespace lsp
                 return STATUS_BAD_ARGUMENTS;
 
             // Lookup for data
-            for (size_t i=0, n=vVars.size(); i<n; ++i)
+            ssize_t idx     = index_of(name);
+            if (idx >= 0)
             {
-                variable_t *var = vVars.uget(i);
+                variable_t *var = vVars.uget(idx);
                 if (var->name.equals(name))
                 {
-                    vVars.qremove(i);
+                    vVars.remove(idx);
                     destroy_value(&var->value);
                     delete var;
                 }
