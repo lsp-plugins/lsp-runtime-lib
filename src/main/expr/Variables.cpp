@@ -300,12 +300,15 @@ namespace lsp
             if (idx >= 0)
             {
                 variable_t *var = vVars.uget(idx);
-                if (var->name.equals(search))
+                int cmp = search->compare_to(&var->name);
+                if (cmp == 0)
                 {
                     if (value != NULL)
                         return copy_value(value, &var->value);
                     return STATUS_OK;
                 }
+                else if (cmp > 0)
+                    ++idx;
             }
             else
                 idx = 0;
@@ -386,15 +389,12 @@ namespace lsp
             if (idx >= 0)
             {
                 variable_t *var = vVars.uget(idx);
-                int cmp = name->compare_to(&var->name);
-                if (cmp == 0)
+                if (name->equals(&var->name))
                 {
                     vVars.remove(idx);
                     destroy_value(&var->value);
                     delete var;
                 }
-                else if (cmp > 0)
-                    ++idx;
             }
 
             return STATUS_OK;
