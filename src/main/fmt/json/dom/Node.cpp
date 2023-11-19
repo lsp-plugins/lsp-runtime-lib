@@ -22,6 +22,7 @@
 #include <lsp-plug.in/fmt/json/dom/Node.h>
 #include <lsp-plug.in/io/InStringSequence.h>
 #include <lsp-plug.in/expr/Tokenizer.h>
+#include <lsp-plug.in/stdlib/locale.h>
 
 namespace lsp
 {
@@ -441,9 +442,12 @@ namespace lsp
                         return STATUS_NO_MEM;
                     break;
                 case JN_DOUBLE:
+                {
+                    SET_LOCALE_SCOPED(LC_NUMERIC, "C");
                     if (!tmp.fmt_ascii("%f", double(pNode->fValue)))
                         return STATUS_NO_MEM;
                     break;
+                }
                 case JN_BOOL:
                     if (!tmp.set_ascii((pNode->bValue) ? "true" : "false"))
                         return STATUS_NO_MEM;
