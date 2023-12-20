@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
- * Created on: 25 февр. 2020 г.
+ * Created on: 25 февр. 2023 г.
  *
  * lsp-runtime-lib is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -23,9 +23,12 @@
 #include <lsp-plug.in/expr/Tokenizer.h>
 #include <lsp-plug.in/io/InStringSequence.h>
 #include <lsp-plug.in/io/OutStringSequence.h>
-#include <lsp-plug.in/stdlib/stdio.h>
+#include <lsp-plug.in/stdlib/locale.h>
 #include <lsp-plug.in/stdlib/math.h>
+#include <lsp-plug.in/stdlib/stdio.h>
+#include <lsp-plug.in/common/debug.h>
 #include <ctype.h>
+
 
 namespace lsp
 {
@@ -740,6 +743,9 @@ namespace lsp
             else
             {
                 char fmt[64];
+
+                SET_LOCALE_SCOPED(LC_NUMERIC, "C");
+
             #ifdef PLATFORM_WINDOWS
                 // Windows format string does not respect uppercase format letters.
                 // That's why we need to do some workaround work

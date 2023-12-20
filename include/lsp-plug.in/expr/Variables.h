@@ -45,7 +45,8 @@ namespace lsp
                 lltl::parray<variable_t>    vVars;
 
             protected:
-                status_t            add(const LSPString *name, const value_t *value);
+                status_t            insert(const LSPString *name, const value_t *value, size_t idx);
+                ssize_t             index_of(const LSPString *name);
 
             public:
                 explicit Variables();

@@ -21,10 +21,10 @@
 
 #include <lsp-plug.in/fmt/sfz/parse.h>
 
+#include <lsp-plug.in/stdlib/locale.h>
 #include <lsp-plug.in/stdlib/stdlib.h>
 #include <lsp-plug.in/stdlib/string.h>
 
-#include <locale.h>
 #include <errno.h>
 
 namespace lsp
@@ -135,25 +135,10 @@ namespace lsp
             return STATUS_OK;
         }
 
-    #define UPDATE_LOCALE(out_var, lc, value) \
-        char *out_var = setlocale(lc, NULL); \
-        if (out_var != NULL) \
-        { \
-            size_t ___len = strlen(out_var) + 1; \
-            char *___copy = static_cast<char *>(alloca(___len)); \
-            memcpy(___copy, out_var, ___len); \
-            out_var = ___copy; \
-        } \
-        setlocale(lc, value); \
-        lsp_finally { \
-            if (saved_locale != NULL) \
-                ::setlocale(LC_NUMERIC, saved_locale); \
-        }
-
         status_t parse_int(ssize_t *dst, const char *text)
         {
             // Update locale
-            UPDATE_LOCALE(saved_locale, LC_NUMERIC, "C");
+            SET_LOCALE_SCOPED(LC_NUMERIC, "C");
 
             // Parse the integer value
             errno       = 0;
@@ -176,7 +161,7 @@ namespace lsp
         status_t parse_float(float *dst, const char *text)
         {
             // Update locale
-            UPDATE_LOCALE(saved_locale, LC_NUMERIC, "C");
+            SET_LOCALE_SCOPED(LC_NUMERIC, "C");
 
             // Parse the floating-point value
             errno       = 0;

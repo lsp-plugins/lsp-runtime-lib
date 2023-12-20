@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 23 февр. 2021 г.
@@ -24,6 +24,7 @@
 #include <lsp-plug.in/io/InStringSequence.h>
 #include <lsp-plug.in/expr/Tokenizer.h>
 #include <lsp-plug.in/expr/types.h>
+#include <lsp-plug.in/stdlib/locale.h>
 
 namespace lsp
 {
@@ -184,7 +185,10 @@ namespace lsp
                 case JN_INT:
                     return (dst->fmt_ascii("%lld", (long long)pNode->nValue) > 0) ? STATUS_OK : STATUS_NO_MEM;
                 case JN_DOUBLE:
+                {
+                    SET_LOCALE_SCOPED(LC_NUMERIC, "C");
                     return (dst->fmt_ascii("%f", (long long)pNode->fValue) > 0) ? STATUS_OK : STATUS_NO_MEM;
+                }
                 case JN_BOOL:
                     return (dst->set_ascii((pNode->bValue) ? "true" : "false")) ? STATUS_OK : STATUS_NO_MEM;
                 case JN_STRING:
@@ -281,8 +285,8 @@ namespace lsp
 
             return (pNode->sValue->set_native(value, charset)) ? STATUS_OK : STATUS_NO_MEM;
         }
-    }
-}
+    } /* namespace json */
+} /* namespace lsp */
 
 
 

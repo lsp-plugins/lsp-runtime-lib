@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 05 нояб. 2015 г.
@@ -20,12 +20,12 @@
  */
 
 #include <lsp-plug.in/runtime/Color.h>
-#include <lsp-plug.in/stdlib/string.h>
-#include <lsp-plug.in/stdlib/stdio.h>
+#include <lsp-plug.in/stdlib/locale.h>
 #include <lsp-plug.in/stdlib/math.h>
+#include <lsp-plug.in/stdlib/stdio.h>
+#include <lsp-plug.in/stdlib/string.h>
 
 #include <ctype.h>
-#include <locale.h>
 #include <errno.h>
 
 namespace lsp
@@ -1196,20 +1196,9 @@ namespace lsp
     status_t Color::parse_numeric(float *dst, size_t nmin, size_t nmax, const char *prefix, const char *src, size_t len)
     {
         // Save and update locale
-        char *saved = ::setlocale(LC_NUMERIC, NULL);
-        if (saved != NULL)
-        {
-            size_t len = ::strlen(saved) + 1;
-            char *saved_copy = static_cast<char *>(alloca(len));
-            ::memcpy(saved_copy, saved, len);
-            saved       = saved_copy;
-        }
-        ::setlocale(LC_NUMERIC, "C");
+        SET_LOCALE_SCOPED(LC_NUMERIC, "C");
 
         status_t res = parse_cnumeric(dst, nmin, nmax, prefix, src, len);
-
-        if (saved != NULL)
-            ::setlocale(LC_NUMERIC, saved);
 
         return res;
     }
@@ -1346,15 +1335,7 @@ namespace lsp
             return res;
 
         // Save and update locale
-        char *saved = ::setlocale(LC_NUMERIC, NULL);
-        if (saved != NULL)
-        {
-            size_t len = ::strlen(saved) + 1;
-            char *saved_copy = static_cast<char *>(alloca(len));
-            ::memcpy(saved_copy, saved, len);
-            saved       = saved_copy;
-        }
-        ::setlocale(LC_NUMERIC, "C");
+        SET_LOCALE_SCOPED(LC_NUMERIC, "C");
 
         // Try to parse different expressions
         if ((res = parse_cnumeric(v, 3, 3, "rgb", src, len)) == STATUS_OK)
@@ -1386,25 +1367,13 @@ namespace lsp
         else if ((res = parse_cnumeric(v, 5, 5, "cmyka", src, len)) == STATUS_OK)
             set_cmyka(v[0], v[1], v[2], v[3], v[4]);
 
-
-        if (saved != NULL)
-            ::setlocale(LC_NUMERIC, saved);
-
         return res;
     }
 
     ssize_t Color::format3(char *dst, size_t len) const
     {
         // Save and update locale
-        char *saved = ::setlocale(LC_NUMERIC, NULL);
-        if (saved != NULL)
-        {
-            size_t len = ::strlen(saved) + 1;
-            char *saved_copy = static_cast<char *>(alloca(len));
-            ::memcpy(saved_copy, saved, len);
-            saved       = saved_copy;
-        }
-        ::setlocale(LC_NUMERIC, "C");
+        SET_LOCALE_SCOPED(LC_NUMERIC, "C");
 
         ssize_t res = 0;
         if (is_rgb())
@@ -1422,24 +1391,13 @@ namespace lsp
         else
             res = snprintf(dst, len, "rgb(%.4f, %.4f, %.4f)", rgb.R, rgb.G, rgb.B);
 
-        if (saved != NULL)
-            ::setlocale(LC_NUMERIC, saved);
-
         return res;
     }
 
     ssize_t Color::format4(char *dst, size_t len) const
     {
         // Save and update locale
-        char *saved = ::setlocale(LC_NUMERIC, NULL);
-        if (saved != NULL)
-        {
-            size_t len = ::strlen(saved) + 1;
-            char *saved_copy = static_cast<char *>(alloca(len));
-            ::memcpy(saved_copy, saved, len);
-            saved       = saved_copy;
-        }
-        ::setlocale(LC_NUMERIC, "C");
+        SET_LOCALE_SCOPED(LC_NUMERIC, "C");
 
         ssize_t res = 0;
         if (is_rgb())
@@ -1456,9 +1414,6 @@ namespace lsp
             res = snprintf(dst, len, "cmyka(%.4f, %.4f, %.4f, %.4f, %.4f)", cmyk.C, cmyk.M, cmyk.Y, cmyk.K, A);
         else
             res = snprintf(dst, len, "rgba(%.4f, %.4f, %.4f, %.4f)", rgb.R, rgb.G, rgb.B, A);
-
-        if (saved != NULL)
-            ::setlocale(LC_NUMERIC, saved);
 
         return res;
     }

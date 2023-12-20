@@ -23,8 +23,9 @@
 #include <lsp-plug.in/io/InFileStream.h>
 #include <lsp-plug.in/io/InStringSequence.h>
 #include <lsp-plug.in/io/InSequence.h>
+#include <lsp-plug.in/stdlib/locale.h>
 #include <lsp-plug.in/stdlib/math.h>
-#include <locale.h>
+
 #include <errno.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -673,15 +674,7 @@ namespace lsp
                 return STATUS_BAD_FORMAT;
 
             // Save and update locale
-            char *saved = ::setlocale(LC_NUMERIC, NULL);
-            if (saved != NULL)
-            {
-                size_t len = ::strlen(saved) + 1;
-                char *saved_copy = static_cast<char *>(alloca(len));
-                ::memcpy(saved_copy, saved, len);
-                saved       = saved_copy;
-            }
-            ::setlocale(LC_NUMERIC, "C");
+            SET_LOCALE_SCOPED(LC_NUMERIC, "C");
 
             // Parse float
             errno = 0;
@@ -708,10 +701,6 @@ namespace lsp
                     success = false;
             }
 
-            // Restore locale
-            if (saved != NULL)
-                ::setlocale(LC_NUMERIC, saved);
-
             // Return result
             if (!success)
                 return STATUS_BAD_FORMAT;
@@ -730,15 +719,7 @@ namespace lsp
                 return STATUS_BAD_FORMAT;
 
             // Save and update locale
-            char *saved = ::setlocale(LC_NUMERIC, NULL);
-            if (saved != NULL)
-            {
-                size_t len = ::strlen(saved) + 1;
-                char *saved_copy = static_cast<char *>(alloca(len));
-                ::memcpy(saved_copy, saved, len);
-                saved       = saved_copy;
-            }
-            ::setlocale(LC_NUMERIC, "C");
+            SET_LOCALE_SCOPED(LC_NUMERIC, "C");
 
             // Parse float
             errno = 0;
@@ -764,10 +745,6 @@ namespace lsp
                 if (*end != '\0')
                     success = false;
             }
-
-            // Restore locale
-            if (saved != NULL)
-                ::setlocale(LC_NUMERIC, saved);
 
             // Return result
             if (!success)

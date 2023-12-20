@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 19 сент. 2019 г.
@@ -22,6 +22,7 @@
 #include <lsp-plug.in/expr/types.h>
 #include <lsp-plug.in/expr/Tokenizer.h>
 #include <lsp-plug.in/io/InStringSequence.h>
+#include <lsp-plug.in/stdlib/locale.h>
 #include <lsp-plug.in/stdlib/math.h>
 
 namespace lsp
@@ -365,8 +366,13 @@ namespace lsp
                         if (!tmp.set_ascii(special))
                             return STATUS_NO_MEM;
                     }
-                    else if (!tmp.fmt_ascii("%f", double(v->v_float)))
-                        return STATUS_NO_MEM;
+                    else
+                    {
+                        // Update locale
+                        SET_LOCALE_SCOPED(LC_NUMERIC, "C");
+                        if (!tmp.fmt_ascii("%f", double(v->v_float)))
+                            return STATUS_NO_MEM;
+                    }
                     break;
                 }
                 case VT_BOOL:
@@ -410,8 +416,13 @@ namespace lsp
                         if (!tmp.set_ascii(special))
                             return STATUS_NO_MEM;
                     }
-                    else if (!tmp.fmt_ascii("%f", double(v->v_float)))
-                        return STATUS_NO_MEM;
+                    else
+                    {
+                        // Update locale
+                        SET_LOCALE_SCOPED(LC_NUMERIC, "C");
+                        if (!tmp.fmt_ascii("%f", double(v->v_float)))
+                            return STATUS_NO_MEM;
+                    }
                     break;
                 }
                 case VT_BOOL:

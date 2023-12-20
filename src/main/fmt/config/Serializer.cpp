@@ -23,8 +23,7 @@
 #include <lsp-plug.in/io/OutFileStream.h>
 #include <lsp-plug.in/io/OutSequence.h>
 #include <lsp-plug.in/io/OutStringSequence.h>
-
-#include <locale.h>
+#include <lsp-plug.in/stdlib/locale.h>
 
 namespace lsp
 {
@@ -132,15 +131,7 @@ namespace lsp
         status_t Serializer::write_float(double v, size_t flags)
         {
             // Save and update locale
-            char *saved = ::setlocale(LC_NUMERIC, NULL);
-            if (saved != NULL)
-            {
-                size_t len = ::strlen(saved) + 1;
-                char *saved_copy = static_cast<char *>(alloca(len));
-                ::memcpy(saved_copy, saved, len);
-                saved       = saved_copy;
-            }
-            ::setlocale(LC_NUMERIC, "C");
+            SET_LOCALE_SCOPED(LC_NUMERIC, "C");
 
             status_t res;
             char tmp[64];
@@ -169,10 +160,6 @@ namespace lsp
             }
             ::snprintf(tmp, sizeof(tmp), fmt, v);
             tmp[sizeof(tmp)-1] = '\0';
-
-            // Restore locale
-            if (saved != NULL)
-                ::setlocale(LC_NUMERIC, saved);
 
             // Write value
             if (flags & SF_QUOTED)

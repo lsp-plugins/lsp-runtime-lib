@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 21 апр. 2017 г.
@@ -25,9 +25,9 @@
 #include <lsp-plug.in/io/InFileStream.h>
 #include <lsp-plug.in/io/InStringSequence.h>
 #include <lsp-plug.in/io/InSequence.h>
+#include <lsp-plug.in/stdlib/locale.h>
 
 #include <errno.h>
-#include <locale.h>
 
 namespace lsp
 {
@@ -498,15 +498,7 @@ namespace lsp
                 return false;
 
             // Save and update locale
-            char *saved = ::setlocale(LC_NUMERIC, NULL);
-            if (saved != NULL)
-            {
-                size_t len = ::strlen(saved) + 1;
-                char *saved_copy = static_cast<char *>(alloca(len));
-                ::memcpy(saved_copy, saved, len);
-                saved       = saved_copy;
-            }
-            ::setlocale(LC_NUMERIC, "C");
+            SET_LOCALE_SCOPED(LC_NUMERIC, "C");
 
             // Parse floating-point value
             errno = 0;
@@ -518,10 +510,6 @@ namespace lsp
                 *dst    = result;
                 *s      = ptr;
             }
-
-            // Restore locale
-            if (saved != NULL)
-                ::setlocale(LC_NUMERIC, saved);
 
             return success;
         }
@@ -871,5 +859,6 @@ namespace lsp
 
             return result;
         }
-    }
+
+    } /* namespace obj */
 } /* namespace lsp */
