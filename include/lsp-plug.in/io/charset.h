@@ -144,6 +144,17 @@ namespace lsp
     inline lsp_utf16_t     *utf8_to_utf16(const char *str) { return __IF_LEBE(utf8_to_utf16le, utf8_to_utf16be)(str); }
 
     /**
+     * Encode NULL-terminated UTF-8 string to NULL-terminated UTF-16 string
+     * @param dst destination buffer to store data
+     * @param src string to encode
+     * @param count number of elements available in destination buffer
+     * @return number of elements produced (including zero-terminating character) or zero if there is not enough space
+     */
+    size_t                  utf8_to_utf16le(lsp_utf16_t *dst, const char *src, size_t count);
+    size_t                  utf8_to_utf16be(lsp_utf16_t *dst, const char *src, size_t count);
+    inline size_t           utf8_to_utf16(lsp_utf16_t *dst, const char *src, size_t count) { return __IF_LEBE(utf8_to_utf16le, utf8_to_utf16be)(dst, src, count); }
+
+    /**
      * Encode sequence of UTF-8 characters into sequence of UTF-16 characters
      * @param dst target buffer to store characters
      * @param ndst number of elements available in target buffer
@@ -166,6 +177,17 @@ namespace lsp
     inline lsp_utf32_t     *utf8_to_utf32(const char *str) { return __IF_LEBE(utf8_to_utf32le, utf8_to_utf32be)(str); };
 
     /**
+     * Encode NULL-terminated UTF-8 string to NULL-terminated UTF-32 string
+     * @param dst destination buffer to store data
+     * @param src string to encode
+     * @param count number of elements available in destination buffer
+     * @return number of elements produced (including zero-terminating character) or negative value if there is not enough space
+     */
+    size_t                  utf8_to_utf32le(lsp_utf32_t *dst, const char *src, size_t count);
+    size_t                  utf8_to_utf32be(lsp_utf32_t *dst, const char *src, size_t count);
+    inline size_t           utf8_to_utf32(lsp_utf32_t *dst, const char *src, size_t count) { return __IF_LEBE(utf8_to_utf32le, utf8_to_utf32be)(dst, src, count); }
+
+    /**
      * Encode sequence of UTF-8 characters into sequence of UTF-32 characters
      * @param dst target buffer to store characters
      * @param ndst number of elements available in target buffer
@@ -186,6 +208,17 @@ namespace lsp
     char                   *utf16le_to_utf8(const lsp_utf16_t *str);
     char                   *utf16be_to_utf8(const lsp_utf16_t *str);
     inline char            *utf16_to_utf8(const lsp_utf16_t *str) { return __IF_LEBE(utf16le_to_utf8, utf16be_to_utf8)(str); };
+
+    /**
+     * Encode NULL-terminated UTF-16 string to NULL-terminated UTF-8 string
+     * @param dst destination buffer to store data
+     * @param src string to encode
+     * @param count number of elements available in destination buffer
+     * @return number of elements produced (including zero-terminating character) or negative value if there is not enough space
+     */
+    size_t                  utf16le_to_utf8(char *dst, const lsp_utf16_t *src, size_t count);
+    size_t                  utf16be_to_utf8(char *dst, const lsp_utf16_t *src, size_t count);
+    inline size_t           utf16_to_utf8(char *dst, const lsp_utf16_t *src, size_t count) { return __IF_LEBE(utf16le_to_utf8, utf16be_to_utf8)(dst, src, count); }
 
     /**
      * Encode sequence of UTF-16 characters into sequence of UTF-16 characters
@@ -217,6 +250,24 @@ namespace lsp
     inline lsp_utf32_t     *utf16_to_utf32(const lsp_utf16_t *str) { return __IF_LEBE(utf16le_to_utf32le, utf16be_to_utf32be)(str); }
 
     /**
+     * Encode NULL-terminated UTF-16 string to NULL-terminated UTF-32 string
+     * @param dst destination buffer to store data
+     * @param src string to encode
+     * @param count number of elements available in destination buffer
+     * @return number of elements produced (including zero-terminating character) or negative value if there is not enough space
+     */
+    size_t                  utf16le_to_utf32le(lsp_utf32_t *dst, const lsp_utf16_t *src, size_t count);
+    size_t                  utf16le_to_utf32be(lsp_utf32_t *dst, const lsp_utf16_t *src, size_t count);
+    size_t                  utf16be_to_utf32le(lsp_utf32_t *dst, const lsp_utf16_t *src, size_t count);
+    size_t                  utf16be_to_utf32be(lsp_utf32_t *dst, const lsp_utf16_t *src, size_t count);
+
+    inline size_t           utf16le_to_utf32(lsp_utf32_t *dst, const lsp_utf16_t *src, size_t count) { return __IF_LEBE(utf16le_to_utf32le, utf16le_to_utf32be)(dst, src, count); }
+    inline size_t           utf16be_to_utf32(lsp_utf32_t *dst, const lsp_utf16_t *src, size_t count) { return __IF_LEBE(utf16be_to_utf32le, utf16be_to_utf32be)(dst, src, count); }
+    inline size_t           utf16_to_utf32le(lsp_utf32_t *dst, const lsp_utf16_t *src, size_t count) { return __IF_LEBE(utf16le_to_utf32le, utf16be_to_utf32le)(dst, src, count); }
+    inline size_t           utf16_to_utf32be(lsp_utf32_t *dst, const lsp_utf16_t *src, size_t count) { return __IF_LEBE(utf16le_to_utf32be, utf16be_to_utf32be)(dst, src, count); }
+    inline size_t           utf16_to_utf32(lsp_utf32_t *dst, const lsp_utf16_t *src, size_t count) { return __IF_LEBE(utf16le_to_utf32le, utf16be_to_utf32be)(dst, src, count); }
+
+    /**
      * Encode sequence of UTF-16 characters into sequence of UTF-32 characters
      * @param dst target buffer to store characters
      * @param ndst number of elements available in target buffer
@@ -246,6 +297,17 @@ namespace lsp
     inline char            *utf32_to_utf8(const lsp_utf32_t *str) { return __IF_LEBE(utf32le_to_utf8, utf32be_to_utf8)(str); };
 
     /**
+     * Encode NULL-terminated UTF-32 string to NULL-terminated UTF-8 string
+     * @param dst destination buffer to store data
+     * @param src string to encode
+     * @param count number of elements available in destination buffer
+     * @return number of elements produced (including zero-terminating character) or negative value if there is not enough space
+     */
+    size_t                  utf32le_to_utf8(char *dst, const lsp_utf32_t *src, size_t count);
+    size_t                  utf32be_to_utf8(char *dst, const lsp_utf32_t *src, size_t count);
+    inline size_t           utf32_to_utf8(char *dst, const lsp_utf32_t *src, size_t count) { return __IF_LEBE(utf32le_to_utf8, utf32be_to_utf8)(dst, src, count); };
+
+    /**
      * Encode sequence of UTF-8 characters into sequence of UTF-16 characters
      * @param dst target buffer to store characters
      * @param ndst number of elements available in target buffer
@@ -273,6 +335,24 @@ namespace lsp
     inline lsp_utf16_t     *utf32_to_utf16le(const lsp_utf32_t *str)    { return __IF_LEBE(utf32le_to_utf16le, utf32be_to_utf16le)(str);  }
     inline lsp_utf16_t     *utf32_to_utf16be(const lsp_utf32_t *str)    { return __IF_LEBE(utf32le_to_utf16be, utf32be_to_utf16be)(str);  }
     inline lsp_utf16_t     *utf32_to_utf16(const lsp_utf32_t *str)      { return __IF_LEBE(utf32le_to_utf16le, utf32be_to_utf16be)(str);  }
+
+    /**
+     * Encode NULL-terminated UTF-32 string to NULL-terminated UTF-16 string
+     * @param dst destination buffer to store data
+     * @param src string to encode
+     * @param count number of elements available in destination buffer
+     * @return number of elements produced (including zero-terminating character) or negative value if there is not enough space
+     */
+    size_t                  utf32le_to_utf16le(lsp_utf16_t *dst, const lsp_utf32_t *src, size_t count);
+    size_t                  utf32le_to_utf16be(lsp_utf16_t *dst, const lsp_utf32_t *src, size_t count);
+    size_t                  utf32be_to_utf16le(lsp_utf16_t *dst, const lsp_utf32_t *src, size_t count);
+    size_t                  utf32be_to_utf16be(lsp_utf16_t *dst, const lsp_utf32_t *src, size_t count);
+
+    inline size_t           utf32le_to_utf16(lsp_utf16_t *dst, const lsp_utf32_t *src, size_t count)    { return __IF_LEBE(utf32le_to_utf16le, utf32le_to_utf16be)(dst, src, count);  }
+    inline size_t           utf32be_to_utf16(lsp_utf16_t *dst, const lsp_utf32_t *src, size_t count)    { return __IF_LEBE(utf32be_to_utf16le, utf32be_to_utf16be)(dst, src, count);  }
+    inline size_t           utf32_to_utf16le(lsp_utf16_t *dst, const lsp_utf32_t *src, size_t count)    { return __IF_LEBE(utf32le_to_utf16le, utf32be_to_utf16le)(dst, src, count);  }
+    inline size_t           utf32_to_utf16be(lsp_utf16_t *dst, const lsp_utf32_t *src, size_t count)    { return __IF_LEBE(utf32le_to_utf16be, utf32be_to_utf16be)(dst, src, count);  }
+    inline size_t           utf32_to_utf16(lsp_utf16_t *dst, const lsp_utf32_t *src, size_t count)      { return __IF_LEBE(utf32le_to_utf16le, utf32be_to_utf16be)(dst, src, count);  }
 
     /**
      * Encode sequence of UTF-8 characters into sequence of UTF-16 characters
