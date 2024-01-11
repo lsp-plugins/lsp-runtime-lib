@@ -228,13 +228,12 @@ namespace lsp
 
 UTEST_BEGIN("runtime.io", charset)
 
-    void check_utf8_to_utfX()
+    void check_utf8_to_utf16()
     {
         lsp_utf16_t *s_na = NULL, *s_le = NULL, *s_be = NULL;
-        lsp_utf32_t *s32_na = NULL, *s32_le = NULL, *s32_be = NULL;
         size_t len;
 
-        printf("Testing check_utf8_to_utfX\n");
+        printf("Testing utf8_to_utf16\n");
 
         for (size_t i=0, n=sizeof(utf8_check)/sizeof(utf8_check_t); i<n; ++i)
         {
@@ -266,6 +265,21 @@ UTEST_BEGIN("runtime.io", charset)
             UTEST_ASSERT(strcmp_bswap(s_na, s_be, false) == 0);
             if (len > 0)
                 UTEST_ASSERT(strcmp_test(s_le, s_be) != 0);
+        }
+    }
+
+    void check_utf8_to_utf32()
+    {
+        lsp_utf32_t *s32_na = NULL, *s32_le = NULL, *s32_be = NULL;
+        size_t len;
+
+        printf("Testing utf8_to_utf32\n");
+
+        for (size_t i=0, n=sizeof(utf8_check)/sizeof(utf8_check_t); i<n; ++i)
+        {
+            printf("  checking test line %d...\n", int(i));
+
+            utf8_check_t *ck = &utf8_check[i];
 
             // UTF8 -> UTF32
             s32_na = lsp::utf8_to_utf32(ck->s);
@@ -294,14 +308,13 @@ UTEST_BEGIN("runtime.io", charset)
         }
     }
 
-    void check_utf16_to_utfX()
+    void check_utf16_to_utf8()
     {
         lsp_utf16_t *le = NULL, *be = NULL;
         const lsp_utf16_t *na = NULL;
         char *s_na = NULL, *s_le = NULL, *s_be = NULL;
-        lsp_utf32_t *s32[9];
         size_t len;
-        printf("Testing check_utf16_to_utfX\n");
+        printf("Testing utf16_to_utf8\n");
 
         for (size_t i=0, n=sizeof(utf16_check)/sizeof(utf16_check_t); i<n; ++i)
         {
@@ -343,6 +356,33 @@ UTEST_BEGIN("runtime.io", charset)
             free(s_na);
             free(s_le);
             free(s_be);
+        }
+    }
+
+    void check_utf16_to_utf32()
+    {
+        lsp_utf16_t *le = NULL, *be = NULL;
+        const lsp_utf16_t *na = NULL;
+        lsp_utf32_t *s32[9];
+        size_t len;
+        printf("Testing utf16_to_utf32\n");
+
+        for (size_t i=0, n=sizeof(utf16_check)/sizeof(utf16_check_t); i<n; ++i)
+        {
+            printf("  checking test line %d...\n", int(i));
+
+            utf16_check_t *ck = &utf16_check[i];
+
+            // Obtain native string and it's LE and BE copies
+            na  = reinterpret_cast<const lsp_utf16_t *>(ck->s);
+            le  = strdup_bswap(na, true);
+            be  = strdup_bswap(na, false);
+
+            len = strlen_test(na);
+            UTEST_ASSERT(le != NULL);
+            UTEST_ASSERT(be != NULL);
+            if (len > 0)
+                UTEST_ASSERT(strcmp_test(le, be) != 0);
 
             // UTF16 -> UTF32
             s32[0]  = lsp::utf16_to_utf32(na);
@@ -573,9 +613,11 @@ UTEST_BEGIN("runtime.io", charset)
 
     UTEST_MAIN
     {
-        check_utf8_to_utfX();
-        check_utf16_to_utfX();
-//        check_latin_lower_upper();
+        check_utf8_to_utf16();
+        check_utf8_to_utf32();
+        check_utf16_to_utf8();
+        check_utf16_to_utf32();
+        check_latin_lower_upper();
         check_cyrillic_lower_upper();
     }
 UTEST_END;
