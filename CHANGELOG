@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.20 ===
-
+* Additional methods for converting between UTF-8, UTF-16 and UTF-32.
 
 === 1.0.19 ===
 * Optimized expression variables access.
