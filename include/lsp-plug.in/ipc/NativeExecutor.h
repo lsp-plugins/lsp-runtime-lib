@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 27 янв. 2016 г.
@@ -19,8 +19,8 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef CORE_NATIVEEXECUTOR_H_
-#define CORE_NATIVEEXECUTOR_H_
+#ifndef IPC_NATIVEEXECUTOR_H_
+#define IPC_NATIVEEXECUTOR_H_
 
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/common/atomic.h>
@@ -32,6 +32,9 @@ namespace lsp
 {
     namespace ipc
     {
+        /**
+         * Native executor class
+         */
         class NativeExecutor: public IExecutor
         {
             private:
@@ -40,24 +43,42 @@ namespace lsp
                 ITask              *pTail;
                 atomic_t            nLock;
 
+            private:
                 static status_t     execute(void *params);
-                void    run();
 
             private:
-                NativeExecutor &operator = (const NativeExecutor &src); // Deny copying
+                void                run();
 
             public:
                 explicit NativeExecutor();
-                virtual ~NativeExecutor();
+                NativeExecutor(const NativeExecutor &) = delete;
+                NativeExecutor(NativeExecutor &&) = delete;
+                virtual ~NativeExecutor() override;
+
+                NativeExecutor &operator = (const NativeExecutor & src) = delete;
+                NativeExecutor &operator = (NativeExecutor && src) = delete;
 
             public:
-                status_t start();
+                /**
+                 * Start the execution thread
+                 * @return status of operation
+                 */
+                status_t            start();
 
-                virtual bool submit(ITask *task);
+            public:
+                /**
+                 * Submit some task for execution
+                 * @param task task to submit
+                 * @return true on success
+                 */
+                virtual bool        submit(ITask *task) override;
 
-                virtual void shutdown();
+                /**
+                 * Shutdown the executor
+                 */
+                virtual void        shutdown() override;
         };
-    }
-}
+    } /* namespace ipc */
+} /* namespace lsp */
 
-#endif /* CORE_NATIVEEXECUTOR_H_ */
+#endif /* IPC_NATIVEEXECUTOR_H_ */
