@@ -113,6 +113,13 @@ namespace lsp
             return syscall(SYS_futex, addr, futex_op, val, timeout, addr2, val3);
         }
 
+        Mutex::Mutex()
+        {
+            nLock       = 1;
+            nThreadId   = -1;
+            nLocks      = 0;
+        }
+
         bool Mutex::lock() const
         {
             int res;
@@ -191,6 +198,44 @@ namespace lsp
             return true;
         }
 
+        bool Mutex::wait() const
+        {
+            // ENSURE MUTEX IS LOCKED
+            // Unlock current mutex without any notifications
+            if (nThreadId != pthread_self())
+                return false;
+            ssize_t locks       = nLocks;
+
+            // Increment number of waiters in the queue
+            atomic_add(&nWaiters, 1);
+
+            if (atomic_cas(&nLock, 0, 1))
+            {
+                futex(
+                    &nLock,         // addr: address
+                    FUTEX_WAKE,     // futex_op: WAKEUP listeners at the specified address
+                    1,              // val: Number of listeners to wake up
+                    NULL,           // timeout: unused
+                    0,              // addr2: unused
+                    0);             // val3: unused
+            }
+
+            // NOW MUTEX IS UNLOCKED
+
+        }
+
+        bool Mutex::wait(wsize_t millis) const
+        {
+        }
+
+        bool Mutex::notify() const
+        {
+        }
+
+        bool Mutex::notify_all() const
+        {
+        }
+
 #else
         Mutex::Mutex()
         {
@@ -204,6 +249,33 @@ namespace lsp
         Mutex::~Mutex()
         {
             pthread_mutex_destroy(&sMutex);
+        }
+
+        bool Mutex::lock() const
+        {
+            while (true)
+            {
+                switch (pthread_mutex_lock(&sMutex))
+                {
+                    case 0:
+                        return true;
+                    case EBUSY:
+                        sched_yield();
+                        break;
+                    default:
+                        return false;
+                }
+            }
+        }
+
+        bool Mutex::try_lock() const
+        {
+            return pthread_mutex_trylock(&sMutex) == 0;
+        }
+
+        bool Mutex::unlock() const
+        {
+            return pthread_mutex_unlock(&sMutex) == 0;
         }
 #endif /* PLATFORM_LINUX */
 

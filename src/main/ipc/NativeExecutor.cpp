@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 27 янв. 2016 г.
@@ -144,5 +144,6 @@ namespace lsp
             _this->run();
             return STATUS_OK;
         }
-    }
-}
+
+    } /* namespace ipc */
+} /* namespace lsp */
