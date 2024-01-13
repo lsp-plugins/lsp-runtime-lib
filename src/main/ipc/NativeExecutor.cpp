@@ -123,7 +123,7 @@ namespace lsp
                 else
                 {
                     // Remove task from queue
-                    pHead           = next_task(pHead);
+                    pHead           = unlink_task(pHead);
                     if (pHead == NULL)
                         pTail           = NULL;
 

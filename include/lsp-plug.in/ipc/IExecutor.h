@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 27 янв. 2016 г.
@@ -44,27 +44,46 @@ namespace lsp
                     link->pNext     = NULL;
                 }
 
-                static inline ITask *next_task(ITask *task)
+                static inline ITask *unlink_task(ITask *task)
                 {
                     ITask *next     = task->pNext;
                     task->pNext     = NULL;
                     return next;
                 }
 
-                static inline void run_task(ITask *task)
+                static inline void set_next_task(ITask *tail, ITask *next)
                 {
-                    task->nState    = ITask::TS_RUNNING;
-                    task->nCode     = 0;
-                    task->nCode     = task->run();
-                    task->nState    = ITask::TS_COMPLETED;
+                    tail->pNext     = next;
                 }
 
-            private:
-                IExecutor &operator = (const IExecutor &src);       // Deny copying
+                static inline ITask *get_next_task(ITask *task)
+                {
+                    return task->pNext;
+                }
+
+                static inline IExecutor *get_executor(ITask *task)
+                {
+                    return task->pExecutor;
+                }
+
+                static inline void set_executor(ITask *task, IExecutor *executor)
+                {
+                    task->pExecutor = executor;
+                }
+
+                void run_task(ITask *task);
 
             public:
-                explicit IExecutor();
+                IExecutor();
+                IExecutor(const IExecutor &) = delete;
+                IExecutor(IExecutor &&) = delete;
                 virtual ~IExecutor();
+
+                IExecutor &operator = (const IExecutor & src) = delete;
+                IExecutor &operator = (IExecutor && src) = delete;
+
+            protected:
+                virtual void task_finished(ITask *task);
 
             public:
                 /** Submit task for execution
