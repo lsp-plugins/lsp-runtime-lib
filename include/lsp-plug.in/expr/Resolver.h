@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 16 сент. 2019 г.
@@ -36,12 +36,14 @@ namespace lsp
          */
         class Resolver
         {
-            private:
-                Resolver & operator = (const Resolver &);
-
             public:
                 explicit Resolver();
+                Resolver(const Resolver &) = delete;
+                Resolver(Resolver &&) = delete;
                 virtual ~Resolver();
+
+                Resolver & operator = (const Resolver &) = delete;
+                Resolver & operator = (Resolver &&) = delete;
 
             public:
                 /**
@@ -63,9 +65,29 @@ namespace lsp
                  * @return status of operation
                  */
                 virtual status_t resolve(value_t *value, const LSPString *name, size_t num_indexes = 0, const ssize_t *indexes = NULL);
+
+                /**
+                 * Perform function call
+                 * @param value destination pointer to store the value
+                 * @param name name of the function
+                 * @param num_args number of arguments
+                 * @param args list of arguments (may be NULL)
+                 * @return status of operation
+                 */
+                virtual status_t call(value_t *value, const char *name, size_t num_args, const value_t *args = NULL);
+
+                /**
+                 * Perform function call
+                 * @param value destination pointer to store the value
+                 * @param name name of the function
+                 * @param num_args number of arguments
+                 * @param args list of arguments (may be NULL)
+                 * @return status of operation
+                 */
+                virtual status_t call(value_t *value, const LSPString *name, size_t num_args, const value_t *args = NULL);
         };
     
-    } /* namespace calc */
+    } /* namespace expr */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_EXPR_RESOLVER_H_ */
