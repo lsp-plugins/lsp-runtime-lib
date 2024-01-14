@@ -461,6 +461,7 @@ namespace lsp
 
         status_t Expression::scan_dependencies(expr_t *expr)
         {
+            status_t res;
             if (expr == NULL)
                 return STATUS_OK;
 
@@ -470,7 +471,7 @@ namespace lsp
                     return STATUS_OK;
                 case ET_CALC:
                 {
-                    status_t res = scan_dependencies(expr->calc.cond);
+                    res = scan_dependencies(expr->calc.cond);
                     if (res == STATUS_OK)
                         res = scan_dependencies(expr->calc.left);
                     if (res == STATUS_OK)
@@ -479,12 +480,22 @@ namespace lsp
                 }
                 case ET_RESOLVE:
                 {
-                    status_t res = add_dependency(expr->resolve.name);
+                    res = add_dependency(expr->resolve.name);
                     if (res != STATUS_OK)
                         return res;
                     for (size_t i=0; i<expr->resolve.count; ++i)
                     {
                         res = scan_dependencies(expr->resolve.items[i]);
+                        if (res != STATUS_OK)
+                            break;
+                    }
+                    return res;
+                }
+                case ET_CALL:
+                {
+                    for (size_t i=0; i<expr->call.count; ++i)
+                    {
+                        res = scan_dependencies(expr->call.items[i]);
                         if (res != STATUS_OK)
                             break;
                     }

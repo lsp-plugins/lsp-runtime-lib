@@ -137,6 +137,31 @@ namespace lsp
             return STATUS_OK;
         }
 
+        status_t set_value_string(value_t *dst, const char *value)
+        {
+            if (value == NULL)
+            {
+                set_value_null(dst);
+                return STATUS_OK;
+            }
+            else if (dst->type == VT_STRING)
+                return (dst->v_str->set_utf8(value)) ? STATUS_OK : STATUS_NO_MEM;
+
+            LSPString *str = new LSPString();
+            if (str == NULL)
+                return STATUS_NO_MEM;
+            if (!str->set_utf8(value))
+            {
+                delete str;
+                return STATUS_NO_MEM;
+            }
+
+            destroy_value_internal(dst);
+            dst->type       = VT_STRING;
+            dst->v_str      = str;
+            return STATUS_OK;
+        }
+
         status_t copy_value(value_t *dst, const value_t *src)
         {
             if (src == NULL)
@@ -213,6 +238,29 @@ namespace lsp
                     return STATUS_OK;
                 case VT_UNDEF:
                     set_value_undef(v);
+                    return STATUS_OK;
+            }
+
+            return STATUS_BAD_TYPE;
+        }
+
+        status_t cast_value(value_t *dst, const value_t *v, value_type_t type)
+        {
+            status_t res = copy_value(dst, v);
+            if (res != STATUS_OK)
+                return res;
+
+            switch (type)
+            {
+                case VT_INT: return cast_int(dst);
+                case VT_FLOAT: return cast_float(dst);
+                case VT_BOOL: return cast_bool(dst);
+                case VT_STRING: return cast_string(dst);
+                case VT_NULL:
+                    set_value_null(dst);
+                    return STATUS_OK;
+                case VT_UNDEF:
+                    set_value_undef(dst);
                     return STATUS_OK;
             }
 
@@ -509,6 +557,55 @@ namespace lsp
             }
             return STATUS_OK;
         }
+
+        status_t cast_int(value_t *dst, const value_t *v)
+        {
+            status_t res = copy_value(dst, v);
+            if (res == STATUS_OK)
+                res         = cast_int(dst);
+            return res;
+        }
+
+        status_t cast_float(value_t *dst, const value_t *v)
+        {
+            status_t res = copy_value(dst, v);
+            if (res == STATUS_OK)
+                res         = cast_float(dst);
+            return res;
+        }
+
+        status_t cast_bool(value_t *dst, const value_t *v)
+        {
+            status_t res = copy_value(dst, v);
+            if (res == STATUS_OK)
+                res         = cast_bool(dst);
+            return res;
+        }
+
+        status_t cast_string(value_t *dst, const value_t *v)
+        {
+            status_t res = copy_value(dst, v);
+            if (res == STATUS_OK)
+                res         = cast_string(dst);
+            return res;
+        }
+
+        status_t cast_string_ext(value_t *dst, const value_t *v)
+        {
+            status_t res = copy_value(dst, v);
+            if (res == STATUS_OK)
+                res         = cast_string_ext(dst);
+            return res;
+        }
+
+        status_t cast_numeric(value_t *dst, const value_t *v)
+        {
+            status_t res = copy_value(dst, v);
+            if (res == STATUS_OK)
+                res         = cast_numeric(dst);
+            return res;
+        }
+
     } /* namespace expr */
 } /* namespace lsp */
 
