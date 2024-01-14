@@ -327,6 +327,8 @@ namespace lsp
             ssize_t idx     = index_of_func(name);
             if (idx < 0)
             {
+                if (pResolver != NULL)
+                    return pResolver->call(value, name, num_args, args);
                 set_value_undef(value);
                 return STATUS_OK;
             }
@@ -335,6 +337,8 @@ namespace lsp
             user_func_t *func = vFunc.uget(idx);
             if (!name->equals(&func->name))
             {
+                if (pResolver != NULL)
+                    return pResolver->call(value, name, num_args, args);
                 set_value_undef(value);
                 return STATUS_OK;
             }
