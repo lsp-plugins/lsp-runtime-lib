@@ -499,7 +499,7 @@ namespace lsp
                         if (res != STATUS_OK)
                             break;
                     }
-                    return res;
+                    return STATUS_OK;
                 }
                 default:
                     break;
