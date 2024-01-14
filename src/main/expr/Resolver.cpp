@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 16 сент. 2019 г.
@@ -36,7 +36,7 @@ namespace lsp
     
         status_t Resolver::resolve(value_t *value, const char *name, size_t num_indexes, const ssize_t *indexes)
         {
-            value->type     = VT_NULL;
+            set_value_null(value);
             return STATUS_OK;
         }
 
@@ -45,5 +45,16 @@ namespace lsp
             return resolve(value, name->get_utf8(), num_indexes, indexes);
         }
 
-    } /* namespace calc */
+        status_t Resolver::call(value_t *value, const char *name, size_t num_args, const value_t *args)
+        {
+            set_value_undef(value);
+            return STATUS_OK;
+        }
+
+        status_t Resolver::call(value_t *value, const LSPString *name, size_t num_args, const value_t *args)
+        {
+            return call(value, name->get_utf8(), num_args, args);
+        }
+
+    } /* namespace expr */
 } /* namespace lsp */

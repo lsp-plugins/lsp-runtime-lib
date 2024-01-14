@@ -40,29 +40,43 @@ namespace lsp
                     value_t                     value;
                 } variable_t;
 
+                typedef struct user_func_t
+                {
+                    LSPString                   name;
+                    function_t                  func;
+                    void                       *context;
+                } user_func_t;
+
             protected:
                 Resolver                   *pResolver;
                 lltl::parray<variable_t>    vVars;
+                lltl::parray<user_func_t>   vFunc;
 
             protected:
-                status_t            insert(const LSPString *name, const value_t *value, size_t idx);
-                ssize_t             index_of(const LSPString *name);
+                status_t            insert_var(const LSPString *name, const value_t *value, size_t idx);
+                ssize_t             index_of_var(const LSPString *name);
+
+                status_t            insert_func(const LSPString *name, function_t func, void *context, size_t idx);
+                ssize_t             index_of_func(const LSPString *name);
 
             public:
                 explicit Variables();
                 explicit Variables(Resolver *r);
                 Variables(const Variables &) = delete;
                 Variables(Variables &&) = delete;
-                virtual ~Variables();
+                virtual ~Variables() override;
 
                 Variables & operator = (const Variables &) = delete;
                 Variables & operator = (Variables &&) = delete;
 
             public:
-                virtual status_t    resolve(value_t *value, const char *name, size_t num_indexes = 0, const ssize_t *indexes = NULL);
-                virtual status_t    resolve(value_t *value, const LSPString *name, size_t num_indexes = 0, const ssize_t *indexes = NULL);
+                virtual status_t    resolve(value_t *value, const char *name, size_t num_indexes = 0, const ssize_t *indexes = NULL) override;
+                virtual status_t    resolve(value_t *value, const LSPString *name, size_t num_indexes = 0, const ssize_t *indexes = NULL) override;
+                virtual status_t    call(value_t *value, const char *name, size_t num_args, const value_t *args = NULL) override;
+                virtual status_t    call(value_t *value, const LSPString *name, size_t num_args, const value_t *args = NULL) override;
 
             public:
+                // Different variable operations
                 status_t            set_int(const char *name, ssize_t value);
                 status_t            set_float(const char *name, double value);
                 status_t            set_bool(const char *name, bool value);
@@ -82,8 +96,21 @@ namespace lsp
                 status_t            unset(const char *name, value_t *value = NULL);
                 status_t            unset(const LSPString *name, value_t *value = NULL);
 
+                void                clear_vars();
+
+            public:
+                status_t            bind_func(const char *name, function_t func, void *context = NULL);
+                status_t            bind_func(const LSPString *name, function_t func, void *context = NULL);
+
+                status_t            unbind_func(const char *name);
+                status_t            unbind_func(const LSPString *name);
+
+                void                clear_func();
+
+            public:
                 void                clear();
 
+            public:
                 /**
                  * Get variable resolver
                  * @return variable resolver

@@ -55,6 +55,17 @@ namespace lsp
         } value_t;
 
         /**
+         * User-defined function
+         *
+         * @param context additional user context passed to function
+         * @param result destination value to store result, should be initialized
+         * @param num_args number of arguments passed to function
+         * @param args list of arguments passed to function (may be NULL if num_args is 0)
+         * @return status of operation
+         */
+        typedef status_t (*function_t)(void *context, value_t *result, size_t num_args, const value_t *args);
+
+        /**
          * Initialize value with VT_UNDEF type
          * @param dst destination value
          */
@@ -110,11 +121,18 @@ namespace lsp
         void        set_value_bool(value_t *dst, bool value);
 
         /**
-         * Set value to boolean
+         * Set value to string
          * @param dst target to set
          * @param value string value to set
          */
         status_t    set_value_string(value_t *dst, LSPString *value);
+
+        /**
+         * Set value to string
+         * @param dst target to set
+         * @param value UTF-8 string to set
+         */
+        status_t    set_value_string(value_t *dst, const char *value);
 
         /**
          * Destroy value and all internal contents associated with it
@@ -129,14 +147,22 @@ namespace lsp
         status_t    fetch_string(LSPString *dst, const value_t *v);
 
         status_t    cast_value(value_t *v, value_type_t type);
+        status_t    cast_value(value_t *dst, const value_t *v, value_type_t type);
 
         status_t    cast_int(value_t *v);
         status_t    cast_float(value_t *v);
         status_t    cast_bool(value_t *v);
         status_t    cast_string(value_t *v);
         status_t    cast_string_ext(value_t *v);
-
         status_t    cast_numeric(value_t *v);
+
+        status_t    cast_int(value_t *dst, const value_t *v);
+        status_t    cast_float(value_t *dst, const value_t *v);
+        status_t    cast_bool(value_t *dst, const value_t *v);
+        status_t    cast_string(value_t *dst, const value_t *v);
+        status_t    cast_string_ext(value_t *dst, const value_t *v);
+        status_t    cast_numeric(value_t *dst, const value_t *v);
+
     } /* namespace expr */
 } /* namespace lsp */
 

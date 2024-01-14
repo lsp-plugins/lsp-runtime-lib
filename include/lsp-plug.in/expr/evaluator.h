@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 18 сент. 2019 г.
@@ -96,6 +96,7 @@ namespace lsp
         status_t eval_db(value_t *value, const expr_t *expr, eval_env_t *env);
 
         status_t eval_resolve(value_t *value, const expr_t *expr, eval_env_t *env);
+        status_t eval_call(value_t *value, const expr_t *expr, eval_env_t *env);
         status_t eval_value(value_t *value, const expr_t *expr, eval_env_t *env);
 
         status_t eval_sin(value_t *value, const expr_t *expr, eval_env_t *env);

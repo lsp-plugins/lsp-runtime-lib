@@ -5,6 +5,7 @@
 === 1.0.20 ===
 * Additional methods for converting between UTF-8, UTF-16 and UTF-32.
 * Added support of real-time nesting of ipc::IExecutor.
+* Added support of custom functions in the expression language.
 
 === 1.0.19 ===
 * Optimized expression variables access.
