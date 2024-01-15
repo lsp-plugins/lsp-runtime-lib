@@ -45,15 +45,6 @@ namespace lsp
         {
         }
 
-        inline void Path::fixup_path()
-        {
-#ifdef PLATFORM_WINDOWS
-            sPath.replace_all('/', FILE_SEPARATOR_C);
-#else
-            sPath.replace_all('\\', FILE_SEPARATOR_C);
-#endif /* PLATFORM_WINDOWS */
-        }
-
         Path *Path::clone() const
         {
             Path *res = new Path();
@@ -71,7 +62,6 @@ namespace lsp
                 return STATUS_BAD_ARGUMENTS;
             if (!sPath.set_native(path, charset))
                 return STATUS_NO_MEM;
-            fixup_path();
             return STATUS_OK;
         }
 
@@ -81,7 +71,6 @@ namespace lsp
                 return STATUS_BAD_ARGUMENTS;
             if (!sPath.set_utf8(path))
                 return STATUS_NO_MEM;
-            fixup_path();
             return STATUS_OK;
         }
 
@@ -91,7 +80,6 @@ namespace lsp
                 return STATUS_BAD_ARGUMENTS;
             if (!sPath.set(path))
                 return STATUS_NO_MEM;
-            fixup_path();
             return STATUS_OK;
         }
 
@@ -101,7 +89,6 @@ namespace lsp
                 return STATUS_BAD_ARGUMENTS;
             if (!sPath.set(&path->sPath))
                 return STATUS_NO_MEM;
-            fixup_path();
             return STATUS_OK;
         }
 
@@ -237,6 +224,74 @@ namespace lsp
             return (path->sPath.set(&sPath)) ? STATUS_OK : STATUS_NO_MEM;
         }
 
+        inline ssize_t Path::rightmost_separator(const LSPString *s)
+        {
+            ssize_t idx     = s->rindex_of(FILE_SEPARATOR_C);
+        #ifdef PLATFORM_WINDOWS
+            ssize_t idx2    = s->rindex_of('/');
+            if ((idx < 0) || (idx < idx2))
+                idx             = idx2;
+        #endif /* PLATFORM_WINDOWS */
+            return idx;
+        }
+
+        inline ssize_t Path::leftmost_separator(const LSPString *s)
+        {
+            ssize_t idx     = s->index_of(FILE_SEPARATOR_C);
+        #ifdef PLATFORM_WINDOWS
+            ssize_t idx2    = s->index_of('/');
+            if ((idx < 0) || (idx > idx2))
+                idx             = idx2;
+        #endif /* PLATFORM_WINDOWS */
+            return idx;
+        }
+
+        inline ssize_t Path::indexof_separator(const LSPString *s, ssize_t off)
+        {
+            ssize_t idx     = s->index_of(off, FILE_SEPARATOR_C);
+        #ifdef PLATFORM_WINDOWS
+            ssize_t idx2    = s->index_of(off, '/');
+            if ((idx < 0) || (idx > idx2))
+                idx             = idx2;
+        #endif /* PLATFORM_WINDOWS */
+            return idx;
+        }
+
+        inline ssize_t Path::rindexof_separator(const LSPString *s, ssize_t off)
+        {
+            ssize_t idx     = s->rindex_of(off, FILE_SEPARATOR_C);
+        #ifdef PLATFORM_WINDOWS
+            ssize_t idx2    = s->rindex_of(off, '/');
+            if ((idx < 0) || (idx < idx2))
+                idx             = idx2;
+        #endif /* PLATFORM_WINDOWS */
+            return idx;
+        }
+
+        inline bool Path::ends_with_separator(const LSPString *s)
+        {
+            if (s->ends_with(FILE_SEPARATOR_C))
+                return true;
+        #ifdef PLATFORM_WINDOWS
+            if (s->ends_with('/'))
+                return true;
+        #endif /* PLATFORM_WINDOWS */
+            return false;
+        }
+
+        inline bool Path::is_separator_char(lsp_wchar_t ch)
+        {
+            if (ch == FILE_SEPARATOR_C)
+                return true;
+
+        #ifdef PLATFORM_WINDOWS
+            if (ch == '/')
+                return true;
+        #endif /* PLATFORM_WINDOWS */
+
+            return false;
+        }
+
         status_t Path::set_last(const char *path)
         {
             if (path == NULL)
@@ -245,14 +300,11 @@ namespace lsp
                 return remove_last();
 
             ssize_t len     = sPath.length();
-            ssize_t idx     = sPath.rindex_of(FILE_SEPARATOR_C);
+            ssize_t idx     = rightmost_separator(&sPath);
             idx             = (idx < 0) ? 0 : idx + 1;
             sPath.set_length(idx);
             if (sPath.append_utf8(path))
-            {
-                fixup_path();
                 return STATUS_OK;
-            }
 
             sPath.set_length(len);
             return STATUS_NO_MEM;
@@ -266,14 +318,11 @@ namespace lsp
                 return remove_last();
 
             ssize_t len     = sPath.length();
-            ssize_t idx     = sPath.rindex_of(FILE_SEPARATOR_C);
+            ssize_t idx     = rightmost_separator(&sPath);
             idx             = (idx < 0) ? 0 : idx + 1;
             sPath.set_length(idx);
             if (sPath.append(path))
-            {
-                fixup_path();
                 return STATUS_OK;
-            }
 
             sPath.set_length(len);
             return STATUS_NO_MEM;
@@ -287,14 +336,11 @@ namespace lsp
                 return remove_last();
 
             ssize_t len     = sPath.length();
-            ssize_t idx     = sPath.rindex_of(FILE_SEPARATOR_C);
+            ssize_t idx     = rightmost_separator(&sPath);
             idx             = (idx < 0) ? 0 : idx + 1;
             sPath.set_length(idx);
             if (sPath.append(&path->sPath))
-            {
-                fixup_path();
                 return STATUS_OK;
-            }
 
             sPath.set_length(len);
             return STATUS_NO_MEM;
@@ -305,7 +351,7 @@ namespace lsp
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
-            ssize_t idx = sPath.rindex_of(FILE_SEPARATOR_C);
+            ssize_t idx = rightmost_separator(&sPath);
             idx     = (idx < 0) ? 0 : idx + 1;
 
             const char *utf8 = sPath.get_utf8(idx);
@@ -325,7 +371,7 @@ namespace lsp
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
-            ssize_t idx = sPath.rindex_of(FILE_SEPARATOR_C);
+            ssize_t idx = rightmost_separator(&sPath);
             idx     = (idx < 0) ? 0 : idx + 1;
 
             return (path->set(&sPath, idx)) ? STATUS_OK : STATUS_NO_MEM;
@@ -341,7 +387,7 @@ namespace lsp
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
-            ssize_t idx         = sPath.index_of(FILE_SEPARATOR_C);
+            ssize_t idx         = leftmost_separator(&sPath);
             if (idx < 0)
             {
                 if (sPath.is_empty())
@@ -368,7 +414,7 @@ namespace lsp
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
-            ssize_t idx         = sPath.index_of(FILE_SEPARATOR_C);
+            ssize_t idx         = leftmost_separator(&sPath);
             if (idx < 0)
             {
                 if (sPath.is_empty())
@@ -386,7 +432,7 @@ namespace lsp
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
-            ssize_t idx         = sPath.index_of(FILE_SEPARATOR_C);
+            ssize_t idx         = leftmost_separator(&sPath);
             if (idx < 0)
                 return STATUS_NOT_FOUND;
             if (is_absolute())
@@ -402,7 +448,7 @@ namespace lsp
 
             ssize_t start, next;
 
-            start   = sPath.rindex_of(FILE_SEPARATOR_C);
+            start   = rightmost_separator(&sPath);
             start   = (start < 0) ? 0 : start + 1;
 
             // Lookup for last dot
@@ -435,7 +481,7 @@ namespace lsp
 
             ssize_t start, next;
 
-            start   = sPath.rindex_of(FILE_SEPARATOR_C);
+            start   = rightmost_separator(&sPath);
             start   = (start < 0) ? 0 : start + 1;
 
             // Lookup for last dot
@@ -463,7 +509,7 @@ namespace lsp
 
             ssize_t start, next, end;
 
-            start   = sPath.rindex_of(FILE_SEPARATOR_C);
+            start   = rightmost_separator(&sPath);
             start   = (start < 0) ? 0 : start + 1;
 
             // Lookup for last dot
@@ -496,7 +542,7 @@ namespace lsp
 
             ssize_t start, next, end;
 
-            start   = sPath.rindex_of(FILE_SEPARATOR_C);
+            start   = rightmost_separator(&sPath);
             start   = (start < 0) ? 0 : start + 1;
 
             // Lookup for last dot
@@ -524,7 +570,7 @@ namespace lsp
 
             ssize_t start, next, end;
 
-            start   = sPath.rindex_of(FILE_SEPARATOR_C);
+            start   = rightmost_separator(&sPath);
             start   = (start < 0) ? 0 : start + 1;
 
             // Lookup for last dot
@@ -557,7 +603,7 @@ namespace lsp
 
             ssize_t start, next, end;
 
-            start   = sPath.rindex_of(FILE_SEPARATOR_C);
+            start   = rightmost_separator(&sPath);
             start   = (start < 0) ? 0 : start + 1;
 
             // Lookup for last dot
@@ -585,7 +631,7 @@ namespace lsp
             else if (is_root())
                 return STATUS_NOT_FOUND;
 
-            ssize_t idx = sPath.rindex_of(FILE_SEPARATOR_C);
+            ssize_t idx = rightmost_separator(&sPath);
             if (idx < 0)
                 return STATUS_NOT_FOUND;
 
@@ -608,7 +654,7 @@ namespace lsp
             else if (is_root())
                 return STATUS_NOT_FOUND;
 
-            ssize_t idx = sPath.rindex_of(FILE_SEPARATOR_C);
+            ssize_t idx = rightmost_separator(&sPath);
             if (idx < 0)
                 return STATUS_NOT_FOUND;
 
@@ -622,7 +668,7 @@ namespace lsp
             else if (is_root())
                 return STATUS_NOT_FOUND;
 
-            ssize_t idx = sPath.rindex_of(FILE_SEPARATOR_C);
+            ssize_t idx = rightmost_separator(&sPath);
             if (idx < 0)
                 return STATUS_NOT_FOUND;
 
@@ -639,17 +685,15 @@ namespace lsp
             LSPString tmp;
             if (!tmp.set_utf8(path))
                 return STATUS_NO_MEM;
-            while (tmp.ends_with(FILE_SEPARATOR_C))
+            while (ends_with_separator(&tmp))
                 tmp.set_length(tmp.length() - 1);
 
             bool success = tmp.append(FILE_SEPARATOR_C);
             if (success)
                 success = tmp.append(&sPath);
             if (success)
-            {
                 sPath.swap(&tmp);
-                fixup_path();
-            }
+
             return (success) ? STATUS_OK : STATUS_NO_MEM;
         }
 
@@ -663,17 +707,15 @@ namespace lsp
             LSPString tmp;
             if (!tmp.set(path))
                 return STATUS_NO_MEM;
-            while (tmp.ends_with(FILE_SEPARATOR_C))
+            while (ends_with_separator(&tmp))
                 tmp.set_length(tmp.length() - 1);
 
             bool success = tmp.append(FILE_SEPARATOR_C);
             if (success)
                 success = tmp.append(&sPath);
             if (success)
-            {
                 sPath.swap(&tmp);
-                fixup_path();
-            }
+
             return (success) ? STATUS_OK : STATUS_NO_MEM;
         }
 
@@ -687,17 +729,15 @@ namespace lsp
             LSPString tmp;
             if (!tmp.set(&path->sPath))
                 return STATUS_NO_MEM;
-            while (tmp.ends_with(FILE_SEPARATOR_C))
+            while (ends_with_separator(&tmp))
                 tmp.set_length(tmp.length() - 1);
 
             bool success = tmp.append(FILE_SEPARATOR_C);
             if (success)
                 success = tmp.append(&sPath);
             if (success)
-            {
                 sPath.swap(&tmp);
-                fixup_path();
-            }
+
             return (success) ? STATUS_OK : STATUS_NO_MEM;
         }
 
@@ -707,7 +747,6 @@ namespace lsp
                 return STATUS_BAD_ARGUMENTS;
             if (!sPath.append_utf8(path))
                 return STATUS_NO_MEM;
-            fixup_path();
             return STATUS_OK;
         }
 
@@ -717,7 +756,6 @@ namespace lsp
                 return STATUS_BAD_ARGUMENTS;
             if (!sPath.append(path))
                 return STATUS_NO_MEM;
-            fixup_path();
             return STATUS_OK;
         }
 
@@ -727,7 +765,6 @@ namespace lsp
                 return STATUS_BAD_ARGUMENTS;
             if (!sPath.append(&path->sPath))
                 return STATUS_NO_MEM;
-            fixup_path();
             return STATUS_OK;
         }
 
@@ -743,12 +780,10 @@ namespace lsp
                 return STATUS_INVALID_VALUE;
 
             size_t len = sPath.length();
-            bool success = ((len <= 0) || (sPath.ends_with(FILE_SEPARATOR_C))) ? true : sPath.append(FILE_SEPARATOR_C);
+            bool success = ((len <= 0) || (ends_with_separator(&sPath))) ? true : sPath.append(FILE_SEPARATOR_C);
             if (success)
                 success = sPath.append(&tmp.sPath);
-            if (success)
-                fixup_path();
-            else
+            if (!success)
                 sPath.set_length(len);
 
             return (success) ? STATUS_OK : STATUS_NO_MEM;
@@ -766,12 +801,10 @@ namespace lsp
                 return STATUS_INVALID_VALUE;
 
             size_t len = sPath.length();
-            bool success = ((len <= 0) || (sPath.ends_with(FILE_SEPARATOR_C))) ? true : sPath.append(FILE_SEPARATOR_C);
+            bool success = ((len <= 0) || (ends_with_separator(&sPath))) ? true : sPath.append(FILE_SEPARATOR_C);
             if (success)
                 success = sPath.append(&tmp.sPath);
-            if (success)
-                fixup_path();
-            else
+            if (!success)
                 sPath.set_length(len);
 
             return (success) ? STATUS_OK : STATUS_NO_MEM;
@@ -787,12 +820,10 @@ namespace lsp
                 return STATUS_INVALID_VALUE;
 
             size_t len = sPath.length();
-            bool success = ((len <= 0) || (sPath.ends_with(FILE_SEPARATOR_C))) ? true : sPath.append(FILE_SEPARATOR_C);
+            bool success = ((len <= 0) || (ends_with_separator(&sPath))) ? true : sPath.append(FILE_SEPARATOR_C);
             if (success)
                 success = sPath.append(&path->sPath);
-            if (success)
-                fixup_path();
-            else
+            if (!success)
                 sPath.set_length(len);
             return (success) ? STATUS_OK : STATUS_NO_MEM;
         }
@@ -813,7 +844,6 @@ namespace lsp
                 return STATUS_BAD_ARGUMENTS;
             if (!sPath.append(path))
                 return STATUS_NO_MEM;
-            fixup_path();
             return STATUS_OK;
         }
 
@@ -829,7 +859,7 @@ namespace lsp
             if (is_root())
                 return STATUS_OK;
 
-            ssize_t idx     = sPath.rindex_of(FILE_SEPARATOR_C);
+            ssize_t idx     = rightmost_separator(&sPath);
             if (is_relative())
             {
                 if (idx < 0)
@@ -838,7 +868,7 @@ namespace lsp
             }
             else if (idx >= 0)
             {
-                ssize_t idx2    = (idx > 0) ? sPath.rindex_of(idx - 1, FILE_SEPARATOR_C) : -1;
+                ssize_t idx2    = (idx > 0) ? rindexof_separator(&sPath, idx - 1) : -1;
                 if (idx2 < 0)
                     idx             = idx + 1;
                 sPath.set_length(idx);
@@ -851,7 +881,7 @@ namespace lsp
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
-            ssize_t idx = sPath.rindex_of(FILE_SEPARATOR_C);
+            ssize_t idx = rightmost_separator(&sPath);
             idx     = (idx < 0) ? 0 : idx + 1;
 
             const char *utf8 = sPath.get_utf8(idx);
@@ -873,7 +903,7 @@ namespace lsp
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
-            ssize_t idx = sPath.rindex_of(FILE_SEPARATOR_C);
+            ssize_t idx = rightmost_separator(&sPath);
             idx     = (idx < 0) ? 0 : idx + 1;
 
             if (!path->set(&sPath, idx))
@@ -926,7 +956,7 @@ namespace lsp
             if (is_root())
                 return STATUS_NOT_FOUND;
 
-            ssize_t idx     = sPath.index_of(FILE_SEPARATOR_C);
+            ssize_t idx     = leftmost_separator(&sPath);
             if (is_relative())
             {
                 if (idx < 0)
@@ -945,7 +975,7 @@ namespace lsp
                 return STATUS_BAD_ARGUMENTS;
 
             size_t tail;
-            ssize_t idx         = sPath.index_of(FILE_SEPARATOR_C);
+            ssize_t idx         = leftmost_separator(&sPath);
             if (idx < 0)
             {
                 if (sPath.is_empty())
@@ -979,7 +1009,7 @@ namespace lsp
                 return STATUS_BAD_ARGUMENTS;
 
             size_t tail;
-            ssize_t idx         = sPath.index_of(FILE_SEPARATOR_C);
+            ssize_t idx         = leftmost_separator(&sPath);
             if (idx < 0)
             {
                 if (sPath.is_empty())
@@ -1045,7 +1075,7 @@ namespace lsp
             else if (is_root())
                 return STATUS_OK;
 #if defined(PLATFORM_WINDOWS)
-            ssize_t idx = sPath.index_of(FILE_SEPARATOR_C);
+            ssize_t idx = leftmost_separator(&sPath);
             if (idx < 0)
                 return STATUS_BAD_STATE;
             sPath.set_length(idx+1);
@@ -1060,7 +1090,7 @@ namespace lsp
             if (!is_absolute())
                 return STATUS_OK;
 
-            ssize_t idx = sPath.index_of(FILE_SEPARATOR_C);
+            ssize_t idx = leftmost_separator(&sPath);
             if (idx < 0)
             {
                 sPath.set_length(0);
@@ -1074,7 +1104,7 @@ namespace lsp
         {
             if (is_root())
                 return STATUS_OK;
-            ssize_t idx = sPath.rindex_of(FILE_SEPARATOR_C);
+            ssize_t idx = rightmost_separator(&sPath);
             if (idx < 0)
                 idx = 0;
             sPath.set_length(idx);
@@ -1108,7 +1138,7 @@ namespace lsp
             size_t removed = 0;
             while (index < max)
             {
-                if (sPath.char_at(index) != FILE_SEPARATOR_C)
+                if (!is_separator_char(sPath.char_at(index)))
                     break;
                 ++removed;
                 ++index;
@@ -1132,7 +1162,7 @@ namespace lsp
 
         status_t Path::remove_base()
         {
-            ssize_t idx = sPath.rindex_of(FILE_SEPARATOR_C);
+            ssize_t idx = rightmost_separator(&sPath);
             if (idx < 0)
                 return STATUS_OK;
             return (sPath.remove(0, idx + 1)) ? STATUS_OK : STATUS_NO_MEM;
@@ -1186,13 +1216,13 @@ namespace lsp
                 switch (state)
                 {
                     case S_SEEK:
-                        if (c == FILE_SEPARATOR_C)
+                        if (is_separator_char(c))
                             state       = S_SEPARATOR;
                         else if (c == '.')
                             state       = S_DOT;
                         break;
                     case S_SEPARATOR:
-                        if (c == FILE_SEPARATOR_C)
+                        if (is_separator_char(c))
                             return false;
                         else if (c == '.')
                             state       = S_DOT;
@@ -1200,7 +1230,7 @@ namespace lsp
                             state       = S_SEEK;
                         break;
                     case S_DOT:
-                        if (c == FILE_SEPARATOR_C)
+                        if (is_separator_char(c))
                             return false;
                         else if (c == '.')
                             state       = S_DOTDOT;
@@ -1208,7 +1238,7 @@ namespace lsp
                             state       = S_SEEK;
                         break;
                     case S_DOTDOT:
-                        if (c == FILE_SEPARATOR_C)
+                        if (is_separator_char(c))
                             return false;
                         else
                             state       = S_SEEK;
@@ -1248,7 +1278,7 @@ namespace lsp
 
             if (is_absolute())
             {
-                while (*(s++) != FILE_SEPARATOR_C)
+                while (!is_separator_char(*(s++)))
                     /* loop */ ;
                 state               = S_SEPARATOR;
             }
@@ -1263,7 +1293,7 @@ namespace lsp
                 switch (state)
                 {
                     case S_SEEK:
-                        if (c == FILE_SEPARATOR_C)
+                        if (is_separator_char(c))
                         {
                             state       = S_SEPARATOR;
                             *w++        = c;
@@ -1274,7 +1304,7 @@ namespace lsp
                             *w++    = c;
                         break;
                     case S_SEPARATOR:
-                        if (c == FILE_SEPARATOR_C)
+                        if (is_separator_char(c))
                             break;
                         else if (c == '.')
                             state       = S_DOT;
@@ -1285,7 +1315,7 @@ namespace lsp
                         }
                         break;
                     case S_DOT:
-                        if (c == FILE_SEPARATOR_C)
+                        if (is_separator_char(c))
                             state       = S_SEPARATOR;
                         else if (c == '.')
                             state       = S_DOTDOT;
@@ -1297,7 +1327,7 @@ namespace lsp
                         }
                         break;
                     case S_DOTDOT:
-                        if (c == FILE_SEPARATOR_C)
+                        if (is_separator_char(c))
                         {
                             state       = S_SEPARATOR;
                             if (w > s)
@@ -1306,7 +1336,7 @@ namespace lsp
                                 {
                                     --w;
                                 }
-                                while ((w > path) && (w[-1] != FILE_SEPARATOR_C));
+                                while ((w > path) && (!is_separator_char(w[-1])));
                             }
                         }
                         else
@@ -1320,7 +1350,7 @@ namespace lsp
                 }
             }
 
-            while ((w > s) && (w[-1] == FILE_SEPARATOR_C))
+            while ((w > s) && (is_separator_char(w[-1])))
                 --w;
 
             sPath.set_length(w - path);
@@ -1481,12 +1511,12 @@ namespace lsp
 
             // Prepare the loopp
             LSPString tmp;
-            ssize_t off = path.sPath.index_of(0, FILE_SEPARATOR_C);
+            ssize_t off = leftmost_separator(&path.sPath);
             if (off < 0)
                 return STATUS_INVALID_VALUE;
             else if (path.is_absolute())
             {
-                off = path.sPath.index_of(off+1, FILE_SEPARATOR_C);
+                off = indexof_separator(&path.sPath, off+1);
                 if (off < 0) // Tried to create root directory?
                     return STATUS_OK;
             }
@@ -1502,7 +1532,7 @@ namespace lsp
                     return res;
 
                 // Lookup for next separator
-                off     = path.sPath.index_of(off+1, FILE_SEPARATOR_C);
+                off     = indexof_separator(&path.sPath, off+1);
             }
 
             return Dir::create(&sPath);
@@ -1558,15 +1588,11 @@ namespace lsp
         void Path::take(LSPString *src)
         {
             sPath.take(src);
-            fixup_path();
         }
 
         status_t Path::current()
         {
-            status_t res = Dir::get_current(&sPath);
-            if (res == STATUS_OK)
-                fixup_path();
-            return res;
+            return Dir::get_current(&sPath);
         }
 
         ssize_t Path::fmt(const char *fmt...)
@@ -1575,8 +1601,6 @@ namespace lsp
             va_start(list, fmt);
             ssize_t res = sPath.vfmt_utf8(fmt, list);
             va_end(list);
-            if (res > 0)
-                fixup_path();
             return res;
         }
 
@@ -1586,24 +1610,18 @@ namespace lsp
             va_start(list, fmt);
             ssize_t res = sPath.vfmt_utf8(fmt->get_utf8(), list);
             va_end(list);
-            if (res > 0)
-                fixup_path();
             return res;
         }
 
         ssize_t Path::vfmt(const char *fmt, va_list args)
         {
             ssize_t res = sPath.vfmt_utf8(fmt, args);
-            if (res > 0)
-                fixup_path();
             return res;
         }
 
         ssize_t Path::vfmt(const LSPString *fmt, va_list args)
         {
             ssize_t res = sPath.vfmt_utf8(fmt->get_utf8(), args);
-            if (res > 0)
-                fixup_path();
             return res;
         }
 
@@ -1618,7 +1636,7 @@ namespace lsp
             if (len == 1)
                 return wc[0] == '.';
 
-            return (wc[len-2] == FILE_SEPARATOR_C) &&
+            return (is_separator_char(wc[len-2])) &&
                     (wc[len-1] == '.');
         }
 
@@ -1640,7 +1658,7 @@ namespace lsp
             if (len == 1)
                 return wc[0] == '.';
 
-            return (wc[len-2] == FILE_SEPARATOR_C) &&
+            return (is_separator_char(wc[len-2])) &&
                     (wc[len-1] == '.');
         }
 
@@ -1656,7 +1674,7 @@ namespace lsp
                 return path[0] == '.';
 
             path = &path[len - 2];
-            return (path[0] == FILE_SEPARATOR_C) &&
+            return (is_separator_char(path[0])) &&
                     (path[1] == '.');
         }
 
@@ -1671,7 +1689,7 @@ namespace lsp
                 return (wc[0] == '.') &&
                         (wc[1] == '.');
 
-            return (wc[len-3] == FILE_SEPARATOR_C) &&
+            return (is_separator_char(wc[len-3])) &&
                     (wc[len-2] == '.') &&
                     (wc[len-1] == '.');
         }
@@ -1695,7 +1713,7 @@ namespace lsp
                 return (wc[0] == '.') &&
                         (wc[1] == '.');
 
-            return (wc[len-3] == FILE_SEPARATOR_C) &&
+            return (is_separator_char(wc[len-3])) &&
                     (wc[len-2] == '.') &&
                     (wc[len-1] == '.');
         }
@@ -1712,7 +1730,7 @@ namespace lsp
                 return (path[0] == '.') &&
                         (path[1] == '.');
 
-            return (path[len-3] == FILE_SEPARATOR_C) &&
+            return (is_separator_char(path[len-3])) &&
                     (path[len-2] == '.') &&
                     (path[len-1] == '.');
         }
@@ -1729,14 +1747,14 @@ namespace lsp
             if ((len--) <= 0)
                 return true;
 
-            if (wc[len] == FILE_SEPARATOR_C)
+            if (is_separator_char(wc[len]))
                 return true;
             else if (wc[len] != '.')
                 return false;
             if ((len--) <= 0)
                 return true;
 
-            return wc[len] == FILE_SEPARATOR_C;
+            return is_separator_char(wc[len]);
         }
 
         bool Path::is_dots(const Path *path)
@@ -1758,14 +1776,14 @@ namespace lsp
             if ((len--) <= 0)
                 return true;
 
-            if (path[len] == FILE_SEPARATOR_C)
+            if (is_separator_char(path[len]))
                 return true;
             else if (path[len] != '.')
                 return false;
             if ((len--) <= 0)
                 return true;
 
-            return path[len] == FILE_SEPARATOR_C;
+            return is_separator_char(path[len]);
         }
 
         bool Path::is_dots(const LSPString *path)
@@ -1783,14 +1801,14 @@ namespace lsp
             if ((len--) <= 0)
                 return true;
 
-            if (wc[len] == FILE_SEPARATOR_C)
+            if (is_separator_char(wc[len]))
                 return true;
             else if (wc[len] != '.')
                 return false;
             if ((len--) <= 0)
                 return true;
 
-            return wc[len] == FILE_SEPARATOR_C;
+            return is_separator_char(wc[len]);
         }
 
         bool Path::valid_file_name(const LSPString *fname)
@@ -1807,7 +1825,7 @@ namespace lsp
                 lsp_wchar_t ch = *(chars++);
                 if ((ch == '*') || (ch == '?'))
                     return false;
-                if ((ch == FILE_SEPARATOR_C) || (ch == '\0'))
+                if ((is_separator_char(ch)) || (ch == '\0'))
                     return false;
                 #ifdef PLATFORM_WINDOWS
                 if ((ch == '/') || (ch == ':') || (ch== '|') || (ch == '<') || (ch == '>'))
@@ -1938,7 +1956,7 @@ namespace lsp
                     sPath.clear();
                     return STATUS_OK;
                 }
-                else if (sPath.char_at(matched) == FILE_SEPARATOR_C)
+                else if (is_separator_char(sPath.char_at(matched)))
                 {
                     // Just remove file base
                     sPath.remove(0, matched+1);
@@ -1946,14 +1964,14 @@ namespace lsp
                 }
 
                 // Find last matchind file separator
-                idx1 = sPath.rindex_of(matched, FILE_SEPARATOR_C);
-                idx2 = base->sPath.rindex_of(matched, FILE_SEPARATOR_C);
+                idx1 = rindexof_separator(&sPath, matched);
+                idx2 = rindexof_separator(&base->sPath, matched);
                 if ((idx1 < 0) || (idx2 != idx1))
                     return STATUS_NOT_FOUND;
             }
             else if (matched == ssize_t(sPath.length()))
             {
-                if (base->sPath.char_at(matched) != FILE_SEPARATOR_C)
+                if (!is_separator_char(base->sPath.char_at(matched)))
                     return STATUS_NOT_FOUND;
 
                 // All is OK, we're just at the end of the child path
@@ -1964,19 +1982,19 @@ namespace lsp
             {
                 // Special case when the match ended up with file separator
                 // in one or both path names.
-                if (sPath.char_at(matched) == FILE_SEPARATOR_C)
+                if (is_separator_char(sPath.char_at(matched)))
                 {
-                    if (base->sPath.char_at(matched) != FILE_SEPARATOR_C)
+                    if (!is_separator_char(base->sPath.char_at(matched)))
                         --matched;
                 }
-                else if (base->sPath.char_at(matched) == FILE_SEPARATOR_C)
+                else if (is_separator_char(base->sPath.char_at(matched)))
                     --matched;
                 if (matched < 0)
                     return STATUS_NOT_FOUND;
 
                 // Find last matching file separator
-                idx1 = sPath.rindex_of(matched, FILE_SEPARATOR_C);
-                idx2 = base->sPath.rindex_of(matched, FILE_SEPARATOR_C);
+                idx1 = rindexof_separator(&sPath, matched);
+                idx2 = rindexof_separator(&base->sPath, matched);
                 if ((idx1 < 0) || (idx2 != idx1))
                     return STATUS_NOT_FOUND;
             }
@@ -1985,7 +2003,7 @@ namespace lsp
             LSPString tmp;
             while (true)
             {
-                idx2        = base->sPath.index_of(idx2 + 1, FILE_SEPARATOR_C);
+                idx2        = indexof_separator(&base->sPath, idx2 + 1);
                 if (!tmp.append_ascii(".." FILE_SEPARATOR_S))
                     return STATUS_NO_MEM;
                 if (idx2 < 0)
@@ -1996,7 +2014,7 @@ namespace lsp
             if (!tmp.append(&sPath, idx1 + 1))
                 return STATUS_NO_MEM;
             // Remove the trailing '/' character if present
-            if (tmp.ends_with(FILE_SEPARATOR_C))
+            if (ends_with_separator(&tmp))
                 tmp.remove_last();
 
             sPath.swap(&tmp);

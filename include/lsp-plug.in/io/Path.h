@@ -64,8 +64,14 @@ namespace lsp
                 LSPString   sPath;
 
             private:
-                inline void     fixup_path();
-                status_t        compute_relative(Path *base);
+                status_t                compute_relative(Path *base);
+
+                static inline ssize_t   rightmost_separator(const LSPString *s);
+                static inline ssize_t   leftmost_separator(const LSPString *s);
+                static inline ssize_t   indexof_separator(const LSPString *s, ssize_t off);
+                static inline ssize_t   rindexof_separator(const LSPString *s, ssize_t off);
+                static inline bool      ends_with_separator(const LSPString *s);
+                static inline bool      is_separator_char(lsp_wchar_t ch);
 
             public:
                 explicit Path();
