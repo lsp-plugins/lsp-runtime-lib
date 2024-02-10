@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.20 ===
+* More detailed MIDI specification (added MIDI_CHANNELS constant).
 * Additional methods for converting between UTF-8, UTF-16 and UTF-32.
 * Added support of real-time nesting of ipc::IExecutor.
 * Added support of custom functions in the expression language.

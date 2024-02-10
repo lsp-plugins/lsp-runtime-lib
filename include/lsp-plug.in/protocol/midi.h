@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 марта 2016 г.
@@ -77,6 +77,11 @@ namespace lsp
             };
         } event_t;
     #pragma pack(pop)
+
+        /**
+         * Maximum number of channels
+         */
+        constexpr uint8_t MIDI_CHANNELS     = 0x10;
 
         enum message_t
         {
@@ -199,7 +204,8 @@ namespace lsp
          * @return number of bytes required to encode MIDI event, negative value on error, never zero
          */
         ssize_t size_of(const event_t *ev);
-    }
-}
+
+    } /* namespace midi */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_PROTOCOL_MIDI_H_ */

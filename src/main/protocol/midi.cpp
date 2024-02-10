@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 марта 2016 г.
@@ -168,7 +168,7 @@ namespace lsp
             {
                 case MIDI_MSG_NOTE_OFF:
                 case MIDI_MSG_NOTE_ON:
-                    if (ev->channel >= 0x10)
+                    if (ev->channel >= MIDI_CHANNELS)
                         return -STATUS_BAD_FORMAT;
                     if (ev->note.pitch >= 0x80)
                         return -STATUS_BAD_FORMAT;
@@ -180,7 +180,7 @@ namespace lsp
                     return 3;
 
                 case MIDI_MSG_NOTE_PRESSURE:
-                    if (ev->channel >= 0x10)
+                    if (ev->channel >= MIDI_CHANNELS)
                         return -STATUS_BAD_FORMAT;
                     if (ev->atouch.pitch >= 0x80)
                         return -STATUS_BAD_FORMAT;
@@ -192,7 +192,7 @@ namespace lsp
                     return 3;
 
                 case MIDI_MSG_NOTE_CONTROLLER:
-                    if (ev->channel >= 0x10)
+                    if (ev->channel >= MIDI_CHANNELS)
                         return -STATUS_BAD_FORMAT;
                     if (ev->ctl.control >= 0x80)
                         return -STATUS_BAD_FORMAT;
@@ -204,7 +204,7 @@ namespace lsp
                     return 3;
 
                 case MIDI_MSG_PROGRAM_CHANGE:
-                    if (ev->channel >= 0x10)
+                    if (ev->channel >= MIDI_CHANNELS)
                         return -STATUS_BAD_FORMAT;
                     if (ev->program >= 0x80)
                         return -STATUS_BAD_FORMAT;
@@ -213,7 +213,7 @@ namespace lsp
                     return 2;
 
                 case MIDI_MSG_CHANNEL_PRESSURE:
-                    if (ev->channel >= 0x10)
+                    if (ev->channel >= MIDI_CHANNELS)
                         return -STATUS_BAD_FORMAT;
                     if (ev->chn.pressure >= 0x80)
                         return -STATUS_BAD_FORMAT;
@@ -222,7 +222,7 @@ namespace lsp
                     return 2;
 
                 case MIDI_MSG_PITCH_BEND:
-                    if (ev->channel >= 0x10)
+                    if (ev->channel >= MIDI_CHANNELS)
                         return -STATUS_BAD_FORMAT;
                     if (ev->bend >= 0x4000)
                         return -STATUS_BAD_FORMAT;
@@ -285,7 +285,7 @@ namespace lsp
             {
                 case MIDI_MSG_NOTE_OFF:
                 case MIDI_MSG_NOTE_ON:
-                    if (ev->channel >= 0x10)
+                    if (ev->channel >= MIDI_CHANNELS)
                         return -STATUS_BAD_FORMAT;
                     if (ev->note.pitch >= 0x80)
                         return -STATUS_BAD_FORMAT;
@@ -294,7 +294,7 @@ namespace lsp
                     return 3;
 
                 case MIDI_MSG_NOTE_PRESSURE:
-                    if (ev->channel >= 0x10)
+                    if (ev->channel >= MIDI_CHANNELS)
                         return -STATUS_BAD_FORMAT;
                     if (ev->atouch.pitch >= 0x80)
                         return -STATUS_BAD_FORMAT;
@@ -303,7 +303,7 @@ namespace lsp
                     return 3;
 
                 case MIDI_MSG_NOTE_CONTROLLER:
-                    if (ev->channel >= 0x10)
+                    if (ev->channel >= MIDI_CHANNELS)
                         return -STATUS_BAD_FORMAT;
                     if (ev->ctl.control >= 0x80)
                         return -STATUS_BAD_FORMAT;
@@ -312,21 +312,21 @@ namespace lsp
                     return 3;
 
                 case MIDI_MSG_PROGRAM_CHANGE:
-                    if (ev->channel >= 0x10)
+                    if (ev->channel >= MIDI_CHANNELS)
                         return -STATUS_BAD_FORMAT;
                     if (ev->program >= 0x80)
                         return -STATUS_BAD_FORMAT;
                     return 2;
 
                 case MIDI_MSG_CHANNEL_PRESSURE:
-                    if (ev->channel >= 0x10)
+                    if (ev->channel >= MIDI_CHANNELS)
                         return -STATUS_BAD_FORMAT;
                     if (ev->chn.pressure >= 0x80)
                         return -STATUS_BAD_FORMAT;
                     return 2;
 
                 case MIDI_MSG_PITCH_BEND:
-                    if (ev->channel >= 0x10)
+                    if (ev->channel >= MIDI_CHANNELS)
                         return -STATUS_BAD_FORMAT;
                     if (ev->bend >= 0x4000)
                         return -STATUS_BAD_FORMAT;
@@ -368,7 +368,8 @@ namespace lsp
 
             return -STATUS_BAD_FORMAT;
         }
-    }
-}
+
+    } /* namespace midi */
+} /* namespace lsp */
 
 
