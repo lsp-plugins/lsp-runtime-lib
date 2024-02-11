@@ -38,42 +38,54 @@ namespace lsp
             uint8_t         channel;        // ID of the MIDI channel
             union
             {
-                uint8_t         bparams[2];     // Byte parameters
-
+                // For MIDI_MSG_NOTE_OFF and MIDI_MSG_NOTE_ON
                 struct
                 {
                     uint8_t         pitch;         // Note key
                     uint8_t         velocity;      // Note velocity
                 } note;
 
+                // For MIDI_MSG_NOTE_CONTROLLER
                 struct
                 {
                     uint8_t         control;       // Control
                     uint8_t         value;         // Value
                 } ctl;
 
+                // For MIDI_MSG_NOTE_PRESSURE
                 struct
                 {
                     uint8_t         pitch;          // Note key
                     uint8_t         pressure;       // Note pressure
                 } atouch;
 
+                // For MIDI_MSG_CHANNEL_PRESSURE
                 struct
                 {
                     uint8_t         pressure;        // Channel pressure
                 } chn;
 
+                // For MIDI_MSG_PROGRAM_CHANGE
                 uint8_t         program;         // program
+
+                // For MIDI_MSG_PITCH_BEND
                 uint16_t        bend;
 
+                // For MIDI_MSG_MTC_QUARTER
                 struct
                 {
                     uint8_t         type;
                     uint8_t         value;
                 } mtc;
 
+                // For MIDI_MSG_SONG_POS
                 uint16_t        beats;
+
+                // For MIDI_MSG_SONG_SELECT
                 uint8_t         song;
+
+                // For other messages
+                uint8_t         bparams[2];     // Byte parameters
             };
         } event_t;
     #pragma pack(pop)
