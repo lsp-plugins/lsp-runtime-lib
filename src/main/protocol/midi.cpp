@@ -86,6 +86,66 @@ namespace lsp
             return size;
         }
 
+        static size_t decode_system_message(event_t *ev, const uint8_t *b, size_t bytes)
+        {
+            ssize_t size;
+
+            switch (b[0])
+            {
+                case MIDI_MSG_SYSTEM_EXCLUSIVE: // TODO
+                    return -STATUS_NOT_IMPLEMENTED;
+
+                case MIDI_MSG_MTC_QUARTER:
+                    if ((b[1]) & 0x80)
+                        return -STATUS_CORRUPTED;
+                    ev->mtc.type            = b[1] >> 4;
+                    ev->mtc.value           = b[1] & 0x0f;
+                    size                    = 2;
+                    break;
+
+                case MIDI_MSG_SONG_POS:
+                    if (bytes < 3)
+                        return -STATUS_CORRUPTED;
+                    if ((b[1]) & 0x80)
+                        return -STATUS_CORRUPTED;
+                    if ((b[2]) & 0x80)
+                        return -STATUS_CORRUPTED;
+                    ev->beats               = uint16_t(b[2] << 7) | uint16_t(b[1]);
+                    size                    = 3;
+                    break;
+
+                case MIDI_MSG_SONG_SELECT:
+                    if ((b[1]) & 0x80)
+                        return -STATUS_CORRUPTED;
+                    ev->song                = b[1];
+                    ev->bparams[1]          = 0;
+                    size                    = 2;
+                    break;
+
+                case MIDI_MSG_TUNE_REQUEST:
+                case MIDI_MSG_END_EXCLUSIVE:
+                case MIDI_MSG_CLOCK:
+                case MIDI_MSG_START:
+                case MIDI_MSG_CONTINUE:
+                case MIDI_MSG_STOP:
+                case MIDI_MSG_ACTIVE_SENSING:
+                case MIDI_MSG_RESET:
+                    ev->bparams[0]          = 0;
+                    ev->bparams[1]          = 0;
+                    size                    = 1;
+                    break;
+
+                default:
+                    return -STATUS_BAD_FORMAT;
+            }
+
+            ev->timestamp           = 0;
+            ev->type                = b[0];
+            ev->channel             = 0;
+
+            return size;
+        }
+
         ssize_t decode(event_t *ev, const uint8_t *b)
         {
             ssize_t size;
@@ -151,6 +211,90 @@ namespace lsp
 
                 default:
                     return decode_system_message(ev, b);
+            }
+
+            ev->type                = b[0] & 0xf0;
+            ev->channel             = b[0] & 0x0f;
+            ev->timestamp           = 0;
+            return size;
+        }
+
+        ssize_t decode(event_t *ev, const uint8_t *b, size_t bytes)
+        {
+            ssize_t size = 0;
+            if (bytes < 2)
+                return -STATUS_CORRUPTED;
+
+            if (!((b[0]) & 0x80))
+                return -STATUS_CORRUPTED;
+
+            switch ((b[0]) & 0xf0)
+            {
+                // Channel messages
+                case MIDI_MSG_NOTE_OFF:
+                case MIDI_MSG_NOTE_ON:
+                    if (bytes < 3)
+                        return -STATUS_CORRUPTED;
+                    if ((b[1]) & 0x80)
+                        return -STATUS_CORRUPTED;
+                    if ((b[2]) & 0x80)
+                        return -STATUS_CORRUPTED;
+                    ev->note.pitch          = b[1];
+                    ev->note.velocity       = b[2];
+                    size                    = 3;
+                    break;
+
+                case MIDI_MSG_NOTE_CONTROLLER:
+                    if (bytes < 3)
+                        return -STATUS_CORRUPTED;
+                    if ((b[1]) & 0x80)
+                        return -STATUS_CORRUPTED;
+                    if ((b[2]) & 0x80)
+                        return -STATUS_CORRUPTED;
+                    ev->ctl.control         = b[1];
+                    ev->ctl.value           = b[2];
+                    size                    = 3;
+                    break;
+
+                case MIDI_MSG_NOTE_PRESSURE:
+                    if (bytes < 3)
+                        return -STATUS_CORRUPTED;
+                    if ((b[1]) & 0x80)
+                        return -STATUS_CORRUPTED;
+                    if ((b[2]) & 0x80)
+                        return -STATUS_CORRUPTED;
+                    ev->atouch.pitch        = b[1];
+                    ev->atouch.pressure     = b[2];
+                    size                    = 3;
+                    break;
+
+                case MIDI_MSG_PROGRAM_CHANGE:
+                    if ((b[1]) & 0x80)
+                        return -STATUS_CORRUPTED;
+                    ev->program             = b[1];
+                    size                    = 2;
+                    break;
+
+                case MIDI_MSG_CHANNEL_PRESSURE:
+                    if ((b[1]) & 0x80)
+                        return -STATUS_CORRUPTED;
+                    ev->chn.pressure        = b[1];
+                    size                    = 2;
+                    break;
+
+                case MIDI_MSG_PITCH_BEND:
+                    if (bytes < 3)
+                        return -STATUS_CORRUPTED;
+                    if ((b[1]) & 0x80)
+                        return -STATUS_CORRUPTED;
+                    if ((b[2]) & 0x80)
+                        return -STATUS_CORRUPTED;
+                    ev->bend                = uint16_t(b[1] << 7) | uint16_t(b[2]);
+                    size                    = 3;
+                    break;
+
+                default:
+                    return decode_system_message(ev, b, bytes);
             }
 
             ev->type                = b[0] & 0xf0;

@@ -197,10 +197,19 @@ namespace lsp
         /**
          * Decode MIDI message
          * @param ev MIDI event structure to decode
-         * @param bytes buffer containing MIDI message
+         * @param bytes buffer containing MIDI message (1-3 bytes)
          * @return number of bytes used for decodingm negative value on error, never zero
          */
         ssize_t decode(event_t *ev, const uint8_t *bytes);
+
+        /**
+         * Decode MIDI message, more safe algorithm that checks the input array bounds
+         * @param ev MIDI event structure to decode
+         * @param bytes buffer containing MIDI message
+         * @param length length of the buffer
+         * @return number of bytes used for decodingm negative value on error, never zero
+         */
+        ssize_t decode(event_t *ev, const uint8_t *bytes, size_t length);
 
         /**
          * Encode MIDI message
