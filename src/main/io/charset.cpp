@@ -1094,6 +1094,40 @@ namespace lsp
         return utf16;
     }
 
+    size_t utf8_to_utf16le(lsp_utf16_t *dst, const char *str, size_t count)
+    {
+        lsp_utf32_t cp;
+        size_t items    = 0;
+        do
+        {
+            cp      = read_utf8_codepoint(&str);
+            items  += count_utf16(cp);
+            if (items > count)
+                return 0;
+
+            write_utf16le_codepoint(&dst, cp);
+        } while (cp != 0);
+
+        return items;
+    }
+
+    size_t utf8_to_utf16be(lsp_utf16_t *dst, const char *str, size_t count)
+    {
+        lsp_utf32_t cp;
+        size_t items    = 0;
+        do
+        {
+            cp      = read_utf8_codepoint(&str);
+            items  += count_utf16(cp);
+            if (items > count)
+                return 0;
+
+            write_utf16be_codepoint(&dst, cp);
+        } while (cp != 0);
+
+        return items;
+    }
+
     lsp_utf32_t *utf8_to_utf32le(const char *str)
     {
         // Estimate number of bytes
@@ -1146,6 +1180,36 @@ namespace lsp
         *dst        = 0;
 
         return utf32;
+    }
+
+    size_t utf8_to_utf32le(lsp_utf32_t *dst, const char *str, size_t count)
+    {
+        lsp_utf32_t cp;
+        size_t items    = 0;
+        do
+        {
+            cp      = read_utf8_codepoint(&str);
+            if (++items > count)
+                return 0;
+            *(dst++)        = CPU_TO_LE(cp);
+        } while (cp != 0);
+
+        return items;
+    }
+
+    size_t utf8_to_utf32be(lsp_utf32_t *dst, const char *str, size_t count)
+    {
+        lsp_utf32_t cp;
+        size_t items    = 0;
+        do
+        {
+            cp      = read_utf8_codepoint(&str);
+            if (++items > count)
+                return 0;
+            *(dst++)        = CPU_TO_BE(cp);
+        } while (cp != 0);
+
+        return items;
     }
 
     //-------------------------------------------------------------------------
@@ -1202,6 +1266,38 @@ namespace lsp
         *dst = '\0';
 
         return utf8;
+    }
+
+    size_t utf16le_to_utf8(char *dst, const lsp_utf16_t *str, size_t count)
+    {
+        lsp_utf32_t cp;
+        size_t items = 0;
+        do
+        {
+            cp          = read_utf16le_codepoint(&str);
+            items      += count_utf8(cp);
+            if (items > count)
+                return 0;
+            write_utf8_codepoint(&dst, cp);
+        } while (cp != 0);
+
+        return items;
+    }
+
+    size_t utf16be_to_utf8(char *dst, const lsp_utf16_t *str, size_t count)
+    {
+        lsp_utf32_t cp;
+        size_t items = 0;
+        do
+        {
+            cp          = read_utf16be_codepoint(&str);
+            items      += count_utf8(cp);
+            if (items > count)
+                return 0;
+            write_utf8_codepoint(&dst, cp);
+        } while (cp != 0);
+
+        return items;
     }
 
     lsp_utf32_t *utf16le_to_utf32le(const lsp_utf16_t *str)
@@ -1312,6 +1408,66 @@ namespace lsp
         return utf32;
     }
 
+    size_t utf16le_to_utf32le(lsp_utf32_t *dst, const lsp_utf16_t *str, size_t count)
+    {
+        lsp_utf32_t cp;
+        size_t items = 0;
+        do
+        {
+            cp          = read_utf16le_codepoint(&str);
+            if (++items > count)
+                return 0;
+            *(dst++)    = CPU_TO_LE(cp);
+        } while (cp != 0);
+
+        return items;
+    }
+
+    size_t utf16le_to_utf32be(lsp_utf32_t *dst, const lsp_utf16_t *str, size_t count)
+    {
+        lsp_utf32_t cp;
+        size_t items = 0;
+        do
+        {
+            cp          = read_utf16le_codepoint(&str);
+            if (++items > count)
+                return 0;
+            *(dst++)    = CPU_TO_BE(cp);
+        } while (cp != 0);
+
+        return items;
+    }
+
+    size_t utf16be_to_utf32le(lsp_utf32_t *dst, const lsp_utf16_t *str, size_t count)
+    {
+        lsp_utf32_t cp;
+        size_t items = 0;
+        do
+        {
+            cp          = read_utf16be_codepoint(&str);
+            if (++items > count)
+                return 0;
+            *(dst++)    = CPU_TO_LE(cp);
+        } while (cp != 0);
+
+        return items;
+    }
+
+    size_t utf16be_to_utf32be(lsp_utf32_t *dst, const lsp_utf16_t *str, size_t count)
+    {
+        lsp_utf32_t cp;
+        size_t items = 0;
+        do
+        {
+            cp          = read_utf16be_codepoint(&str);
+            if (++items > count)
+                return 0;
+            *(dst++)    = CPU_TO_BE(cp);
+        } while (cp != 0);
+
+        return items;
+    }
+
     //-------------------------------------------------------------------------
     // UTF-32 non-streaming routines
     char *utf32le_to_utf8(const lsp_utf32_t *str)
@@ -1368,6 +1524,38 @@ namespace lsp
 
         *dst = 0;
         return utf8;
+    }
+
+    size_t utf32le_to_utf8(char *dst, const lsp_utf32_t *src, size_t count)
+    {
+        lsp_utf32_t cp;
+        size_t items = 0;
+        do
+        {
+            cp          = LE_TO_CPU(*(src++));
+            items      += count_utf8(cp);
+            if (items > count)
+                return 0;
+            write_utf8_codepoint(&dst, cp);
+        } while (cp != 0);
+
+        return items;
+    }
+
+    size_t utf32be_to_utf8(char *dst, const lsp_utf32_t *src, size_t count)
+    {
+        lsp_utf32_t cp;
+        size_t items = 0;
+        do
+        {
+            cp          = BE_TO_CPU(*(src++));
+            items      += count_utf8(cp);
+            if (items > count)
+                return 0;
+            write_utf8_codepoint(&dst, cp);
+        } while (cp != 0);
+
+        return items;
     }
 
     lsp_utf16_t *utf32le_to_utf16le(const lsp_utf32_t *str)
@@ -1480,6 +1668,78 @@ namespace lsp
 
         *dst = 0;
         return utf16;
+    }
+
+    size_t utf32le_to_utf16le(lsp_utf16_t *dst, const lsp_utf32_t *str, size_t count)
+    {
+        lsp_utf32_t cp;
+        size_t items = 0;
+
+        // Estimate length
+        do
+        {
+            cp          = LE_TO_CPU(*(str++));
+            items      += count_utf16(cp);
+            if (items > count)
+                return 0;
+            write_utf16le_codepoint(&dst, cp);
+        } while (cp != 0);
+
+        return items;
+    }
+
+    size_t utf32le_to_utf16be(lsp_utf16_t *dst, const lsp_utf32_t *str, size_t count)
+    {
+        lsp_utf32_t cp;
+        size_t items = 0;
+
+        // Estimate length
+        do
+        {
+            cp          = LE_TO_CPU(*(str++));
+            items      += count_utf16(cp);
+            if (items > count)
+                return 0;
+            write_utf16be_codepoint(&dst, cp);
+        } while (cp != 0);
+
+        return items;
+    }
+
+    size_t utf32be_to_utf16le(lsp_utf16_t *dst, const lsp_utf32_t *str, size_t count)
+    {
+        lsp_utf32_t cp;
+        size_t items = 0;
+
+        // Estimate length
+        do
+        {
+            cp          = BE_TO_CPU(*(str++));
+            items      += count_utf16(cp);
+            if (items > count)
+                return 0;
+            write_utf16le_codepoint(&dst, cp);
+        } while (cp != 0);
+
+        return items;
+    }
+
+    size_t utf32be_to_utf16be(lsp_utf16_t *dst, const lsp_utf32_t *str, size_t count)
+    {
+        lsp_utf32_t cp;
+        size_t items = 0;
+
+        // Estimate length
+        do
+        {
+            cp          = BE_TO_CPU(*(str++));
+            items      += count_utf16(cp);
+            if (items > count)
+                return 0;
+            write_utf16be_codepoint(&dst, cp);
+        } while (cp != 0);
+
+        return items;
     }
 
     //-------------------------------------------------------------------------

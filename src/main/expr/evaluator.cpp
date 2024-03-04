@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 18 сент. 2019 г.
@@ -1154,6 +1154,53 @@ namespace lsp
             destroy_value(&tmp);
 
             return res;
+        }
+
+        status_t eval_call(value_t *value, const expr_t *expr, eval_env_t *env)
+        {
+            status_t res;
+            if (env == NULL)
+            {
+                set_value_undef(value);
+                return STATUS_OK;
+            }
+
+            // No indexes? Do simple stuff
+            if (expr->call.count <= 0)
+            {
+                res = env->call(value, expr->call.name, 0, NULL);
+                if (res != STATUS_NOT_FOUND)
+                    return res;
+
+                set_value_undef(value);
+                return STATUS_OK;
+            }
+
+            // Initialize arguments
+            value_t *args = reinterpret_cast<value_t *>(::malloc(expr->call.count * sizeof(value_t)));
+            if (args == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally { free(args); };
+            for (size_t i=0; i<expr->call.count; ++i)
+                init_value(&args[i]);
+            lsp_finally {
+                for (size_t i=0; i<expr->call.count; ++i)
+                    destroy_value(&args[i]);
+            };
+
+            // Fill arguments
+            for (size_t i=0; i<expr->call.count; ++i)
+            {
+                expr_t *e = expr->call.items[i];
+
+                // Evaluate and store index
+                res = e->eval(&args[i], e, env);
+                if (res != STATUS_OK)
+                    return res;
+            }
+
+            // Now we can perform call
+            return env->call(value, expr->call.name, expr->call.count, args);
         }
 
         status_t eval_value(value_t *value, const expr_t *expr, eval_env_t *env)

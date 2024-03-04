@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 27 янв. 2016 г.
@@ -30,6 +30,11 @@ namespace lsp
 {
     namespace ipc
     {
+        class IExecutor;
+
+        /**
+         * Task interface. Task can be submitted to executor object for asynchronous execution.
+         */
         class ITask: public IRunnable
         {
             public:
@@ -42,13 +47,12 @@ namespace lsp
                 };
 
             protected:
-                // Task linking
-                ITask      *pNext;
-                int         nCode;
+                ITask                  *pNext;          // Pointer to next task queue
+                ipc::IExecutor         *pExecutor;      // Nested executor if present
+                int                     nCode;          // Execution code
+                volatile task_state_t   nState;         // Task state
 
-                // Task state
-                volatile task_state_t    nState;
-
+            protected:
                 // Executor service
                 friend class IExecutor;
 
@@ -56,7 +60,12 @@ namespace lsp
 
             public:
                 ITask();
+                ITask(const ITask &) = delete;
+                ITask(ITask &&) = delete;
                 virtual ~ITask();
+
+                ITask & operator = (const ITask &) = delete;
+                ITask & operator = (ITask &&) = delete;
 
             public:
                 virtual status_t run();
@@ -118,7 +127,6 @@ namespace lsp
         };
 
     } /* namespace ipc */
-
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_IPC_ITASK_H_ */

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 18 сент. 2019 г.
@@ -36,6 +36,7 @@ namespace lsp
         {
             ET_CALC,
             ET_RESOLVE,
+            ET_CALL,
             ET_VALUE
         };
 
@@ -58,6 +59,13 @@ namespace lsp
                     size_t      count;      // Number of additional indexes
                     expr_t    **items;      // List of additional indexes
                 } resolve;
+
+                struct
+                {
+                    LSPString  *name;       // Base name of function
+                    size_t      count;      // Number of additional indexes
+                    expr_t    **items;      // List of additional indexes
+                } call;
 
                 value_t     value;          // Value
             };
@@ -85,6 +93,7 @@ namespace lsp
         status_t parse_func(expr_t **expr, Tokenizer *t, size_t flags);
         status_t parse_primary(expr_t **expr, Tokenizer *t, size_t flags);
         status_t parse_identifier(expr_t **expr, Tokenizer *t, size_t flags);
+        status_t parse_call(expr_t **expr, Tokenizer *t, size_t flags);
 
         status_t parse_expression(expr_t **expr, Tokenizer *t, size_t flags);
 

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 27 янв. 2016 г.
@@ -32,6 +32,24 @@ namespace lsp
 
         IExecutor::~IExecutor()
         {
+        }
+
+        void IExecutor::run_task(ITask *task)
+        {
+            task->nState    = ITask::TS_RUNNING;
+            task->nCode     = 0;
+            task->nCode     = task->run();
+            task->nState    = ITask::TS_COMPLETED;
+
+            // Run callback method
+            task_finished(task);
+        }
+
+        void IExecutor::task_finished(ITask *task)
+        {
+            // Call nested executor (if any)
+            if (task->pExecutor != NULL)
+                task->pExecutor->task_finished(task);
         }
 
         bool IExecutor::submit(ITask *task)

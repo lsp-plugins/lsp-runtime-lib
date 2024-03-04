@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 18 сент. 2019 г.
@@ -54,6 +54,20 @@ namespace lsp
                     {
                         delete expr->resolve.name;
                         expr->resolve.name  = NULL;
+                    }
+                    break;
+                case ET_CALL:
+                    if (expr->call.items != NULL)
+                    {
+                        for (size_t i=0, n=expr->call.count; i<n; ++i)
+                            parse_destroy(expr->call.items[i]);
+                        ::free(expr->call.items);
+                        expr->call.items     = NULL;
+                    }
+                    if (expr->call.name != NULL)
+                    {
+                        delete expr->call.name;
+                        expr->call.name  = NULL;
                     }
                     break;
                 case ET_CALC:
@@ -186,6 +200,83 @@ namespace lsp
             bind->resolve.name  = id;
             bind->resolve.count = indexes.size();
             bind->resolve.items = indexes.release();
+
+            *expr               = bind;
+            return STATUS_OK;
+        }
+
+        status_t parse_call(expr_t **expr, Tokenizer *t, size_t flags)
+        {
+            // Get identifier
+            token_t tok = t->get_token(flags);
+            if (tok != TT_BAREWORD)
+                return STATUS_BAD_TOKEN;
+
+            // Get function name
+            LSPString *id   = t->text_value()->clone();
+            if (id == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally {
+                if (id != NULL)
+                    delete id;
+            };
+
+            // Require opening brace
+            tok = t->get_token(TF_GET);
+            if (tok != TT_LBRACE)
+                return (tok == TT_EOF) ? STATUS_EOF : STATUS_BAD_TOKEN;
+
+            // Parse list of arguments
+            expr_t *bind = NULL;
+            lltl::parray<expr_t> args;
+            lsp_finally {
+                for (size_t i=0, n=args.size(); i<n; ++i)
+                    parse_destroy(args.uget(i));
+                args.flush();
+            };
+
+            do
+            {
+                // Parse the expression as an argument
+                status_t res = parse_expression(&bind, t, TF_GET);
+                if (res != STATUS_OK)
+                    return res;
+                lsp_finally { parse_destroy(bind); };
+
+                // Next token should be TT_COMMA or TT_RBRACE
+                tok = t->get_token(TF_NONE);
+                switch (tok)
+                {
+                    case TT_COMMA:
+                    case TT_RBRACE:
+                        if (!args.add(bind))
+                        {
+                            parse_destroy(bind);
+                            return STATUS_NO_MEM;
+                        }
+                        bind    = NULL;
+                        break;
+
+                    case TT_EOF:
+                        return STATUS_EOF;
+                    default:
+                        return STATUS_BAD_TOKEN;
+                }
+            } while (tok != TT_RBRACE);
+
+            // Get next token for caller
+            t->get_token(TF_GET);
+
+            // Create resulting expression
+            bind    = parse_create_expr();
+            if (bind == NULL)
+                return STATUS_NO_MEM;
+
+            bind->eval          = eval_call;
+            bind->type          = ET_CALL;
+            bind->call.name     = release_ptr(id);
+            bind->call.count    = args.size();
+            bind->call.items    = args.release();
 
             *expr               = bind;
             return STATUS_OK;
@@ -334,13 +425,13 @@ namespace lsp
         status_t parse_func(expr_t **expr, Tokenizer *t, size_t flags)
         {
             // Check token
-            token_t tok = t->get_token(flags);
+            token_t func = t->get_token(flags);
 
             // Parse right part
             status_t res;
             expr_t *right   = NULL;
 
-            switch(tok)
+            switch (func)
             {
                 case TT_EX:
                 case TT_DB:
@@ -366,8 +457,34 @@ namespace lsp
                 case TT_RAD:
                 case TT_DEG:
                 case TT_ABS:
-                    res = parse_func(&right, t, TF_GET);
+                {
+                    // Check that LBRACE is present
+                    token_t tok = t->get_token(TF_GET);
+                    if (tok == TT_EOF)
+                        return STATUS_EOF;
+                    if (tok == TT_LBRACE)
+                    {
+                        // Parse sub-expression
+                        res = parse_expression(&right, t, TF_GET);
+                        if (res == STATUS_OK)
+                        {
+                            // Require right brace
+                            tok = t->get_token(TF_NONE);
+                            if (tok != TT_RBRACE)
+                                return (tok == TT_EOF) ? STATUS_EOF : STATUS_BAD_TOKEN;
+
+                            // Force to get next token
+                            t->get_token(TF_GET);
+                        }
+                    }
+                    else
+                        res = parse_func(&right, t, TF_NONE);
                     break;
+                }
+
+                case TT_BAREWORD:
+                    return parse_call(expr, t, TF_NONE);
+
                 default:
                     return parse_primary(expr, t, TF_NONE);
             }
@@ -381,7 +498,7 @@ namespace lsp
                 parse_destroy(right);
                 return STATUS_NO_MEM;
             }
-            switch (tok)
+            switch (func)
             {
                 case TT_EX:             bind->eval  = eval_exists; break;
                 case TT_DB:             bind->eval  = eval_db; break;

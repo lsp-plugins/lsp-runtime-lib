@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 марта 2016 г.
@@ -38,45 +38,62 @@ namespace lsp
             uint8_t         channel;        // ID of the MIDI channel
             union
             {
-                uint8_t         bparams[2];     // Byte parameters
-
+                // For MIDI_MSG_NOTE_OFF and MIDI_MSG_NOTE_ON
                 struct
                 {
                     uint8_t         pitch;         // Note key
                     uint8_t         velocity;      // Note velocity
                 } note;
 
+                // For MIDI_MSG_NOTE_CONTROLLER
                 struct
                 {
                     uint8_t         control;       // Control
                     uint8_t         value;         // Value
                 } ctl;
 
+                // For MIDI_MSG_NOTE_PRESSURE
                 struct
                 {
                     uint8_t         pitch;          // Note key
                     uint8_t         pressure;       // Note pressure
                 } atouch;
 
+                // For MIDI_MSG_CHANNEL_PRESSURE
                 struct
                 {
                     uint8_t         pressure;        // Channel pressure
                 } chn;
 
+                // For MIDI_MSG_PROGRAM_CHANGE
                 uint8_t         program;         // program
+
+                // For MIDI_MSG_PITCH_BEND
                 uint16_t        bend;
 
+                // For MIDI_MSG_MTC_QUARTER
                 struct
                 {
                     uint8_t         type;
                     uint8_t         value;
                 } mtc;
 
+                // For MIDI_MSG_SONG_POS
                 uint16_t        beats;
+
+                // For MIDI_MSG_SONG_SELECT
                 uint8_t         song;
+
+                // For other messages
+                uint8_t         bparams[2];     // Byte parameters
             };
         } event_t;
     #pragma pack(pop)
+
+        /**
+         * Maximum number of channels
+         */
+        constexpr uint8_t MIDI_CHANNELS     = 0x10;
 
         enum message_t
         {
@@ -180,10 +197,19 @@ namespace lsp
         /**
          * Decode MIDI message
          * @param ev MIDI event structure to decode
-         * @param bytes buffer containing MIDI message
+         * @param bytes buffer containing MIDI message (1-3 bytes)
          * @return number of bytes used for decodingm negative value on error, never zero
          */
         ssize_t decode(event_t *ev, const uint8_t *bytes);
+
+        /**
+         * Decode MIDI message, more safe algorithm that checks the input array bounds
+         * @param ev MIDI event structure to decode
+         * @param bytes buffer containing MIDI message
+         * @param length length of the buffer
+         * @return number of bytes used for decodingm negative value on error, never zero
+         */
+        ssize_t decode(event_t *ev, const uint8_t *bytes, size_t length);
 
         /**
          * Encode MIDI message
@@ -199,7 +225,8 @@ namespace lsp
          * @return number of bytes required to encode MIDI event, negative value on error, never zero
          */
         ssize_t size_of(const event_t *ev);
-    }
-}
+
+    } /* namespace midi */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_PROTOCOL_MIDI_H_ */

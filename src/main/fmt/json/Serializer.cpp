@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 17 окт. 2019 г.
@@ -27,6 +27,7 @@
 #include <lsp-plug.in/fmt/json/Serializer.h>
 #include <lsp-plug.in/stdlib/stdio.h>
 #include <lsp-plug.in/stdlib/math.h>
+#include <lsp-plug.in/stdlib/locale.h>
 
 namespace lsp
 {
@@ -342,7 +343,27 @@ namespace lsp
             return (res == STATUS_OK) ? pOut->write_ascii(buf, len) : res;
         }
 
-        status_t Serializer::write_int(ssize_t value)
+        status_t Serializer::write_int(int32_t value)
+        {
+            if (pOut == NULL)
+                return STATUS_BAD_STATE;
+
+            char buf[0x20];
+            int len = ::snprintf(buf, sizeof(buf), "%ld", (long)value);
+            return (len < int(sizeof(buf))) ? write_raw(buf, len) : STATUS_OVERFLOW;
+        }
+
+        status_t Serializer::write_int(uint32_t value)
+        {
+            if (pOut == NULL)
+                return STATUS_BAD_STATE;
+
+            char buf[0x20];
+            int len = ::snprintf(buf, sizeof(buf), "%lu", (unsigned long)value);
+            return (len < int(sizeof(buf))) ? write_raw(buf, len) : STATUS_OVERFLOW;
+        }
+
+        status_t Serializer::write_int(int64_t value)
         {
             if (pOut == NULL)
                 return STATUS_BAD_STATE;
@@ -352,7 +373,43 @@ namespace lsp
             return (len < int(sizeof(buf))) ? write_raw(buf, len) : STATUS_OVERFLOW;
         }
 
-        status_t Serializer::write_hex(ssize_t value)
+        status_t Serializer::write_int(uint64_t value)
+        {
+            if (pOut == NULL)
+                return STATUS_BAD_STATE;
+
+            char buf[0x20];
+            int len = ::snprintf(buf, sizeof(buf), "%llu", (unsigned long long)value);
+            return (len < int(sizeof(buf))) ? write_raw(buf, len) : STATUS_OVERFLOW;
+        }
+
+        status_t Serializer::write_hex(int32_t value)
+        {
+            if (pOut == NULL)
+                return STATUS_BAD_STATE;
+            else if (sSettings.version < JSON_VERSION5)
+                return STATUS_INVALID_VALUE;
+
+            char buf[0x20];
+            int len = (value < 0) ?
+                    ::snprintf(buf, sizeof(buf), "-0x%lx", (long)(-value)) :
+                    ::snprintf(buf, sizeof(buf), "0x%lx", (long)value);
+            return (len < int(sizeof(buf))) ? write_raw(buf, len) : STATUS_OVERFLOW;
+        }
+
+        status_t Serializer::write_hex(uint32_t value)
+        {
+            if (pOut == NULL)
+                return STATUS_BAD_STATE;
+            else if (sSettings.version < JSON_VERSION5)
+                return STATUS_INVALID_VALUE;
+
+            char buf[0x20];
+            int len = ::snprintf(buf, sizeof(buf), "0x%lx", (unsigned long)value);
+            return (len < int(sizeof(buf))) ? write_raw(buf, len) : STATUS_OVERFLOW;
+        }
+
+        status_t Serializer::write_hex(int64_t value)
         {
             if (pOut == NULL)
                 return STATUS_BAD_STATE;
@@ -363,6 +420,18 @@ namespace lsp
             int len = (value < 0) ?
                     ::snprintf(buf, sizeof(buf), "-0x%llx", (long long)(-value)) :
                     ::snprintf(buf, sizeof(buf), "0x%llx", (long long)value);
+            return (len < int(sizeof(buf))) ? write_raw(buf, len) : STATUS_OVERFLOW;
+        }
+
+        status_t Serializer::write_hex(uint64_t value)
+        {
+            if (pOut == NULL)
+                return STATUS_BAD_STATE;
+            else if (sSettings.version < JSON_VERSION5)
+                return STATUS_INVALID_VALUE;
+
+            char buf[0x20];
+            int len = ::snprintf(buf, sizeof(buf), "0x%llx", (unsigned long long)value);
             return (len < int(sizeof(buf))) ? write_raw(buf, len) : STATUS_OVERFLOW;
         }
 
@@ -391,6 +460,8 @@ namespace lsp
                 return write_raw("NaN", 3);
             else if (isinf(value))
                 return (value < 0.0) ? write_raw("-Infinity", 9) : write_raw("Infinity", 8);
+
+            SET_LOCALE_SCOPED(LC_NUMERIC, "C"); // For proper decimal point
 
             char *buf = NULL;
             int len = asprintf(&buf, fmt, value);
@@ -822,6 +893,174 @@ namespace lsp
             sState.flags   &= ~SF_COMMA;
             sState.flags   |= SF_CONTENT;
             return (res == STATUS_OK) ? pOut->write(']') : res;
+        }
+
+        status_t Serializer::prop_int(const char *key, int32_t value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_int(value) : res;
+        }
+
+        status_t Serializer::prop_int(const LSPString *key, int32_t value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_int(value) : res;
+        }
+
+        status_t Serializer::prop_int(const char *key, uint32_t value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_int(value) : res;
+        }
+
+        status_t Serializer::prop_int(const LSPString *key, uint32_t value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_int(value) : res;
+        }
+
+        status_t Serializer::prop_int(const char *key, int64_t value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_int(value) : res;
+        }
+
+        status_t Serializer::prop_int(const LSPString *key, int64_t value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_int(value) : res;
+        }
+
+        status_t Serializer::prop_int(const char *key, uint64_t value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_int(value) : res;
+        }
+
+        status_t Serializer::prop_int(const LSPString *key, uint64_t value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_int(value) : res;
+        }
+
+        status_t Serializer::prop_hex(const char *key, int32_t value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_hex(value) : res;
+        }
+
+        status_t Serializer::prop_hex(const LSPString *key, int32_t value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_hex(value) : res;
+        }
+
+        status_t Serializer::prop_hex(const char *key, uint32_t value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_hex(value) : res;
+        }
+
+        status_t Serializer::prop_hex(const LSPString *key, uint32_t value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_hex(value) : res;
+        }
+
+        status_t Serializer::prop_hex(const char *key, int64_t value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_hex(value) : res;
+        }
+
+        status_t Serializer::prop_hex(const LSPString *key, int64_t value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_hex(value) : res;
+        }
+
+        status_t Serializer::prop_hex(const char *key, uint64_t value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_hex(value) : res;
+        }
+
+        status_t Serializer::prop_hex(const LSPString *key, uint64_t value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_hex(value) : res;
+        }
+
+        status_t Serializer::prop_double(const char *key, double value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_double(value) : res;
+        }
+
+        status_t Serializer::prop_double(const LSPString *key, double value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_double(value) : res;
+        }
+
+        status_t Serializer::prop_double(const char *key, double value, const char *fmt)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_double(value, fmt) : res;
+        }
+
+        status_t Serializer::prop_double(const LSPString *key, double value, const char *fmt)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_double(value, fmt) : res;
+        }
+
+        status_t Serializer::prop_bool(const char *key, bool value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_bool(value) : res;
+        }
+
+        status_t Serializer::prop_bool(const LSPString *key, bool value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_bool(value) : res;
+        }
+
+        status_t Serializer::prop_string(const char *key, const char *value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_string(value) : res;
+        }
+
+        status_t Serializer::prop_string(const char *key, const LSPString *value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_string(value) : res;
+        }
+
+        status_t Serializer::prop_string(const LSPString *key, const char *value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_string(value) : res;
+        }
+
+        status_t Serializer::prop_string(const LSPString *key, const LSPString *value)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_string(value) : res;
+        }
+
+        status_t Serializer::prop_null(const char *key)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_null() : res;
+        }
+
+        status_t Serializer::prop_null(const LSPString *key)
+        {
+            status_t res = write_property(key);
+            return (res == STATUS_OK) ? write_null() : res;
         }
 
     } /* namespace json */
