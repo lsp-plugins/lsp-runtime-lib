@@ -9,6 +9,7 @@
 * Added support of custom functions in the expression language.
 * Enhanced JSON serializer interface with new functions.
 * Updated build scripts.
+* Updated module versions in dependencies.
 
 === 1.0.19 ===
 * Optimized expression variables access.
