@@ -174,7 +174,7 @@ namespace lsp
             {
                 if (LE_TO_CPU(wfe.wFormatTag) == WAVE_FORMAT_PCM)
                 {
-                    size_t fsize    = LE_TO_CPU(wfe.wBitsPerSample) * LE_TO_CPU(wfe.nChannels);
+                    size_t fsize        = LE_TO_CPU(wfe.wBitsPerSample) * LE_TO_CPU(wfe.nChannels);
                     if (fsize & 0x07)   // not multiple of 8?
                         return close(STATUS_UNSUPPORTED_FORMAT);
                     fsize >>= 3;        // divide by 8
@@ -186,6 +186,11 @@ namespace lsp
                 {
                     if (LE_TO_CPU(wfe.wBitsPerSample) != sizeof(f32_t)*8)
                         return close(STATUS_UNSUPPORTED_FORMAT);
+
+                    const size_t fsize  = sizeof(f32_t) * LE_TO_CPU(wfe.nChannels);
+                    nFrames             = ckData.cksize / fsize;
+                    if ((nFrames * fsize) != ckData.cksize)
+                        return close(STATUS_CORRUPTED_FILE);
                 }
             }
 

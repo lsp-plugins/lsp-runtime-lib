@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.21 ===
-
+* Fixed reading of 32-bit FLOAT WAV files that do not contain fact chunk on Windows.
 
 === 1.0.20 ===
 * More detailed MIDI specification (added MIDI_CHANNELS constant).
