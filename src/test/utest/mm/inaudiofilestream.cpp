@@ -259,8 +259,46 @@ UTEST_BEGIN("runtime.mm", inaudiofilestream)
         UTEST_ASSERT(is.close() == STATUS_OK);
     }
 
+    void test_read_src_f32(const char *file)
+    {
+        io::Path path;
+
+        UTEST_ASSERT(path.fmt("%s/%s", resources(), file));
+        printf("Reading source f32 audio file %s as f32 samples\n", path.as_native());
+
+        mm::InAudioFileStream is;
+        mm::audio_stream_t info;
+
+        UTEST_ASSERT(is.open(&path) == STATUS_OK);
+        UTEST_ASSERT(is.info(&info) == STATUS_OK);
+        UTEST_ASSERT(info.srate == 48000);
+        UTEST_ASSERT(info.channels == 2);
+        UTEST_ASSERT(info.frames == FRAMES);
+
+        ByteBuffer buf(BUF_SAMPLES * sizeof(float) * 2);
+        ssize_t off = 0;
+
+        while (true)
+        {
+            // Check position
+            UTEST_ASSERT(is.position() == off);
+
+            // Read frames
+            ssize_t read = is.read(buf.data<float>(), BUF_SAMPLES);
+            if (read < 0)
+            {
+                UTEST_ASSERT(read == -STATUS_EOF);
+                break;
+            }
+            UTEST_ASSERT(buf.valid());
+        }
+
+        UTEST_ASSERT(is.close() == STATUS_OK);
+    }
+
     UTEST_MAIN
     {
+        test_read_src_f32("mm/f32.wav");
         test_read_f32("mm/pcm.wav");
         test_read_s16("mm/pcm.wav");
         test_read_u16("mm/pcm.wav");
