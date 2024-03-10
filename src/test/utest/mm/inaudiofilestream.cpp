@@ -273,7 +273,7 @@ UTEST_BEGIN("runtime.mm", inaudiofilestream)
         UTEST_ASSERT(is.info(&info) == STATUS_OK);
         UTEST_ASSERT(info.srate == 48000);
         UTEST_ASSERT(info.channels == 2);
-        UTEST_ASSERT(info.frames == FRAMES);
+        UTEST_ASSERT(info.frames == 4096);
 
         ByteBuffer buf(BUF_SAMPLES * sizeof(float) * 2);
         ssize_t off = 0;
