@@ -291,6 +291,8 @@ UTEST_BEGIN("runtime.mm", inaudiofilestream)
                 break;
             }
             UTEST_ASSERT(buf.valid());
+
+            off += read;
         }
 
         UTEST_ASSERT(is.close() == STATUS_OK);
