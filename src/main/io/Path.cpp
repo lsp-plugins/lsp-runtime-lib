@@ -27,6 +27,7 @@
 
 #if defined(PLATFORM_WINDOWS)
     #include <windows.h>
+    #include <fileapi.h>
     #include <shlwapi.h>
 #else
     #include <fcntl.h>
@@ -1421,7 +1422,61 @@ namespace lsp
                 return STATUS_INVALID_VALUE;
 
         #ifdef PLATFORM_WINDOWS
-            // TODO: try GetFinalPathNameByHandleW
+            #if _WIN32_WINNT >= 0x0600
+                // Try GetFinalPathNameByHandleW
+                HANDLE hfile = ::CreateFileW(
+                    sPath.get_utf16(), // lpFileName
+                    0, // dwDesiredAccess
+                    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, // dwShareMode
+                    NULL, // lpSecurityAttributes
+                    OPEN_EXISTING, // dwCreationDisposition
+                    FILE_ATTRIBUTE_NORMAL, // dwFlagsAndAttributes
+                    NULL); // hTemplateFile
+
+                if (hfile != INVALID_HANDLE_VALUE)
+                {
+                    lsp_finally {
+                        ::CloseHandle(hfile);
+                    };
+
+                    DWORD path_size = ::GetFinalPathNameByHandleW(
+                        hfile, // hFile
+                        NULL, // lpszFilePath
+                        0, // cchFilePath
+                        FILE_NAME_NORMALIZED); // dwFlags
+
+                    if (path_size > 0)
+                    {
+                        // Allocate buffer to store UTF-16 path
+                        WCHAR *buf = static_cast<WCHAR *>(malloc((path_size + 1) * sizeof(WCHAR)));
+                        if (buf == NULL)
+                            return STATUS_NO_MEM;
+                        lsp_finally {
+                            free(buf);
+                        };
+
+                        // Obtain the value
+                        path_size = ::GetFinalPathNameByHandleW(
+                            hfile, // hFile
+                            buf, // lpszFilePath
+                            path_size, // cchFilePath
+                            FILE_NAME_NORMALIZED); // dwFlags
+
+                        if (path_size > 0)
+                        {
+                            buf[path_size] = 0;
+
+                            // Remove long path name prefix if it is present
+                            const WCHAR *sbuf = buf;
+                            if ((sbuf[0] == '\\') && (sbuf[1] == '\\') && (sbuf[2] == '?') && (sbuf[3] == '\\'))
+                                sbuf   += 4;
+
+                            return path->set_native(reinterpret_cast<const char *>(sbuf), "UTF-16");
+                        }
+                    }
+                }
+            #endif /* _WIN32_WINNT */
+
             return path->set(this);
         #else
             status_t res;
