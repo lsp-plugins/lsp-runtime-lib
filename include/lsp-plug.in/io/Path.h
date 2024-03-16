@@ -419,6 +419,14 @@ namespace lsp
                 status_t        final_path(Path *path) const;
 
                 /**
+                 * Convert current path to the final path of the physical file/device. That means, if the path name
+                 * is a symbolic link or a chain of symbolic links, the function reads them until the object associated
+                 * with the path name becomes the non-symbolic link.
+                 * @return
+                 */
+                status_t        to_final_path();
+
+                /**
                  * Obtain the size of the file
                  * @return file size or negative error code
                  */

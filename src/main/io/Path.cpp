@@ -1404,6 +1404,15 @@ namespace lsp
             dst->take(&sPath);
         }
 
+        status_t Path::to_final_path()
+        {
+            Path tmp;
+            status_t res = final_path(&tmp);
+            if (res == STATUS_OK)
+                sPath.swap(tmp.sPath);
+            return STATUS_OK;
+        }
+
         status_t Path::final_path(LSPString *path) const
         {
             if (path == NULL)
