@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 8 февр. 2019 г.
@@ -22,14 +22,17 @@
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/io/File.h>
 #include <lsp-plug.in/io/Dir.h>
+#include <lsp-plug.in/lltl/phashset.h>
 #include <lsp-plug.in/stdlib/string.h>
 
 #if defined(PLATFORM_WINDOWS)
     #include <windows.h>
+    #include <fileapi.h>
     #include <shlwapi.h>
 #else
     #include <fcntl.h>
     #include <sys/stat.h>
+    #include <unistd.h>
     #include <errno.h>
 #endif /* defined(PLATFORM_WINDOWS) */
 
@@ -1394,6 +1397,188 @@ namespace lsp
         status_t Path::sym_stat(fattr_t *attr) const
         {
             return File::sym_stat(&sPath, attr);
+        }
+
+        void Path::drain(LSPString *dst)
+        {
+            dst->take(&sPath);
+        }
+
+        status_t Path::final_path(LSPString *path) const
+        {
+            if (path == NULL)
+                return STATUS_INVALID_VALUE;
+
+            Path fpath;
+            status_t res = final_path(&fpath);
+            if (res == STATUS_OK)
+                fpath.drain(path);
+            return res;
+        }
+
+        status_t Path::final_path(Path *path) const
+        {
+            if (path == NULL)
+                return STATUS_INVALID_VALUE;
+
+        #ifdef PLATFORM_WINDOWS
+            #if _WIN32_WINNT >= 0x0600
+                // Try GetFinalPathNameByHandleW
+                HANDLE hfile = ::CreateFileW(
+                    sPath.get_utf16(), // lpFileName
+                    0, // dwDesiredAccess
+                    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, // dwShareMode
+                    NULL, // lpSecurityAttributes
+                    OPEN_EXISTING, // dwCreationDisposition
+                    FILE_ATTRIBUTE_NORMAL, // dwFlagsAndAttributes
+                    NULL); // hTemplateFile
+
+                if (hfile != INVALID_HANDLE_VALUE)
+                {
+                    lsp_finally {
+                        ::CloseHandle(hfile);
+                    };
+
+                    DWORD path_size = ::GetFinalPathNameByHandleW(
+                        hfile, // hFile
+                        NULL, // lpszFilePath
+                        0, // cchFilePath
+                        FILE_NAME_NORMALIZED); // dwFlags
+
+                    if (path_size > 0)
+                    {
+                        // Allocate buffer to store UTF-16 path
+                        WCHAR *buf = static_cast<WCHAR *>(malloc((path_size + 1) * sizeof(WCHAR)));
+                        if (buf == NULL)
+                            return STATUS_NO_MEM;
+                        lsp_finally {
+                            free(buf);
+                        };
+
+                        // Obtain the value
+                        path_size = ::GetFinalPathNameByHandleW(
+                            hfile, // hFile
+                            buf, // lpszFilePath
+                            path_size, // cchFilePath
+                            FILE_NAME_NORMALIZED); // dwFlags
+
+                        if (path_size > 0)
+                        {
+                            buf[path_size] = 0;
+
+                            // Remove long path name prefix if it is present
+                            const WCHAR *sbuf = buf;
+                            if ((sbuf[0] == '\\') && (sbuf[1] == '\\') && (sbuf[2] == '?') && (sbuf[3] == '\\'))
+                                sbuf   += 4;
+
+                            return path->set_native(reinterpret_cast<const char *>(sbuf), "UTF-16");
+                        }
+                    }
+                }
+            #endif /* _WIN32_WINNT */
+
+            return path->set(this);
+        #else
+            status_t res;
+            fattr_t attr;
+            Path tmp, link;
+            char *buf = NULL;
+            lsp_finally {
+                if (buf != NULL)
+                    free(buf);
+            };
+
+            lltl::phashset<Path> visited;
+            lsp_finally {
+                for (lltl::iterator<Path> it = visited.values(); it; ++it)
+                {
+                    Path *p = it.get();
+                    if (p != NULL)
+                        delete p;
+                }
+                visited.flush();
+            };
+
+            // Initialize path with self value
+            if ((res = tmp.set(this)) != STATUS_OK)
+                return res;
+
+            while (true)
+            {
+                // Read file attributes
+                if ((res = File::stat(&tmp, &attr)) != STATUS_OK)
+                    return res;
+
+                // We're done if it is not a symbolic link
+                if (attr.type != fattr_t::FT_SYMLINK)
+                {
+                    tmp.swap(path);
+                    return STATUS_OK;
+                }
+
+                // Allocate buffer in lazy mode
+                if (buf == NULL)
+                {
+                    buf     = static_cast<char *>(malloc(PATH_MAX * sizeof(char)));
+                    if (buf == NULL)
+                        return STATUS_NO_MEM;
+                }
+
+                // Read the link to the file
+                ssize_t count = readlink(tmp.as_native(), buf, PATH_MAX - 1);
+                if (count < 0)
+                {
+                    int error = errno;
+
+                    switch (error)
+                    {
+                        case EFAULT: return STATUS_FAILED;
+                        case EINVAL: return STATUS_INVALID_VALUE;
+                        case EIO: return STATUS_IO_ERROR;
+                        case ENAMETOOLONG: return STATUS_TOO_BIG;
+                        case ELOOP: return STATUS_OVERFLOW;
+                        case ENOENT: return STATUS_NOT_FOUND;
+                        case ENOMEM: return STATUS_NO_MEM;
+                        case ENOTDIR: return STATUS_NOT_DIRECTORY;
+                        default:
+                            break;
+                    }
+
+                    return STATUS_IO_ERROR;
+                }
+                buf[count] = '\0';
+
+                // Initialize link path
+                if ((res = link.set_native(buf)) != STATUS_OK)
+                    return res;
+
+                // Analyze link path: if it is relative symbolic link or not
+                if (link.is_relative())
+                {
+                    // We need to glue relative path to the current path
+                    if ((res = tmp.remove_last()) != STATUS_OK)
+                        return res;
+                    if ((res = tmp.append_child(&link)) != STATUS_OK)
+                        return res;
+                }
+                else
+                    tmp.swap(&link);
+                if ((res = tmp.canonicalize()) != STATUS_OK)
+                    return res;
+
+                // Test if we already have visited such path and remember it
+                if (visited.contains(&tmp))
+                    return STATUS_OVERFLOW;
+                Path *clone = tmp.clone();
+                if (clone == NULL)
+                    return STATUS_NO_MEM;
+                if (!visited.create(clone))
+                {
+                    delete clone;
+                    return STATUS_NO_MEM;
+                }
+            }
+        #endif /* PLATFORM_WINDOWS */
         }
 
         wssize_t Path::size() const

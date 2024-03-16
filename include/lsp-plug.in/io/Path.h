@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 8 февр. 2019 г.
@@ -380,6 +380,7 @@ namespace lsp
                 inline void     take(Path *src)                                     { sPath.take(&src->sPath);          }
                 inline size_t   length() const                                      { return sPath.length();            }
                 void            take(LSPString *src);
+                void            drain(LSPString *dst);
 
             public:
                 // Some kind of file operations
@@ -396,6 +397,26 @@ namespace lsp
                  * @return status of operaiton
                  */
                 status_t        sym_stat(fattr_t *attr) const;
+
+                /**
+                 * Get the final path of the physical file/device. That means, if the path name is a symbolic link
+                 * or a chain of symbolic links, the function reads them until the object associated with the path name
+                 * becomes the non-symbolic link.
+                 *
+                 * @param path variable to store the path
+                 * @return status of operation
+                 */
+                status_t        final_path(LSPString *path) const;
+
+                /**
+                 * Get the final path of the physical file/device. That means, if the path name is a symbolic link
+                 * or a chain of symbolic links, the function reads them until the object associated with the path name
+                 * becomes the non-symbolic link.
+                 *
+                 * @param path variable to store the path
+                 * @return status of operation
+                 */
+                status_t        final_path(Path *path) const;
 
                 /**
                  * Obtain the size of the file
