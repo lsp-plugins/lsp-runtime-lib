@@ -796,6 +796,18 @@ UTEST_BEGIN("runtime.io", path)
         }
     }
 
+    void test_final_path()
+    {
+        io::Path tmp, fpath;
+
+        tmp.set("/home/sadko/tmp/symlink-test/a");
+        UTEST_ASSERT(tmp.final_path(&fpath) == STATUS_OK);
+        UTEST_ASSERT(fpath.equals("/home/sadko/tmp/symlink-test/3/e.txt"));
+
+        tmp.set("/home/sadko/tmp/symlink-test/A");
+        UTEST_ASSERT(tmp.final_path(&fpath) == STATUS_OVERFLOW);
+    }
+
     UTEST_MAIN
     {
         test_get_set();
@@ -813,6 +825,7 @@ UTEST_BEGIN("runtime.io", path)
         test_dots();
         test_relative();
         test_ext();
+        test_final_path();
     }
 UTEST_END;
 
