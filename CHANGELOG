@@ -4,6 +4,7 @@
 
 === 1.0.21 ===
 * Fixed reading of 32-bit FLOAT WAV files that do not contain fact chunk on Windows.
+* Implemented min(), max(), rms() and avg() builtin functions for expression language.
 * Implemented io::Path::final_path method for obtaining the final file system object
   the abstract path points to.
 

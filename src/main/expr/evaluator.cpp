@@ -492,10 +492,11 @@ namespace lsp
             // Fetch right argument and test for UNDEF
             value_t right;
             init_value(&right);
+            lsp_finally { destroy_value(&right); };
+
             res = expr->calc.right->eval(&right, expr->calc.right, env);
             if (res != STATUS_OK)
             {
-                destroy_value(&right);
                 destroy_value(value);
                 return res;
             }
@@ -503,13 +504,11 @@ namespace lsp
             if (value->type == VT_UNDEF)
             {
                 set_value_int(value, (right.type == VT_UNDEF) ? 0 : -1);
-                destroy_value(&right);
                 return STATUS_OK;
             }
             else if (right.type == VT_UNDEF)
             {
                 set_value_int(value, 1);
-                destroy_value(&right);
                 return STATUS_OK;
             }
 
@@ -517,13 +516,11 @@ namespace lsp
             if (value->type == VT_NULL)
             {
                 set_value_int(value, (right.type == VT_NULL) ? 0 : -1);
-                destroy_value(&right);
                 return STATUS_OK;
             }
             else if (right.type == VT_NULL)
             {
                 set_value_int(value, 1);
-                destroy_value(&right);
                 return STATUS_OK;
             }
 
@@ -677,7 +674,6 @@ namespace lsp
 
             if (res != STATUS_OK)
                 destroy_value(value);
-            destroy_value(&right);
 
             return res;
         }
