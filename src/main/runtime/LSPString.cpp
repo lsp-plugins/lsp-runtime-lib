@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 30 авг. 2017 г.
@@ -1271,7 +1271,7 @@ namespace lsp
             return start;
 
         ssize_t last = nLength - str->nLength;
-        while (start < last)
+        while (start <= last)
         {
             if (xcmp(&pData[start], str->pData, str->nLength) == 0)
                 return start;
@@ -1286,7 +1286,7 @@ namespace lsp
             return 0;
 
         ssize_t start = 0, last = nLength - str->nLength;
-        while (start < last)
+        while (start <= last)
         {
             if (xcmp(&pData[start], str->pData, str->nLength) == 0)
                 return start;
@@ -1341,7 +1341,7 @@ namespace lsp
         if (str->nLength <= 0)
             return 0;
 
-        ssize_t start = nLength - str->nLength - 1;
+        ssize_t start = nLength - str->nLength;
         while (start >= 0)
         {
             if (xcmp(&pData[start], str->pData, str->nLength) == 0)
