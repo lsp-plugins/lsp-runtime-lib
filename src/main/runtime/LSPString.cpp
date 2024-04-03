@@ -1322,9 +1322,8 @@ namespace lsp
 
     ssize_t LSPString::rindex_of(ssize_t start, const LSPString *str) const
     {
-        XSAFE_ITRANS(start, nLength, -1);
-        if (str->nLength <= 0)
-            return start;
+        if (start > ssize_t(nLength))
+            return -1;
 
         start -= str->nLength;
         while (start >= 0)
