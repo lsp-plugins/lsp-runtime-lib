@@ -113,8 +113,13 @@ namespace lsp
             else if (pContext != NULL)
                 return STATUS_OPENED;
 
+            // For portable use, a shared memory object should be identified by a name of the form  /somename;
+            // that is, a null-terminated string of up to NAME_MAX (i.e., 255) characters consisting of an initial
+            // slash, followed by one or more characters, none of which are slashes.
             LSPString tmp;
-            if (!tmp.set_utf8(name))
+            if (!tmp.append(FILE_SEPARATOR_C))
+                return STATUS_NO_MEM;
+            if (!tmp.append_utf8(name))
                 return STATUS_NO_MEM;
 
             return open_internal(&tmp, mode, size);
@@ -186,11 +191,11 @@ namespace lsp
                 return STATUS_BAD_ARGUMENTS;
 
             if ((mode & SHM_WRITE) != 0)
-                o_flags     = ((mode & SHM_READ) != 0) ? O_RDWR : O_WRONLY;
+                o_flags     = O_RDWR;
             else
                 o_flags     = O_RDONLY;
             if (mode & SHM_CREATE)
-                o_flags     = O_CREAT | O_EXCL;
+                o_flags    |= O_CREAT | O_EXCL;
 
             // Get the path
             const char *path = name->get_native();
@@ -304,7 +309,9 @@ namespace lsp
                 if (pContext->pData != NULL)
                     res     = update_status(res, unmap());
 
-                res = update_status(res, ::close(pContext->nFD));
+                if (pContext->nFD >= 0)
+                    res = update_status(res, ::close(pContext->nFD));
+
                 if ((pContext->nMode & (SHM_CREATE | SHM_PERSIST)) == SHM_CREATE)
                 {
                     const char *path = pContext->sPath.get_native();
@@ -327,11 +334,11 @@ namespace lsp
                 return STATUS_CORRUPTED;
 
             int prot_flags = 0;
-            if (pContext->nMode == SHM_READ)
+            if ((pContext->nMode & SHM_READ) != 0)
                 prot_flags     |= PROT_READ;
-            if (pContext->nMode == SHM_WRITE)
+            if ((pContext->nMode & SHM_WRITE) != 0)
                 prot_flags     |= PROT_WRITE;
-            if (pContext->nMode == SHM_EXEC)
+            if ((pContext->nMode & SHM_EXEC) != 0)
                 prot_flags     |= PROT_EXEC;
 
             // Map new memory address
