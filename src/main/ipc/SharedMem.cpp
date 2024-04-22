@@ -271,7 +271,7 @@ namespace lsp
 
             return res;
         #else
-            if (munmap(pContext->pData, pContext->nMapSize) >= 0)
+            if (munmap(ctx->pData, ctx->nMapSize) >= 0)
                 return STATUS_OK;
 
             const int error = errno;
@@ -309,11 +309,15 @@ namespace lsp
 
         status_t SharedMem::open_context(shared_context_t *ctx, LSPString *name, size_t mode, size_t size)
         {
+            lsp_finally {
+                close_context(ctx);
+            };
+
         #ifdef PLATFORM_WINDOWS
             // TODO
 
         #else
-            if (pContext->hFD < 0)
+            if (ctx->hFD >= 0)
                 return STATUS_OPENED;
 
             // Form the open mode
@@ -334,24 +338,8 @@ namespace lsp
                 return STATUS_NO_MEM;
 
             // Create and initialize context
-            shared_context_t *ctx = new shared_context_t();
-            if (ctx == NULL)
-                return STATUS_NO_MEM;
-
-            ctx->nReferences    = 1;
-            ctx->pData          = NULL;
-            ctx->nSize          = 0;
-            ctx->nMapOffset     = 0;
-            ctx->nMapSize       = 0;
             ctx->nMode          = mode & (~SHM_PERSIST);
             ctx->sPath.swap(name);
-
-            ctx->hFD            = -1;
-//            ctx->pSemaphore     = NULL;
-
-            lsp_finally {
-                close_context(ctx);
-            };
 
             static constexpr int open_mode =
                 S_IRUSR | S_IWUSR |
@@ -409,6 +397,9 @@ namespace lsp
             // Now we are ready to deploy new context
             ctx->nMode      = mode;
             ctx->nSize      = size;
+
+            // Prevent context from being closed
+            ctx             = NULL;
 
             return STATUS_OK;
         }
