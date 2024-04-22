@@ -27,7 +27,7 @@
 #include <lsp-plug.in/common/atomic.h>
 
 #if defined(PLATFORM_WINDOWS)
-    #include <synchapi.h>
+    // Nothing
 #elif defined(PLATFORM_LINUX)
     #include <linux/futex.h>
     #include <sys/syscall.h>
@@ -52,8 +52,11 @@ namespace lsp
         class Mutex
         {
             private:
+                typedef void                   *HANDLE;
+
+            private:
                 mutable HANDLE                  hMutex;     // Mutex object
-                mutable DWORD                   nThreadId;  // Owner's thread identifier
+                mutable uint32_t                nThreadId;  // Owner's thread identifier
                 mutable atomic_t                nLocks;     // Number of locks by current thread
 
             private:

@@ -24,6 +24,7 @@
 
 #ifdef PLATFORM_WINDOWS
     #include <windows.h>
+    #include <synchapi.h>
 #endif /* PLATFORM_WINDOWS */
 
 namespace lsp
