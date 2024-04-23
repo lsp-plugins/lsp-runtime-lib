@@ -58,7 +58,7 @@ namespace lsp
                 void     release_context();
                 bool     allocate_context();
 
-                static status_t open_context(shared_context_t *ctx, LSPString *name, size_t mode, size_t size);
+                static status_t open_context(shared_context_t *ctx, size_t mode, size_t size);
                 static status_t unlink_file(shared_context_t *ctx);
                 static status_t close_context(shared_context_t *ctx);
                 static status_t unmap_context(shared_context_t *ctx);

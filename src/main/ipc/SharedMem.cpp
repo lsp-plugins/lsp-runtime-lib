@@ -32,6 +32,7 @@
 #ifdef PLATFORM_WINDOWS
     #include <windows.h>
     #include <memoryapi.h>
+    #include <fileapi.h>
 #else
     #include <errno.h>
     #include <fcntl.h>
@@ -125,7 +126,7 @@ namespace lsp
         bool SharedMem::allocate_context()
         {
             if (pContext != NULL)
-                return false;
+                return true;
             shared_context_t *ctx   = new shared_context_t;
             if (ctx == NULL)
                 return false;
@@ -138,8 +139,8 @@ namespace lsp
             ctx->nMode          = 0;
 
         #ifdef PLATFORM_WINDOWS
-            ctx->hFD            = NULL;
-            ctx->hMapping       = NULL;
+            ctx->hFD            = INVALID_HANDLE_VALUE;
+            ctx->hMapping       = INVALID_HANDLE_VALUE;
         #else
             ctx->hFD            = -1;
         #endif /* PLATFORM_WINDOWS */
@@ -153,51 +154,83 @@ namespace lsp
         {
             if (name == NULL)
                 return STATUS_BAD_ARGUMENTS;
-
-            LSPString tmp;
-
-        #ifdef PLATFORM_WINDOWS
-            if (!tmp.set_utf8(name))
-                return STATUS_NO_MEM;
-        #else
-            // For portable use, a shared memory object should be identified by a name of the form  /somename;
-            // that is, a null-terminated string of up to NAME_MAX (i.e., 255) characters consisting of an initial
-            // slash, followed by one or more characters, none of which are slashes.
-            if (!tmp.append(FILE_SEPARATOR_C))
-                return STATUS_NO_MEM;
-            if (!tmp.append_utf8(name))
-                return STATUS_NO_MEM;
-        #endif /* PLATFORM_WINDOWS */
+            if ((mode & (SHM_READ | SHM_WRITE)) == 0)
+                return STATUS_BAD_ARGUMENTS;
+            if (opened())
+                return STATUS_OPENED;
 
             if (!allocate_context())
                 return STATUS_NO_MEM;
 
-            return open_context(pContext, &tmp, mode, size);
+        #ifdef PLATFORM_WINDOWS
+            // Form the name of the temporary file
+            status_t res = system::get_system_temporary_dir(&pContext->sPath);
+            if (res != STATUS_OK)
+                return res;
+            if (!pContext->sPath.append(FILE_SEPARATOR_C))
+                return STATUS_NO_MEM;
+            if (!pContext->sPath.append_utf8(name))
+                return STATUS_NO_MEM;
+
+            // Form the name of shared mapping
+            if (!pContext->sLock.set_ascii("Local" FILE_SEPARATOR_S))
+                return STATUS_NO_MEM;
+            if (!pContext->sLock.append_utf8(name))
+                return STATUS_NO_MEM;
+
+        #else
+            // For portable use, a shared memory object should be identified by a name of the form  /somename;
+            // that is, a null-terminated string of up to NAME_MAX (i.e., 255) characters consisting of an initial
+            // slash, followed by one or more characters, none of which are slashes.
+            pContext->sPath.clear();
+            if (!pContext->sPath.append(FILE_SEPARATOR_C))
+                return STATUS_NO_MEM;
+            if (!pContext->sPath.append_utf8(name))
+                return STATUS_NO_MEM;
+        #endif /* PLATFORM_WINDOWS */
+
+            return open_context(pContext, mode, size);
         }
 
         status_t SharedMem::open(const LSPString *name, size_t mode, size_t size)
         {
             if (name == NULL)
                 return STATUS_BAD_ARGUMENTS;
+            if ((mode & (SHM_READ | SHM_WRITE)) == 0)
+                return STATUS_BAD_ARGUMENTS;
+            if (opened())
+                return STATUS_OPENED;
 
-            LSPString tmp;
+            if (!allocate_context())
+                return STATUS_NO_MEM;
+
         #ifdef PLATFORM_WINDOWS
-            if (!tmp.set(name))
+            // Form the name of the temporary file
+            status_t res = system::get_system_temporary_dir(&pContext->sPath);
+            if (res != STATUS_OK)
+                return res;
+            if (!pContext->sPath.append(FILE_SEPARATOR_C))
+                return STATUS_NO_MEM;
+            if (!pContext->sPath.append(name))
+                return STATUS_NO_MEM;
+
+            // Form the name of shared mapping
+            if (!pContext->sLock.set_ascii("Local" FILE_SEPARATOR_S))
+                return STATUS_NO_MEM;
+            if (!pContext->sLock.append(name))
                 return STATUS_NO_MEM;
         #else
             // For portable use, a shared memory object should be identified by a name of the form  /somename;
             // that is, a null-terminated string of up to NAME_MAX (i.e., 255) characters consisting of an initial
             // slash, followed by one or more characters, none of which are slashes.
-            if (!tmp.append(FILE_SEPARATOR_C))
+            pContext->sPath.clear();
+            if (!pContext->sPath.append(FILE_SEPARATOR_C))
                 return STATUS_NO_MEM;
-            if (!tmp.append(name))
+            if (!pContext->sPath.append(name))
                 return STATUS_NO_MEM;
         #endif /* PLATFORM_WINDOWS */
 
-            if (!allocate_context())
-                return STATUS_NO_MEM;
-
-            return open_context(pContext, &tmp, mode, size);
+            return open_context(pContext, mode, size);
         }
 
         status_t SharedMem::close_context(shared_context_t *ctx)
@@ -222,12 +255,19 @@ namespace lsp
                 ctx->sLock.truncate();
             };
 
-            const bool is_open = (ctx->hFD != NULL);
+            if (ctx->hMapping != INVALID_HANDLE_VALUE)
+            {
+                if (!CloseHandle(ctx->hMapping))
+                    res = update_status(res, STATUS_IO_ERROR);
+                ctx->hMapping   = INVALID_HANDLE_VALUE;
+            }
+
+            const bool is_open = (ctx->hFD != INVALID_HANDLE_VALUE);
             if (is_open)
             {
                 if (!CloseHandle(ctx->hFD))
-                    res             = STATUS_IO_ERROR;
-                ctx->hFD        = NULL;
+                    res             = update_status(res, STATUS_IO_ERROR);
+                ctx->hFD        = INVALID_HANDLE_VALUE;
             }
         #else
             lsp_finally {
@@ -245,7 +285,7 @@ namespace lsp
         #endif /* PLATFORM_WINDOWS */
 
             // Need to release system structures?
-            if ((ctx->nMode & (SHM_CREATE | SHM_PERSIST)) == SHM_CREATE)
+            if ((is_open) && ((ctx->nMode & (SHM_CREATE | SHM_PERSIST)) == SHM_CREATE))
                 res = update_status(res, unlink_file(ctx));
 
             return res;
@@ -258,18 +298,12 @@ namespace lsp
             lsp_finally { ctx->pData = NULL; };
 
         #ifdef PLATFORM_WINDOWS
-            status_t res = STATUS_OK;
+            if (!FlushViewOfFile(ctx->pData, ctx->nMapSize))
+                return STATUS_IO_ERROR;
             if (!UnmapViewOfFile(ctx->pData))
-                res = STATUS_IO_ERROR;
+                return STATUS_IO_ERROR;
 
-            if (ctx->hMapping != NULL)
-            {
-                if (!CloseHandle(ctx->hMapping))
-                    res = STATUS_IO_ERROR;
-                ctx->hMapping   = NULL;
-            }
-
-            return res;
+            return STATUS_OK;
         #else
             if (munmap(ctx->pData, ctx->nMapSize) >= 0)
                 return STATUS_OK;
@@ -292,34 +326,144 @@ namespace lsp
 
         status_t SharedMem::unlink_file(shared_context_t *ctx)
         {
-            status_t res = STATUS_OK;
         #ifdef PLATFORM_WINDOWS
-            // TODO
+            const WCHAR *path = ctx->sPath.get_utf16();
+            if (path == NULL)
+                return STATUS_NO_MEM;
+
+            if (!DeleteFileW(path))
+                return STATUS_IO_ERROR;
         #else
             const char *path = ctx->sPath.get_native();
             if (path == NULL)
                 return STATUS_NO_MEM;
 
             if (shm_unlink(path) < 0)
-                res = STATUS_IO_ERROR;
+                return STATUS_IO_ERROR;
         #endif /* PLATFORM_WINDOWS */
 
-            return res;
+            return STATUS_OK;
         }
 
-        status_t SharedMem::open_context(shared_context_t *ctx, LSPString *name, size_t mode, size_t size)
+        status_t SharedMem::open_context(shared_context_t *ctx, size_t mode, size_t size)
         {
             lsp_finally {
                 close_context(ctx);
             };
 
         #ifdef PLATFORM_WINDOWS
-            // TODO
+            const WCHAR *path = ctx->sPath.get_utf16();
+            if (path == NULL)
+                return STATUS_NO_MEM;
+            const WCHAR *lock = ctx->sLock.get_utf16();
+            if (lock == NULL)
+                return STATUS_NO_MEM;
+
+            DWORD prot_flags = ((mode & SHM_EXEC) != 0) ? PAGE_EXECUTE_READWRITE : PAGE_READWRITE;
+            DWORD file_access = 0;
+            if ((mode & SHM_READ) != 0)
+                file_access |= GENERIC_READ;
+            if ((mode & SHM_WRITE) != 0)
+                file_access |= GENERIC_READ | GENERIC_WRITE;
+            if ((mode & SHM_EXEC) != 0)
+                file_access |= GENERIC_EXECUTE;
+
+            DWORD open_mode = (mode & SHM_CREATE) ? CREATE_NEW : OPEN_EXISTING;
+
+            if (mode & SHM_PERSIST)
+            {
+                ctx->hFD = CreateFileW(
+                    path, // lpFileName
+                    file_access, // dwDesiredAccess
+                    FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, // dwShareMode
+                    NULL, // lpSecurityAttributes
+                    open_mode, // dwCreationDisposition
+                    FILE_ATTRIBUTE_ARCHIVE, // dwFlagsAndAttributes
+                    NULL); // hTemplateFile
+
+                if (ctx->hFD == INVALID_HANDLE_VALUE)
+                {
+                    DWORD error = GetLastError();
+                    switch (error)
+                    {
+                        case ERROR_FILE_EXISTS: return STATUS_ALREADY_EXISTS;
+                        case ERROR_ALREADY_EXISTS: return STATUS_ALREADY_EXISTS;
+                        case ERROR_FILE_NOT_FOUND: return STATUS_NOT_FOUND;
+                        case ERROR_ACCESS_DENIED: return STATUS_PERMISSION_DENIED;
+                        default: break;
+                    }
+                    return STATUS_IO_ERROR;
+                }
+
+                // Try to open file mapping by name
+                if (mode & SHM_CREATE)
+                {
+                    // Resize the file
+                    LARGE_INTEGER l_size;
+                    l_size.QuadPart = size;
+                    if (!SetFilePointerEx(ctx->hFD, l_size, NULL, FILE_BEGIN))
+                        return STATUS_IO_ERROR;
+                    if (!SetEndOfFile(ctx->hFD))
+                        return STATUS_IO_ERROR;
+                }
+                else
+                {
+                    // Determine file size
+                    LARGE_INTEGER l_size;
+                    if (!GetFileSizeEx(ctx->hFD, &l_size))
+                        return STATUS_IO_ERROR;
+                    size = l_size.QuadPart;
+                }
+            }
+            else
+                ctx->hFD = INVALID_HANDLE_VALUE;
+
+            // Try to open file mapping first
+            if (!(mode & SHM_CREATE))
+            {
+                ctx->hMapping = OpenFileMappingW(prot_flags, TRUE, lock);
+                if ((ctx->hMapping == INVALID_HANDLE_VALUE) || (ctx->hMapping == NULL))
+                {
+                    DWORD error = GetLastError();
+                    switch (error)
+                    {
+                        case ERROR_FILE_EXISTS: return STATUS_ALREADY_EXISTS;
+                        case ERROR_ACCESS_DENIED: return STATUS_PERMISSION_DENIED;
+                        case ERROR_FILE_NOT_FOUND: break;
+                        default: return STATUS_IO_ERROR;
+                    }
+                }
+            }
+
+            // Try to create file mapping if it was not opened
+            if ((ctx->hMapping == INVALID_HANDLE_VALUE) || (ctx->hMapping == NULL))
+            {
+                LARGE_INTEGER l_size;
+                l_size.QuadPart = size;
+
+                ctx->hMapping = CreateFileMappingW(
+                    ctx->hFD,    // hFile
+                    NULL, // lpFileMappingAttributes
+                    prot_flags, // flProtect
+                    l_size.HighPart, // dwMaximumSizeHigh
+                    l_size.LowPart, // dwMaximumSizeLow
+                    lock); // lpName
+
+                if ((ctx->hMapping == INVALID_HANDLE_VALUE) || (ctx->hMapping == NULL))
+                {
+                    ctx->hMapping = INVALID_HANDLE_VALUE;
+                    DWORD error = GetLastError();
+                    switch (error)
+                    {
+                        case ERROR_FILE_EXISTS: return STATUS_ALREADY_EXISTS;
+                        case ERROR_ACCESS_DENIED: return STATUS_PERMISSION_DENIED;
+                        default: break;
+                    }
+                    return STATUS_IO_ERROR;
+                }
+            }
 
         #else
-            if (ctx->hFD >= 0)
-                return STATUS_OPENED;
-
             // Form the open mode
             int o_flags = 0;
             if ((mode & (SHM_READ | SHM_WRITE)) == 0)
@@ -333,13 +477,12 @@ namespace lsp
                 o_flags    |= O_CREAT | O_EXCL;
 
             // Get the path
-            const char *path = name->get_native();
+            const char *path = ctx->sPath.get_native();
             if (path == NULL)
                 return STATUS_NO_MEM;
 
             // Create and initialize context
             ctx->nMode          = mode & (~SHM_PERSIST);
-            ctx->sPath.swap(name);
 
             static constexpr int open_mode =
                 S_IRUSR | S_IWUSR |
@@ -407,16 +550,46 @@ namespace lsp
         status_t SharedMem::close()
         {
             status_t res = close_context(pContext);
-            pContext = NULL;
             return res;
         }
 
         status_t SharedMem::map_context(shared_context_t *ctx, size_t offset, size_t size)
         {
         #ifdef PLATFORM_WINDOWS
-             void *addr = NULL;
+            DWORD file_access = 0;
+            if ((ctx->nMode & SHM_READ) != 0)
+                file_access |= FILE_MAP_READ;
+            if ((ctx->nMode & SHM_WRITE) != 0)
+                file_access |= FILE_MAP_WRITE;
+            if ((ctx->nMode & SHM_EXEC) != 0)
+                file_access |= FILE_MAP_EXECUTE;
 
-             // TODO
+            LARGE_INTEGER l_offset;
+            l_offset.QuadPart = offset;
+
+            void *addr = MapViewOfFile(
+                 ctx->hMapping, // hFileMappingObject,
+                 file_access, // dwDesiredAccess,
+                 l_offset.HighPart, // dwFileOffsetHigh,
+                 l_offset.LowPart, // dwFileOffsetLow,
+                 size); // dwNumberOfBytesToMap
+
+            if (addr == NULL)
+            {
+                DWORD error = GetLastError();
+                switch (error)
+                {
+                    case ERROR_FILE_EXISTS: return STATUS_ALREADY_EXISTS;
+                    case ERROR_ACCESS_DENIED: return STATUS_PERMISSION_DENIED;
+                    default: break;
+                }
+
+                return STATUS_IO_ERROR;
+            }
+
+            // Unmap previously mapped address
+            if (ctx->pData != NULL)
+                UnmapViewOfFile(ctx->pData);
 
          #else
              int prot_flags = 0;
@@ -473,7 +646,7 @@ namespace lsp
             // Check state
             if (!opened())
                 return STATUS_CLOSED;
-            if (pContext->pData == NULL)
+            if (!mapped())
                 return STATUS_NOT_MAPPED;
 
             // Unmap memory
@@ -494,7 +667,7 @@ namespace lsp
         {
             if (!opened())
                 return -STATUS_CLOSED;
-            if (pContext->pData == NULL)
+            if (!mapped())
                 return -STATUS_NOT_MAPPED;
 
             return pContext->nMapOffset;
@@ -504,7 +677,7 @@ namespace lsp
         {
             if (!opened())
                 return -STATUS_CLOSED;
-            if (pContext->pData == NULL)
+            if (!mapped())
                 return -STATUS_NOT_MAPPED;
 
             return pContext->nMapSize;
@@ -523,7 +696,7 @@ namespace lsp
             if (pContext == NULL)
                 return false;
         #ifdef PLATFORM_WINDOWS
-            if (pContext->hFD == NULL)
+            if ((pContext->hFD == INVALID_HANDLE_VALUE) && (pContext->hMapping == INVALID_HANDLE_VALUE))
                 return false;
         #else
             if (pContext->hFD < 0)
