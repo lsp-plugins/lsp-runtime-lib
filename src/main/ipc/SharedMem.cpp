@@ -24,6 +24,7 @@
 #include <lsp-plug.in/runtime/version.h>
 
 #include <lsp-plug.in/common/atomic.h>
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/io/File.h>
 #include <lsp-plug.in/runtime/LSPString.h>
@@ -368,79 +369,47 @@ namespace lsp
             if ((mode & SHM_EXEC) != 0)
                 file_access |= GENERIC_EXECUTE;
 
-            DWORD open_mode = (mode & SHM_CREATE) ? CREATE_NEW : OPEN_EXISTING;
+            LARGE_INTEGER l_size;
+            l_size.QuadPart = size;
 
-            if (mode & SHM_PERSIST)
+            if (mode & SHM_CREATE)
             {
-                ctx->hFD = CreateFileW(
-                    path, // lpFileName
-                    file_access, // dwDesiredAccess
-                    FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, // dwShareMode
-                    NULL, // lpSecurityAttributes
-                    open_mode, // dwCreationDisposition
-                    FILE_ATTRIBUTE_ARCHIVE, // dwFlagsAndAttributes
-                    NULL); // hTemplateFile
-
-                if (ctx->hFD == INVALID_HANDLE_VALUE)
+                if (mode & SHM_PERSIST)
                 {
-                    DWORD error = GetLastError();
-                    switch (error)
+//                    lsp_trace("CreateFileW(access=0x%x, CREATE_NEW)", file_access);
+                    ctx->hFD = CreateFileW(
+                        path, // lpFileName
+                        file_access, // dwDesiredAccess
+                        FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, // dwShareMode
+                        NULL, // lpSecurityAttributes
+                        CREATE_NEW, // dwCreationDisposition
+                        FILE_ATTRIBUTE_ARCHIVE, // dwFlagsAndAttributes
+                        NULL); // hTemplateFile
+
+                    if (ctx->hFD == INVALID_HANDLE_VALUE)
                     {
-                        case ERROR_FILE_EXISTS: return STATUS_ALREADY_EXISTS;
-                        case ERROR_ALREADY_EXISTS: return STATUS_ALREADY_EXISTS;
-                        case ERROR_FILE_NOT_FOUND: return STATUS_NOT_FOUND;
-                        case ERROR_ACCESS_DENIED: return STATUS_PERMISSION_DENIED;
-                        default: break;
+                        DWORD error = GetLastError();
+                        switch (error)
+                        {
+                            case ERROR_FILE_EXISTS: return STATUS_ALREADY_EXISTS;
+                            case ERROR_ALREADY_EXISTS: return STATUS_ALREADY_EXISTS;
+                            case ERROR_FILE_NOT_FOUND: return STATUS_NOT_FOUND;
+                            case ERROR_ACCESS_DENIED: return STATUS_PERMISSION_DENIED;
+                            default: break;
+                        }
+                        return STATUS_IO_ERROR;
                     }
-                    return STATUS_IO_ERROR;
-                }
 
-                // Try to open file mapping by name
-                if (mode & SHM_CREATE)
-                {
                     // Resize the file
-                    LARGE_INTEGER l_size;
-                    l_size.QuadPart = size;
                     if (!SetFilePointerEx(ctx->hFD, l_size, NULL, FILE_BEGIN))
                         return STATUS_IO_ERROR;
                     if (!SetEndOfFile(ctx->hFD))
                         return STATUS_IO_ERROR;
                 }
                 else
-                {
-                    // Determine file size
-                    LARGE_INTEGER l_size;
-                    if (!GetFileSizeEx(ctx->hFD, &l_size))
-                        return STATUS_IO_ERROR;
-                    size = l_size.QuadPart;
-                }
-            }
-            else
-                ctx->hFD = INVALID_HANDLE_VALUE;
+                    ctx->hFD = INVALID_HANDLE_VALUE;
 
-            // Try to open file mapping first
-            if (!(mode & SHM_CREATE))
-            {
-                ctx->hMapping = OpenFileMappingW(prot_flags, TRUE, lock);
-                if ((ctx->hMapping == INVALID_HANDLE_VALUE) || (ctx->hMapping == NULL))
-                {
-                    DWORD error = GetLastError();
-                    switch (error)
-                    {
-                        case ERROR_FILE_EXISTS: return STATUS_ALREADY_EXISTS;
-                        case ERROR_ACCESS_DENIED: return STATUS_PERMISSION_DENIED;
-                        case ERROR_FILE_NOT_FOUND: break;
-                        default: return STATUS_IO_ERROR;
-                    }
-                }
-            }
-
-            // Try to create file mapping if it was not opened
-            if ((ctx->hMapping == INVALID_HANDLE_VALUE) || (ctx->hMapping == NULL))
-            {
-                LARGE_INTEGER l_size;
-                l_size.QuadPart = size;
-
+//                lsp_trace("CreateFileMappingW(fd=%p, access=0x%x, size=%d)", ctx->hFD, prot_flags, l_size.LowPart);
                 ctx->hMapping = CreateFileMappingW(
                     ctx->hFD,    // hFile
                     NULL, // lpFileMappingAttributes
@@ -460,6 +429,84 @@ namespace lsp
                         default: break;
                     }
                     return STATUS_IO_ERROR;
+                }
+            }
+            else
+            {
+                // Try to open file mapping
+//                lsp_trace("OpenFileMappingW(access=0x%x, size=%d)", FILE_MAP_ALL_ACCESS, l_size.LowPart);
+                ctx->hMapping = OpenFileMappingW(FILE_MAP_ALL_ACCESS, TRUE, lock);
+                if ((ctx->hMapping == INVALID_HANDLE_VALUE) || (ctx->hMapping == NULL))
+                {
+                    DWORD error = GetLastError();
+                    switch (error)
+                    {
+                        case ERROR_FILE_EXISTS: return STATUS_ALREADY_EXISTS;
+                        case ERROR_ACCESS_DENIED: return STATUS_PERMISSION_DENIED;
+                        case ERROR_FILE_NOT_FOUND:
+                            if (!(mode & SHM_PERSIST))
+                                return STATUS_NOT_FOUND;
+                            break;
+                        default: return STATUS_IO_ERROR;
+                    }
+
+                    // There is no file mapping to open, try to create it
+                    if (mode & SHM_PERSIST)
+                    {
+//                        lsp_trace("CreateFileW(access=0x%x, OPEN_EXISTING)", file_access);
+
+                        ctx->hFD = CreateFileW(
+                            path, // lpFileName
+                            file_access, // dwDesiredAccess
+                            FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, // dwShareMode
+                            NULL, // lpSecurityAttributes
+                            OPEN_EXISTING, // dwCreationDisposition
+                            FILE_ATTRIBUTE_ARCHIVE, // dwFlagsAndAttributes
+                            NULL); // hTemplateFile
+
+                        if (ctx->hFD == INVALID_HANDLE_VALUE)
+                        {
+                            DWORD error = GetLastError();
+                            switch (error)
+                            {
+                                case ERROR_FILE_EXISTS: return STATUS_ALREADY_EXISTS;
+                                case ERROR_ALREADY_EXISTS: return STATUS_ALREADY_EXISTS;
+                                case ERROR_FILE_NOT_FOUND: return STATUS_NOT_FOUND;
+                                case ERROR_ACCESS_DENIED: return STATUS_PERMISSION_DENIED;
+                                default: break;
+                            }
+                            return STATUS_IO_ERROR;
+                        }
+
+                        // Determine file size
+                        if (!GetFileSizeEx(ctx->hFD, &l_size))
+                            return STATUS_IO_ERROR;
+                        size = l_size.QuadPart;
+                    }
+                    else
+                        ctx->hFD = INVALID_HANDLE_VALUE;
+
+//                    lsp_trace("CreateFileMappingW(fd=%p, access=0x%x, size=%d)", ctx->hFD, prot_flags, l_size.LowPart);
+                    ctx->hMapping = CreateFileMappingW(
+                        ctx->hFD,    // hFile
+                        NULL, // lpFileMappingAttributes
+                        prot_flags, // flProtect
+                        l_size.HighPart, // dwMaximumSizeHigh
+                        l_size.LowPart, // dwMaximumSizeLow
+                        lock); // lpName
+
+                    if ((ctx->hMapping == INVALID_HANDLE_VALUE) || (ctx->hMapping == NULL))
+                    {
+                        ctx->hMapping = INVALID_HANDLE_VALUE;
+                        DWORD error = GetLastError();
+                        switch (error)
+                        {
+                            case ERROR_FILE_EXISTS: return STATUS_ALREADY_EXISTS;
+                            case ERROR_ACCESS_DENIED: return STATUS_PERMISSION_DENIED;
+                            default: break;
+                        }
+                        return STATUS_IO_ERROR;
+                    }
                 }
             }
 
@@ -556,20 +603,21 @@ namespace lsp
         status_t SharedMem::map_context(shared_context_t *ctx, size_t offset, size_t size)
         {
         #ifdef PLATFORM_WINDOWS
-            DWORD file_access = 0;
+            DWORD map_access = 0;
             if ((ctx->nMode & SHM_READ) != 0)
-                file_access |= FILE_MAP_READ;
+                map_access |= FILE_MAP_READ;
             if ((ctx->nMode & SHM_WRITE) != 0)
-                file_access |= FILE_MAP_WRITE;
+                map_access |= FILE_MAP_WRITE;
             if ((ctx->nMode & SHM_EXEC) != 0)
-                file_access |= FILE_MAP_EXECUTE;
+                map_access |= FILE_MAP_EXECUTE;
 
             LARGE_INTEGER l_offset;
             l_offset.QuadPart = offset;
 
+//            lsp_trace("MapViewOfFile(%p, 0x%x, %d, %d)", ctx->hMapping, map_access, l_offset.LowPart, size);
             void *addr = MapViewOfFile(
                  ctx->hMapping, // hFileMappingObject,
-                 file_access, // dwDesiredAccess,
+                 map_access, // dwDesiredAccess,
                  l_offset.HighPart, // dwFileOffsetHigh,
                  l_offset.LowPart, // dwFileOffsetLow,
                  size); // dwNumberOfBytesToMap

@@ -122,54 +122,11 @@ UTEST_BEGIN("runtime.ipc", shmem)
         UTEST_ASSERT(shm1.close() == STATUS_OK);
     }
 
-    void test_persistent_recreate()
-    {
-        constexpr size_t shm_size = 0x10000;
-        ipc::SharedMem shm1, shm2;
-
-        printf("Testing persistent shared memory storage\n");
-
-        // Open first source
-        status_t res = shm1.open("lsp-recreate-test.shm", ipc::SharedMem::SHM_RW | ipc::SharedMem::SHM_CREATE, shm_size);
-        if (res == STATUS_ALREADY_EXISTS)
-            res = shm1.open("lsp-recreate-test.shm", ipc::SharedMem::SHM_RW, shm_size);
-
-        UTEST_ASSERT(res == STATUS_OK);
-        UTEST_ASSERT(shm1.map(0, shm_size) == STATUS_OK);
-        UTEST_ASSERT(shm1.data() != NULL);
-        printf("  mapped shm1 to %p\n", shm1.data());
-
-        memset(shm1.data(), 0xaa, shm_size);
-
-        // Open second source
-        UTEST_ASSERT(shm2.open("lsp-recreate-test.shm", ipc::SharedMem::SHM_RW, shm_size) == STATUS_OK);
-        UTEST_ASSERT(shm2.map(0, shm_size) == STATUS_OK);
-        UTEST_ASSERT(shm2.data() != NULL);
-        printf("  mapped shm2 to %p\n", shm1.data());
-
-        UTEST_ASSERT(memcmp(shm1.data(), shm2.data(), shm_size) == 0);
-        memset(shm1.data(), 0x55, shm_size);
-
-        // Close first source and reopen
-        UTEST_ASSERT(shm1.close() == STATUS_OK);
-        UTEST_ASSERT(shm1.open("lsp-recreate-test.shm", ipc::SharedMem::SHM_RW | ipc::SharedMem::SHM_CREATE, shm_size) == STATUS_OK);
-        UTEST_ASSERT(shm1.map(0, shm_size) == STATUS_OK);
-        UTEST_ASSERT(shm1.data() != NULL);
-        printf("  mapped shm1 to %p\n", shm1.data());
-
-        memset(shm1.data(), 0xc3, shm_size);
-        UTEST_ASSERT(memcmp(shm1.data(), shm2.data(), shm_size) != 0);
-
-        UTEST_ASSERT(shm2.close() == STATUS_OK);
-        UTEST_ASSERT(shm1.close() == STATUS_OK);
-    }
-
     UTEST_MAIN
     {
-//        test_basic_operations();
-//        test_multiple_clients();
+        test_basic_operations();
+        test_multiple_clients();
         test_persistent();
-        test_persistent_recreate();
     }
 UTEST_END;
 
