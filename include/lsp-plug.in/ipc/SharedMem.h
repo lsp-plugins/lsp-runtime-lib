@@ -34,7 +34,7 @@ namespace lsp
         struct shared_context_t;
 
         /**
-         * Named shared memory segment.
+         * Named global shared memory segment for inter-process communication.
          */
         class SharedMem
         {
