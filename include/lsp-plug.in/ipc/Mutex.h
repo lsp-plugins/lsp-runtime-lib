@@ -136,9 +136,6 @@ namespace lsp
             private:
                 mutable pthread_mutex_t     sMutex;
 
-            private:
-                Mutex & operator = (const Mutex & m);       // Deny copying
-
             public:
                 explicit Mutex();
                 Mutex(const Mutex &) = delete;
