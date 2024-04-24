@@ -70,16 +70,18 @@ namespace lsp
             if (hLock != NULL)
                 return STATUS_OPENED;
 
-        #ifndef PLATFORM_WINDOWS
+        #ifdef PLATFORM_WINDOWS
+            return open_internal(name);
+        #else
             LSPString tmp;
 
             if (!tmp.append(FILE_SEPARATOR_C))
                 return STATUS_NO_MEM;
             if (!tmp.append(name))
                 return STATUS_NO_MEM;
-        #endif /* PLATFORM_WINDOWS */
 
             return open_internal(&tmp);
+        #endif /* PLATFORM_WINDOWS */
         }
 
         status_t SharedMutex::open_internal(const LSPString *name)
