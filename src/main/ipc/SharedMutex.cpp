@@ -53,9 +53,16 @@ namespace lsp
                 return STATUS_OPENED;
 
             LSPString tmp;
+        #ifdef PLATFORM_WINDOWS
             if (!tmp.set_utf8(name))
                 return STATUS_NO_MEM;
-            return open(&tmp);
+        #else
+            if (!tmp.append(FILE_SEPARATOR_C))
+                return STATUS_NO_MEM;
+            if (!tmp.append_utf8(name))
+                return STATUS_NO_MEM;
+        #endif /* PLATFORM_WINDOWS */
+            return open_internal(&tmp);
         }
 
         status_t SharedMutex::open(const LSPString *name)
@@ -63,6 +70,20 @@ namespace lsp
             if (hLock != NULL)
                 return STATUS_OPENED;
 
+        #ifndef PLATFORM_WINDOWS
+            LSPString tmp;
+
+            if (!tmp.append(FILE_SEPARATOR_C))
+                return STATUS_NO_MEM;
+            if (!tmp.append(name))
+                return STATUS_NO_MEM;
+        #endif /* PLATFORM_WINDOWS */
+
+            return open_internal(&tmp);
+        }
+
+        status_t SharedMutex::open_internal(const LSPString *name)
+        {
         #ifdef PLATFORM_WINDOWS
             const WCHAR *path = name->get_utf16();
             if (path == NULL)

@@ -69,6 +69,9 @@ namespace lsp
                 SharedMutex & operator = (const SharedMutex &) = delete;
                 SharedMutex & operator = (SharedMutex &&) = delete;
 
+            private:
+                status_t            open_internal(const LSPString *name);
+
             public:
                 /**
                  * Open or create shared mutex object
