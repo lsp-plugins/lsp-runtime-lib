@@ -53,7 +53,7 @@ namespace lsp
         #ifdef PLATFORM_WINDOWS
                 typedef void       *HANDLE;
 
-                HANDLE             *hLock;
+                HANDLE              hLock;
         #else
                 sem_t              *hLock;
         #endif /* PLATFORM_WINDOWS */

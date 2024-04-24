@@ -55,9 +55,9 @@ UTEST_BEGIN("runtime.ipc", shmutex)
 
         ipc::Thread::sleep(500);
         ctx->log(mutex.open("test-lsp.lock"), "open1", STATUS_OK);
-        ctx->log(mutex.lock(), "lock1", STATUS_OK);
+        ctx->log(mutex.lock(), "SYNC1", STATUS_OK);
         ipc::Thread::sleep(800);
-        ctx->log(mutex.unlock(), "unlock1", STATUS_OK);
+        ctx->log(mutex.unlock(), "SYNC2", STATUS_OK);
 
         return STATUS_OK;
     }
@@ -72,15 +72,15 @@ UTEST_BEGIN("runtime.ipc", shmutex)
 
         ipc::Thread::sleep(500);
 
-        ctx->log(mutex.unlock(), "unlock2", STATUS_OK);
+        ctx->log(mutex.unlock(), "SYNC1", STATUS_OK);
 
         ipc::Thread::sleep(100);
 
         ctx->log(mutex.try_lock(), "trylock2", STATUS_RETRY);
         ctx->log(mutex.lock(500), "timedlock2", STATUS_TIMED_OUT);
-        ctx->log(mutex.lock(500), "timedlock2", STATUS_OK);
+        ctx->log(mutex.lock(500), "SYNC2", STATUS_OK);
         ipc::Thread::sleep(200);
-        ctx->log(mutex.unlock(), "unlock2", STATUS_OK);
+        ctx->log(mutex.unlock(), "SYNC3", STATUS_OK);
 
         return STATUS_OK;
     }
@@ -142,7 +142,7 @@ UTEST_BEGIN("runtime.ipc", shmutex)
         UTEST_ASSERT(mutex.unlock() == STATUS_OK);
 
         ipc::Thread::sleep(2000);
-        ctx.log(mutex.lock(), "lock", STATUS_OK);
+        ctx.log(mutex.lock(), "SYNC3", STATUS_OK);
         ctx.log(mutex.unlock(), "unlock", STATUS_OK);
 
         ctx.log(mutex.close(), "close", STATUS_OK);
@@ -150,10 +150,10 @@ UTEST_BEGIN("runtime.ipc", shmutex)
         printf("Result content: %s\n", ctx.data.get_ascii());
 
         UTEST_ASSERT(ctx.data.equals_ascii(
-            "open=true;lock=true;start=true;sleep=true;"
-            "open2=true;unlock=true;lock2=true;open1=true;unlock2=true;"
-            "lock1=true;trylock2=true;timedlock2=true;unlock1=true;timedlock2=true;"
-            "unlock2=true;lock=true;unlock=true;close=true;"));
+            "open=true;lock=true;start=true;sleep=true;open2=true;unlock=true;lock2=true;open1=true;"
+            "SYNC1=true;SYNC1=true;trylock2=true;timedlock2=true;"
+            "SYNC2=true;SYNC2=true;"
+            "SYNC3=true;SYNC3=true;unlock=true;close=true;"));
     }
 
     UTEST_MAIN

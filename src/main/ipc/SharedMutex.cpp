@@ -22,10 +22,15 @@
 #include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/ipc/SharedMutex.h>
 
-#include <errno.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <time.h>
+#ifdef PLATFORM_WINDOWS
+    #include <windows.h>
+    #include <synchapi.h>
+#else
+    #include <errno.h>
+    #include <fcntl.h>
+    #include <sys/stat.h>
+    #include <time.h>
+#endif /* PLATFORM_WINDOWS */
 
 namespace lsp
 {
@@ -58,6 +63,15 @@ namespace lsp
             if (hLock != NULL)
                 return STATUS_OPENED;
 
+        #ifdef PLATFORM_WINDOWS
+            const WCHAR *path = name->get_utf16();
+            if (path == NULL)
+                return STATUS_NO_MEM;
+
+            hLock = CreateMutexW(NULL, FALSE, path);
+            if (hLock != NULL)
+                return STATUS_OK;
+        #else
             const char *path = name->get_native();
             if (name == NULL)
                 return STATUS_NO_MEM;
@@ -84,6 +98,8 @@ namespace lsp
                 case ENOMEM: return STATUS_NO_MEM;
                 default: break;
             }
+        #endif /* PLATFORM_WINDOWS */
+
             return STATUS_IO_ERROR;
         }
 
@@ -93,6 +109,19 @@ namespace lsp
                 return STATUS_OK;
 
             status_t res = STATUS_OK;
+
+        #ifdef PLATFORM_WINDOWS
+            if (bLocked)
+            {
+                if (!ReleaseMutex(hLock))
+                    res     = update_status(res, STATUS_IO_ERROR);
+                bLocked = false;
+            }
+
+            if (!CloseHandle(hLock))
+                res     = update_status(res, STATUS_IO_ERROR);
+            hLock = NULL;
+        #else
             if (bLocked)
             {
                 if (sem_post(hLock) < 0)
@@ -102,6 +131,7 @@ namespace lsp
             if (sem_close(hLock) < 0)
                 res     = update_status(res, STATUS_IO_ERROR);
             hLock = NULL;
+        #endif /* PLATFORM_WINDOWS */
 
             return res;
         }
@@ -113,6 +143,22 @@ namespace lsp
             if (bLocked)
                 return STATUS_LOCKED;
 
+        #ifdef PLATFORM_WINDOWS
+            DWORD res = WaitForSingleObject(hLock, INFINITE);
+            switch (res)
+            {
+                case WAIT_OBJECT_0:
+                case WAIT_ABANDONED:
+                    bLocked     = true;
+                    return STATUS_OK;
+                case WAIT_TIMEOUT:
+                    return STATUS_TIMED_OUT;
+                case WAIT_FAILED:
+                    return STATUS_UNKNOWN_ERR;
+                default:
+                    break;
+            }
+        #else
             if (sem_wait(hLock) >= 0)
             {
                 bLocked = true;
@@ -128,6 +174,7 @@ namespace lsp
                 case ETIMEDOUT: return STATUS_TIMED_OUT;
                 default: break;
             }
+        #endif /* PLATFORM_WINDOWS */
 
             return STATUS_UNKNOWN_ERR;
         }
@@ -139,6 +186,22 @@ namespace lsp
             if (bLocked)
                 return STATUS_LOCKED;
 
+        #ifdef PLATFORM_WINDOWS
+            DWORD res = WaitForSingleObject(hLock, delay);
+            switch (res)
+            {
+                case WAIT_OBJECT_0:
+                case WAIT_ABANDONED:
+                    bLocked     = true;
+                    return STATUS_OK;
+                case WAIT_TIMEOUT:
+                    return STATUS_TIMED_OUT;
+                case WAIT_FAILED:
+                    return STATUS_UNKNOWN_ERR;
+                default:
+                    break;
+            }
+        #else
             // sem_timedwait() is the same as sem_wait(), except that abs_timeout specifies a limit on the
             // amount of time that the call should block if the decrement cannot be immediately performed.
             // The abs_timeout argument points to a structure that specifies an absolute timeout in seconds
@@ -169,6 +232,7 @@ namespace lsp
                 case ETIMEDOUT: return STATUS_TIMED_OUT;
                 default: break;
             }
+        #endif /* PLATFORM_WINDOWS */
 
             return STATUS_UNKNOWN_ERR;
         }
@@ -180,6 +244,22 @@ namespace lsp
             if (bLocked)
                 return STATUS_LOCKED;
 
+        #ifdef PLATFORM_WINDOWS
+            DWORD res = WaitForSingleObject(hLock, 0);
+            switch (res)
+            {
+                case WAIT_OBJECT_0:
+                case WAIT_ABANDONED:
+                    bLocked     = true;
+                    return STATUS_OK;
+                case WAIT_TIMEOUT:
+                    return STATUS_RETRY;
+                case WAIT_FAILED:
+                    return STATUS_UNKNOWN_ERR;
+                default:
+                    break;
+            }
+        #else
             if (sem_trywait(hLock) >= 0)
             {
                 bLocked     = true;
@@ -195,6 +275,7 @@ namespace lsp
                 case ETIMEDOUT: return STATUS_TIMED_OUT;
                 default: break;
             }
+        #endif /* PLATFORM_WINDOWS */
 
             return STATUS_UNKNOWN_ERR;
         }
@@ -206,6 +287,13 @@ namespace lsp
             if (!bLocked)
                 return STATUS_BAD_STATE;
 
+        #ifdef PLATFORM_WINDOWS
+            if (ReleaseMutex(hLock))
+            {
+                bLocked = false;
+                return STATUS_OK;
+            }
+        #else
             if (sem_post(hLock) >= 0)
             {
                 bLocked = false;
@@ -221,6 +309,7 @@ namespace lsp
                 case ETIMEDOUT: return STATUS_TIMED_OUT;
                 default: break;
             }
+        #endif /* PLATFORM_WINDOWS */
 
             return STATUS_UNKNOWN_ERR;
         }
