@@ -31,6 +31,8 @@ namespace lsp
 {
     namespace ipc
     {
+#if defined(PLATFORM_WINDOWS)
+
         namespace detail
         {
             struct CRITICAL_SECTION: public ::CRITICAL_SECTION
@@ -38,7 +40,6 @@ namespace lsp
             };
         } /* namespace detail */
 
-#if defined(PLATFORM_WINDOWS)
         Mutex::Mutex()
         {
             hMutex      = new detail::CRITICAL_SECTION;
