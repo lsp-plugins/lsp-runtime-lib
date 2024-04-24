@@ -31,75 +31,51 @@ namespace lsp
 {
     namespace ipc
     {
+        namespace detail
+        {
+            struct CRITICAL_SECTION: public ::CRITICAL_SECTION
+            {
+            };
+        } /* namespace detail */
+
 #if defined(PLATFORM_WINDOWS)
         Mutex::Mutex()
         {
-            hMutex      = CreateMutexW(NULL, FALSE, NULL);
-            nThreadId   = -1;
-            nLocks      = 0;
+            hMutex      = new detail::CRITICAL_SECTION;
+            if (hMutex != NULL)
+                InitializeCriticalSectionAndSpinCount(hMutex, 0x10);
         }
 
         Mutex::~Mutex()
         {
-            CloseHandle(hMutex);
+            if (hMutex != NULL)
+            {
+                DeleteCriticalSection(hMutex);
+                delete hMutex;
+            }
         }
 
         bool Mutex::lock() const
         {
-            if (nThreadId == GetCurrentThreadId())
-            {
-                ++nLocks;
-                return true;
-            }
-
-            DWORD res = WaitForSingleObject(hMutex, INFINITE);
-            if (res == WAIT_OBJECT_0)
-            {
-                ++nLocks;
-                nThreadId   = GetCurrentThreadId();
-                return true;
-            }
-            return false;
+            EnterCriticalSection(hMutex);
+            return true;
         }
 
         bool Mutex::try_lock() const
         {
-            if (nThreadId == DWORD(-1))
-            {
-                DWORD res = WaitForSingleObject(hMutex, 0);
-                if (res == WAIT_OBJECT_0)
-                {
-                    ++nLocks;
-                    nThreadId   = GetCurrentThreadId();
-                    return true;
-                }
-            }
-            else if (nThreadId == GetCurrentThreadId())
-            {
-                ++nLocks;
-                return true;
-            }
-
-            return false;
+            return TryEnterCriticalSection(hMutex);
         }
 
         bool Mutex::unlock() const
         {
-            if (nThreadId != GetCurrentThreadId())
+            HANDLE thread = reinterpret_cast<HANDLE>(GetCurrentThreadId());
+            if (hMutex->OwningThread != thread)
+                return false;
+            if (hMutex->RecursionCount <= 0)
                 return false;
 
-            bool result = true;
-            if (!(--nLocks))
-            {
-                nThreadId   = -1;
-                result = ReleaseMutex(hMutex);
-                if (!result)
-                {
-                    nThreadId   = GetCurrentThreadId();
-                    ++nLocks;
-                }
-            }
-            return result;
+            LeaveCriticalSection(hMutex);
+            return true;
         }
 
 #elif defined(PLATFORM_LINUX)

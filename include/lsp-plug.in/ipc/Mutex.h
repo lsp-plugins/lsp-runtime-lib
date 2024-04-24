@@ -46,18 +46,19 @@ namespace lsp
     namespace ipc
     {
 #if defined(PLATFORM_WINDOWS)
+
+        namespace detail
+        {
+            struct CRITICAL_SECTION;
+        } /* namespace detail */
+
         /**
          * Recursive mutex for Windows platform
          */
         class Mutex
         {
             private:
-                typedef void                   *HANDLE;
-
-            private:
-                mutable HANDLE                  hMutex;     // Mutex object
-                mutable uint32_t                nThreadId;  // Owner's thread identifier
-                mutable atomic_t                nLocks;     // Number of locks by current thread
+                mutable detail::CRITICAL_SECTION   *hMutex;     // Mutex object
 
             public:
                 explicit Mutex();
