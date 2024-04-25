@@ -1819,17 +1819,17 @@ namespace lsp
             return false;
 
         // Estimate size of string in memory
-        ssize_t slen = multibyte_to_widechar(cp, const_cast<CHAR *>(s), &n, NULL, NULL);
+        ssize_t slen = multibyte_to_widechar(cp, const_cast<char *>(s), &n, NULL, NULL);
         if (slen <= 0)
             return false;
 
         // Perform native -> utf-16 encoding
-        WCHAR *buf = reinterpret_cast<WCHAR *>(::malloc(slen * sizeof(WCHAR)));
+        lsp_utf16_t *buf = reinterpret_cast<lsp_utf16_t *>(::malloc(slen * sizeof(lsp_utf16_t)));
         if (buf == NULL)
             return false;
 
         size_t bytes  = slen;
-        slen    = multibyte_to_widechar(cp, const_cast<CHAR *>(s), &n, buf, &bytes);
+        slen    = multibyte_to_widechar(cp, const_cast<char *>(s), &n, buf, &bytes);
         if (slen <= 0)
         {
             free(buf);
