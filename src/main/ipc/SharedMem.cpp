@@ -99,8 +99,8 @@ namespace lsp
                 return;
 
             close_context(pContext);
-            pContext = NULL;
             delete pContext;
+            pContext = NULL;
         }
 
         SharedMem & SharedMem::operator = (const SharedMem & src)
