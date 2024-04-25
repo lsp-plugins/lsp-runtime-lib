@@ -7,6 +7,9 @@
 * Implemented min(), max(), rms() and avg() builtin functions for expression language.
 * Implemented io::Path::final_path method for obtaining the final file system object
   the abstract path points to.
+* Implemented ipc::SharedMem primitive for organizing shared memory segments.
+* Implemented ipc::SharedMutex primitive for organizing global inter-process mutexes.
+* Implementeation of ipc::Mutex moved to critical section for Windows.
 
 === 1.0.20 ===
 * More detailed MIDI specification (added MIDI_CHANNELS constant).

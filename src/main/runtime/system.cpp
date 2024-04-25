@@ -466,39 +466,70 @@ namespace lsp
 #endif /* PLATFORM_WINDOWS */
 
 #ifdef PLATFORM_WINDOWS
+        status_t get_system_temporary_dir(LSPString *path)
+        {
+            LSPString tmp;
+
+            if (get_env_var("SYSTEMROOT", &tmp) != STATUS_OK)
+                return STATUS_NOT_FOUND;
+
+            if (!tmp.append(FILE_SEPARATOR_C))
+                return STATUS_NO_MEM;
+            if (!tmp.append_ascii("Temp"))
+                return STATUS_NO_MEM;
+
+            tmp.swap(path);
+            return STATUS_OK;
+        }
+
+        status_t get_system_temporary_dir(io::Path *path)
+        {
+            LSPString tmp;
+            status_t res = get_system_temporary_dir(&tmp);
+            return (res == STATUS_OK) ? path->set(&tmp) : res;
+        }
+
         status_t get_temporary_dir(LSPString *path)
         {
             if (get_env_var("TEMP", path) == STATUS_OK)
                 return STATUS_OK;
+
             if (get_env_var("TMP", path) == STATUS_OK)
                 return STATUS_OK;
-            return (path->set_ascii("tmp")) ? STATUS_OK : STATUS_NO_MEM;
+
+            return get_system_temporary_dir(path);
         }
 
         status_t get_temporary_dir(io::Path *path)
         {
             LSPString tmp;
-            if (get_env_var("TEMP", &tmp) == STATUS_OK)
-                return STATUS_OK;
-            if (get_env_var("TMP", &tmp) == STATUS_OK)
-                return STATUS_OK;
-            if (!tmp.set_ascii("tmp"))
-                return STATUS_NO_MEM;
-            return path->set(&tmp);
+            status_t res = get_temporary_dir(&tmp);
+            return (res == STATUS_OK) ? path->set(&tmp) : res;
         }
+
 #else
-        status_t get_temporary_dir(LSPString *path)
+        status_t get_system_temporary_dir(LSPString *path)
         {
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
             return (path->set_ascii("/tmp")) ? STATUS_OK : STATUS_NO_MEM;
         }
 
-        status_t get_temporary_dir(io::Path *path)
+        status_t get_system_temporary_dir(io::Path *path)
         {
             if (path == NULL)
                 return STATUS_BAD_ARGUMENTS;
             return path->set("/tmp");
+        }
+
+        status_t get_temporary_dir(LSPString *path)
+        {
+            return get_system_temporary_dir(path);
+        }
+
+        status_t get_temporary_dir(io::Path *path)
+        {
+            return get_system_temporary_dir(path);
         }
 #endif /* PLATFORM_WINDOWS */
 

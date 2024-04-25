@@ -200,6 +200,20 @@ namespace lsp
         status_t get_temporary_dir(io::Path *path);
 
         /**
+         * Get system temporary directory
+         * @param path pointer to store result
+         * @return status of operation
+         */
+        status_t get_system_temporary_dir(LSPString *path);
+
+        /**
+         * Get system temporary directory
+         * @param path pointer to store result
+         * @return status of operation
+         */
+        status_t get_system_temporary_dir(io::Path *path);
+
+        /**
          * Get current directiory
          * @param path path to store current directory
          * @return status of operation

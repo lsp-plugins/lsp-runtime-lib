@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 25 февр. 2019 г.
@@ -27,7 +27,7 @@
 #include <lsp-plug.in/common/atomic.h>
 
 #if defined(PLATFORM_WINDOWS)
-    #include <synchapi.h>
+    // Nothing
 #elif defined(PLATFORM_LINUX)
     #include <linux/futex.h>
     #include <sys/syscall.h>
@@ -46,22 +46,27 @@ namespace lsp
     namespace ipc
     {
 #if defined(PLATFORM_WINDOWS)
+
+        namespace detail
+        {
+            struct CRITICAL_SECTION;
+        } /* namespace detail */
+
         /**
          * Recursive mutex for Windows platform
          */
         class Mutex
         {
             private:
-                mutable HANDLE                  hMutex;     // Mutex object
-                mutable DWORD                   nThreadId;  // Owner's thread identifier
-                mutable atomic_t                nLocks;     // Number of locks by current thread
-
-            private:
-                Mutex & operator = (const Mutex & m);       // Deny copying
+                mutable detail::CRITICAL_SECTION   *hMutex;     // Mutex object
 
             public:
                 explicit Mutex();
+                Mutex(const Mutex &) = delete;
+                Mutex(Mutex &&) = delete;
                 ~Mutex();
+                Mutex & operator = (const Mutex &) = delete;
+                Mutex & operator = (Mutex &&) = delete;
 
                 /** Wait until mutex is unlocked and lock it
                  *
@@ -80,8 +85,8 @@ namespace lsp
                 bool unlock() const;
         };
 #elif defined(PLATFORM_LINUX)
-        /** Fast recursive mutex implementation for Linux
-         *
+        /**
+         * Fast recursive mutex implementation for Linux using Futex primitive
          */
         class Mutex
         {
@@ -90,9 +95,6 @@ namespace lsp
                 mutable volatile pthread_t      nThreadId;  // Locked thread identifier
                 mutable ssize_t                 nLocks;     // Number of locks by current thread
 
-            private:
-                Mutex & operator = (const Mutex & m);       // Deny copying
-
             public:
                 explicit Mutex()
                 {
@@ -100,6 +102,14 @@ namespace lsp
                     nThreadId   = -1;
                     nLocks      = 0;
                 }
+
+                Mutex(const Mutex &) = delete;
+                Mutex(Mutex &&) = delete;
+                ~Mutex() = default;
+
+                Mutex & operator = (const Mutex &) = delete;
+                Mutex & operator = (Mutex &&) = delete;
+
 
                 /** Wait until mutex is unlocked and lock it
                  *
@@ -126,12 +136,13 @@ namespace lsp
             private:
                 mutable pthread_mutex_t     sMutex;
 
-            private:
-                Mutex & operator = (const Mutex & m);       // Deny copying
-
             public:
                 explicit Mutex();
+                Mutex(const Mutex &) = delete;
+                Mutex(Mutex &&) = delete;
                 ~Mutex();
+                Mutex & operator = (const Mutex &) = delete;
+                Mutex & operator = (Mutex &&) = delete;
 
                 /** Wait until mutex is unlocked and lock it
                  *
