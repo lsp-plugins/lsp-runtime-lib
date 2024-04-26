@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.22 ===
+
+
 === 1.0.21 ===
 * Fixed reading of 32-bit FLOAT WAV files that do not contain fact chunk on Windows.
 * Implemented min(), max(), rms() and avg() builtin functions for expression language.
