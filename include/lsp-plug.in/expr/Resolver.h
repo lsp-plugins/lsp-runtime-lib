@@ -24,6 +24,7 @@
 
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/expr/types.h>
+#include <lsp-plug.in/expr/functions.h>
 
 namespace lsp
 {
@@ -44,6 +45,9 @@ namespace lsp
 
                 Resolver & operator = (const Resolver &) = delete;
                 Resolver & operator = (Resolver &&) = delete;
+
+            protected:
+                stdfunc_t find_std_func(const char *name);
 
             public:
                 /**

@@ -27,7 +27,6 @@
 #include <lsp-plug.in/stdlib/string.h>
 
 #if defined(PLATFORM_WINDOWS)
-    #include <winnls.h>
 #else
     #include <iconv.h>
     #include <locale.h>
@@ -38,6 +37,7 @@
 namespace lsp
 {
 #if defined(PLATFORM_WINDOWS)
+    typedef uint32_t        LCID;
 
     ssize_t                 get_codepage(LCID locale, bool ansi = true);
 
@@ -55,7 +55,7 @@ namespace lsp
      *        can be NULL or point to zero value for just estimating the length)
      * @return number of UTF-16 characters written to destination buffer or negative error code
      */
-    ssize_t                 multibyte_to_widechar(size_t cp, LPCCH src, size_t *nsrc, LPWSTR dst, size_t *ndst);
+    ssize_t                 multibyte_to_widechar(size_t cp, const char *src, size_t *nsrc, lsp_utf16_t *dst, size_t *ndst);
 
     /**
      * This is a WideCharToMultiByte wrapping function that handles additional cases
@@ -69,7 +69,7 @@ namespace lsp
      *        can be NULL or point to zero value for just estimating the length)
      * @return number of bytes written to destination buffer or negative error code
      */
-    ssize_t                 widechar_to_multibyte(size_t cp, LPCWCH src, size_t *nsrc, LPSTR dst, size_t *ndst);
+    ssize_t                 widechar_to_multibyte(size_t cp, const lsp_utf16_t *src, size_t *nsrc, char *dst, size_t *ndst);
 #else
 
     iconv_t                 init_iconv_to_wchar_t(const char *charset);

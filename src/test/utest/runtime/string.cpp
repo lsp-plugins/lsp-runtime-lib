@@ -171,6 +171,9 @@ UTEST_BEGIN("runtime.runtime", string)
         UTEST_ASSERT(s1.index_of(&s3) == 8);
         s1.swap(&s3); // s1 = "SOME", s3 = "THIS IS SOME TEXT"
 
+        UTEST_ASSERT(s1.index_of(&s1) == 0);
+        UTEST_ASSERT(s1.index_of(0, &s1) == 0);
+
         UTEST_ASSERT(s1.get_native() != NULL);
         printf("s1 = %s\n", s1.get_native());
 
@@ -216,7 +219,12 @@ UTEST_BEGIN("runtime.runtime", string)
         UTEST_ASSERT(s1.index_of(7, &s3) == 10);
         UTEST_ASSERT(s1.index_of(-21, &s3) == 10);
         UTEST_ASSERT(s1.rindex_of(&s3) == 12);
-        UTEST_ASSERT(s1.rindex_of(-17, &s3) == 6);
+        UTEST_ASSERT(s1.rindex_of(10, &s3) == 6);
+        UTEST_ASSERT(s1.rindex_of(15, &s3) == 12);
+        UTEST_ASSERT(s1.rindex_of(s1.length(), &s3) == 12);
+
+        UTEST_ASSERT(s1.rindex_of(&s1) == 0);
+        UTEST_ASSERT(s1.rindex_of(s1.length(), &s1) == 0);
 
         UTEST_ASSERT(s5.set_ascii("BBBBCCCC"));
         UTEST_ASSERT(s5.get_native() != NULL);

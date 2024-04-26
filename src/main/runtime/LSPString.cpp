@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 30 авг. 2017 г.
@@ -1271,7 +1271,7 @@ namespace lsp
             return start;
 
         ssize_t last = nLength - str->nLength;
-        while (start < last)
+        while (start <= last)
         {
             if (xcmp(&pData[start], str->pData, str->nLength) == 0)
                 return start;
@@ -1286,7 +1286,7 @@ namespace lsp
             return 0;
 
         ssize_t start = 0, last = nLength - str->nLength;
-        while (start < last)
+        while (start <= last)
         {
             if (xcmp(&pData[start], str->pData, str->nLength) == 0)
                 return start;
@@ -1322,9 +1322,8 @@ namespace lsp
 
     ssize_t LSPString::rindex_of(ssize_t start, const LSPString *str) const
     {
-        XSAFE_ITRANS(start, nLength, -1);
-        if (str->nLength <= 0)
-            return start;
+        if (start > ssize_t(nLength))
+            return -1;
 
         start -= str->nLength;
         while (start >= 0)
@@ -1341,7 +1340,7 @@ namespace lsp
         if (str->nLength <= 0)
             return 0;
 
-        ssize_t start = nLength - str->nLength - 1;
+        ssize_t start = nLength - str->nLength;
         while (start >= 0)
         {
             if (xcmp(&pData[start], str->pData, str->nLength) == 0)
@@ -1820,17 +1819,17 @@ namespace lsp
             return false;
 
         // Estimate size of string in memory
-        ssize_t slen = multibyte_to_widechar(cp, const_cast<CHAR *>(s), &n, NULL, NULL);
+        ssize_t slen = multibyte_to_widechar(cp, const_cast<char *>(s), &n, NULL, NULL);
         if (slen <= 0)
             return false;
 
         // Perform native -> utf-16 encoding
-        WCHAR *buf = reinterpret_cast<WCHAR *>(::malloc(slen * sizeof(WCHAR)));
+        lsp_utf16_t *buf = reinterpret_cast<lsp_utf16_t *>(::malloc(slen * sizeof(lsp_utf16_t)));
         if (buf == NULL)
             return false;
 
         size_t bytes  = slen;
-        slen    = multibyte_to_widechar(cp, const_cast<CHAR *>(s), &n, buf, &bytes);
+        slen    = multibyte_to_widechar(cp, const_cast<char *>(s), &n, buf, &bytes);
         if (slen <= 0)
         {
             free(buf);

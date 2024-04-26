@@ -40,7 +40,6 @@ namespace lsp
 {
     namespace io
     {
-        
         File::File()
         {
             nErrorCode  = STATUS_OK;

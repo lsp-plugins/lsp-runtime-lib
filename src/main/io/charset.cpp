@@ -31,6 +31,7 @@
 
 #ifdef PLATFORM_WINDOWS
     #include <windows.h>
+    #include <winnls.h>
 #endif /* PLATFORM_WINDOWS */
 
 namespace lsp
@@ -2375,7 +2376,7 @@ namespace lsp
         return nconv;
     }
 
-    ssize_t multibyte_to_widechar(size_t cp, LPCCH src, size_t *nsrc, LPWSTR dst, size_t *ndst)
+    ssize_t multibyte_to_widechar(size_t cp, const char *src, size_t *nsrc, lsp_utf16_t *dst, size_t *ndst)
     {
         ssize_t nconv;
 
@@ -2630,7 +2631,7 @@ namespace lsp
         return half - limit;
     }
 
-    ssize_t widechar_to_multibyte(size_t cp, LPCWCH src, size_t *nsrc, LPSTR dst, size_t *ndst)
+    ssize_t widechar_to_multibyte(size_t cp, const lsp_utf16_t *src, size_t *nsrc, char *dst, size_t *ndst)
     {
         ssize_t nconv;
 

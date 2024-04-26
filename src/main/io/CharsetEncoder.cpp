@@ -41,7 +41,7 @@ namespace lsp
 
 #if defined(PLATFORM_WINDOWS)
             xBuffer         = NULL;
-            nCodePage       = UINT(-1);
+            nCodePage       = uint32_t(-1);
 #else
             hIconv          = iconv_t(-1);
 #endif /* PLATFORM_WINDOWS */
@@ -55,7 +55,7 @@ namespace lsp
         status_t CharsetEncoder::init(const char *charset)
         {
 #if defined(PLATFORM_WINDOWS)
-            if (nCodePage != UINT(-1))
+            if (nCodePage != uint32_t(-1))
                 return STATUS_BAD_STATE;
 
             ssize_t cp  = codepage_from_name(charset);
@@ -119,7 +119,7 @@ namespace lsp
 
 #if defined(PLATFORM_WINDOWS)
             xBuffer     = NULL;
-            nCodePage   = UINT(-1);
+            nCodePage   = uint32_t(-1);
 #else
             if (hIconv != iconv_t(-1))
             {
@@ -256,7 +256,7 @@ namespace lsp
             // Round 2: encode UTF-16 -> native charset
             nsrc            = DATA_BUFSIZE*2 - ndst;
             ndst            = DATA_BUFSIZE * sizeof(lsp_utf32_t);
-            CHAR *xoutbuf   = reinterpret_cast<CHAR *>(bBufTail);
+            char *xoutbuf   = reinterpret_cast<char *>(bBufTail);
             ssize_t nbytes  = widechar_to_multibyte(nCodePage, xBuffer, &nsrc, xoutbuf, &ndst);
             if (nbytes <= 0)
                 return nbytes;

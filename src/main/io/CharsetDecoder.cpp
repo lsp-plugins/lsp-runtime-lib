@@ -42,7 +42,7 @@ namespace lsp
 
 #if defined(PLATFORM_WINDOWS)
             xBuffer         = NULL;
-            nCodePage       = UINT(-1);
+            nCodePage       = uint32_t(-1);
 #else
             hIconv          = iconv_t(-1);
 #endif /* PLATFORM_WINDOWS */
@@ -56,7 +56,7 @@ namespace lsp
         status_t CharsetDecoder::init(const char *charset)
         {
 #if defined(PLATFORM_WINDOWS)
-            if (nCodePage != UINT(-1))
+            if (nCodePage != uint32_t(-1))
                 return STATUS_BAD_STATE;
 
             ssize_t cp  = codepage_from_name(charset);
@@ -119,7 +119,7 @@ namespace lsp
 
 #ifdef PLATFORM_WINDOWS
             xBuffer     = NULL;
-            nCodePage   = UINT(-1);
+            nCodePage   = uint32_t(-1);
 #else
             if (hIconv != iconv_t(-1))
             {
@@ -259,7 +259,7 @@ namespace lsp
             // Now we can surely decode DATA_BUFSIZE characters
 #ifdef PLATFORM_WINDOWS
             // Round 1: Perform native -> UTF-16 decoding
-            CHAR *xinbuf        = reinterpret_cast<CHAR *>(bBufHead);
+            char *xinbuf        = reinterpret_cast<char *>(bBufHead);
             size_t nsrc         = xinleft;
             size_t ndst         = DATA_BUFSIZE*2;
             ssize_t nbytes      = multibyte_to_widechar(nCodePage, xinbuf, &nsrc, xBuffer, &ndst);

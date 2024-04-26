@@ -290,6 +290,46 @@ UTEST_BEGIN("runtime.expr", expression)
         destroy_value(&res);
     }
 
+    void test_standard_functions(Resolver *r)
+    {
+        Expression e(r);
+        value_t res;
+        init_value(&res);
+        lsp_finally { destroy_value(&res); };
+
+        // Evaluate min() expression
+        static const char *min_expr = "min(5.0, 4, 10.0, 3, 0.1, 2, 1)";
+        printf("Evaluating min() expression: %s\n", min_expr);
+        UTEST_ASSERT_MSG(e.parse(min_expr, Expression::FLAG_NONE) == STATUS_OK, "Error parsing expression: %s", min_expr);
+        UTEST_ASSERT(e.evaluate(&res) == STATUS_OK);
+        UTEST_ASSERT(res.type == VT_FLOAT);
+        UTEST_ASSERT(float_equals_adaptive(res.v_float, 0.1));
+
+        // Evaluate min() expression
+        static const char *max_expr = "max(5.0, 4, 10.0, 3, 0.1, 2, 1)";
+        printf("Evaluating max() expression: %s\n", max_expr);
+        UTEST_ASSERT_MSG(e.parse(max_expr, Expression::FLAG_NONE) == STATUS_OK, "Error parsing expression: %s", max_expr);
+        UTEST_ASSERT(e.evaluate(&res) == STATUS_OK);
+        UTEST_ASSERT(res.type == VT_FLOAT);
+        UTEST_ASSERT(float_equals_adaptive(res.v_float, 10.0));
+
+        // Evaluate avg() expression
+        static const char *avg_expr = "avg(1, 2, 3, 4, 5, 6, 7)";
+        printf("Evaluating avg() expression: %s\n", avg_expr);
+        UTEST_ASSERT_MSG(e.parse(avg_expr, Expression::FLAG_NONE) == STATUS_OK, "Error parsing expression: %s", avg_expr);
+        UTEST_ASSERT(e.evaluate(&res) == STATUS_OK);
+        UTEST_ASSERT(res.type == VT_FLOAT);
+        UTEST_ASSERT(float_equals_adaptive(res.v_float, 4.0));
+
+        // Evaluate rms() expression
+        static const char *rms_expr = "rms(1, 2, 3, 4, 5, 6, 7)";
+        printf("Evaluating avg() expression: %s\n", rms_expr);
+        UTEST_ASSERT_MSG(e.parse(rms_expr, Expression::FLAG_NONE) == STATUS_OK, "Error parsing expression: %s", rms_expr);
+        UTEST_ASSERT(e.evaluate(&res) == STATUS_OK);
+        UTEST_ASSERT(res.type == VT_FLOAT);
+        UTEST_ASSERT(float_equals_adaptive(res.v_float, sqrtf(20.0)));
+    }
+
     UTEST_MAIN
     {
         Variables v;
@@ -383,6 +423,7 @@ UTEST_BEGIN("runtime.expr", expression)
 
         test_dependencies(&v);
         test_function_call(&v);
+        test_standard_functions(&v);
 
         test_invalid("(:a ge 0 db) : -1 : 1");
     }

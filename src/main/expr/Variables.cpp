@@ -329,8 +329,8 @@ namespace lsp
             {
                 if (pResolver != NULL)
                     return pResolver->call(value, name, num_args, args);
-                set_value_undef(value);
-                return STATUS_OK;
+
+                return Resolver::call(value, name, num_args, args);
             }
 
             // Ensure than name of function matches
@@ -339,8 +339,8 @@ namespace lsp
             {
                 if (pResolver != NULL)
                     return pResolver->call(value, name, num_args, args);
-                set_value_undef(value);
-                return STATUS_OK;
+
+                return Resolver::call(value, name, num_args, args);
             }
 
             // Execute function

@@ -558,6 +558,49 @@ namespace lsp
             return STATUS_OK;
         }
 
+        status_t cast_non_string(value_t *v)
+        {
+            if (v->type != VT_STRING)
+                return STATUS_OK;
+
+            // Parse integer/float number as string and cast to integer
+            value_t xv;
+            io::InStringSequence s(v->v_str);
+            Tokenizer t(&s);
+
+            switch (t.get_token(TF_GET))
+            {
+                case TT_IVALUE:
+                    xv.type     = VT_INT;
+                    xv.v_int    = t.int_value();
+                    break;
+                case TT_FVALUE:
+                    xv.type     = VT_FLOAT;
+                    xv.v_float  = t.float_value();
+                    break;
+                case TT_TRUE:
+                    xv.type     = VT_BOOL;
+                    xv.v_bool   = true;
+                    break;
+                case TT_FALSE:
+                    xv.type     = VT_BOOL;
+                    xv.v_bool   = 0;
+                    break;
+                default:
+                    delete v->v_str;
+                    v->type     = VT_UNDEF;
+                    return STATUS_OK;
+            }
+
+            if (t.get_token(TF_GET) != TT_EOF)
+                return STATUS_BAD_FORMAT;
+
+            delete v->v_str;
+            *v      = xv;
+
+            return STATUS_OK;
+        }
+
         status_t cast_int(value_t *dst, const value_t *v)
         {
             status_t res = copy_value(dst, v);
@@ -604,6 +647,45 @@ namespace lsp
             if (res == STATUS_OK)
                 res         = cast_numeric(dst);
             return res;
+        }
+
+        status_t cast_non_string(value_t *dst, const value_t *v)
+        {
+            if (v->type != VT_STRING)
+                return STATUS_OK;
+
+            // Parse integer/float number as string and cast to integer
+            value_t xv;
+            io::InStringSequence s(v->v_str);
+            Tokenizer t(&s);
+
+            switch (t.get_token(TF_GET))
+            {
+                case TT_IVALUE:
+                    xv.type     = VT_INT;
+                    xv.v_int    = t.int_value();
+                    break;
+                case TT_FVALUE:
+                    xv.type     = VT_FLOAT;
+                    xv.v_float  = t.float_value();
+                    break;
+                case TT_TRUE:
+                    xv.type     = VT_BOOL;
+                    xv.v_bool   = true;
+                    break;
+                case TT_FALSE:
+                    xv.type     = VT_BOOL;
+                    xv.v_bool   = false;
+                    break;
+                default:
+                    xv.type     = VT_UNDEF;
+                    break;
+            }
+
+            if (t.get_token(TF_GET) != TT_EOF)
+                return STATUS_BAD_FORMAT;
+
+            return copy_value(dst, &xv);
         }
 
     } /* namespace expr */

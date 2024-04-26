@@ -155,6 +155,7 @@ namespace lsp
         status_t    cast_string(value_t *v);
         status_t    cast_string_ext(value_t *v);
         status_t    cast_numeric(value_t *v);
+        status_t    cast_non_string(value_t *v);
 
         status_t    cast_int(value_t *dst, const value_t *v);
         status_t    cast_float(value_t *dst, const value_t *v);
@@ -162,6 +163,7 @@ namespace lsp
         status_t    cast_string(value_t *dst, const value_t *v);
         status_t    cast_string_ext(value_t *dst, const value_t *v);
         status_t    cast_numeric(value_t *dst, const value_t *v);
+        status_t    cast_non_string(value_t *dst, const value_t *v);
 
     } /* namespace expr */
 } /* namespace lsp */

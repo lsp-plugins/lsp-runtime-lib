@@ -51,7 +51,7 @@ namespace lsp
 
 #if defined(PLATFORM_WINDOWS)
                 lsp_utf16_t    *xBuffer;        // Additional translation buffer
-                UINT            nCodePage;      // Code page
+                uint32_t        nCodePage;      // Code page
 #else
                 iconv_t         hIconv;         // iconv handle
 #endif /* PLATFORM_WINDOWS */

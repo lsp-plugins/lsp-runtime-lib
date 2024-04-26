@@ -20,12 +20,47 @@
  */
 
 #include <lsp-plug.in/expr/Resolver.h>
+#include <lsp-plug.in/expr/functions.h>
+#include <lsp-plug.in/stdlib/string.h>
 
 namespace lsp
 {
     namespace expr
     {
+        typedef struct builtin_func_t
+        {
+            const char *name;
+            const stdfunc_t func;
+        } builtin_func_t;
         
+        static const builtin_func_t builtin_functions[] =
+        {
+            { "avg", stdfunc_avg },
+            { "max", stdfunc_max },
+            { "min", stdfunc_min },
+            { "rms", stdfunc_rms },
+        };
+
+        stdfunc_t Resolver::find_std_func(const char *name)
+        {
+            ssize_t first = 0, last = sizeof(builtin_functions)/sizeof(builtin_func_t);
+            while (first <= last)
+            {
+                ssize_t mid = (first + last) >> 1;
+                const builtin_func_t *f = &builtin_functions[mid];
+
+                int res = strcmp(name, f->name);
+                if (res == 0)
+                    return f->func;
+                else if (res < 0)
+                    last = mid - 1;
+                else // if (res < 0)
+                    first = mid + 1;
+            }
+
+            return NULL;
+        }
+
         Resolver::Resolver()
         {
         }
@@ -47,13 +82,17 @@ namespace lsp
 
         status_t Resolver::call(value_t *value, const char *name, size_t num_args, const value_t *args)
         {
+            stdfunc_t func = find_std_func(name);
+            if (func != NULL)
+                return func(value, num_args, args);
+
             set_value_undef(value);
             return STATUS_OK;
         }
 
         status_t Resolver::call(value_t *value, const LSPString *name, size_t num_args, const value_t *args)
         {
-            return call(value, name->get_utf8(), num_args, args);
+            return Resolver::call(value, name->get_utf8(), num_args, args);
         }
 
     } /* namespace expr */
