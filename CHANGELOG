@@ -10,6 +10,7 @@
 * Implemented ipc::SharedMem primitive for organizing shared memory segments.
 * Implemented ipc::SharedMutex primitive for organizing global inter-process mutexes.
 * Implementeation of ipc::Mutex moved to critical section for Windows.
+* Updated module versions in dependencies.
 
 === 1.0.20 ===
 * More detailed MIDI specification (added MIDI_CHANNELS constant).
