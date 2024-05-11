@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 17 мар. 2019 г.
@@ -253,8 +253,21 @@ namespace lsp
          * @param volumes pointer to array that stores volume information
          */
         void free_volume_info(lltl::parray<volume_info_t> *volumes);
-    }
-}
+
+        /**
+         * Get system virtual memory page size
+         * @return system virtual memory page size
+         */
+        size_t page_size();
+
+        /**
+         * Get number of processors available on the system
+         * @return number of processors available on the system
+         */
+        size_t system_cores();
+
+    } /* namespace system */
+} /* namespace lsp */
 
 
 #endif /* LSP_PLUG_IN_RUNTIME_SYSTEM_H_ */

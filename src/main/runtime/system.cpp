@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 17 мар. 2019 г.
@@ -40,6 +40,7 @@
     #include <sys/stat.h>
     #include <sys/time.h>
     #include <time.h>
+    #include <unistd.h>
 #endif /* PLATFORM_POSIX */
 
 #if defined PLATFORM_LINUX
@@ -1210,6 +1211,30 @@ namespace lsp
                     delete p;
             }
             volumes->flush();
+        }
+
+        size_t page_size()
+        {
+        #ifdef PLATFORM_WINDOWS
+            SYSTEM_INFO     os_sysinfo;
+            GetSystemInfo(&os_sysinfo);
+
+            return os_sysinfo.dwPageSize;
+        #else
+            return sysconf(_SC_PAGESIZE);
+        #endif /* PLATFORM_WINDOWS */
+        }
+
+        size_t system_cores()
+        {
+        #ifdef PLATFORM_WINDOWS
+            SYSTEM_INFO     os_sysinfo;
+            GetSystemInfo(&os_sysinfo);
+
+            return os_sysinfo.dwNumberOfProcessors;;
+        #else
+            return sysconf(_SC_NPROCESSORS_ONLN);
+        #endif /* PLATFORM_WINDOWS */
         }
 
     } /* namespace system */

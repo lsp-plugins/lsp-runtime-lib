@@ -58,6 +58,7 @@ namespace lsp
                 void     release_context();
                 bool     allocate_context();
 
+            protected:
                 static status_t open_context(shared_context_t *ctx, size_t mode, size_t size);
                 static status_t unlink_file(shared_context_t *ctx);
                 static status_t close_context(shared_context_t *ctx);
@@ -74,6 +75,26 @@ namespace lsp
                 SharedMem & operator = (SharedMem && src);
 
             public:
+                /**
+                 * Create shared segment with unique name
+                 * @param name pointer to store generated shared memory segment name
+                 * @param potfix postfix added to the name, can be NULL
+                 * @param mode open mode, the SHM_CREATE flag is interpreted as being always set
+                 * @param size size of the shared memory segment
+                 * @return status of operation
+                 */
+                status_t create(LSPString *name, const LSPString *postfix, size_t mode, size_t size);
+
+                /**
+                 * Create shared segment with unique name
+                 * @param name pointer to store shared memory segment name
+                 * @param potfix postfix added to the name, can be NULL
+                 * @param mode open mode, the SHM_CREATE flag is interpreted as being always set
+                 * @param size size of the shared memory segment
+                 * @return status of operation
+                 */
+                status_t create(LSPString *name, const char *postfix, size_t mode, size_t size);
+
                 /**
                  * Create named shared memory segment and map to memory
                  * @param name shared memory segment identifier (UTF-8)
@@ -139,27 +160,6 @@ namespace lsp
                  * @return pointer to the mapped memory or NULL if shared memory segment is not mapped
                  */
                 const void *data() const;
-
-//                /**
-//                 * Lock the shared memory segment. Blocking operations are available when shared segment
-//                 * is created and do not depend on it's mapping.
-//                 * @return status of operation
-//                 */
-//                status_t lock() const;
-//
-//                /**
-//                 * Try to lock the shared memory segment. Blocking operations are available when shared segment
-//                 * is created and do not depend on it's mapping.
-//                 * @return status of operation: STATUS_OK if locked, STATUS_RETRY if not locked
-//                 */
-//                status_t try_lock() const;
-//
-//                /**
-//                 * Unlock the shared memory segment. Blocking operations are available when shared segment
-//                 * is created and do not depend on it's mapping.
-//                 * @return status of operation
-//                 */
-//                status_t unlock() const;
 
                 /**
                  * Return mapping offset

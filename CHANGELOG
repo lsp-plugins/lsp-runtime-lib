@@ -3,7 +3,9 @@
 *******************************************************************************
 
 === 1.0.22 ===
-
+* Implemented system::page_size() and system::system_cores() functions.
+* Extended ipc::SharedMem interface.
+* Implemented UUID generation and formatting header.
 
 === 1.0.21 ===
 * Fixed reading of 32-bit FLOAT WAV files that do not contain fact chunk on Windows.

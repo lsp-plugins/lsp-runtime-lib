@@ -29,11 +29,17 @@
 #include <lsp-plug.in/io/File.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/runtime/system.h>
+#include <lsp-plug.in/runtime/uuid.h>
 
 #ifdef PLATFORM_WINDOWS
     #include <windows.h>
     #include <memoryapi.h>
     #include <fileapi.h>
+
+    // Windows headers define macro for a type (sick)... We need to avoid it.
+    #ifdef uuid_t
+        #undef uuid_t
+    #endif /* uuid_t */
 #else
     #include <errno.h>
     #include <fcntl.h>
@@ -149,6 +155,94 @@ namespace lsp
             pContext = ctx;
 
             return true;
+        }
+
+        status_t SharedMem::create(LSPString *name, const LSPString *postfix, size_t mode, size_t size)
+        {
+            LSPString tmp;
+            lsp::uuid_t uuid;
+            char utext[48];
+
+            if (opened())
+                return STATUS_OPENED;
+
+            if ((mode & (SHM_READ | SHM_WRITE)) == 0)
+                return STATUS_BAD_ARGUMENTS;
+            mode |= SHM_CREATE;
+
+            const size_t postfix_len = (postfix != NULL) ? postfix->length() : 0;
+            if (!tmp.reserve(36 + postfix_len))
+                return STATUS_NO_MEM;
+
+            while (true)
+            {
+                // Form the name of the shared segment
+                generate_uuid(&uuid);
+                format_uuid_dashed(utext, &uuid, false);
+
+                if (!tmp.set_ascii(utext))
+                    return STATUS_NO_MEM;
+                if (postfix_len > 0)
+                {
+                    if (!tmp.append(postfix))
+                        return STATUS_NO_MEM;
+                }
+
+                // Try to create new shared segment
+                status_t res = open(&tmp, mode, size);
+                if (res == STATUS_OK)
+                    break;
+                else if (res != STATUS_ALREADY_EXISTS)
+                    return res;
+            }
+
+            tmp.swap(name);
+
+            return STATUS_OK;
+        }
+
+        status_t SharedMem::create(LSPString *name, const char *postfix, size_t mode, size_t size)
+        {
+            LSPString tmp;
+            lsp::uuid_t uuid;
+            char utext[48];
+
+            if (opened())
+                return STATUS_OPENED;
+
+            if ((mode & (SHM_READ | SHM_WRITE)) == 0)
+                return STATUS_BAD_ARGUMENTS;
+            mode |= SHM_CREATE;
+
+            const size_t postfix_len = (postfix != NULL) ? strlen(postfix) : 0;
+            if (!tmp.reserve(36 + postfix_len))
+                return STATUS_NO_MEM;
+
+            while (true)
+            {
+                // Form the name of the shared segment
+                generate_uuid(&uuid);
+                format_uuid_dashed(utext, &uuid, false);
+
+                if (!tmp.set_ascii(utext))
+                    return STATUS_NO_MEM;
+                if (postfix_len > 0)
+                {
+                    if (!tmp.append_utf8(postfix))
+                        return STATUS_NO_MEM;
+                }
+
+                // Try to create new shared segment
+                status_t res = open(&tmp, mode, size);
+                if (res == STATUS_OK)
+                    break;
+                else if (res != STATUS_ALREADY_EXISTS)
+                    return res;
+            }
+
+            tmp.swap(name);
+
+            return STATUS_OK;
         }
 
         status_t SharedMem::open(const char *name, size_t mode, size_t size)
@@ -270,6 +364,11 @@ namespace lsp
                     res             = update_status(res, STATUS_IO_ERROR);
                 ctx->hFD        = INVALID_HANDLE_VALUE;
             }
+
+            // Need to release system structures?
+            // For windows, last one who closed the shared resource can unlink it
+            if ((is_open) && (!(ctx->nMode & SHM_PERSIST)))
+                unlink_file(ctx);
         #else
             lsp_finally {
                 ctx->sPath.truncate();
@@ -283,11 +382,13 @@ namespace lsp
                     res             = STATUS_IO_ERROR;
                 ctx->hFD = -1;
             }
-        #endif /* PLATFORM_WINDOWS */
 
             // Need to release system structures?
+            // For POSIX, those who created the shared resource
             if ((is_open) && ((ctx->nMode & (SHM_CREATE | SHM_PERSIST)) == SHM_CREATE))
                 res = update_status(res, unlink_file(ctx));
+
+        #endif /* PLATFORM_WINDOWS */
 
             return res;
         }
