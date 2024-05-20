@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 25 февр. 2019 г.
@@ -33,6 +33,7 @@
 #endif /* PLATFORM_WINDOWS */
 
 #include <lsp-plug.in/ipc/IRunnable.h>
+#include <lsp-plug.in/runtime/system.h>
 
 namespace lsp
 {
@@ -170,7 +171,7 @@ namespace lsp
                  * Return number of execution cores supported by the system
                  * @return number of logical CPUs in the system available for processing
                  */
-                static size_t system_cores();
+                static inline size_t system_cores() { return system::system_cores(); }
         };
     
     } /* namespace ipc */

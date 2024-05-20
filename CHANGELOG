@@ -2,6 +2,12 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.22 ===
+* Implemented system::page_size() and system::system_cores() functions.
+* Extended ipc::SharedMem interface.
+* Implemented UUID generation and formatting header.
+* Updated module versions in dependencies.
+
 === 1.0.21 ===
 * Fixed reading of 32-bit FLOAT WAV files that do not contain fact chunk on Windows.
 * Implemented min(), max(), rms() and avg() builtin functions for expression language.
