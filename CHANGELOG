@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.23 ===
-
+* Implemented IInSequence::sink() method for writing all content to another IOutSequence.
 
 === 1.0.22 ===
 * Implemented system::page_size() and system::system_cores() functions.

@@ -20,6 +20,7 @@
  */
 
 #include <lsp-plug.in/io/IInSequence.h>
+#include <lsp-plug.in/io/IOutSequence.h>
 
 namespace lsp
 {
@@ -83,5 +84,51 @@ namespace lsp
         {
             return set_error(STATUS_NOT_SUPPORTED);
         }
-    }
+
+        wssize_t IInSequence::sink(IOutSequence *os, size_t buf_size)
+        {
+            if ((os == NULL) || (buf_size < 1))
+                return -set_error(STATUS_BAD_ARGUMENTS);
+
+            lsp_wchar_t *buf = reinterpret_cast<lsp_wchar_t *>(::malloc(buf_size * sizeof(lsp_wchar_t)));
+            if (buf == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally {
+                ::free(buf);
+            };
+
+            wssize_t count = 0;
+            while (true)
+            {
+                // Read data
+                ssize_t nread = read(buf, buf_size);
+                if (nread < 0)
+                {
+                    if (nread == -STATUS_EOF)
+                    {
+                        set_error(STATUS_OK);
+                        return count;
+                    }
+
+                    set_error(-nread);
+                    return nread;
+                }
+                count += nread;
+
+                // Write data
+                ssize_t off = 0;
+                while (off < nread)
+                {
+                    ssize_t nwritten = os->write(&buf[off], nread-off);
+                    if (nwritten < 0)
+                    {
+                        set_error(-nwritten);
+                        return nwritten;
+                    }
+                    off    += nwritten;
+                }
+            }
+        }
+
+    } /* namespace io */
 } /* namespace lsp */

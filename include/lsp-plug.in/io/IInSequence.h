@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 июн. 2018 г.
@@ -32,6 +32,8 @@ namespace lsp
 {
     namespace io
     {
+        class IOutSequence;
+
         class IInSequence
         {
             protected:
@@ -99,6 +101,13 @@ namespace lsp
                  *        - STATUS_NOT_SUPPORTED if feature is not supported by this sequence
                  */
                 virtual status_t    mark(ssize_t limit);
+
+                /**
+                 * Sink all data to the output sequence
+                 * @param os pointer to the output stream
+                 * @return number of bytes written or negative error code
+                 */
+                virtual wssize_t    sink(IOutSequence *os, size_t buf_size = 0x1000);
 
                 /**
                  * Reset position to the sequence to previously set mark
