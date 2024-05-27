@@ -105,7 +105,7 @@ namespace lsp
                 /**
                  * Sink all data to the output sequence
                  * @param os pointer to the output stream
-                 * @return number of bytes written or negative error code
+                 * @return number of characters processed or negative error code
                  */
                 virtual wssize_t    sink(IOutSequence *os, size_t buf_size = 0x1000);
 

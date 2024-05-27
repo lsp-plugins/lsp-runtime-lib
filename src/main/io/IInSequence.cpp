@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 июн. 2018 г.
@@ -21,6 +21,7 @@
 
 #include <lsp-plug.in/io/IInSequence.h>
 #include <lsp-plug.in/io/IOutSequence.h>
+#include <lsp-plug.in/common/debug.h>
 
 namespace lsp
 {
@@ -116,16 +117,11 @@ namespace lsp
                 count += nread;
 
                 // Write data
-                ssize_t off = 0;
-                while (off < nread)
+                status_t res = os->write(buf, nread);
+                if (res != STATUS_OK)
                 {
-                    ssize_t nwritten = os->write(&buf[off], nread-off);
-                    if (nwritten < 0)
-                    {
-                        set_error(-nwritten);
-                        return nwritten;
-                    }
-                    off    += nwritten;
+                    set_error(-res);
+                    return -res;
                 }
             }
         }
