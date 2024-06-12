@@ -29,6 +29,9 @@
 
 #ifdef PLATFORM_WINDOWS
     #include <windows.h>
+    #include <processthreadsapi.h>
+#else
+    #include <sched.h>
 #endif /* PLATFORM_WINDOWS */
 
 namespace lsp
@@ -209,6 +212,11 @@ namespace lsp
             return STATUS_OK;
         }
 
+        void Thread::yield()
+        {
+            SwitchToThread();
+        }
+
 #else
         void *Thread::thread_launcher(void *arg)
         {
@@ -313,6 +321,11 @@ namespace lsp
             }
 
             return STATUS_OK;
+        }
+
+        void Thread::yield()
+        {
+            sched_yield();
         }
 
 #endif /* PLATFORM_WINDOWS */

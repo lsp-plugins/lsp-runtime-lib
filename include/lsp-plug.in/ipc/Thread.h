@@ -134,6 +134,12 @@ namespace lsp
                 static status_t sleep(wsize_t millis);
 
                 /**
+                 * Causes the calling thread to yield execution to another thread that
+                 * is ready to run on the current processor.
+                 */
+                static void yield();
+
+                /**
                  * Return the current thread
                  * @return current thread or NULL if current thread is not an instance of ipc::Thread class
                  */

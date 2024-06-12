@@ -4,6 +4,7 @@
 
 === 1.0.23 ===
 * Implemented IInSequence::sink() method for writing all content to another IOutSequence.
+* Added Thread::yield() method.
 * Updated build scripts.
 
 === 1.0.22 ===
