@@ -81,7 +81,7 @@ namespace lsp
 
 #elif defined(PLATFORM_LINUX)
         static inline int futex(
-            volatile int *addr,
+            int *addr,
             int futex_op,
             int val,
             const struct timespec *timeout,

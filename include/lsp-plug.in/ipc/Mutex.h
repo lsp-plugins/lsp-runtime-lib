@@ -91,7 +91,7 @@ namespace lsp
         class Mutex
         {
             private:
-                mutable volatile int            nLock;      // 1 = unlocked, 0 = locked
+                mutable int                     nLock;      // 1 = unlocked, 0 = locked
                 mutable volatile pthread_t      nThreadId;  // Locked thread identifier
                 mutable ssize_t                 nLocks;     // Number of locks by current thread
 
