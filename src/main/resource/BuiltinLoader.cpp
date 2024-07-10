@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 15 мар. 2021 г.
@@ -138,7 +138,7 @@ namespace lsp
             }
 
             // Initialize decompressor and skip the desired amount of data to access the entry
-            res = d->init(&pData[ent->segment], ent->offset + ent->length, nBufSize);
+            res = d->init(&pData[ent->segment], nDataSize - ent->segment, ent->offset + ent->length, nBufSize);
             if (res == STATUS_OK)
             {
                 wssize_t skipped = d->skip(ent->offset);
