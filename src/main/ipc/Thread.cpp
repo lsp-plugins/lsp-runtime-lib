@@ -29,6 +29,9 @@
 
 #ifdef PLATFORM_WINDOWS
     #include <windows.h>
+    #include <processthreadsapi.h>
+#else
+    #include <sched.h>
 #endif /* PLATFORM_WINDOWS */
 
 namespace lsp
@@ -45,7 +48,7 @@ namespace lsp
 
         Thread::Thread()
         {
-            enState             = TS_CREATED;
+            atomic_store(&enState, TS_CREATED);
             nResult             = STATUS_OK;
             bCancelled          = false;
             CLR_HANDLE(hThread);
@@ -56,7 +59,7 @@ namespace lsp
         
         Thread::Thread(thread_proc_t proc)
         {
-            enState             = TS_CREATED;
+            atomic_store(&enState, TS_CREATED);
             nResult             = STATUS_OK;
             bCancelled          = false;
             CLR_HANDLE(hThread);
@@ -67,7 +70,7 @@ namespace lsp
 
         Thread::Thread(thread_proc_t proc, void *arg)
         {
-            enState             = TS_CREATED;
+            atomic_store(&enState, TS_CREATED);
             nResult             = STATUS_OK;
             bCancelled          = false;
             CLR_HANDLE(hThread);
@@ -78,7 +81,7 @@ namespace lsp
 
         Thread::Thread(IRunnable *runnable)
         {
-            enState             = TS_CREATED;
+            atomic_store(&enState, TS_CREATED);
             nResult             = STATUS_OK;
             bCancelled          = false;
             CLR_HANDLE(hThread);
@@ -108,7 +111,7 @@ namespace lsp
 
         status_t Thread::cancel()
         {
-            switch (enState)
+            switch (atomic_load(&enState))
             {
                 case TS_PENDING:
                 case TS_RUNNING:
@@ -138,7 +141,7 @@ namespace lsp
             int state;
             do
             {
-                state       = _this->enState;
+                state       = atomic_load(&_this->enState);
             } while (!atomic_cas(&_this->enState, state, TS_FINISHED));
 
             _this->nResult  = res;
@@ -153,13 +156,13 @@ namespace lsp
                 return STATUS_UNKNOWN_ERR;
 
             hThread     = thandle;
-            enState     = TS_PENDING;
+            atomic_store(&enState, TS_PENDING);
             return STATUS_OK;
         }
 
         status_t Thread::join()
         {
-            switch (enState)
+            switch (atomic_load(&enState))
             {
                 case TS_CREATED:
                     return STATUS_BAD_STATE;
@@ -209,6 +212,11 @@ namespace lsp
             return STATUS_OK;
         }
 
+        void Thread::yield()
+        {
+            SwitchToThread();
+        }
+
 #else
         void *Thread::thread_launcher(void *arg)
         {
@@ -229,7 +237,7 @@ namespace lsp
             int state;
             do
             {
-                state       = _this->enState;
+                state       = atomic_load(&_this->enState);
             } while (!atomic_cas(&_this->enState, state, TS_FINISHED));
 
             _this->nResult  = res;
@@ -243,13 +251,13 @@ namespace lsp
                 return STATUS_UNKNOWN_ERR;
 
             hThread     = tid;
-            enState     = TS_PENDING;
+            atomic_store(&enState, TS_PENDING);
             return STATUS_OK;
         }
 
         status_t Thread::join()
         {
-            switch (enState)
+            switch (atomic_load(&enState))
             {
                 case TS_CREATED:
                     return STATUS_BAD_STATE;
@@ -313,6 +321,11 @@ namespace lsp
             }
 
             return STATUS_OK;
+        }
+
+        void Thread::yield()
+        {
+            sched_yield();
         }
 
 #endif /* PLATFORM_WINDOWS */

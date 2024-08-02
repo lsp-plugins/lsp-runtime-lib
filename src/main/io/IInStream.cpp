@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 нояб. 2017 г.
@@ -133,6 +133,9 @@ namespace lsp
             uint8_t *buf = reinterpret_cast<uint8_t *>(::malloc(buf_size));
             if (buf == NULL)
                 return STATUS_NO_MEM;
+            lsp_finally {
+                ::free(buf);
+            };
 
             wssize_t count = 0;
             while (true)
@@ -141,7 +144,6 @@ namespace lsp
                 ssize_t nread = read(buf, buf_size);
                 if (nread < 0)
                 {
-                    ::free(buf);
                     if (nread == -STATUS_EOF)
                     {
                         set_error(STATUS_OK);
@@ -160,7 +162,6 @@ namespace lsp
                     ssize_t nwritten = os->write(&buf[off], nread-off);
                     if (nwritten < 0)
                     {
-                        ::free(buf);
                         set_error(-nwritten);
                         return nwritten;
                     }
@@ -175,5 +176,5 @@ namespace lsp
             return set_error(nErrorCode);
         }
 
-    } /* namespace ws */
+    } /* namespace io */
 } /* namespace lsp */

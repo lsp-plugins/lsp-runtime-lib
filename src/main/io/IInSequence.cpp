@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 июн. 2018 г.
@@ -20,6 +20,8 @@
  */
 
 #include <lsp-plug.in/io/IInSequence.h>
+#include <lsp-plug.in/io/IOutSequence.h>
+#include <lsp-plug.in/common/debug.h>
 
 namespace lsp
 {
@@ -83,5 +85,46 @@ namespace lsp
         {
             return set_error(STATUS_NOT_SUPPORTED);
         }
-    }
+
+        wssize_t IInSequence::sink(IOutSequence *os, size_t buf_size)
+        {
+            if ((os == NULL) || (buf_size < 1))
+                return -set_error(STATUS_BAD_ARGUMENTS);
+
+            lsp_wchar_t *buf = reinterpret_cast<lsp_wchar_t *>(::malloc(buf_size * sizeof(lsp_wchar_t)));
+            if (buf == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally {
+                ::free(buf);
+            };
+
+            wssize_t count = 0;
+            while (true)
+            {
+                // Read data
+                ssize_t nread = read(buf, buf_size);
+                if (nread < 0)
+                {
+                    if (nread == -STATUS_EOF)
+                    {
+                        set_error(STATUS_OK);
+                        return count;
+                    }
+
+                    set_error(-nread);
+                    return nread;
+                }
+                count += nread;
+
+                // Write data
+                status_t res = os->write(buf, nread);
+                if (res != STATUS_OK)
+                {
+                    set_error(-res);
+                    return -res;
+                }
+            }
+        }
+
+    } /* namespace io */
 } /* namespace lsp */

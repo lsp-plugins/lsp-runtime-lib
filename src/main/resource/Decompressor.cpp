@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 16 мар. 2021 г.
@@ -39,7 +39,7 @@ namespace lsp
             sReplay.rep     = 0;
 
             nOffset         = 0;
-            nLast           = 0;
+            nSize           = 0;
         }
 
         Decompressor::~Decompressor()
@@ -64,20 +64,20 @@ namespace lsp
             sReplay.rep     = 0;
 
             nOffset         = 0;
-            nLast           = 0;
+            nSize           = 0;
 
             return sIn.close();
         }
 
-        status_t Decompressor::init(const void *data, size_t last, size_t buf_sz)
+        status_t Decompressor::init(const void *data, size_t data_size, size_t decompressed_size, size_t buf_sz)
         {
             // Create buffer
             status_t res = sBuffer.init(buf_sz);
             if (res != STATUS_OK)
                 return res;
 
-            // Create inpute memory stream
-            io::InMemoryStream *ims = new io::InMemoryStream(data, SIZE_MAX);
+            // Create input memory stream
+            io::InMemoryStream *ims = new io::InMemoryStream(data, data_size);
             if (ims == NULL)
                 return STATUS_NO_MEM;
 
@@ -91,7 +91,7 @@ namespace lsp
 
             // Update positions
             nOffset         = 0;
-            nLast           = last;
+            nSize           = decompressed_size;
 
             // Clear replay buffer
             sReplay.off     = 0;
@@ -284,7 +284,7 @@ namespace lsp
             while (nread < count)
             {
                 // Check offset
-                if (nOffset >= nLast)
+                if (nOffset >= nSize)
                 {
                     if (nread <= 0)
                         return -set_error(STATUS_EOF);
@@ -318,7 +318,7 @@ namespace lsp
         {
             ssize_t res;
 
-            if (nOffset >= nLast)
+            if (nOffset >= nSize)
                 return -set_error(STATUS_EOF);
 
             do
@@ -335,5 +335,5 @@ namespace lsp
             set_error(res);
             return res;
         }
-    }
-}
+    } /* namespace resource */
+} /* namespace lsp */

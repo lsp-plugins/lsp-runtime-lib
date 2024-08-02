@@ -2,6 +2,13 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.23 ===
+* Implemented IInSequence::sink() method for writing all content to another IOutSequence.
+* Fixed possible access to uninitialized memory when loading built-in resources.
+* Added Thread::yield() method.
+* Updated build scripts.
+* Updated module versions in dependencies.
+
 === 1.0.22 ===
 * Implemented system::page_size() and system::system_cores() functions.
 * Extended ipc::SharedMem interface.

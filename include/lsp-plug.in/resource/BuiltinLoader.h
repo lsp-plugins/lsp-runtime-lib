@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 15 мар. 2021 г.
@@ -39,10 +39,6 @@ namespace lsp
          */
         class BuiltinLoader: public ILoader
         {
-            private:
-                BuiltinLoader & operator = (const BuiltinLoader & );
-                BuiltinLoader (const BuiltinLoader &);
-
             protected:
                 const uint8_t                  *pData;      // Compressed data
                 size_t                          nDataSize;  // Data size
@@ -55,7 +51,12 @@ namespace lsp
 
             public:
                 explicit BuiltinLoader();
-                virtual ~BuiltinLoader();
+                BuiltinLoader(const BuiltinLoader &) = delete;
+                BuiltinLoader(BuiltinLoader &&) = delete;
+                virtual ~BuiltinLoader() override;
+
+                BuiltinLoader & operator = (const BuiltinLoader & ) = delete;
+                BuiltinLoader & operator = (BuiltinLoader && ) = delete;
 
             public:
                 /**
@@ -74,9 +75,9 @@ namespace lsp
                 );
 
             public:
-                virtual io::IInStream      *read_stream(const io::Path *name);
+                virtual io::IInStream      *read_stream(const io::Path *name) override;
 
-                virtual ssize_t             enumerate(const io::Path *path, resource_t **list);
+                virtual ssize_t             enumerate(const io::Path *path, resource_t **list) override;
         };
     } /* namespace resource */
 } /* namespace lsp */

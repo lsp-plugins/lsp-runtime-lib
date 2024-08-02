@@ -23,6 +23,7 @@
 #define LSP_PLUG_IN_IPC_THREAD_H_
 
 #include <lsp-plug.in/runtime/version.h>
+#include <lsp-plug.in/common/atomic.h>
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
 
@@ -72,7 +73,7 @@ namespace lsp
 
             private:
                 static __thread Thread     *pThis;
-                volatile int                enState;
+                mutable int                 enState;
                 volatile bool               bCancelled;
                 volatile status_t           nResult;
 
@@ -134,6 +135,12 @@ namespace lsp
                 static status_t sleep(wsize_t millis);
 
                 /**
+                 * Causes the calling thread to yield execution to another thread that
+                 * is ready to run on the current processor.
+                 */
+                static void yield();
+
+                /**
                  * Return the current thread
                  * @return current thread or NULL if current thread is not an instance of ipc::Thread class
                  */
@@ -153,19 +160,19 @@ namespace lsp
                  * Check whether thread has finished
                  * @return true if thread has finished
                  */
-                inline bool finished() const { return enState == TS_FINISHED; }
+                inline bool finished() const { return atomic_load(&enState) == TS_FINISHED; }
 
                 /**
                  * Get thread state
                  * @return thread state
                  */
-                inline thread_state_t state() const { return thread_state_t(enState); };
+                inline thread_state_t state() const { return thread_state_t(atomic_load(&enState)); };
 
                 /**
                  * Return the execution result of the thread
                  * @return execution result of the thread
                  */
-                status_t get_result() const { return (enState == TS_FINISHED) ? nResult : STATUS_BAD_STATE; };
+                status_t get_result() const { return (atomic_load(&enState) == TS_FINISHED) ? nResult : STATUS_BAD_STATE; };
 
                 /**
                  * Return number of execution cores supported by the system

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 16 мар. 2021 г.
@@ -33,10 +33,6 @@ namespace lsp
     {
         class Decompressor: public io::IInStream
         {
-            private:
-                Decompressor &operator = (const Decompressor &);
-                Decompressor(const Decompressor &);
-
             protected:
                 typedef struct cbuf_t
                 {
@@ -53,7 +49,7 @@ namespace lsp
                 cbuf_t              sReplay;        // Replay buffer
 
                 size_t              nOffset;        // Offset
-                size_t              nLast;          // Last byte
+                size_t              nSize;          // Decompressed size
 
             protected:
                 status_t            read_uint(size_t *out, size_t initial, size_t stepping);
@@ -66,17 +62,30 @@ namespace lsp
 
             public:
                 explicit Decompressor();
-                virtual ~Decompressor();
+                Decompressor(const Decompressor &) = delete;
+                Decompressor(Decompressor &&) = delete;
+                Decompressor & operator = (const Decompressor &) = delete;
+                Decompressor & operator = (Decompressor &&) = delete;
+
+                virtual ~Decompressor() override;
 
             public:
-                status_t            init(const void *data, size_t last, size_t buf_sz);
+                /**
+                 * Initialize decompressor
+                 * @param data binary data
+                 * @param data_size the size of the binary data
+                 * @param decompressed_size the size of the decompressed data
+                 * @param buf_sz I/O buffer size
+                 * @return status of operation
+                 */
+                status_t            init(const void *data, size_t data_size, size_t decompressed_size, size_t buf_sz);
 
-            public:
-                virtual ssize_t     read_byte();
-                virtual ssize_t     read(void *dst, size_t count);
-                virtual status_t    close();
+            public: // io::IInStream
+                virtual ssize_t     read_byte() override;
+                virtual ssize_t     read(void *dst, size_t count) override;
+                virtual status_t    close() override;
         };
-    }
-}
+    } /* namespace resource */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_RESOURCE_DECOMPRESSOR_H_ */
