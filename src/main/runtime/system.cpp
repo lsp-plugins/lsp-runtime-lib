@@ -434,16 +434,21 @@ namespace lsp
         status_t sleep_msec(size_t delay)
         {
             if (delay <= 0)
-                return STATUS_OK;;
+                return STATUS_OK;
 
-            struct timespec req, rem;
-            req.tv_nsec = (delay % 1000) * 1000000;
-            req.tv_sec  = delay / 1000;
-            rem.tv_nsec = 0;
-            rem.tv_sec  = 0;
+            time_millis_t ctime = get_time_millis();
+            const time_millis_t dtime = ctime + delay;
 
-            while ((req.tv_nsec > 0) || (req.tv_sec > 0))
+            while (ctime < dtime)
             {
+                struct timespec req, rem;
+                size_t delta    = dtime - ctime;
+
+                req.tv_nsec     = (delta % 1000) * 1000000;
+                req.tv_sec      = delta / 1000;
+                rem.tv_nsec     = 0;
+                rem.tv_sec      = 0;
+
                 // Perform nanosleep for the specific period of time.
                 // If function succeeded and waited the whole desired period
                 // of time, it should return 0.
@@ -460,6 +465,9 @@ namespace lsp
                     default:
                         return STATUS_UNKNOWN_ERR;
                 }
+
+                // Update current time
+                ctime           = get_time_millis();
             }
 
             return STATUS_OK;
@@ -508,7 +516,85 @@ namespace lsp
             return (res == STATUS_OK) ? path->set(&tmp) : res;
         }
 
+        status_t get_user_login(LSPString *user)
+        {
+            size_t capacity     = 0x40;
+            WCHAR *buf          = reinterpret_cast<WCHAR *>(malloc(capacity * sizeof(WCHAR)));
+            if (buf == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally {
+                free(buf);
+            };
+
+            while (true)
+            {
+                DWORD buf_size = capacity;
+                if (GetUserNameW(buf, &buf_size))
+                {
+                    return (user->set_utf16(buf)) ? STATUS_OK : STATUS_NO_MEM;
+                }
+
+                DWORD error = GetLastError();
+                switch (error)
+                {
+                    case ERROR_INSUFFICIENT_BUFFER:
+                        break;
+                    case ERROR_NOT_ENOUGH_MEMORY:
+                        return STATUS_NO_MEM;
+                    default:
+                        return STATUS_UNKNOWN_ERR;
+                }
+
+                // Re-allocate data
+                capacity        = lsp_max(capacity << 1, buf_size + 1);
+                WCHAR *new_buf  = reinterpret_cast<WCHAR *>(realloc(buf, capacity * sizeof(WCHAR)));
+                if (new_buf == NULL)
+                    return STATUS_NO_MEM;
+                buf             = new_buf;
+            }
+        }
 #else
+        status_t get_user_login(LSPString *user)
+        {
+            size_t capacity = 0x40;
+            char *buf       = reinterpret_cast<char *>(malloc(capacity));
+            if (buf == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally {
+                free(buf);
+            };
+
+            while (true)
+            {
+                int res = getlogin_r(buf, capacity);
+                switch (res)
+                {
+                    case 0:
+                        return (user->set_native(buf)) ? STATUS_OK : STATUS_NO_MEM;
+                    case ERANGE:
+                        break;
+                    case EMFILE:
+                    case ENFILE:
+                    case ENXIO:
+                    case ENOTTY:
+                        return STATUS_IO_ERROR;
+                    case ENOENT:
+                        return STATUS_NOT_FOUND;
+                    case ENOMEM:
+                        return STATUS_NO_MEM;
+                    default:
+                        return STATUS_UNKNOWN_ERR;
+                }
+
+                // Re-allocate data
+                capacity      <<= 1;
+                char *new_buf   = reinterpret_cast<char *>(realloc(buf, capacity));
+                if (new_buf == NULL)
+                    return STATUS_NO_MEM;
+                buf             = new_buf;
+            }
+        }
+
         status_t get_system_temporary_dir(LSPString *path)
         {
             if (path == NULL)

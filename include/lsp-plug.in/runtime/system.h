@@ -186,6 +186,13 @@ namespace lsp
         status_t sleep_msec(size_t delay);
 
         /**
+         * Get current user login
+         * @param user pointer to store current user login
+         * @return status of operation
+         */
+        status_t get_user_login(LSPString *user);
+
+        /**
          * Get temporary directory
          * @param path pointer to store result
          * @return status of operation
