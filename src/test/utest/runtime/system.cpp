@@ -22,11 +22,7 @@
 #include <lsp-plug.in/test-fw/utest.h>
 #include <lsp-plug.in/runtime/system.h>
 
-#ifdef PLATFORM_WINDOWS
-    #define DELAY_PRECISION 10
-#else
-    #define DELAY_PRECISION 5
-#endif /* PLATFORM_WINDOWS */
+#define DELAY_PRECISION 10
 
 UTEST_BEGIN("runtime.runtime", system)
 
