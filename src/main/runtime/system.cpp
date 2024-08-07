@@ -37,8 +37,10 @@
 
 #if defined PLATFORM_POSIX
     #include <errno.h>
+    #include <pwd.h>
     #include <sys/stat.h>
     #include <sys/time.h>
+    #include <sys/types.h>
     #include <time.h>
     #include <unistd.h>
 #endif /* PLATFORM_POSIX */
@@ -556,7 +558,7 @@ namespace lsp
 #else
         status_t get_user_login(LSPString *user)
         {
-            size_t capacity = 0x40;
+            size_t capacity = 0x400;
             char *buf       = reinterpret_cast<char *>(malloc(capacity));
             if (buf == NULL)
                 return STATUS_NO_MEM;
@@ -564,12 +566,55 @@ namespace lsp
                 free(buf);
             };
 
+            int error;
+            struct passwd pwd, *rpwd = NULL;
+
             while (true)
             {
-                int res = getlogin_r(buf, capacity);
-                if (res != 0)
-                    fprintf(stderr, "result = %d\n", res);
-                switch (res)
+                error = getpwuid_r(geteuid(), &pwd, buf, capacity, &rpwd);
+                if (rpwd != NULL)
+                    return (user->set_native(rpwd->pw_name)) ? STATUS_OK : STATUS_NO_MEM;
+
+                switch (error)
+                {
+                    case 0:
+                    case ENOENT:
+                    case ESRCH:
+                    case EBADF:
+                    case EPERM:
+                        return STATUS_NOT_FOUND;
+
+                    case EINTR:
+                    case EIO:
+                    case EMFILE:
+                    case ENFILE:
+                        return STATUS_IO_ERROR;
+
+                    case ENOMEM:
+                        return STATUS_NO_MEM;
+
+                    case ERANGE:
+                        break;
+
+                    default:
+                        return STATUS_UNKNOWN_ERR;
+                }
+
+                // Re-allocate data
+                capacity      <<= 1;
+                if (capacity > 0x10000)
+                    break;
+
+                char *new_buf   = reinterpret_cast<char *>(realloc(buf, capacity));
+                if (new_buf == NULL)
+                    return STATUS_NO_MEM;
+                buf             = new_buf;
+            }
+
+            while (true)
+            {
+                error = getlogin_r(buf, capacity);
+                switch (error)
                 {
                     case 0:
                         return (user->set_native(buf)) ? STATUS_OK : STATUS_NO_MEM;
