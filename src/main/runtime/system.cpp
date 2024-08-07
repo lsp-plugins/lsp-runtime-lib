@@ -567,6 +567,8 @@ namespace lsp
             while (true)
             {
                 int res = getlogin_r(buf, capacity);
+                if (res != 0)
+                    fprintf(stderr, "result = %d\n", res);
                 switch (res)
                 {
                     case 0:
