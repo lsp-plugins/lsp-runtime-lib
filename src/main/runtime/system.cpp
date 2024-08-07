@@ -508,7 +508,52 @@ namespace lsp
             return (res == STATUS_OK) ? path->set(&tmp) : res;
         }
 
+        status_t get_user_login(LSPString *user)
+        {
+            return STATUS_NOT_IMPLEMENTED;
+        }
 #else
+        status_t get_user_login(LSPString *user)
+        {
+            size_t capacity = 0x40;
+            char *buf       = reinterpret_cast<char *>(malloc(capacity));
+            if (buf == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally {
+                free(buf);
+            };
+
+            while (true)
+            {
+                int res = getlogin_r(buf, capacity);
+                switch (res)
+                {
+                    case 0:
+                        return (user->set_native(buf)) ? STATUS_OK : STATUS_NO_MEM;
+                    case ERANGE:
+                        break;
+                    case EMFILE:
+                    case ENFILE:
+                    case ENXIO:
+                    case ENOTTY:
+                        return STATUS_IO_ERROR;
+                    case ENOENT:
+                        return STATUS_NOT_FOUND;
+                    case ENOMEM:
+                        return STATUS_NO_MEM;
+                    default:
+                        return STATUS_UNKNOWN_ERR;
+                }
+
+                // Re-allocate data
+                capacity      <<= 1;
+                char *new_buf   = reinterpret_cast<char *>(realloc(buf, capacity));
+                if (new_buf == NULL)
+                    return STATUS_NO_MEM;
+                buf             = new_buf;
+            }
+        }
+
         status_t get_system_temporary_dir(LSPString *path)
         {
             if (path == NULL)
