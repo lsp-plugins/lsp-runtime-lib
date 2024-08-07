@@ -518,7 +518,40 @@ namespace lsp
 
         status_t get_user_login(LSPString *user)
         {
-            return STATUS_NOT_IMPLEMENTED;
+            size_t capacity     = 0x40;
+            WCHAR *buf          = reinterpret_cast<WCHAR *>(malloc(capacity * sizeof(WCHAR)));
+            if (buf == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally {
+                free(buf);
+            };
+
+            while (true)
+            {
+                DWORD buf_size = capacity;
+                if (GetUserNameW(buf, &buf_size))
+                {
+                    return (user->set_utf16(buf)) ? STATUS_OK : STATUS_NO_MEM;
+                }
+
+                DWORD error = GetLastError();
+                switch (error)
+                {
+                    case ERROR_INSUFFICIENT_BUFFER:
+                        break;
+                    case ERROR_NOT_ENOUGH_MEMORY:
+                        return STATUS_NO_MEM;
+                    default:
+                        return STATUS_UNKNOWN_ERR;
+                }
+
+                // Re-allocate data
+                capacity        = lsp_max(capacity << 1, buf_size + 1);
+                WCHAR *new_buf  = reinterpret_cast<WCHAR *>(realloc(buf, capacity * sizeof(WCHAR)));
+                if (new_buf == NULL)
+                    return STATUS_NO_MEM;
+                buf             = new_buf;
+            }
         }
 #else
         status_t get_user_login(LSPString *user)
