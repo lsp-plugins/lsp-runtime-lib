@@ -434,16 +434,21 @@ namespace lsp
         status_t sleep_msec(size_t delay)
         {
             if (delay <= 0)
-                return STATUS_OK;;
+                return STATUS_OK;
 
-            struct timespec req, rem;
-            req.tv_nsec = (delay % 1000) * 1000000;
-            req.tv_sec  = delay / 1000;
-            rem.tv_nsec = 0;
-            rem.tv_sec  = 0;
+            time_millis_t ctime = get_time_millis();
+            const time_millis_t dtime = ctime + delay;
 
-            while ((req.tv_nsec > 0) || (req.tv_sec > 0))
+            while (ctime < dtime)
             {
+                struct timespec req, rem;
+                size_t delta    = dtime - ctime;
+
+                req.tv_nsec     = (delta % 1000) * 1000000;
+                req.tv_sec      = delta / 1000;
+                rem.tv_nsec     = 0;
+                rem.tv_sec      = 0;
+
                 // Perform nanosleep for the specific period of time.
                 // If function succeeded and waited the whole desired period
                 // of time, it should return 0.
@@ -460,6 +465,9 @@ namespace lsp
                     default:
                         return STATUS_UNKNOWN_ERR;
                 }
+
+                // Update current time
+                ctime           = get_time_millis();
             }
 
             return STATUS_OK;
