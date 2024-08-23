@@ -1374,6 +1374,120 @@ namespace lsp
         return -1;
     }
 
+    ssize_t LSPString::index_of_nocase(ssize_t start, const LSPString *str) const
+    {
+        XSAFE_TRANS(start, nLength, -1);
+        if (str->nLength <= 0)
+            return start;
+
+        ssize_t last = nLength - str->nLength;
+        while (start <= last)
+        {
+            if (xcasecmp(&pData[start], str->pData, str->nLength) == 0)
+                return start;
+            start ++;
+        }
+        return -1;
+    }
+
+    ssize_t LSPString::index_of_nocase(const LSPString *str) const
+    {
+        if (str->nLength <= 0)
+            return 0;
+
+        ssize_t start = 0, last = nLength - str->nLength;
+        while (start <= last)
+        {
+            if (xcasecmp(&pData[start], str->pData, str->nLength) == 0)
+                return start;
+            start ++;
+        }
+        return -1;
+    }
+
+    ssize_t LSPString::index_of_nocase(ssize_t start, lsp_wchar_t ch) const
+    {
+        XSAFE_TRANS(start, nLength, -1);
+
+        ssize_t length = nLength;
+        ch = lsp::to_lower(ch);
+        while (start < length)
+        {
+            if (lsp::to_lower(pData[start]) == ch)
+                return start;
+            start ++;
+        }
+
+        return -1;
+    }
+
+    ssize_t LSPString::index_of_nocase(lsp_wchar_t ch) const
+    {
+        ch = lsp::to_lower(ch);
+        for (size_t start = 0; start < nLength; ++start)
+        {
+            if (lsp::to_lower(pData[start]) == ch)
+                return start;
+        }
+        return -1;
+    }
+
+    ssize_t LSPString::rindex_of_nocase(ssize_t start, const LSPString *str) const
+    {
+        if (start > ssize_t(nLength))
+            return -1;
+
+        start -= str->nLength;
+        while (start >= 0)
+        {
+            if (xcasecmp(&pData[start], str->pData, str->nLength) == 0)
+                return start;
+            start --;
+        }
+        return -1;
+    }
+
+    ssize_t LSPString::rindex_of_nocase(const LSPString *str) const
+    {
+        if (str->nLength <= 0)
+            return 0;
+
+        ssize_t start = nLength - str->nLength;
+        while (start >= 0)
+        {
+            if (xcasecmp(&pData[start], str->pData, str->nLength) == 0)
+                return start;
+            start --;
+        }
+        return -1;
+    }
+
+    ssize_t LSPString::rindex_of_nocase(ssize_t start, lsp_wchar_t ch) const
+    {
+        XSAFE_ITRANS(start, nLength, -1);
+
+        ch = lsp::to_lower(ch);
+        while (start >= 0)
+        {
+            if (lsp::to_lower(pData[start]) == ch)
+                return start;
+            start --;
+        }
+
+        return -1;
+    }
+
+    ssize_t LSPString::rindex_of_nocase(lsp_wchar_t ch) const
+    {
+        ch = lsp::to_lower(ch);
+        for (ssize_t start=nLength-1; start >= 0; --start)
+        {
+            if (lsp::to_lower(pData[start]) == ch)
+                return start;
+        }
+        return -1;
+    }
+
     LSPString *LSPString::substring(ssize_t first) const
     {
         XSAFE_TRANS(first, nLength, NULL);

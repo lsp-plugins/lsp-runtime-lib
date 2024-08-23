@@ -5,6 +5,7 @@
 === 1.0.24 ===
 * Added system::get_user_login() function.
 * Fixed io::Path::canonicalize() crashes on several input data.
+* Added index_of_nocase and rindex_of_nocase methods for LSPString.
 
 === 1.0.23 ===
 * Implemented IInSequence::sink() method for writing all content to another IOutSequence.
