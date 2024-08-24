@@ -7,6 +7,9 @@
 * Fixed io::Path::canonicalize() crashes on several input data.
 * Added index_of_nocase and rindex_of_nocase methods for LSPString.
 * Added io::OutMemoryStream::position() method implementation.
+* Another implementation of ipc::SharedMutex for POSIX systems that allows to
+  avoid dead locks when the application that locked the mutex has been
+  terminated.
 
 === 1.0.23 ===
 * Implemented IInSequence::sink() method for writing all content to another IOutSequence.
