@@ -35,7 +35,9 @@ namespace lsp
 {
     namespace ipc
     {
+    #ifndef PLATFORM_WINDOWS
         struct shared_mutex_t;
+    #endif /* PLATFORM_WINDOWS */
 
         /**
          * Named global non-recursive shared mutex for inter-process communication.
@@ -68,6 +70,11 @@ namespace lsp
 
             private:
                 status_t            open_internal(const LSPString *name);
+
+            #ifndef PLATFORM_WINDOWS
+                static status_t     lock_memory(int fd, shared_mutex_t *mutex);
+                static status_t     unlock_memory(int fd, shared_mutex_t *mutex);
+            #endif /* PLATFORM_WINDOWS */
 
             public:
                 /**

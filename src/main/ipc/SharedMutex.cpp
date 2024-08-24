@@ -19,8 +19,10 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/common/atomic.h>
 #include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/ipc/SharedMutex.h>
+#include <lsp-plug.in/ipc/Thread.h>
 
 #ifdef PLATFORM_WINDOWS
     #include <windows.h>
@@ -42,11 +44,15 @@ namespace lsp
     {
         static constexpr uint64_t SHMUTEX_INIT_FLAG     = __IF_LEBE(0x786574756D5F6873ULL, 0x73685F6D75746578ULL); // "sh_mutex"
 
+    #ifndef PLATFORM_WINDOWS
         typedef struct shared_mutex_t
         {
-            uint64_t            init_flag;
-            pthread_mutex_t     mutex;
+            uint64_t            init_flag;      // Should contain SHMUTEX_INIT_FLAG if mutex has been initialized
+            uatomic_t           spin_lock;      // Failover if system does not support flock() on shared memory
+            uatomic_t           padding;        // Padding, not used, should be zero
+            pthread_mutex_t     mutex;          // Shared mutex data
         } shared_mutex_t;
+    #endif /* PLATFORM_WINDOWS */
 
         SharedMutex::SharedMutex()
         {
@@ -101,6 +107,67 @@ namespace lsp
         #endif /* PLATFORM_WINDOWS */
         }
 
+    #ifndef PLATFORM_WINDOWS
+        status_t SharedMutex::lock_memory(int fd, shared_mutex_t *mutex)
+        {
+            while (true)
+            {
+                if (flock(fd, LOCK_EX) == 0)
+                    return STATUS_OK;
+
+                const int error = errno;
+                if (error == EINTR)
+                    continue;
+                if (error == ENOTSUP)
+                    break;
+
+                switch (error)
+                {
+                    case EBADF: return STATUS_IO_ERROR;
+                    case EINTR: break;
+                    case EINVAL: return STATUS_INVALID_VALUE;
+                    case ENOLCK: return STATUS_NO_MEM;
+                    default: return STATUS_IO_ERROR;
+                }
+            }
+
+            // Try to acquire spin-lock instead of flock
+            while (atomic_swap(&mutex->spin_lock, 1) != 0)
+                ipc::Thread::yield();
+
+            return STATUS_OK;
+        }
+
+        status_t SharedMutex::unlock_memory(int fd, shared_mutex_t *mutex)
+        {
+            while (true)
+            {
+                if (flock(fd, LOCK_UN) == 0)
+                    return STATUS_OK;
+
+                const int error = errno;
+                if (error == EINTR)
+                    continue;
+                if (error == ENOTSUP)
+                    break;
+
+                switch (error)
+                {
+                    case EBADF: return STATUS_IO_ERROR;
+                    case EINTR: break;
+                    case EINVAL: return STATUS_INVALID_VALUE;
+                    case ENOLCK: return STATUS_NO_MEM;
+                    default: return STATUS_IO_ERROR;
+                }
+            }
+
+            // Release spin lock
+            atomic_swap(&mutex->spin_lock, 1);
+
+            return STATUS_OK;
+        }
+    #endif /* PLATFORM_WINDOWS */
+
         status_t SharedMutex::open_internal(const LSPString *name)
         {
         #ifdef PLATFORM_WINDOWS
@@ -147,27 +214,6 @@ namespace lsp
             // Perform mutex initialization
             shared_mutex_t *shmutex = NULL;
             {
-                // Lock the shared memory segment to initialize mutex atomically
-                while (flock(fd, LOCK_EX) != 0)
-                {
-                    error = errno;
-                    switch (error)
-                    {
-                        case EBADF: return STATUS_IO_ERROR;
-                        case EINTR: break;
-                        case EINVAL: return STATUS_INVALID_VALUE;
-                        case ENOLCK: return STATUS_NO_MEM;
-                        default: return STATUS_IO_ERROR;
-                    }
-                }
-
-                // Unlock file descriptor on exit out of the scope
-                bool need_unlock = true;
-                lsp_finally {
-                    if (need_unlock)
-                        flock(fd, LOCK_UN);
-                };
-
                 // Reserve memory for the mutex
                 if (ftruncate(fd, sizeof(shared_mutex_t)) != 0)
                 {
@@ -215,6 +261,18 @@ namespace lsp
                 shmutex     = static_cast<shared_mutex_t *>(addr);
                 if (shmutex->init_flag != SHMUTEX_INIT_FLAG)
                 {
+                    // Lock the shared memory segment to initialize mutex atomically
+                    status_t lock_res = lock_memory(fd, shmutex);
+                    if (lock_res != STATUS_OK)
+                        return lock_res;
+
+                    // Unlock file descriptor on exit out of the scope
+                    bool need_unlock = true;
+                    lsp_finally {
+                        if (need_unlock)
+                            unlock_memory(fd, shmutex);
+                    };
+
                     // Mutex is not initialized, initialize it
                     pthread_mutexattr_t attr;
                     if ((error = pthread_mutexattr_init(&attr)) != 0)
@@ -236,25 +294,16 @@ namespace lsp
 
                     // Mark the mutex being initialized
                     shmutex->init_flag  = SHMUTEX_INIT_FLAG;
+
+                    // Unlock memory
+                    need_unlock     = false;
+                    lock_res        = unlock_memory(fd, shmutex);
+                    if (lock_res != STATUS_OK)
+                        return lock_res;
                 }
 
-                // Unlock the file
-                while (flock(fd, LOCK_UN) != 0)
-                {
-                    error = errno;
-                    switch (error)
-                    {
-                        case EBADF: return STATUS_IO_ERROR;
-                        case EINTR: break;
-                        case EINVAL: return STATUS_INVALID_VALUE;
-                        case ENOLCK: return STATUS_NO_MEM;
-                        default: return STATUS_IO_ERROR;
-                    }
-                }
-
-                // Do not unlock the file again
+                // Do not unmap the memory
                 addr = NULL;
-                need_unlock = false;
             }
 
             // Now we have shared mutex and file descriptor, store them
