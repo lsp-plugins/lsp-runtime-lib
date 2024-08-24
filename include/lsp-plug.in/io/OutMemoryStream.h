@@ -102,7 +102,8 @@ namespace lsp
                  */
                 status_t        reserve(size_t amount);
 
-            public:
+            public: // io::IOutStream
+                virtual wssize_t    position() override;
                 virtual ssize_t     write(const void *buf, size_t count) override;
                 virtual ssize_t     writeb(int v) override;
                 virtual status_t    write_byte(int v) override;
