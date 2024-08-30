@@ -532,33 +532,22 @@ namespace lsp
         // Fetch system character set if it is not set
         if (charset == NULL)
         {
-            // Save current locale
+            // Assume default locale being UTF-8
+            charset = "UTF-8";
+
+            // Get system locale
             char *current = setlocale(LC_CTYPE, NULL);
             if (current == NULL)
                 return iconv_t(-1);
-            size_t len = strlen(current) + 1;
-            char *psaved = static_cast<char *>(alloca(len));
-            ::memcpy(psaved, current, len);
-            charset = psaved;
 
-            // Get system locale
-            current = setlocale(LC_CTYPE, "");
-            if (current != NULL)
-                current = strchr(current, '.');
-
-            // Scan for character set
+            // Scan for character set presence
+            current = strchr(current, '.');
             if (current != NULL)
             {
-                len = strlen(current);
-                psaved = static_cast<char *>(alloca(len));
-                ::memcpy(psaved, &current[1], len);
+                ++current;
+                if (strlen(current) > 0)
+                    charset = current;
             }
-
-            // Restore saved locale
-            setlocale(LC_CTYPE, charset);
-
-            // Update locale
-            charset  = (current != NULL) ? psaved : "UTF-8";
         }
 
         // Open conversion
@@ -578,33 +567,22 @@ namespace lsp
         // Fetch system charset if it is not set
         if (charset == NULL)
         {
-            // Save current locale
+            // Assume default locale being UTF-8
+            charset = "UTF-8";
+
+            // Get system locale
             char *current = setlocale(LC_CTYPE, NULL);
             if (current == NULL)
                 return iconv_t(-1);
-            size_t len = strlen(current) + 1;
-            char *psaved = static_cast<char *>(alloca(len));
-            ::memcpy(psaved, current, len);
-            charset = psaved;
 
-            // Get system locale
-            current = setlocale(LC_CTYPE, "");
-            if (current != NULL)
-                current = strchr(current, '.');
-
-            // Scan for character set
+            // Scan for character set presence
+            current = strchr(current, '.');
             if (current != NULL)
             {
-                len = strlen(current);
-                psaved = static_cast<char *>(alloca(len));
-                ::memcpy(psaved, &current[1], len);
+                ++current;
+                if (strlen(current) > 0)
+                    charset = current;
             }
-
-            // Restore saved locale
-            setlocale(LC_CTYPE, charset);
-
-            // Update charset
-            charset  = (current != NULL) ? psaved : "UTF-8";
         }
 
         // Open conversion
