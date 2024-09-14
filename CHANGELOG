@@ -10,6 +10,7 @@
 * Another implementation of ipc::SharedMutex for POSIX systems that allows to
   avoid dead locks when the application that locked the mutex has been
   terminated.
+* Updated build scripts.
 
 === 1.0.23 ===
 * Implemented IInSequence::sink() method for writing all content to another IOutSequence.
