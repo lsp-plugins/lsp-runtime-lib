@@ -35,7 +35,7 @@
     #include <winnetwk.h>
 #endif /* PLATFORM_WINDOWS */
 
-#if defined PLATFORM_POSIX
+#ifdef PLATFORM_POSIX
     #include <errno.h>
     #include <pwd.h>
     #include <sys/stat.h>
@@ -45,7 +45,7 @@
     #include <unistd.h>
 #endif /* PLATFORM_POSIX */
 
-#if defined PLATFORM_LINUX
+#ifdef PLATFORM_LINUX
     #include <mntent.h>
 #endif /* PLATFORM_LINUX */
 
@@ -54,6 +54,12 @@
     #include <sys/param.h>
     #include <sys/ucred.h>
 #endif /* PLATFORM_BSD */
+
+#if defined PLATFORM_HAIKU
+    #include <posix/stdlib.h>
+    #include <sys/mount.h>
+    #include <sys/param.h>
+#endif /* PLATFORM_HAIKU */
 
 namespace lsp
 {
@@ -64,7 +70,7 @@ namespace lsp
             if (name == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
-#ifdef PLATFORM_WINDOWS
+		#ifdef PLATFORM_WINDOWS
             const lsp_utf16_t *nname = name->get_utf16();
             if (nname == NULL)
                 return STATUS_NO_MEM;
@@ -92,16 +98,16 @@ namespace lsp
             bool res = dst->set_utf16(buf, bufsize);
             ::free(buf);
             return (res) ? STATUS_OK : STATUS_NO_MEM;
-#else
+		#else
             const char *nname = name->get_native();
             if (nname == NULL)
                 return STATUS_NO_MEM;
 
-#ifdef _GNU_SOURCE
+		#if defined(_GNU_SOURCE) && !defined(PLATFORM_HAIKU)
             char *var = secure_getenv(nname);
-#else
+		#else
             char *var = getenv(nname);
-#endif
+		#endif
             if (var == NULL)
                 return STATUS_NOT_FOUND;
             if (dst != NULL)
@@ -125,7 +131,7 @@ namespace lsp
 
         status_t set_env_var(const LSPString *name, const LSPString *value)
         {
-#ifdef PLATFORM_WINDOWS
+        #ifdef PLATFORM_WINDOWS
             const lsp_utf16_t *nname = name->get_utf16();
             if (nname == NULL)
                 return STATUS_NO_MEM;
@@ -144,7 +150,7 @@ namespace lsp
                     return STATUS_OK;
             }
             return STATUS_UNKNOWN_ERR;
-#else
+        #else
             const char *nname = name->get_native();
             if (nname == NULL)
                 return STATUS_NO_MEM;
@@ -169,7 +175,7 @@ namespace lsp
                 default: break;
             }
             return STATUS_UNKNOWN_ERR;
-#endif /* PLATFORM_WINDOWS */
+        #endif /* PLATFORM_WINDOWS */
         }
 
         status_t set_env_var(const char *name, const char *value)
@@ -687,7 +693,7 @@ namespace lsp
 
         status_t follow_url(const LSPString *url)
         {
-        #ifdef PLATFORM_WINDOWS
+        #if defined(PLATFORM_WINDOWS)
             ::ShellExecuteW(
                 NULL,               // Not associated with window
                 L"open",            // Open hyperlink
@@ -696,6 +702,17 @@ namespace lsp
                 NULL,               // Directory
                 SW_SHOWNORMAL       // Show command
             );
+        #elif defined(PLATFORM_HAIKU)
+            status_t res;
+            ipc::Process p;
+
+            if ((res = p.set_command("open")) != STATUS_OK)
+                return STATUS_OK;
+            if ((res = p.add_arg(url)) != STATUS_OK)
+                return STATUS_OK;
+            if ((res = p.launch()) != STATUS_OK)
+                return STATUS_OK;
+            p.wait();
         #else
             status_t res;
             ipc::Process p;

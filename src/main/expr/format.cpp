@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 25 февр. 2023 г.
@@ -27,8 +27,10 @@
 #include <lsp-plug.in/stdlib/math.h>
 #include <lsp-plug.in/stdlib/stdio.h>
 #include <lsp-plug.in/common/debug.h>
-#include <ctype.h>
 
+#ifdef PLATFORM_WINDOWS
+    #include <ctype.h>
+#endif /* PLATFORM_WINDOWS */
 
 namespace lsp
 {

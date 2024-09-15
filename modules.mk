@@ -47,6 +47,11 @@ LIBDL_NAME                 := libdl
 LIBDL_TYPE                 := opt
 LIBDL_LDFLAGS              := -ldl
 
+LIBGNU_VERSION             := system
+LIBGNU_NAME                := libgnu
+LIBGNU_TYPE                := opt
+LIBGNU_LDFLAGS             := -lgnu
+
 LIBICONV_VERSION           := system
 LIBICONV_NAME              := libiconv
 LIBICONV_TYPE              := opt
@@ -80,5 +85,3 @@ LIBMPR_VERSION             := system
 LIBMPR_NAME                := libmpr
 LIBMPR_TYPE                := opt
 LIBMPR_LDFLAGS             := -lmpr
-
-
