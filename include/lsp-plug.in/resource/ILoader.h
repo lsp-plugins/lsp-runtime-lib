@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 23 окт. 2020 г.
@@ -38,16 +38,17 @@ namespace lsp
          */
         class ILoader
         {
-            private:
-                ILoader & operator      = (const ILoader &);
-                ILoader(const ILoader &);
-
             protected:
                 status_t            nError;
 
             public:
                 explicit ILoader();
+                ILoader(const ILoader &) = delete;
+                ILoader(ILoader &&) = delete;
                 virtual ~ILoader();
+
+                ILoader & operator = (const ILoader &) = delete;
+                ILoader & operator = (ILoader &&) = delete;
 
             protected:
                 inline status_t             set_error(status_t error)   { return nError = error;        }
@@ -55,22 +56,42 @@ namespace lsp
             public:
                 inline status_t             last_error() const          { return nError;                }
 
+                /**
+                 * Read contents of the resource associated with the name. Should be thread-safe to produce streams as it
+                 * can be shared across different modules in different threads.
+                 *
+                 * @param name name of resource
+                 * @return pointer to opened stream or NULL and error code is set
+                 */
                 virtual io::IInStream      *read_stream(const char *name);
                 virtual io::IInStream      *read_stream(const LSPString *name);
 
                 /**
-                 * This is the main method to be overloaded
+                 * Read contents of the resource associated with the name. Should be thread-safe to produce streams as it
+                 * can be shared across different modules in different threads.
+                 *
+                 * @note This is the main method to be overloaded.
+                 *
                  * @param name name of resource
                  * @return pointer to opened stream or NULL and error code is set
                  */
                 virtual io::IInStream      *read_stream(const io::Path *name);
 
+                /**
+                 * Read contents of the resource associated with the name. Should be thread-safe to produce streams as it
+                 * can be shared across different modules in different threads.
+                 *
+                 * @param name name of resource
+                 * @return pointer to opened stream or NULL and error code is set
+                 */
                 virtual io::IInSequence    *read_sequence(const char *name, const char *charset = NULL);
                 virtual io::IInSequence    *read_sequence(const LSPString *name, const char *charset = NULL);
                 virtual io::IInSequence    *read_sequence(const io::Path *name, const char *charset = NULL);
 
                 /**
-                 * Enumerate resources
+                 * Enumerate resources. Should be thread-safe as it can be called from different threads sharing the
+                 * same resource.
+                 *
                  * @param path the location of resources within resource tree
                  * @param list pointer to store list of resources. Resources should be
                  *        free()'d by caller after use
@@ -80,8 +101,8 @@ namespace lsp
                 virtual ssize_t             enumerate(const LSPString *path, resource_t **list);
                 virtual ssize_t             enumerate(const io::Path *path, resource_t **list);
         };
-    }
-}
+    } /* namespace resource */
+} /* namespace lsp */
 
 
 #endif /* LSP_PLUG_IN_IO_ILOADER_H_ */

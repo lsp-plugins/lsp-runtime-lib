@@ -31,16 +31,14 @@
 
 #include <lsp-plug.in/runtime/system.h>
 
-#if defined(PLATFORM_WINDOWS)
-    // Nothing
-#else
-    #include <semaphore.h>
-#endif
-
 namespace lsp
 {
     namespace ipc
     {
+    #ifndef PLATFORM_WINDOWS
+        struct shared_mutex_t;
+    #endif /* PLATFORM_WINDOWS */
+
         /**
          * Named global non-recursive shared mutex for inter-process communication.
          * The object tracks it's lock state and automatically unlocks on close(), so it's implementation
@@ -55,7 +53,8 @@ namespace lsp
 
                 HANDLE              hLock;
         #else
-                sem_t              *hLock;
+                int                 hFD;
+                shared_mutex_t     *hLock;
         #endif /* PLATFORM_WINDOWS */
 
                 bool                bLocked;
@@ -71,6 +70,11 @@ namespace lsp
 
             private:
                 status_t            open_internal(const LSPString *name);
+
+            #ifndef PLATFORM_WINDOWS
+                static status_t     lock_memory(int fd, shared_mutex_t *mutex);
+                static status_t     unlock_memory(int fd, shared_mutex_t *mutex);
+            #endif /* PLATFORM_WINDOWS */
 
             public:
                 /**

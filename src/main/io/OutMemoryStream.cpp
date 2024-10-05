@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 19 авг. 2019 г.
@@ -49,6 +49,11 @@ namespace lsp
         OutMemoryStream::~OutMemoryStream()
         {
             drop();
+        }
+
+        wssize_t OutMemoryStream::position()
+        {
+            return nPosition;
         }
 
         ssize_t OutMemoryStream::write(const void *buf, size_t count)

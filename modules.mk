@@ -19,19 +19,19 @@
 #
 
 # Variables that describe dependencies
-LSP_COMMON_LIB_VERSION     := 1.0.37
+LSP_COMMON_LIB_VERSION     := 1.0.38
 LSP_COMMON_LIB_NAME        := lsp-common-lib
 LSP_COMMON_LIB_TYPE        := src
 LSP_COMMON_LIB_URL_RO      := https://github.com/lsp-plugins/$(LSP_COMMON_LIB_NAME).git
 LSP_COMMON_LIB_URL_RW      := git@github.com:lsp-plugins/$(LSP_COMMON_LIB_NAME).git
 
-LSP_LLTL_LIB_VERSION       := 1.0.20
+LSP_LLTL_LIB_VERSION       := 1.0.21
 LSP_LLTL_LIB_NAME          := lsp-lltl-lib
 LSP_LLTL_LIB_TYPE          := src
 LSP_LLTL_LIB_URL_RO        := https://github.com/lsp-plugins/$(LSP_LLTL_LIB_NAME).git
 LSP_LLTL_LIB_URL_RW        := git@github.com:lsp-plugins/$(LSP_LLTL_LIB_NAME).git
 
-LSP_TEST_FW_VERSION        := 1.0.26
+LSP_TEST_FW_VERSION        := 1.0.27
 LSP_TEST_FW_NAME           := lsp-test-fw
 LSP_TEST_FW_TYPE           := src
 LSP_TEST_FW_URL_RO         := https://github.com/lsp-plugins/$(LSP_TEST_FW_NAME).git
@@ -46,6 +46,11 @@ LIBDL_VERSION              := system
 LIBDL_NAME                 := libdl
 LIBDL_TYPE                 := opt
 LIBDL_LDFLAGS              := -ldl
+
+LIBGNU_VERSION             := system
+LIBGNU_NAME                := libgnu
+LIBGNU_TYPE                := opt
+LIBGNU_LDFLAGS             := -lgnu
 
 LIBICONV_VERSION           := system
 LIBICONV_NAME              := libiconv
@@ -80,5 +85,3 @@ LIBMPR_VERSION             := system
 LIBMPR_NAME                := libmpr
 LIBMPR_TYPE                := opt
 LIBMPR_LDFLAGS             := -lmpr
-
-

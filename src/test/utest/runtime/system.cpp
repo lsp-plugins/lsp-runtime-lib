@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2022 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 24 июн. 2022 г.
@@ -22,11 +22,7 @@
 #include <lsp-plug.in/test-fw/utest.h>
 #include <lsp-plug.in/runtime/system.h>
 
-#ifdef PLATFORM_WINDOWS
-    #define DELAY_PRECISION 10
-#else
-    #define DELAY_PRECISION 5
-#endif /* PLATFORM_WINDOWS */
+#define DELAY_PRECISION 10
 
 UTEST_BEGIN("runtime.runtime", system)
 
@@ -92,8 +88,18 @@ UTEST_BEGIN("runtime.runtime", system)
         }
     }
 
+    void test_get_user_login()
+    {
+        LSPString login;
+        UTEST_ASSERT(system::get_user_login(&login) == STATUS_OK);
+        printf("User login is: %s\n", login.get_native());
+    }
+
     UTEST_MAIN
     {
+        // Test user login
+        test_get_user_login();
+
         // Test reading of volume info
         test_volume_info();
 

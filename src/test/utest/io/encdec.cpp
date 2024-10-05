@@ -22,6 +22,7 @@
 
 #include <lsp-plug.in/test-fw/utest.h>
 #include <lsp-plug.in/common/status.h>
+#include <lsp-plug.in/stdlib/locale.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/io/NativeFile.h>
 #include <lsp-plug.in/io/CharsetEncoder.h>

@@ -490,6 +490,20 @@ namespace lsp
             ssize_t rindex_of(lsp_wchar_t ch) const;
             inline ssize_t rindex_of(char ch) const { return rindex_of(lsp_wchar_t(uint8_t(ch))); };
 
+            ssize_t index_of_nocase(ssize_t start, const LSPString *str) const;
+            ssize_t index_of_nocase(const LSPString *str) const;
+            ssize_t rindex_of_nocase(ssize_t start, const LSPString *str) const;
+            ssize_t rindex_of_nocase(const LSPString *str) const;
+
+            ssize_t index_of_nocase(ssize_t start, lsp_wchar_t ch) const;
+            inline ssize_t index_of_nocase(ssize_t start, char ch) const { return index_of_nocase(start, lsp_wchar_t(uint8_t(ch))); };
+            ssize_t index_of_nocase(lsp_wchar_t ch) const;
+            inline ssize_t index_of_nocase(char ch) const { return index_of_nocase(lsp_wchar_t(uint8_t(ch))); };
+            ssize_t rindex_of_nocase(ssize_t start, lsp_wchar_t ch) const;
+            inline ssize_t rindex_of_nocase(ssize_t start, char ch) const { return rindex_of_nocase(start, lsp_wchar_t(uint8_t(ch))); };
+            ssize_t rindex_of_nocase(lsp_wchar_t ch) const;
+            inline ssize_t rindex_of_nocase(char ch) const { return rindex_of_nocase(lsp_wchar_t(uint8_t(ch))); };
+
             /** Produce new object as substring of a string
              *
              * @param start start character

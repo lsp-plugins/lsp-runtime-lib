@@ -35,15 +35,17 @@
     #include <winnetwk.h>
 #endif /* PLATFORM_WINDOWS */
 
-#if defined PLATFORM_POSIX
+#ifdef PLATFORM_POSIX
     #include <errno.h>
+    #include <pwd.h>
     #include <sys/stat.h>
     #include <sys/time.h>
+    #include <sys/types.h>
     #include <time.h>
     #include <unistd.h>
 #endif /* PLATFORM_POSIX */
 
-#if defined PLATFORM_LINUX
+#ifdef PLATFORM_LINUX
     #include <mntent.h>
 #endif /* PLATFORM_LINUX */
 
@@ -52,6 +54,12 @@
     #include <sys/param.h>
     #include <sys/ucred.h>
 #endif /* PLATFORM_BSD */
+
+#if defined PLATFORM_HAIKU
+    #include <posix/stdlib.h>
+    #include <sys/mount.h>
+    #include <sys/param.h>
+#endif /* PLATFORM_HAIKU */
 
 namespace lsp
 {
@@ -62,7 +70,7 @@ namespace lsp
             if (name == NULL)
                 return STATUS_BAD_ARGUMENTS;
 
-#ifdef PLATFORM_WINDOWS
+		#ifdef PLATFORM_WINDOWS
             const lsp_utf16_t *nname = name->get_utf16();
             if (nname == NULL)
                 return STATUS_NO_MEM;
@@ -90,16 +98,16 @@ namespace lsp
             bool res = dst->set_utf16(buf, bufsize);
             ::free(buf);
             return (res) ? STATUS_OK : STATUS_NO_MEM;
-#else
+		#else
             const char *nname = name->get_native();
             if (nname == NULL)
                 return STATUS_NO_MEM;
 
-#ifdef _GNU_SOURCE
+		#if defined(_GNU_SOURCE) && !defined(PLATFORM_HAIKU)
             char *var = secure_getenv(nname);
-#else
+		#else
             char *var = getenv(nname);
-#endif
+		#endif
             if (var == NULL)
                 return STATUS_NOT_FOUND;
             if (dst != NULL)
@@ -123,7 +131,7 @@ namespace lsp
 
         status_t set_env_var(const LSPString *name, const LSPString *value)
         {
-#ifdef PLATFORM_WINDOWS
+        #ifdef PLATFORM_WINDOWS
             const lsp_utf16_t *nname = name->get_utf16();
             if (nname == NULL)
                 return STATUS_NO_MEM;
@@ -142,7 +150,7 @@ namespace lsp
                     return STATUS_OK;
             }
             return STATUS_UNKNOWN_ERR;
-#else
+        #else
             const char *nname = name->get_native();
             if (nname == NULL)
                 return STATUS_NO_MEM;
@@ -167,7 +175,7 @@ namespace lsp
                 default: break;
             }
             return STATUS_UNKNOWN_ERR;
-#endif /* PLATFORM_WINDOWS */
+        #endif /* PLATFORM_WINDOWS */
         }
 
         status_t set_env_var(const char *name, const char *value)
@@ -434,16 +442,21 @@ namespace lsp
         status_t sleep_msec(size_t delay)
         {
             if (delay <= 0)
-                return STATUS_OK;;
+                return STATUS_OK;
 
-            struct timespec req, rem;
-            req.tv_nsec = (delay % 1000) * 1000000;
-            req.tv_sec  = delay / 1000;
-            rem.tv_nsec = 0;
-            rem.tv_sec  = 0;
+            time_millis_t ctime = get_time_millis();
+            const time_millis_t dtime = ctime + delay;
 
-            while ((req.tv_nsec > 0) || (req.tv_sec > 0))
+            while (ctime < dtime)
             {
+                struct timespec req, rem;
+                size_t delta    = dtime - ctime;
+
+                req.tv_nsec     = (delta % 1000) * 1000000;
+                req.tv_sec      = delta / 1000;
+                rem.tv_nsec     = 0;
+                rem.tv_sec      = 0;
+
                 // Perform nanosleep for the specific period of time.
                 // If function succeeded and waited the whole desired period
                 // of time, it should return 0.
@@ -460,6 +473,9 @@ namespace lsp
                     default:
                         return STATUS_UNKNOWN_ERR;
                 }
+
+                // Update current time
+                ctime           = get_time_millis();
             }
 
             return STATUS_OK;
@@ -508,7 +524,130 @@ namespace lsp
             return (res == STATUS_OK) ? path->set(&tmp) : res;
         }
 
+        status_t get_user_login(LSPString *user)
+        {
+            size_t capacity     = 0x40;
+            WCHAR *buf          = reinterpret_cast<WCHAR *>(malloc(capacity * sizeof(WCHAR)));
+            if (buf == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally {
+                free(buf);
+            };
+
+            while (true)
+            {
+                DWORD buf_size = capacity;
+                if (GetUserNameW(buf, &buf_size))
+                {
+                    return (user->set_utf16(buf)) ? STATUS_OK : STATUS_NO_MEM;
+                }
+
+                DWORD error = GetLastError();
+                switch (error)
+                {
+                    case ERROR_INSUFFICIENT_BUFFER:
+                        break;
+                    case ERROR_NOT_ENOUGH_MEMORY:
+                        return STATUS_NO_MEM;
+                    default:
+                        return STATUS_UNKNOWN_ERR;
+                }
+
+                // Re-allocate data
+                capacity        = lsp_max(capacity << 1, buf_size + 1);
+                WCHAR *new_buf  = reinterpret_cast<WCHAR *>(realloc(buf, capacity * sizeof(WCHAR)));
+                if (new_buf == NULL)
+                    return STATUS_NO_MEM;
+                buf             = new_buf;
+            }
+        }
 #else
+        status_t get_user_login(LSPString *user)
+        {
+            size_t capacity = 0x400;
+            char *buf       = reinterpret_cast<char *>(malloc(capacity));
+            if (buf == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally {
+                free(buf);
+            };
+
+            int error;
+            struct passwd pwd, *rpwd = NULL;
+
+            while (true)
+            {
+                error = getpwuid_r(geteuid(), &pwd, buf, capacity, &rpwd);
+                if (rpwd != NULL)
+                    return (user->set_native(rpwd->pw_name)) ? STATUS_OK : STATUS_NO_MEM;
+
+                switch (error)
+                {
+                    case 0:
+                    case ENOENT:
+                    case ESRCH:
+                    case EBADF:
+                    case EPERM:
+                        return STATUS_NOT_FOUND;
+
+                    case EINTR:
+                    case EIO:
+                    case EMFILE:
+                    case ENFILE:
+                        return STATUS_IO_ERROR;
+
+                    case ENOMEM:
+                        return STATUS_NO_MEM;
+
+                    case ERANGE:
+                        break;
+
+                    default:
+                        return STATUS_UNKNOWN_ERR;
+                }
+
+                // Re-allocate data
+                capacity      <<= 1;
+                if (capacity > 0x10000)
+                    break;
+
+                char *new_buf   = reinterpret_cast<char *>(realloc(buf, capacity));
+                if (new_buf == NULL)
+                    return STATUS_NO_MEM;
+                buf             = new_buf;
+            }
+
+            while (true)
+            {
+                error = getlogin_r(buf, capacity);
+                switch (error)
+                {
+                    case 0:
+                        return (user->set_native(buf)) ? STATUS_OK : STATUS_NO_MEM;
+                    case ERANGE:
+                        break;
+                    case EMFILE:
+                    case ENFILE:
+                    case ENXIO:
+                    case ENOTTY:
+                        return STATUS_IO_ERROR;
+                    case ENOENT:
+                        return STATUS_NOT_FOUND;
+                    case ENOMEM:
+                        return STATUS_NO_MEM;
+                    default:
+                        return STATUS_UNKNOWN_ERR;
+                }
+
+                // Re-allocate data
+                capacity      <<= 1;
+                char *new_buf   = reinterpret_cast<char *>(realloc(buf, capacity));
+                if (new_buf == NULL)
+                    return STATUS_NO_MEM;
+                buf             = new_buf;
+            }
+        }
+
         status_t get_system_temporary_dir(LSPString *path)
         {
             if (path == NULL)
@@ -554,7 +693,7 @@ namespace lsp
 
         status_t follow_url(const LSPString *url)
         {
-        #ifdef PLATFORM_WINDOWS
+        #if defined(PLATFORM_WINDOWS)
             ::ShellExecuteW(
                 NULL,               // Not associated with window
                 L"open",            // Open hyperlink
@@ -563,6 +702,17 @@ namespace lsp
                 NULL,               // Directory
                 SW_SHOWNORMAL       // Show command
             );
+        #elif defined(PLATFORM_HAIKU)
+            status_t res;
+            ipc::Process p;
+
+            if ((res = p.set_command("open")) != STATUS_OK)
+                return STATUS_OK;
+            if ((res = p.add_arg(url)) != STATUS_OK)
+                return STATUS_OK;
+            if ((res = p.launch()) != STATUS_OK)
+                return STATUS_OK;
+            p.wait();
         #else
             status_t res;
             ipc::Process p;

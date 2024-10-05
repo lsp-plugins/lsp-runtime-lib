@@ -1251,9 +1251,16 @@ namespace lsp
 
             if (is_absolute())
             {
-                while (*(s++) != FILE_SEPARATOR_C)
-                    /* loop */ ;
-                state               = S_SEPARATOR;
+                while (s < e)
+                {
+                    if (*(s++) == FILE_SEPARATOR_C)
+                    {
+                        state               = S_SEPARATOR;
+                        break;
+                    }
+                }
+                if (state != S_SEPARATOR)
+                    return STATUS_OK;
             }
 
             lsp_wchar_t *p          = s;
