@@ -11,6 +11,7 @@
   avoid dead locks when the application that locked the mutex has been
   terminated.
 * Updated build scripts.
+* Updated module versions in dependencies.
 
 === 1.0.23 ===
 * Implemented IInSequence::sink() method for writing all content to another IOutSequence.
