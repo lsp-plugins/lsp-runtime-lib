@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.25 ===
+
+
 === 1.0.24 ===
 * Added system::get_user_login() function.
 * Fixed io::Path::canonicalize() crashes on several input data.
