@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 15 февр. 2021 г.
@@ -365,7 +365,7 @@ namespace lsp
             switch (node->type())
             {
                 case Node::JN_NULL:     return s->write_null();
-                case Node::JN_INT:      return s->write_int(node->as_int().get());
+                case Node::JN_INT:      return s->write_int(lsp::fixed_int(node->as_int().get()));
                 case Node::JN_DOUBLE:   return s->write_double(node->as_double().get());
                 case Node::JN_BOOL:     return s->write_bool(node->as_bool().get());
                 case Node::JN_STRING:
@@ -509,5 +509,7 @@ namespace lsp
             status_t xres   = s.close();
             return (res != STATUS_OK) ? res : xres;
         }
-    }
-}
+
+    } /* namespace json */
+} /* namespace lsp */
+
