@@ -42,7 +42,8 @@ namespace lsp
     {
 
     #ifdef PLATFORM_WINDOWS
-        static inline void decode_file_type(fattr_t *attr, const WIN32_FIND_DATAW *hfi)
+        template <typename S>
+        static inline void decode_file_type(fattr_t *attr, const S *hfi)
         {
             attr->type      = fattr_t::FT_REGULAR;
             if (hfi->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
