@@ -287,7 +287,7 @@ namespace lsp
                 case JE_ARRAY_END:      return end_array();
                 case JE_PROPERTY:       return write_property(&event->sValue);
                 case JE_STRING:         return write_string(&event->sValue);
-                case JE_INTEGER:        return write_int(event->iValue);
+                case JE_INTEGER:        return write_int(lsp::fixed_int(event->iValue));
                 case JE_DOUBLE:         return write_double(event->fValue);
                 case JE_BOOL:           return write_bool(event->bValue);
                 case JE_NULL:           return write_null();
