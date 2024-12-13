@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 18 мар. 2019 г.
@@ -436,9 +436,23 @@ namespace lsp
             attr->blk_size  = sb.st_blksize;
             attr->size      = sb.st_size;
             attr->inode     = sb.st_ino;
-            attr->ctime     = (sb.st_ctim.tv_sec * 1000L) + (sb.st_ctim.tv_nsec / 1000000);
-            attr->mtime     = (sb.st_mtim.tv_sec * 1000L) + (sb.st_mtim.tv_nsec / 1000000);
-            attr->atime     = (sb.st_atim.tv_sec * 1000L) + (sb.st_atim.tv_nsec / 1000000);
+
+            // In C headers st_atime, st_mtime and st_ctime macros are defined for backward comparibility
+            // to provide access to field tv_sec of st_atim, st_mtim and st_ctim structures.
+            // In MacOS, these fields have another names: st_atimespec, st_ctimespec and st_mtimespec
+            #if defined(PLATFORM_MACOSX)
+                attr->ctime     = (sb.st_ctimespec.tv_sec * 1000LL) + (sb.st_ctimespec.tv_nsec / 1000000);
+                attr->mtime     = (sb.st_mtimespec.tv_sec * 1000LL) + (sb.st_mtimespec.tv_nsec / 1000000);
+                attr->atime     = (sb.st_atimespec.tv_sec * 1000LL) + (sb.st_atimespec.tv_nsec / 1000000);
+            #elif defined(st_ctime) || defined(st_mtime) || defined(st_atime)
+                attr->ctime     = (sb.st_ctim.tv_sec * 1000LL) + (sb.st_ctim.tv_nsec / 1000000);
+                attr->mtime     = (sb.st_mtim.tv_sec * 1000LL) + (sb.st_mtim.tv_nsec / 1000000);
+                attr->atime     = (sb.st_atim.tv_sec * 1000LL) + (sb.st_atim.tv_nsec / 1000000);
+            #else
+                attr->ctime     = sb.st_ctime * 1000LL;
+                attr->mtime     = sb.st_mtime * 1000LL;
+                attr->atime     = sb.st_atime * 1000LL;
+            #endif
         #endif /* PLATFORM_WINDOWS */
 
             if (full)

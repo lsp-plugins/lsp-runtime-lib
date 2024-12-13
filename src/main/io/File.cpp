@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 6 мар. 2019 г.
@@ -40,6 +40,61 @@ namespace lsp
 {
     namespace io
     {
+
+    #ifdef PLATFORM_WINDOWS
+        static inline void decode_file_type(fattr_t *attr, const WIN32_FIND_DATAW *hfi)
+        {
+            attr->type      = fattr_t::FT_REGULAR;
+            if (hfi->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                attr->type      = fattr_t::FT_DIRECTORY;
+            else if (hfi->dwFileAttributes & FILE_ATTRIBUTE_DEVICE)
+                attr->type      = fattr_t::FT_BLOCK;
+
+            attr->blk_size  = 4096;
+            attr->size      = (wsize_t(hfi->nFileSizeHigh) << 32) | hfi->nFileSizeLow;
+            attr->inode     = 0;
+            attr->ctime     = ((wsize_t(hfi->ftCreationTime.dwHighDateTime) << 32) | hfi->ftCreationTime.dwLowDateTime) / 10000;
+            attr->mtime     = ((wsize_t(hfi->ftLastWriteTime.dwHighDateTime) << 32) | hfi->ftLastWriteTime.dwLowDateTime) / 10000;
+            attr->atime     = ((wsize_t(hfi->ftLastAccessTime.dwHighDateTime) << 32) | hfi->ftLastAccessTime.dwLowDateTime) / 10000;
+        }
+    #else
+        static inline void decode_file_type(fattr_t *attr, const struct stat *sb)
+        {
+            // Decode file type
+            switch (sb->st_mode & S_IFMT) {
+                case S_IFBLK:  attr->type = fattr_t::FT_BLOCK;      break;
+                case S_IFCHR:  attr->type = fattr_t::FT_CHARACTER;  break;
+                case S_IFDIR:  attr->type = fattr_t::FT_DIRECTORY;  break;
+                case S_IFIFO:  attr->type = fattr_t::FT_FIFO;       break;
+                case S_IFLNK:  attr->type = fattr_t::FT_SYMLINK;    break;
+                case S_IFREG:  attr->type = fattr_t::FT_REGULAR;    break;
+                case S_IFSOCK: attr->type = fattr_t::FT_SOCKET;     break;
+                default:       attr->type = fattr_t::FT_UNKNOWN;    break;
+            }
+
+            attr->blk_size  = sb->st_blksize;
+            attr->size      = sb->st_size;
+            attr->inode     = sb->st_ino;
+
+            // In C headers st_atime, st_mtime and st_ctime macros are defined for backward comparibility
+            // to provide access to field tv_sec of st_atim, st_mtim and st_ctim structures.
+            // In MacOS, these fields have another names: st_atimespec, st_ctimespec and st_mtimespec
+            #if defined(PLATFORM_MACOSX)
+                attr->ctime     = (sb->st_ctimespec.tv_sec * 1000LL) + (sb->st_ctimespec.tv_nsec / 1000000);
+                attr->mtime     = (sb->st_mtimespec.tv_sec * 1000LL) + (sb->st_mtimespec.tv_nsec / 1000000);
+                attr->atime     = (sb->st_atimespec.tv_sec * 1000LL) + (sb->st_atimespec.tv_nsec / 1000000);
+            #elif defined(st_ctime) || defined(st_mtime) || defined(st_atime)
+                attr->ctime     = (sb->st_ctim.tv_sec * 1000LL) + (sb->st_ctim.tv_nsec / 1000000);
+                attr->mtime     = (sb->st_mtim.tv_sec * 1000LL) + (sb->st_mtim.tv_nsec / 1000000);
+                attr->atime     = (sb->st_atim.tv_sec * 1000LL) + (sb->st_atim.tv_nsec / 1000000);
+            #else
+                attr->ctime     = sb->st_ctime * 1000LL;
+                attr->mtime     = sb->st_mtime * 1000LL;
+                attr->atime     = sb->st_atime * 1000LL;
+            #endif
+        }
+    #endif /* PLATFORM_POSIX */
+
         File::File()
         {
             nErrorCode  = STATUS_OK;
@@ -199,19 +254,7 @@ namespace lsp
                 }
                 ::FindClose(dh);
 
-                // Decode file type
-                attr->type      = fattr_t::FT_REGULAR;
-                if (hfi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                    attr->type      = fattr_t::FT_DIRECTORY;
-                else if (hfi.dwFileAttributes & FILE_ATTRIBUTE_DEVICE)
-                    attr->type      = fattr_t::FT_BLOCK;
-
-                attr->blk_size  = 4096;
-                attr->size      = (wsize_t(hfi.nFileSizeHigh) << 32) | hfi.nFileSizeLow;
-                attr->inode     = 0;
-                attr->ctime     = ((wsize_t(hfi.ftCreationTime.dwHighDateTime) << 32) | hfi.ftCreationTime.dwLowDateTime) / 10000;
-                attr->mtime     = ((wsize_t(hfi.ftLastWriteTime.dwHighDateTime) << 32) | hfi.ftLastWriteTime.dwLowDateTime) / 10000;
-                attr->atime     = ((wsize_t(hfi.ftLastAccessTime.dwHighDateTime) << 32) | hfi.ftLastAccessTime.dwLowDateTime) / 10000;
+                decode_file_type(attr, &hfi);
             #else
                 struct stat sb;
                 if (::lstat(path->get_native(), &sb) != 0)
@@ -230,24 +273,7 @@ namespace lsp
                     return STATUS_IO_ERROR;
                 }
 
-                // Decode file type
-                switch (sb.st_mode & S_IFMT) {
-                    case S_IFBLK:  attr->type = fattr_t::FT_BLOCK;      break;
-                    case S_IFCHR:  attr->type = fattr_t::FT_CHARACTER;  break;
-                    case S_IFDIR:  attr->type = fattr_t::FT_DIRECTORY;  break;
-                    case S_IFIFO:  attr->type = fattr_t::FT_FIFO;       break;
-                    case S_IFLNK:  attr->type = fattr_t::FT_SYMLINK;    break;
-                    case S_IFREG:  attr->type = fattr_t::FT_REGULAR;    break;
-                    case S_IFSOCK: attr->type = fattr_t::FT_SOCKET;     break;
-                    default:       attr->type = fattr_t::FT_UNKNOWN;    break;
-                }
-
-                attr->blk_size  = sb.st_blksize;
-                attr->size      = sb.st_size;
-                attr->inode     = sb.st_ino;
-                attr->ctime     = (sb.st_ctim.tv_sec * 1000L) + (sb.st_ctim.tv_nsec / 1000000);
-                attr->mtime     = (sb.st_mtim.tv_sec * 1000L) + (sb.st_mtim.tv_nsec / 1000000);
-                attr->atime     = (sb.st_atim.tv_sec * 1000L) + (sb.st_atim.tv_nsec / 1000000);
+                decode_file_type(attr, &sb);
             #endif /* PLATFORM_WINDOWS */
 
             return STATUS_OK;
@@ -292,19 +318,7 @@ namespace lsp
                 return STATUS_IO_ERROR;
             }
 
-            // Decode file type
-            attr->type      = fattr_t::FT_REGULAR;
-            if (hfi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                attr->type      = fattr_t::FT_DIRECTORY;
-            else if (hfi.dwFileAttributes & FILE_ATTRIBUTE_DEVICE)
-                attr->type      = fattr_t::FT_BLOCK;
-
-            attr->blk_size  = 4096;
-            attr->size      = (wsize_t(hfi.nFileSizeHigh) << 32) | hfi.nFileSizeLow;
-            attr->inode     = (wsize_t(hfi.nFileIndexHigh) << 32) | hfi.nFileIndexLow;
-            attr->ctime     = ((wsize_t(hfi.ftCreationTime.dwHighDateTime) << 32) | hfi.ftCreationTime.dwLowDateTime) / 10000;
-            attr->mtime     = ((wsize_t(hfi.ftLastWriteTime.dwHighDateTime) << 32) | hfi.ftLastWriteTime.dwLowDateTime) / 10000;
-            attr->atime     = ((wsize_t(hfi.ftLastAccessTime.dwHighDateTime) << 32) | hfi.ftLastAccessTime.dwLowDateTime) / 10000;
+            decode_file_type(attr, &hfi);
         #else
             struct stat sb;
             if (::fstat(fd, &sb) != 0)
@@ -323,24 +337,7 @@ namespace lsp
                 return STATUS_IO_ERROR;
             }
 
-            // Decode file type
-            switch (sb.st_mode & S_IFMT) {
-                case S_IFBLK:  attr->type = fattr_t::FT_BLOCK;      break;
-                case S_IFCHR:  attr->type = fattr_t::FT_CHARACTER;  break;
-                case S_IFDIR:  attr->type = fattr_t::FT_DIRECTORY;  break;
-                case S_IFIFO:  attr->type = fattr_t::FT_FIFO;       break;
-                case S_IFLNK:  attr->type = fattr_t::FT_SYMLINK;    break;
-                case S_IFREG:  attr->type = fattr_t::FT_REGULAR;    break;
-                case S_IFSOCK: attr->type = fattr_t::FT_SOCKET;     break;
-                default:       attr->type = fattr_t::FT_UNKNOWN;    break;
-            }
-
-            attr->blk_size  = sb.st_blksize;
-            attr->size      = sb.st_size;
-            attr->inode     = sb.st_ino;
-            attr->ctime     = (sb.st_ctim.tv_sec * 1000L) + (sb.st_ctim.tv_nsec / 1000000);
-            attr->mtime     = (sb.st_mtim.tv_sec * 1000L) + (sb.st_mtim.tv_nsec / 1000000);
-            attr->atime     = (sb.st_atim.tv_sec * 1000L) + (sb.st_atim.tv_nsec / 1000000);
+            decode_file_type(attr, &sb);
         #endif  /* PLATFORM_WINDOWS */
 
             return STATUS_OK;
@@ -387,19 +384,7 @@ namespace lsp
                 }
                 ::FindClose(dh);
 
-                // Decode file type
-                attr->type      = fattr_t::FT_REGULAR;
-                if (hfi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                    attr->type      = fattr_t::FT_DIRECTORY;
-                else if (hfi.dwFileAttributes & FILE_ATTRIBUTE_DEVICE)
-                    attr->type      = fattr_t::FT_BLOCK;
-
-                attr->blk_size  = 4096;
-                attr->size      = (wsize_t(hfi.nFileSizeHigh) << 32) | hfi.nFileSizeLow;
-                attr->inode     = 0;
-                attr->ctime     = ((wsize_t(hfi.ftCreationTime.dwHighDateTime) << 32) | hfi.ftCreationTime.dwLowDateTime) / 10000;
-                attr->mtime     = ((wsize_t(hfi.ftLastWriteTime.dwHighDateTime) << 32) | hfi.ftLastWriteTime.dwLowDateTime) / 10000;
-                attr->atime     = ((wsize_t(hfi.ftLastAccessTime.dwHighDateTime) << 32) | hfi.ftLastAccessTime.dwLowDateTime) / 10000;
+                decode_file_type(attr, &hfi);
             #else
                 struct stat sb;
                 const char *s = path->get_native();
@@ -419,24 +404,7 @@ namespace lsp
                     return STATUS_IO_ERROR;
                 }
 
-                // Decode file type
-                switch (sb.st_mode & S_IFMT) {
-                    case S_IFBLK:  attr->type = fattr_t::FT_BLOCK;      break;
-                    case S_IFCHR:  attr->type = fattr_t::FT_CHARACTER;  break;
-                    case S_IFDIR:  attr->type = fattr_t::FT_DIRECTORY;  break;
-                    case S_IFIFO:  attr->type = fattr_t::FT_FIFO;       break;
-                    case S_IFLNK:  attr->type = fattr_t::FT_SYMLINK;    break;
-                    case S_IFREG:  attr->type = fattr_t::FT_REGULAR;    break;
-                    case S_IFSOCK: attr->type = fattr_t::FT_SOCKET;     break;
-                    default:       attr->type = fattr_t::FT_UNKNOWN;    break;
-                }
-
-                attr->blk_size  = sb.st_blksize;
-                attr->size      = sb.st_size;
-                attr->inode     = sb.st_ino;
-                attr->ctime     = (sb.st_ctim.tv_sec * 1000L) + (sb.st_ctim.tv_nsec / 1000000);
-                attr->mtime     = (sb.st_mtim.tv_sec * 1000L) + (sb.st_mtim.tv_nsec / 1000000);
-                attr->atime     = (sb.st_atim.tv_sec * 1000L) + (sb.st_atim.tv_nsec / 1000000);
+                decode_file_type(attr, &sb);
             #endif /* PLATFORM_WINDOWS */
 
             return STATUS_OK;
