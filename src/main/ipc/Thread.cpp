@@ -27,11 +27,27 @@
 #include <errno.h>
 #include <unistd.h>
 
-#ifdef PLATFORM_WINDOWS
+#if defined(PLATFORM_WINDOWS)
     #include <windows.h>
     #include <processthreadsapi.h>
-#else
+#elif defined(PLATFORM_LINUX)
     #include <sched.h>
+    #include <sys/syscall.h>
+#elif defined(PLATFORM_SOLARIS)
+    #include <pthread.h>
+#elif defined(PLATFORM_FREEBSD)
+    #include <sched.h>
+    #include <sys/thr.h>
+#elif defined(PLATFORM_NETBSD)
+    #include <sched.h>
+    #include <lwp.h>
+#elif defined(PLATFORM_MACOSX)
+    #include <mach/mach.h>
+    #include <mach/mach_error.h>
+    #include <sched.h>
+#elif defined(PLATFORM_DRAGONFLYBSD)
+    #include <sched.h>
+    #include <lwp.h>
 #endif /* PLATFORM_WINDOWS */
 
 namespace lsp
@@ -329,6 +345,34 @@ namespace lsp
         }
 
 #endif /* PLATFORM_WINDOWS */
+
+
+        thread_id_t Thread::current_thread_id()
+        {
+            thread_id_t result  = INVALID_THREAD_ID;
+
+        #if defined(PLATFORM_WINDOWS)
+            return GetCurrentThreadId();
+        #elif defined(PLATFORM_LINUX)
+            result              = syscall( __NR_gettid );
+        #elif defined(PLATFORM_SOLARIS)
+            result              = pthread_self();
+        #elif defined(PLATFORM_MACOSX)
+            result              = mach_thread_self();
+            mach_port_deallocate(mach_task_self(), result);
+        #elif defined(PLATFORM_NETBSD)
+            result              = _lwp_self();
+        #elif defined(PLATFORM_FREEBSD)
+            long lwpid;
+            thr_self( &lwpid );
+            result              = lwpid;
+        #elif defined(PLATFORM_DRAGONFLYBSD)
+            result              = lwp_gettid();
+        #else
+            #warning "need to implement Thread::current_thread_id"
+        #endif
+            return result;
+        }
 
     } /* namespace ipc */
 } /* namespace lsp */

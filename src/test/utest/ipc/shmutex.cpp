@@ -147,13 +147,16 @@ UTEST_BEGIN("runtime.ipc", shmutex)
 
         ctx.log(mutex.close(), "close", STATUS_OK);
 
-        printf("Result content: %s\n", ctx.data.get_ascii());
-
-        UTEST_ASSERT(ctx.data.equals_ascii(
+        static const char *expected =
             "open=true;lock=true;start=true;sleep=true;open2=true;unlock=true;lock2=true;open1=true;"
             "SYNC1=true;SYNC1=true;trylock2=true;timedlock2=true;"
             "SYNC2=true;SYNC2=true;"
-            "SYNC3=true;SYNC3=true;unlock=true;close=true;"));
+            "SYNC3=true;SYNC3=true;unlock=true;close=true;";
+
+        printf("Result content:   %s\n", ctx.data.get_ascii());
+        printf("Expected content: %s\n", expected);
+
+        UTEST_ASSERT(ctx.data.equals_ascii(expected));
     }
 
     UTEST_MAIN

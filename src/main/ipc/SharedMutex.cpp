@@ -21,8 +21,10 @@
 
 #include <lsp-plug.in/common/atomic.h>
 #include <lsp-plug.in/common/debug.h>
+#include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/ipc/SharedMutex.h>
 #include <lsp-plug.in/ipc/Thread.h>
+#include <lsp-plug.in/runtime/system.h>
 
 #ifdef PLATFORM_WINDOWS
     #include <windows.h>
@@ -42,17 +44,17 @@ namespace lsp
 {
     namespace ipc
     {
-        static constexpr uint64_t SHMUTEX_INIT_FLAG     = __IF_LEBE(0x786574756D5F6873ULL, 0x73685F6D75746578ULL); // "sh_mutex"
+        #ifdef LSP_ROBUST_MUTEX_SUPPORTED
+            static constexpr uint64_t SHMUTEX_INIT_FLAG     = __IF_LEBE(0x786574756D5F6873ULL, 0x73685F6D75746578ULL); // "sh_mutex"
 
-    #ifndef PLATFORM_WINDOWS
-        typedef struct shared_mutex_t
-        {
-            uint64_t            init_flag;      // Should contain SHMUTEX_INIT_FLAG if mutex has been initialized
-            uatomic_t           spin_lock;      // Failover if system does not support flock() on shared memory
-            uatomic_t           padding;        // Padding, not used, should be zero
-            pthread_mutex_t     mutex;          // Shared mutex data
-        } shared_mutex_t;
-    #endif /* PLATFORM_WINDOWS */
+            typedef struct shared_mutex_t
+            {
+                volatile uint64_t   init_flag;      // Should contain SHMUTEX_INIT_FLAG if mutex has been initialized
+                uatomic_t           spin_lock;      // Failover if system does not support flock() on shared memory
+                uatomic_t           padding;        // Padding, not used, should be zero
+                pthread_mutex_t     mutex;          // Shared mutex data
+            } shared_mutex_t;
+        #endif /* LSP_ROBUST_MUTEX_SUPPORTED */
 
         SharedMutex::SharedMutex()
         {
@@ -60,9 +62,13 @@ namespace lsp
             hLock       = NULL;
         #else
             hFD         = -1;
-            hLock       = NULL;
+
+            #ifdef LSP_ROBUST_MUTEX_SUPPORTED
+                hLock       = NULL;
+            #endif /* LSP_ROBUST_MUTEX_SUPPORTED */
         #endif /* PLATFORM_WINDOWS */
-            bLocked     = false;
+
+            atomic_store(&nOwner, INVALID_THREAD_ID);
         }
 
         SharedMutex::~SharedMutex()
@@ -70,10 +76,19 @@ namespace lsp
             close();
         }
 
+        inline bool SharedMutex::is_opened() const
+        {
+        #if defined(PLATFORM_WINDOWS) || defined(LSP_ROBUST_MUTEX_SUPPORTED)
+            return hLock != NULL;
+        #else
+            return hFD >= 0;
+        #endif /* PLATFORM_WINDOWS, LSP_ROBUST_MUTEX_SUPPORTED */
+        }
+
         status_t SharedMutex::open(const char *name)
         {
-            if (hLock != NULL)
-                return STATUS_OPENED;
+            if (is_opened())
+               	return STATUS_OPENED;
 
             LSPString tmp;
         #ifdef PLATFORM_WINDOWS
@@ -90,7 +105,7 @@ namespace lsp
 
         status_t SharedMutex::open(const LSPString *name)
         {
-            if (hLock != NULL)
+            if (is_opened())
                 return STATUS_OPENED;
 
         #ifdef PLATFORM_WINDOWS
@@ -108,21 +123,20 @@ namespace lsp
         }
 
     #ifndef PLATFORM_WINDOWS
-        status_t SharedMutex::lock_memory(int fd, shared_mutex_t *mutex)
+        status_t SharedMutex::lock_descriptor(int fd, int flags)
         {
             while (true)
             {
-                if (flock(fd, LOCK_EX) == 0)
+                if (flock(fd, flags) == 0)
                     return STATUS_OK;
 
                 const int error = errno;
-                if (error == EINTR)
-                    continue;
                 if (error == ENOTSUP)
-                    break;
+                    return STATUS_NOT_SUPPORTED;
 
                 switch (error)
                 {
+                    case EAGAIN: return STATUS_RETRY;
                     case EBADF: return STATUS_IO_ERROR;
                     case EINTR: break;
                     case EINVAL: return STATUS_INVALID_VALUE;
@@ -130,54 +144,50 @@ namespace lsp
                     default: return STATUS_IO_ERROR;
                 }
             }
-
-            // Try to acquire spin-lock instead of flock
-            while (atomic_swap(&mutex->spin_lock, 1) != 0)
-                ipc::Thread::yield();
-
-            return STATUS_OK;
         }
 
-        status_t SharedMutex::unlock_memory(int fd, shared_mutex_t *mutex)
-        {
-            while (true)
+        #ifdef LSP_ROBUST_MUTEX_SUPPORTED
+            status_t SharedMutex::lock_memory(int fd, shared_mutex_t *mutex)
             {
-                if (flock(fd, LOCK_UN) == 0)
-                    return STATUS_OK;
-
-                const int error = errno;
-                if (error == EINTR)
-                    continue;
-                if (error == ENOTSUP)
-                    break;
-
-                switch (error)
+                status_t res = lock_descriptor(fd, LOCK_EX);
+                if ((res == STATUS_OK) || (res == STATUS_NOT_SUPPORTED))
                 {
-                    case EBADF: return STATUS_IO_ERROR;
-                    case EINTR: break;
-                    case EINVAL: return STATUS_INVALID_VALUE;
-                    case ENOLCK: return STATUS_NO_MEM;
-                    default: return STATUS_IO_ERROR;
+                    // Try to acquire spin-lock instead of flock
+                    while (atomic_swap(&mutex->spin_lock, 1) != 0)
+                        ipc::Thread::yield();
+
+                    res     = STATUS_OK;
                 }
+
+                return res;
             }
 
-            // Release spin lock
-            atomic_swap(&mutex->spin_lock, 1);
+            status_t SharedMutex::unlock_memory(int fd, shared_mutex_t *mutex)
+            {
+                status_t res = lock_descriptor(fd, LOCK_UN);
+                if ((res == STATUS_OK) || (res == STATUS_NOT_SUPPORTED))
+                {
+                    // Release spin lock
+                    atomic_swap(&mutex->spin_lock, 0);
+                    res     = STATUS_OK;
+                }
 
-            return STATUS_OK;
-        }
+                return res;
+            }
+        #endif /* LSP_ROBUST_MUTEX_SUPPORTED */
+
     #endif /* PLATFORM_WINDOWS */
 
         status_t SharedMutex::open_internal(const LSPString *name)
         {
-        #ifdef PLATFORM_WINDOWS
+        #if defined(PLATFORM_WINDOWS)
             const WCHAR *path = name->get_utf16();
             if (path == NULL)
                 return STATUS_NO_MEM;
 
             hLock = CreateMutexW(NULL, FALSE, path);
             return (hLock != NULL) ? STATUS_OK : STATUS_IO_ERROR;
-        #else
+        #elif defined(LSP_ROBUST_MUTEX_SUPPORTED)
             int error;
             const char *path = name->get_native();
             if (name == NULL)
@@ -211,68 +221,66 @@ namespace lsp
                     ::close(fd);
             };
 
-            // Perform mutex initialization
-            shared_mutex_t *shmutex = NULL;
+            // Reserve memory for the mutex
+            if (ftruncate(fd, sizeof(shared_mutex_t)) != 0)
             {
-                // Reserve memory for the mutex
-                if (ftruncate(fd, sizeof(shared_mutex_t)) != 0)
+                error = errno;
+                switch (error)
                 {
-                    error = errno;
-                    switch (error)
-                    {
-                        case EACCES: return STATUS_PERMISSION_DENIED;
-                        case EFAULT: return STATUS_UNKNOWN_ERR;
-                        case EFBIG: return STATUS_TOO_BIG;
-                        case EINVAL: return STATUS_INVALID_VALUE;
-                        case EINTR: return STATUS_INTERRUPTED;
-                        case EIO: return STATUS_IO_ERROR;
-                        case EISDIR: return STATUS_IS_DIRECTORY;
-                        case EPERM: return STATUS_PERMISSION_DENIED;
-                        case EROFS: return STATUS_READONLY;
-                        case ETXTBSY: return STATUS_PERMISSION_DENIED;
-                        case EBADF: return STATUS_IO_ERROR;
-                        default: return STATUS_IO_ERROR;
-                    }
+                    case EACCES: return STATUS_PERMISSION_DENIED;
+                    case EFAULT: return STATUS_UNKNOWN_ERR;
+                    case EFBIG: return STATUS_TOO_BIG;
+                    case EINVAL: return STATUS_INVALID_VALUE;
+                    case EINTR: return STATUS_INTERRUPTED;
+                    case EIO: return STATUS_IO_ERROR;
+                    case EISDIR: return STATUS_IS_DIRECTORY;
+                    case EPERM: return STATUS_PERMISSION_DENIED;
+                    case EROFS: return STATUS_READONLY;
+                    case ETXTBSY: return STATUS_PERMISSION_DENIED;
+                    case EBADF: return STATUS_IO_ERROR;
+                    default: return STATUS_IO_ERROR;
                 }
+            }
 
-                // Map the mutex memory
-                void *addr = mmap(0, sizeof(shared_mutex_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-                if (addr == MAP_FAILED)
+            // Map the mutex memory
+            shared_mutex_t *shmutex     = static_cast<shared_mutex_t *>(mmap(0, sizeof(shared_mutex_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
+            if (shmutex == MAP_FAILED)
+            {
+                error = errno;
+                switch (error)
                 {
-                    error = errno;
-                    switch (error)
-                    {
-                        case EACCES: return STATUS_PERMISSION_DENIED;
-                        case EAGAIN: return STATUS_RETRY;
-                        case EPERM: return STATUS_PERMISSION_DENIED;
-                        case EFBIG: return STATUS_TOO_BIG;
-                        case EEXIST: return STATUS_ALREADY_EXISTS;
-                        case ENOMEM: return STATUS_NO_MEM;
-                        case EOVERFLOW: return STATUS_OVERFLOW;
-                        default: return STATUS_IO_ERROR;
-                    }
+                    case EACCES: return STATUS_PERMISSION_DENIED;
+                    case EAGAIN: return STATUS_RETRY;
+                    case EPERM: return STATUS_PERMISSION_DENIED;
+                    case EFBIG: return STATUS_TOO_BIG;
+                    case EEXIST: return STATUS_ALREADY_EXISTS;
+                    case ENOMEM: return STATUS_NO_MEM;
+                    case EOVERFLOW: return STATUS_OVERFLOW;
+                    default: return STATUS_IO_ERROR;
                 }
+            }
+            lsp_finally {
+                if (shmutex != NULL)
+                    munmap(shmutex, sizeof(shared_mutex_t));
+            };
+
+            // Ensure that mutex is initialized
+            if (shmutex->init_flag != SHMUTEX_INIT_FLAG)
+            {
+                // Lock the shared memory segment to initialize mutex atomically
+                status_t lock_res = lock_memory(fd, shmutex);
+                if (lock_res != STATUS_OK)
+                    return lock_res;
+
+                // Unlock file descriptor on exit out of the scope
+                bool need_unlock = true;
                 lsp_finally {
-                    if (addr != NULL)
-                        munmap(addr, sizeof(shared_mutex_t));
+                    if (need_unlock)
+                        unlock_memory(fd, shmutex);
                 };
 
-                // Ensure that mutex is initialized
-                shmutex     = static_cast<shared_mutex_t *>(addr);
                 if (shmutex->init_flag != SHMUTEX_INIT_FLAG)
                 {
-                    // Lock the shared memory segment to initialize mutex atomically
-                    status_t lock_res = lock_memory(fd, shmutex);
-                    if (lock_res != STATUS_OK)
-                        return lock_res;
-
-                    // Unlock file descriptor on exit out of the scope
-                    bool need_unlock = true;
-                    lsp_finally {
-                        if (need_unlock)
-                            unlock_memory(fd, shmutex);
-                    };
-
                     // Mutex is not initialized, initialize it
                     pthread_mutexattr_t attr;
                     if ((error = pthread_mutexattr_init(&attr)) != 0)
@@ -294,53 +302,103 @@ namespace lsp
 
                     // Mark the mutex being initialized
                     shmutex->init_flag  = SHMUTEX_INIT_FLAG;
-
-                    // Unlock memory
-                    need_unlock     = false;
-                    lock_res        = unlock_memory(fd, shmutex);
-                    if (lock_res != STATUS_OK)
-                        return lock_res;
                 }
 
-                // Do not unmap the memory
-                addr = NULL;
+                // Unlock memory
+                need_unlock     = false;
+                lock_res        = unlock_memory(fd, shmutex);
+                if (lock_res != STATUS_OK)
+                    return lock_res;
             }
 
             // Now we have shared mutex and file descriptor, store them
             hFD     = fd;
-            hLock   = shmutex;
+            hLock   = release_ptr(shmutex);
 
             fd      = -1;
 
             return STATUS_OK;
-        #endif /* PLATFORM_WINDOWS */
+        #else
+            // Open lock file
+            io::Path tmp;
+            status_t res = system::get_system_temporary_dir(&tmp);
+            if (res != STATUS_OK)
+                return res;
+
+            // Use separate directory to not to confuse with another applications' files
+            if ((res = tmp.append_child("shmutex")) != STATUS_OK)
+                return res;
+
+            if ((res = tmp.mkdir()) != STATUS_OK)
+            {
+                if (res != STATUS_ALREADY_EXISTS)
+                    return res;
+            }
+
+            // Try to open or create file
+            if ((res = tmp.append(name)) != STATUS_OK)
+                return res;
+
+            int fd = ::open(tmp.as_native(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+            if (fd < 0)
+            {
+                int code = errno;
+                status_t res = STATUS_IO_ERROR;
+
+                switch (code)
+                {
+                    case EPERM: case EACCES: res = STATUS_PERMISSION_DENIED; break;
+                    case EEXIST: res = STATUS_ALREADY_EXISTS; break;
+                    case EINVAL: res = STATUS_INVALID_VALUE; break;
+                    case EISDIR: res = STATUS_IS_DIRECTORY; break;
+                    case ENAMETOOLONG: res = STATUS_OVERFLOW; break;
+                    case ENOENT: res = STATUS_NOT_FOUND; break;
+                    case ENOMEM: res = STATUS_NO_MEM; break;
+                    case ENOTDIR: res = STATUS_NOT_DIRECTORY; break;
+                    case EROFS: res = STATUS_READONLY; break;
+                    default: break;
+                }
+
+                return res;
+            }
+            lsp_finally {
+                if (fd >= 0)
+                    ::close(fd);
+            };
+
+            // Now we have shared mutex and file descriptor, store them
+            hFD     = fd;
+            fd      = -1;
+
+            return STATUS_OK;
+        #endif /* PLATFORM_WINDOWS, LSP_ROBUST_MUTEX_SUPPORTED */
         }
 
         status_t SharedMutex::close()
         {
-            if (hLock == NULL)
+            if (!is_opened())
                 return STATUS_OK;
 
             status_t res = STATUS_OK;
 
         #ifdef PLATFORM_WINDOWS
-            if (bLocked)
+            // Release lock if it is set
+            if (atomic_swap(&nOwner, INVALID_THREAD_ID) != INVALID_THREAD_ID)
             {
                 if (!ReleaseMutex(hLock))
                     res     = update_status(res, STATUS_IO_ERROR);
-                bLocked = false;
             }
 
             if (!CloseHandle(hLock))
                 res     = update_status(res, STATUS_IO_ERROR);
             hLock = NULL;
-        #else
-            if (bLocked)
+        #elif defined(LSP_ROBUST_MUTEX_SUPPORTED)
+            // Release lock if it is set
+            if (atomic_swap(&nOwner, INVALID_THREAD_ID) != INVALID_THREAD_ID)
             {
                 int error = pthread_mutex_unlock(&hLock->mutex);
                 if (error != 0)
                     res     = update_status(res, STATUS_IO_ERROR);
-                bLocked = false;
             }
 
             // Unmap memory
@@ -353,25 +411,36 @@ namespace lsp
                 ::close(hFD);
                 hFD     = -1;
             }
-        #endif /* PLATFORM_WINDOWS */
+        #else
+            // Release lock if it is set
+            if (atomic_swap(&nOwner, INVALID_THREAD_ID) != INVALID_THREAD_ID)
+                lock_descriptor(hFD, LOCK_UN);
+
+            // Close file descriptor
+            ::close(hFD);
+            hFD     = -1;
+        #endif /* PLATFORM_WINDOWS, LSP_ROBUST_MUTEX_SUPPORTED */
 
             return res;
         }
 
         status_t SharedMutex::lock()
         {
-            if (hLock == NULL)
+            if (!is_opened())
                 return STATUS_CLOSED;
-            if (bLocked)
+
+            // Check that we don't lock the mutex again
+            const thread_id_t tid = Thread::current_thread_id();
+            if (atomic_load(&nOwner) == tid)
                 return STATUS_LOCKED;
 
-        #ifdef PLATFORM_WINDOWS
+        #if defined(PLATFORM_WINDOWS)
             DWORD res = WaitForSingleObject(hLock, INFINITE);
             switch (res)
             {
                 case WAIT_OBJECT_0:
                 case WAIT_ABANDONED:
-                    bLocked     = true;
+                    atomic_store(&nOwner, tid);
                     return STATUS_OK;
                 case WAIT_TIMEOUT:
                     return STATUS_TIMED_OUT;
@@ -382,34 +451,51 @@ namespace lsp
             }
 
             return STATUS_UNKNOWN_ERR;
-        #else
+        #elif defined(LSP_ROBUST_MUTEX_SUPPORTED)
             int error = pthread_mutex_lock(&hLock->mutex);
-            if (error != 0)
+            switch (error)
             {
-                switch (error)
+                case 0: break;
+                case EDEADLK: return STATUS_BAD_STATE;
+                case EBUSY: return STATUS_LOCKED;
+                case EOWNERDEAD:
                 {
-                    case EDEADLK: return STATUS_BAD_STATE;
-                    case EBUSY: return STATUS_LOCKED;
-                    case EOWNERDEAD:
-                    {
-                        pthread_mutex_consistent(&hLock->mutex);
-                        break;
-                    }
-                    default: return STATUS_UNKNOWN_ERR;
+                    pthread_mutex_consistent(&hLock->mutex);
+                    break;
                 }
+                default: return STATUS_UNKNOWN_ERR;
             }
 
-            bLocked     = true;
+            atomic_store(&nOwner, tid);
 
             return STATUS_OK;
-        #endif /* PLATFORM_WINDOWS */
+        #else
+            status_t res = lock_descriptor(hFD, LOCK_EX);
+            if (res != STATUS_OK)
+                return res;
+
+            // Now we need to spin to ensure that our thread owns the lock
+            while (true)
+            {
+                if (atomic_cas(&nOwner, INVALID_THREAD_ID, tid))
+                    return STATUS_OK;
+
+                // Wait for a while
+                ipc::Thread::sleep(1);
+            }
+
+            return res;
+        #endif /* PLATFORM_WINDOWS, LSP_ROBUST_MUTEX_SUPPORTED */
         }
 
         status_t SharedMutex::lock(system::time_millis_t delay)
         {
-            if (hLock == NULL)
+            if (!is_opened())
                 return STATUS_CLOSED;
-            if (bLocked)
+
+            // Check that we don't lock the mutex again
+            const thread_id_t tid = Thread::current_thread_id();
+            if (atomic_load(&nOwner) == tid)
                 return STATUS_LOCKED;
 
         #ifdef PLATFORM_WINDOWS
@@ -418,7 +504,7 @@ namespace lsp
             {
                 case WAIT_OBJECT_0:
                 case WAIT_ABANDONED:
-                    bLocked     = true;
+                    atomic_store(&nOwner, tid);
                     return STATUS_OK;
                 case WAIT_TIMEOUT:
                     return STATUS_TIMED_OUT;
@@ -429,7 +515,7 @@ namespace lsp
             }
 
             return STATUS_UNKNOWN_ERR;
-        #else
+        #elif defined(LSP_ROBUST_MUTEX_SUPPORTED)
             // sem_timedwait() is the same as sem_wait(), except that abs_timeout specifies a limit on the
             // amount of time that the call should block if the decrement cannot be immediately performed.
             // The abs_timeout argument points to a structure that specifies an absolute timeout in seconds
@@ -446,33 +532,69 @@ namespace lsp
             }
 
             int error = pthread_mutex_timedlock(&hLock->mutex, &timeout);
-            if (error != 0)
+            switch (error)
             {
-                switch (error)
+                case 0: break;
+                case EDEADLK: return STATUS_BAD_STATE;
+                case EBUSY: return STATUS_LOCKED;
+                case ETIMEDOUT: return STATUS_TIMED_OUT;
+                case EOWNERDEAD:
                 {
-                    case EDEADLK: return STATUS_BAD_STATE;
-                    case EBUSY: return STATUS_LOCKED;
-                    case ETIMEDOUT: return STATUS_TIMED_OUT;
-                    case EOWNERDEAD:
-                    {
-                        pthread_mutex_consistent(&hLock->mutex);
-                        break;
-                    }
-                    default: return STATUS_UNKNOWN_ERR;
+                    pthread_mutex_consistent(&hLock->mutex);
+                    break;
                 }
+                default: return STATUS_UNKNOWN_ERR;
             }
 
-            bLocked     = true;
+            atomic_store(&nOwner, tid);
 
             return STATUS_OK;
-        #endif /* PLATFORM_WINDOWS */
+        #else
+            // Since we can not lock file without using signals, we need to simulate the timed wait with a loop
+            const system::time_millis_t deadline = system::get_time_millis() + delay;
+            while (true)
+            {
+                status_t res = lock_descriptor(hFD, LOCK_EX | LOCK_NB);
+                if (res == STATUS_OK)
+                    break;
+
+                // Check that we didn't reach deadline
+                const system::time_millis_t ctime = system::get_time_millis();
+                if (ctime >= deadline)
+                    return STATUS_TIMED_OUT;
+
+                // Wait for a while
+                ipc::Thread::yield();
+            }
+
+            // Now we need to spin to ensure that our thread owns the lock
+            while (true)
+            {
+                if (atomic_cas(&nOwner, 0, tid))
+                    return STATUS_OK;
+
+                // Check that we didn't reach deadline
+                const system::time_millis_t ctime = system::get_time_millis();
+                if (ctime >= deadline)
+                {
+                    lock_descriptor(hFD, LOCK_UN);
+                    return STATUS_TIMED_OUT;
+                }
+
+                // Wait for a while
+                ipc::Thread::sleep(1);
+            }
+        #endif /* PLATFORM_WINDOWS, LSP_ROBUST_MUTEX_SUPPORTED */
         }
 
         status_t SharedMutex::try_lock()
         {
-            if (hLock == NULL)
+            if (!is_opened())
                 return STATUS_CLOSED;
-            if (bLocked)
+
+            // Check that we don't lock the mutex again
+            const thread_id_t tid = Thread::current_thread_id();
+            if (atomic_load(&nOwner) == tid)
                 return STATUS_LOCKED;
 
         #ifdef PLATFORM_WINDOWS
@@ -481,7 +603,7 @@ namespace lsp
             {
                 case WAIT_OBJECT_0:
                 case WAIT_ABANDONED:
-                    bLocked     = true;
+                    atomic_store(&nOwner, tid);
                     return STATUS_OK;
                 case WAIT_TIMEOUT:
                     return STATUS_RETRY;
@@ -492,50 +614,70 @@ namespace lsp
             }
 
             return STATUS_UNKNOWN_ERR;
-        #else
+        #elif defined(LSP_ROBUST_MUTEX_SUPPORTED)
             int error = pthread_mutex_trylock(&hLock->mutex);
-            if (error != 0)
+            switch (error)
             {
-                switch (error)
+                case 0: break;
+                case EDEADLK: return STATUS_BAD_STATE;
+                case EBUSY: return STATUS_RETRY;
+                case EOWNERDEAD:
                 {
-                    case EDEADLK: return STATUS_BAD_STATE;
-                    case EBUSY: return STATUS_RETRY;
-                    case EOWNERDEAD:
-                    {
-                        pthread_mutex_consistent(&hLock->mutex);
-                        break;
-                    }
-                    default: return STATUS_UNKNOWN_ERR;
+                    pthread_mutex_consistent(&hLock->mutex);
+                    break;
                 }
+                default: return STATUS_UNKNOWN_ERR;
             }
 
-            bLocked     = true;
+            atomic_store(&nOwner, tid);
 
             return STATUS_OK;
-        #endif /* PLATFORM_WINDOWS */
+        #else
+            status_t res = lock_descriptor(hFD, LOCK_EX | LOCK_NB);
+            if (res != STATUS_OK)
+                return res;
+
+            // Now we need to lock the spin
+            if (atomic_cas(&nOwner, INVALID_THREAD_ID, tid))
+                return STATUS_OK;
+
+            // Unlock descriptor
+            lock_descriptor(hFD, LOCK_UN);
+            return STATUS_RETRY;
+        #endif /* PLATFORM_WINDOWS, LSP_ROBUST_MUTEX_SUPPORTED */
         }
 
         status_t SharedMutex::unlock()
         {
-            if (hLock == NULL)
+            if (!is_opened())
                 return STATUS_CLOSED;
-            if (!bLocked)
+
+            // Check that we own the lock the mutex
+            const thread_id_t tid = Thread::current_thread_id();
+            if (atomic_load(&nOwner) != tid)
                 return STATUS_BAD_STATE;
 
         #ifdef PLATFORM_WINDOWS
-            if (ReleaseMutex(hLock))
+            if (!ReleaseMutex(hLock))
+                return STATUS_UNKNOWN_ERR;
+        #elif defined(LSP_ROBUST_MUTEX_SUPPORTED)
+            int error   = pthread_mutex_unlock(&hLock->mutex);
+            switch (error)
             {
-                bLocked = false;
-                return STATUS_OK;
+                case 0: break;
+                case EDEADLK: return STATUS_BAD_STATE;
+                case EBUSY: return STATUS_RETRY;
+                case EPERM: return STATUS_PERMISSION_DENIED;
+                default: return STATUS_UNKNOWN_ERR;
             }
-
-            return STATUS_UNKNOWN_ERR;
         #else
-            pthread_mutex_unlock(&hLock->mutex);
-            bLocked     = false;
+            status_t res    = lock_descriptor(hFD, LOCK_UN);
+            if (res != STATUS_OK)
+                return res;
+        #endif /* PLATFORM_WINDOWS, LSP_ROBUST_MUTEX_SUPPORTED */
 
+            atomic_store(&nOwner, INVALID_THREAD_ID);
             return STATUS_OK;
-        #endif /* PLATFORM_WINDOWS */
         }
 
     } /* namespace ipc */
