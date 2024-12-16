@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 24 апр. 2020 г.
@@ -19,6 +19,10 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/common/types.h>
+
+#ifdef PLATFORM_WINDOWS
+
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/common/endian.h>
@@ -26,8 +30,6 @@
 #include <lsp-plug.in/mm/sample.h>
 #include <private/mm/ACMStream.h>
 #include <stdlib.h>
-
-#ifndef USE_LIBSNDFILE
 
 #include <windows.h>
 #include <mmreg.h>
@@ -814,4 +816,4 @@ namespace lsp
     } /* namespace mm */
 } /* namespace lsp */
 
-#endif /* USE_LIBSNDFILE */
+#endif /* PLATFORM_WINDOWS */

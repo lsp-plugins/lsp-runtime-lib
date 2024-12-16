@@ -24,26 +24,30 @@
 
 #include <lsp-plug.in/runtime/version.h>
 
+#include <lsp-plug.in/common/atomic.h>
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/common/types.h>
-
+#include <lsp-plug.in/ipc/Thread.h>
 #include <lsp-plug.in/runtime/LSPString.h>
-
 #include <lsp-plug.in/runtime/system.h>
 
 namespace lsp
 {
     namespace ipc
     {
-    #ifndef PLATFORM_WINDOWS
+    #if defined(PLATFORM_LINUX) || defined(PLATFORM_FREEBSD)
+        #define LSP_ROBUST_MUTEX_SUPPORTED
+    #endif /* PLATFORM_LINUX, PLATFORM_FREEBSD */
+
+    #ifdef LSP_ROBUST_MUTEX_SUPPORTED
         struct shared_mutex_t;
-    #endif /* PLATFORM_WINDOWS */
+    #endif /* LSP_ROBUST_MUTEX_SUPPORTED */
 
         /**
          * Named global non-recursive shared mutex for inter-process communication.
-         * The object tracks it's lock state and automatically unlocks on close(), so it's implementation
-         * is not thread safe. Dont' share it between threads of a process. Instead of this, use different
-         * SharedMutex object and open() method for the same target string.
+         * The object tracks it's lock state and automatically unlocks on close().
+         * Lock operations can be executed by multiple threads on the same mutex object.
+         * Creation and destruction functions are not thread safe.
          */
         class SharedMutex
         {
@@ -54,10 +58,12 @@ namespace lsp
                 HANDLE              hLock;
         #else
                 int                 hFD;
-                shared_mutex_t     *hLock;
-        #endif /* PLATFORM_WINDOWS */
 
-                bool                bLocked;
+            #ifdef LSP_ROBUST_MUTEX_SUPPORTED
+                shared_mutex_t     *hLock;
+            #endif /* LSP_ROBUST_MUTEX_SUPPORTED */
+        #endif /* PLATFORM_WINDOWS */
+                thread_id_t         nOwner;
 
             public:
                 explicit SharedMutex();
@@ -69,11 +75,17 @@ namespace lsp
                 SharedMutex & operator = (SharedMutex &&) = delete;
 
             private:
+                inline bool         is_opened() const;
+
                 status_t            open_internal(const LSPString *name);
 
+            private:
             #ifndef PLATFORM_WINDOWS
-                static status_t     lock_memory(int fd, shared_mutex_t *mutex);
-                static status_t     unlock_memory(int fd, shared_mutex_t *mutex);
+                static status_t     lock_descriptor(int fd, int flags);
+                #ifdef LSP_ROBUST_MUTEX_SUPPORTED
+                    static status_t     lock_memory(int fd, shared_mutex_t *mutex);
+                    static status_t     unlock_memory(int fd, shared_mutex_t *mutex);
+                #endif /* LSP_ROBUST_MUTEX_SUPPORTED */
             #endif /* PLATFORM_WINDOWS */
 
             public:

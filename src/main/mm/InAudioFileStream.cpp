@@ -150,7 +150,8 @@ namespace lsp
     #ifdef USE_LIBSNDFILE
         status_t InAudioFileStream::decode_sf_error(SNDFILE *fd)
         {
-            switch (sf_error(fd))
+            const int error = sf_error(fd);
+            switch (error)
             {
                 case SF_ERR_NO_ERROR:
                     return STATUS_OK;
@@ -161,7 +162,7 @@ namespace lsp
                 case SF_ERR_UNSUPPORTED_ENCODING:
                     return STATUS_BAD_FORMAT;
                 default:
-                    return STATUS_UNKNOWN_ERR;
+                    return STATUS_UNSUPPORTED_FORMAT;
             }
         }
     #else

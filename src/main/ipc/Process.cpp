@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 24 июл. 2019 г.
@@ -1220,7 +1220,28 @@ namespace lsp
         {
             lsp_trace("Creating child process using vfork()...");
             errno           = 0;
+
+        #ifdef PLATFORM_MACOSX
+            #if defined(COMPILER_CLANG)
+                #pragma clang diagnostic push
+                #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+            #elif defined(COMPILER_GCC)
+                #pragma GCC diagnostic push
+                #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+            #endif
+        #endif /* PLATFORM_MACOSX */
+
+            // vfork() is deprecated in MacOS, we'll hide deprectation warning for that as
+            // vfork() is a fallback case for posix_spawn.
             pid_t pid       = ::vfork();
+
+        #ifdef PLATFORM_MACOSX
+            #if defined(COMPILER_CLANG)
+                #pragma clang diagnostic pop
+            #elif defined(COMPILER_GCC)
+                #pragma GCC diagnostic pop
+            #endif
+        #endif /* PLATFORM_MACOSX */
 
             // Failed to fork()?
             if (pid < 0)

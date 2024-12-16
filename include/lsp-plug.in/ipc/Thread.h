@@ -55,6 +55,10 @@ namespace lsp
          */
         typedef status_t (* thread_proc_t)(void *arg);
 
+        typedef umword_t                thread_id_t;
+
+        constexpr thread_id_t INVALID_THREAD_ID     = 0;
+
         /**
          * Thread class
          */
@@ -179,6 +183,12 @@ namespace lsp
                  * @return number of logical CPUs in the system available for processing
                  */
                 static inline size_t system_cores() { return system::system_cores(); }
+
+                /**
+                 * Get current thread identifier.
+                 * @return current thread identifier
+                 */
+                static thread_id_t      current_thread_id();
         };
     
     } /* namespace ipc */
