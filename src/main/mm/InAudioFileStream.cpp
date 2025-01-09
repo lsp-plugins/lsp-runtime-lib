@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 19 апр. 2020 г.
@@ -27,7 +27,7 @@
 #include <lsp-plug.in/stdlib/stdio.h>
 #include <lsp-plug.in/stdlib/string.h>
 
-#ifdef PLATFORM_WINDOWS
+#if defined(PLATFORM_WINDOWS)
     #include <private/mm/ACMStream.h>
     #include <private/mm/MMIOReader.h>
 
@@ -36,6 +36,12 @@
     #include <mmreg.h>
     #include <msacm.h>
 #endif /* PLATFORM_WINDOWS */
+
+#if defined(PLATFORM_MACOSX)
+    #include <CoreFoundation/CFString.h>
+    #include <CoreFoundation/CFURL.h>
+    #include <AudioToolbox/ExtendedAudioFile.h>
+#endif /* PLATFORM_MACOSX */
 
 #ifdef USE_LIBSNDFILE
     #if (__SIZEOF_INT__ == 4)
@@ -53,7 +59,7 @@ namespace lsp
 {
     namespace mm
     {
-    #ifndef USE_LIBSNDFILE
+    #if defined(PLATFORM_WINDOWS)
         struct WAVEFILE
         {
             MMIOReader         *pMMIO;
@@ -81,7 +87,12 @@ namespace lsp
 
             return -1;
         }
-    #endif /* USE_LIBSNDFILE */
+    #elif defined(PLATFORM_MACOSX)
+        static inline ExtAudioFileRef eaf_ref(void *handle)
+        {
+            return static_cast<ExtAudioFileRef>(handle);
+        }
+    #endif
         
         InAudioFileStream::InAudioFileStream()
         {
@@ -121,10 +132,7 @@ namespace lsp
             if (h == NULL)
                 return STATUS_OK;
 
-        #ifdef USE_LIBSNDFILE
-            int res     = sf_close(h);
-            return (res == 0) ? STATUS_OK : STATUS_IO_ERROR;
-        #else
+        #if defined(PLATFORM_WINDOWS)
             status_t res    = STATUS_OK;
             if (h->pACM != NULL)
             {
@@ -144,28 +152,16 @@ namespace lsp
             free(h);
 
             return res;
-        #endif /* USE_LIBSNDFILE */
+        #elif defined(PLATFORM_MACOSX)
+            OSStatus res = ExtAudioFileDispose(eaf_ref(h));
+            return decode_os_status(res);
+        #else
+            int res     = sf_close(h);
+            return (res == 0) ? STATUS_OK : STATUS_IO_ERROR;
+        #endif
         }
 
-    #ifdef USE_LIBSNDFILE
-        status_t InAudioFileStream::decode_sf_error(SNDFILE *fd)
-        {
-            const int error = sf_error(fd);
-            switch (error)
-            {
-                case SF_ERR_NO_ERROR:
-                    return STATUS_OK;
-                case SF_ERR_UNRECOGNISED_FORMAT:
-                    return STATUS_BAD_FORMAT;
-                case SF_ERR_MALFORMED_FILE:
-                    return STATUS_CORRUPTED_FILE;
-                case SF_ERR_UNSUPPORTED_ENCODING:
-                    return STATUS_BAD_FORMAT;
-                default:
-                    return STATUS_UNSUPPORTED_FORMAT;
-            }
-        }
-    #else
+    #if defined(PLATFORM_WINDOWS)
         ssize_t InAudioFileStream::read_acm_convert(void *dst, size_t nframes, size_t fmt)
         {
             size_t nread    = 0;
@@ -224,7 +220,30 @@ namespace lsp
 
             return nread / fsize;
         }
-    #endif /* USE_LIBSNDFILE */
+    #elif defined(PLATFORM_MACOSX)
+        status_t InAudioFileStream::decode_os_status(uint32_t code)
+        {
+            return (code == kAudio_NoError) ? STATUS_OK : STATUS_UNKNOWN_ERR;
+        }
+    #else
+        status_t InAudioFileStream::decode_sf_error(SNDFILE *fd)
+        {
+            const int error = sf_error(fd);
+            switch (error)
+            {
+                case SF_ERR_NO_ERROR:
+                    return STATUS_OK;
+                case SF_ERR_UNRECOGNISED_FORMAT:
+                    return STATUS_BAD_FORMAT;
+                case SF_ERR_MALFORMED_FILE:
+                    return STATUS_CORRUPTED_FILE;
+                case SF_ERR_UNSUPPORTED_ENCODING:
+                    return STATUS_BAD_FORMAT;
+                default:
+                    return STATUS_UNSUPPORTED_FORMAT;
+            }
+        }
+    #endif
 
         status_t InAudioFileStream::open(const char *path)
         {
@@ -248,44 +267,7 @@ namespace lsp
             if (!is_closed())
                 return -set_error(STATUS_OPENED);
 
-        #ifdef USE_LIBSNDFILE
-            SF_INFO info;
-            SNDFILE *sf;
-
-            // Open file for reading
-            // Note! From documentation:
-            // When opening a file for read, the format field should be set to zero before calling sf_open().
-            // The only exception to this is the case of RAW files where the caller has to set the samplerate, channels
-            // and format fields to valid values. All other fields of the structure are filled in by the library.
-            info.format         = 0;
-            if ((sf = sf_open(path->get_native(), SFM_READ, &info)) == NULL)
-                return set_error(decode_sf_error(sf));
-
-            // Decode metadata
-            sFormat.srate       = info.samplerate;
-            sFormat.channels    = info.channels;
-            sFormat.frames      = info.frames;
-
-            // Decode sample format
-            switch (info.format & SF_FORMAT_SUBMASK)
-            {
-                case SF_FORMAT_PCM_U8: sFormat.format = mm::SFMT_U8_CPU; break;
-                case SF_FORMAT_PCM_S8: sFormat.format = mm::SFMT_S8_CPU; break;
-                case SF_FORMAT_PCM_16: sFormat.format = mm::SFMT_S16_CPU; break;
-                case SF_FORMAT_PCM_24: sFormat.format = mm::SFMT_S24_CPU; break;
-                case SF_FORMAT_PCM_32: sFormat.format = mm::SFMT_S32_CPU; break;
-                case SF_FORMAT_FLOAT:  sFormat.format = mm::SFMT_F32_CPU; break;
-                case SF_FORMAT_DOUBLE: sFormat.format = mm::SFMT_F64_CPU; break;
-                default:               sFormat.format = mm::SFMT_F32_CPU; break;
-            }
-
-            // Commit new state
-            hHandle             = sf;
-            nOffset             = 0;
-            bSeekable           = info.seekable;
-
-            return set_error(STATUS_OK);
-        #else
+        #if defined(PLATFORM_WINDOWS)
             status_t res        = STATUS_OK;
 
             // Allocate handle
@@ -355,7 +337,179 @@ namespace lsp
             // Commit handle and return
             lsp::swap(hHandle, h);
             return set_error(STATUS_OK);
-        #endif /* USE_LIBSNDFILE */
+        #elif defined(PLATFORM_MACOSX)
+            // Form the URL to open
+            CFStringRef str_ref = CFStringCreateWithCString(
+                kCFAllocatorDefault,
+                path->get_utf8(),
+                kCFStringEncodingUTF8);
+            lsp_finally { CFRelease(str_ref); };
+            CFURLRef url_ref = CFURLCreateWithFileSystemPath(
+                kCFAllocatorDefault,
+                str_ref,
+                kCFURLPOSIXPathStyle,
+                false);
+            lsp_finally { CFRelease(url_ref); };
+
+            // Open file
+            ExtAudioFileRef eaf = NULL;
+            OSStatus os_res = ExtAudioFileOpenURL(url_ref, &eaf);
+            if (os_res != kAudio_NoError)
+                return set_error(decode_os_status(os_res));
+            lsp_finally {
+                if (eaf != NULL)
+                    ExtAudioFileDispose(eaf);
+            };
+
+            // Read audio format
+            AudioStreamBasicDescription info;
+            UInt32 szof_info = sizeof(AudioStreamBasicDescription);
+            bzero(&info, szof_info);
+            os_res = ExtAudioFileGetProperty(
+                eaf,
+                kExtAudioFileProperty_FileDataFormat,
+                &szof_info,
+                &info);
+            if (os_res != kAudio_NoError)
+                return set_error(decode_os_status(os_res));
+
+            // Read audio file length if present
+            SInt64 num_frames = -1;
+            os_res = ExtAudioFileGetProperty(
+                eaf,
+                kExtAudioFileProperty_FileDataFormat,
+                &szof_info,
+                &info);
+            if (os_res != kAudio_NoError)
+                num_frames = -1;
+
+
+            // Decode sample format
+            size_t format       = 0;
+            size_t be_flag      = (info.mFormatFlags & kAudioFormatFlagIsBigEndian) ? mm::SFMT_BE : mm::SFMT_LE;
+            bool need_convert   = info.mFormatID != kAudioFormatLinearPCM;
+            if (!need_convert)
+            {
+                if (info.mFormatFlags & kAudioFormatFlagIsFloat)
+                {
+                    if (info.mBitsPerChannel == sizeof(float) * 8)
+                        format          = mm::SFMT_F32 | be_flag;
+                    else if (info.mBitsPerChannel == sizeof(double) * 8)
+                        format          = mm::SFMT_F64 | be_flag;
+                    else
+                    {
+                        format          = mm::SFMT_F32_CPU;
+                        need_convert    = true;
+                    }
+                }
+                else if (info.mFormatFlags & kAudioFormatFlagIsSignedInteger)
+                {
+                    if (info.mBitsPerChannel == sizeof(int8_t) * 8)
+                        format          = mm::SFMT_S8 | be_flag;
+                    else if (info.mBitsPerChannel == sizeof(int16_t) * 8)
+                        format          = mm::SFMT_S16 | be_flag;
+                    else if (info.mBitsPerChannel == sizeof(int8_t) * 24)
+                        format          = mm::SFMT_S24 | be_flag;
+                    else if (info.mBitsPerChannel == sizeof(int32_t) * 8)
+                        format          = mm::SFMT_S32 | be_flag;
+                    else
+                    {
+                        format          = mm::SFMT_F32_CPU;
+                        need_convert    = true;
+                    }
+                }
+                else
+                {
+                    if (info.mBitsPerChannel == sizeof(uint8_t) * 8)
+                        format          = mm::SFMT_U8 | be_flag;
+                    else if (info.mBitsPerChannel == sizeof(uint16_t) * 8)
+                        format          = mm::SFMT_U16 | be_flag;
+                    else if (info.mBitsPerChannel == sizeof(uint8_t) * 24)
+                        format          = mm::SFMT_U24 | be_flag;
+                    else if (info.mBitsPerChannel == sizeof(uint32_t) * 8)
+                        format          = mm::SFMT_U32 | be_flag;
+                    else
+                    {
+                        format          = mm::SFMT_F32_CPU;
+                        need_convert    = true;
+                    }
+                }
+            }
+
+            // Initialize audio converter if needed to match the selected sample format
+            if (need_convert)
+            {
+                AudioStreamBasicDescription cvt;
+                bzero(&cvt, sizeof(AudioStreamBasicDescription));
+                cvt.mSampleRate       = info.mSampleRate;
+                cvt.mFormatID         = kAudioFormatLinearPCM;
+                cvt.mFormatFlags      = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
+
+                cvt.mBytesPerPacket   = sizeof(float) * info.mChannelsPerFrame;
+                cvt.mFramesPerPacket  = 1;
+                cvt.mBytesPerFrame    = sizeof(float) * info.mChannelsPerFrame;
+                cvt.mChannelsPerFrame = info.mChannelsPerFrame;
+                cvt.mBitsPerChannel   = sizeof(float) * 8;
+
+                os_res = ExtAudioFileSetProperty(
+                    eaf,
+                    kExtAudioFileProperty_ClientDataFormat,
+                    sizeof(AudioStreamBasicDescription),
+                    &cvt);
+
+                if (os_res != kAudio_NoError)
+                    return set_error(decode_os_status(os_res));
+            }
+
+            // Update state and return
+            sFormat.srate       = info.mSampleRate;
+            sFormat.channels    = info.mChannelsPerFrame;
+            sFormat.frames      = num_frames;
+            sFormat.format      = format;
+
+            nOffset             = 0;
+            bSeekable           = false;
+            hHandle             = release_ptr(eaf);
+
+            return set_error(STATUS_OK);
+        #else
+            SF_INFO info;
+            SNDFILE *sf;
+
+            // Open file for reading
+            // Note! From documentation:
+            // When opening a file for read, the format field should be set to zero before calling sf_open().
+            // The only exception to this is the case of RAW files where the caller has to set the samplerate, channels
+            // and format fields to valid values. All other fields of the structure are filled in by the library.
+            info.format         = 0;
+            if ((sf = sf_open(path->get_native(), SFM_READ, &info)) == NULL)
+                return set_error(decode_sf_error(sf));
+
+            // Decode metadata
+            sFormat.srate       = info.samplerate;
+            sFormat.channels    = info.channels;
+            sFormat.frames      = info.frames;
+
+            // Decode sample format
+            switch (info.format & SF_FORMAT_SUBMASK)
+            {
+                case SF_FORMAT_PCM_U8: sFormat.format = mm::SFMT_U8_CPU; break;
+                case SF_FORMAT_PCM_S8: sFormat.format = mm::SFMT_S8_CPU; break;
+                case SF_FORMAT_PCM_16: sFormat.format = mm::SFMT_S16_CPU; break;
+                case SF_FORMAT_PCM_24: sFormat.format = mm::SFMT_S24_CPU; break;
+                case SF_FORMAT_PCM_32: sFormat.format = mm::SFMT_S32_CPU; break;
+                case SF_FORMAT_FLOAT:  sFormat.format = mm::SFMT_F32_CPU; break;
+                case SF_FORMAT_DOUBLE: sFormat.format = mm::SFMT_F64_CPU; break;
+                default:               sFormat.format = mm::SFMT_F32_CPU; break;
+            }
+
+            // Commit new state
+            hHandle             = sf;
+            nOffset             = 0;
+            bSeekable           = info.seekable;
+
+            return set_error(STATUS_OK);
+        #endif
         }
 
         status_t InAudioFileStream::close()
@@ -406,7 +560,35 @@ namespace lsp
 
         ssize_t InAudioFileStream::direct_read(void *dst, size_t nframes, size_t fmt)
         {
-        #ifdef USE_LIBSNDFILE
+        #if defined(PLATFORM_WINDOWS)
+            if (hHandle->pMMIO == NULL)
+                return -STATUS_NOT_SUPPORTED;
+            if (hHandle->pACM != NULL)
+                return read_acm_convert(dst, nframes, fmt);
+
+            size_t fsize    = sformat_size_of(sFormat.format) * sFormat.channels;
+            ssize_t nread   = hHandle->pMMIO->read(dst, fsize * nframes);
+            return (nread < 0) ? nread : nread / fsize;
+        #elif defined(PLATFORM_MACOSX)
+            const size_t fsize    = sformat_size_of(sFormat.format) * sFormat.channels;
+
+            AudioBufferList list;
+            AudioBuffer *buf = &list.mBuffers[0];
+
+            list.mNumberBuffers         = 1;
+            buf->mNumberChannels        = UInt32(sFormat.channels);
+            buf->mDataByteSize          = UInt32(fsize * nframes);
+            buf->mData                  = dst;
+
+            UInt32 count                = UInt32(nframes);
+            OSStatus os_res             = ExtAudioFileRead(eaf_ref(hHandle), &count, &list);
+            if (os_res != kAudio_NoError)
+                return -set_error(decode_os_status(os_res));
+            if (count > 0)
+                return count;
+
+            return -STATUS_EOF;
+        #else
             sf_count_t count;
             status_t res;
 
@@ -415,19 +597,15 @@ namespace lsp
                 case SFMT_S32:
                     count   = sf_readf_int(hHandle, static_cast<int *>(dst), nframes);
                     break;
-
                 case SFMT_S16:
                     count   = sf_readf_short(hHandle, static_cast<short *>(dst), nframes);
                     break;
-
                 case SFMT_F32:
                     count   = sf_readf_float(hHandle, static_cast<float *>(dst), nframes);
                     break;
-
                 case SFMT_F64:
                     count   = sf_readf_double(hHandle, static_cast<double *>(dst), nframes);
                     break;
-
                 default: // Force SFMT_F32 sample format
                     count   = sf_readf_float(hHandle, static_cast<float *>(dst), nframes);
                     break;
@@ -439,16 +617,7 @@ namespace lsp
 
             res = decode_sf_error(hHandle);
             return -((res == STATUS_OK) ? STATUS_EOF : res);
-        #else
-            if (hHandle->pMMIO == NULL)
-                return -STATUS_NOT_SUPPORTED;
-            if (hHandle->pACM != NULL)
-                return read_acm_convert(dst, nframes, fmt);
-
-            size_t fsize    = sformat_size_of(sFormat.format) * sFormat.channels;
-            ssize_t nread   = hHandle->pMMIO->read(dst, fsize * nframes);
-            return (nread < 0) ? nread : nread / fsize;
-        #endif /* USE_LIBSNDFILE */
+        #endif
         }
 
         wssize_t InAudioFileStream::skip(wsize_t nframes)
@@ -458,17 +627,7 @@ namespace lsp
             if (!bSeekable)
                 return IInAudioStream::skip(nframes);
 
-        #ifdef USE_LIBSNDFILE
-            sf_count_t res = sf_seek(hHandle, nframes, SEEK_CUR);
-            if (res >= 0)
-            {
-                nOffset    += nframes;
-                set_error(STATUS_OK);
-                return nframes;
-            }
-
-            return -set_error(decode_sf_error(hHandle));
-        #else
+        #if defined(PLATFORM_WINDOWS)
             if (hHandle->pMMIO != NULL)
             {
                 size_t fsize    = sformat_size_of(sFormat.format) * LE_TO_CPU(hHandle->pFormat->nChannels);
@@ -483,7 +642,25 @@ namespace lsp
             }
 
             return -set_error(STATUS_NOT_SUPPORTED);
-        #endif /* USE_LIBSNDFILE */
+        #elif defined(PLATFORM_MACOSX)
+            OSStatus os_res             = ExtAudioFileSeek(eaf_ref(hHandle), nOffset + nframes);
+            if (os_res != kAudio_NoError)
+                return -set_error(decode_os_status(os_res));
+
+            nOffset    += nframes;
+            set_error(STATUS_OK);
+            return nframes;
+        #else
+            sf_count_t res = sf_seek(hHandle, nframes, SEEK_CUR);
+            if (res >= 0)
+            {
+                nOffset    += nframes;
+                set_error(STATUS_OK);
+                return nframes;
+            }
+
+            return -set_error(decode_sf_error(hHandle));
+        #endif
         }
 
         wssize_t InAudioFileStream::seek(wsize_t nframes)
@@ -493,17 +670,7 @@ namespace lsp
             if (!bSeekable)
                 return IInAudioStream::seek(nframes);
 
-        #ifdef USE_LIBSNDFILE
-            sf_count_t res = sf_seek(hHandle, nframes, SEEK_SET);
-            if (res >= 0)
-            {
-                nOffset     = nframes;
-                set_error(STATUS_OK);
-                return nframes;
-            }
-
-            return -set_error(decode_sf_error(hHandle));
-        #else
+        #if defined(PLATFORM_WINDOWS)
             if (hHandle->pMMIO != NULL)
             {
                 size_t fsize    = sformat_size_of(sFormat.format) * LE_TO_CPU(hHandle->pFormat->nChannels);
@@ -518,7 +685,25 @@ namespace lsp
             }
 
             return -set_error(STATUS_NOT_SUPPORTED);
-        #endif /* USE_LIBSNDFILE */
+        #elif defined(PLATFORM_MACOSX)
+            OSStatus os_res             = ExtAudioFileSeek(eaf_ref(hHandle), nframes);
+            if (os_res != kAudio_NoError)
+                return -set_error(decode_os_status(os_res));
+
+            nOffset     = nframes;
+            set_error(STATUS_OK);
+            return nframes;
+        #else
+            sf_count_t res = sf_seek(hHandle, nframes, SEEK_SET);
+            if (res >= 0)
+            {
+                nOffset     = nframes;
+                set_error(STATUS_OK);
+                return nframes;
+            }
+
+            return -set_error(decode_sf_error(hHandle));
+        #endif
         }
 
         status_t InAudioFileStream::info(mm::audio_stream_t *dst) const

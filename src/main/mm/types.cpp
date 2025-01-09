@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 16 апр. 2020 г.
@@ -32,11 +32,13 @@ namespace lsp
                 case SFMT_U8: case SFMT_S8: return sizeof(uint8_t);
                 case SFMT_U16: case SFMT_S16: return sizeof(uint16_t);
                 case SFMT_U24: case SFMT_S24:
-                #ifdef USE_LIBSNDFILE
-                    return sizeof(uint32_t);
-                #else
+                #if defined(PLATFORM_WINDOWS)
                     return sizeof(uint8_t) * 3;
-                #endif /* USE_LIBSNDFILE */
+                #elif defined(PLATFORM_MACOSX)
+                    return sizeof(uint8_t) * 3;
+                #else
+                    return sizeof(uint32_t);
+                #endif
                 case SFMT_U32: case SFMT_S32:
                     return sizeof(uint32_t);
                 case SFMT_F32:
@@ -125,7 +127,7 @@ namespace lsp
             }
             return -1;
         }
-    }
-}
+    } /* namespace mm */
+} /* namespace lsp */
 
 
