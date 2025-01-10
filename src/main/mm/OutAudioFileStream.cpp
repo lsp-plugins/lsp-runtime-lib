@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 20 апр. 2020 г.
@@ -31,6 +31,12 @@
     #include <msacm.h>
 #endif /* PLATFORM_WINDOWS */
 
+#if defined(PLATFORM_MACOSX)
+    #include <CoreFoundation/CFString.h>
+    #include <CoreFoundation/CFURL.h>
+    #include <AudioToolbox/ExtendedAudioFile.h>
+#endif /* PLATFORM_MACOSX */
+
 #ifdef USE_LIBSNDFILE
     #if (__SIZEOF_INT__ == 4)
         #define AFS_S32_CPU     mm::SFMT_S32_CPU
@@ -47,7 +53,7 @@ namespace lsp
 {
     namespace mm
     {
-    #ifndef USE_LIBSNDFILE
+    #if defined(PLATFORM_WINDOWS)
         struct WAVEFILE
         {
             MMIOWriter         *pMMIO;          // MMIO writer
@@ -77,22 +83,191 @@ namespace lsp
 
             return -1;
         }
-    #endif /* USE_LIBSNDFILE */
-        
-        OutAudioFileStream::OutAudioFileStream()
+    #elif defined(PLATFORM_MACOSX)
+        static inline ExtAudioFileRef eaf_ref(void *handle)
         {
-            hHandle         = NULL;
-            nCodec          = 0;
-            bSeekable       = false;
+            return static_cast<ExtAudioFileRef>(handle);
         }
-        
-        OutAudioFileStream::~OutAudioFileStream()
+    
+        status_t OutAudioFileStream::decode_os_status(uint32_t code)
         {
-            IOutAudioStream::close();
-            do_close();
+            return (code == kAudio_NoError) ? STATUS_OK : STATUS_UNKNOWN_ERR;
         }
 
-    #ifdef USE_LIBSNDFILE
+        uint32_t OutAudioFileStream::select_file_format(size_t codec)
+        {
+            // Choose audio format
+            switch (codec & AFMT_MASK)
+            {
+                case AFMT_WAV:      return kAudioFileWAVEType;
+                case AFMT_AIFF:     return kAudioFileAIFFType;
+                case AFMT_AU:       return kAudioFileNextType;
+                case AFMT_W64:      return kAudioFileWave64Type;
+                case AFMT_SD2:      return kAudioFileSoundDesigner2Type;
+                case AFMT_FLAC:     return kAudioFileFLACType;
+                case AFMT_CAF:      return kAudioFileCAFType;
+                case AFMT_RF64:     return kAudioFileRF64Type;
+                default:
+                    return 0;
+            }
+        }
+
+        static bool select_sample_format(AudioStreamBasicDescription *info, const audio_stream_t *fmt, size_t codec)
+        {
+            bzero(&info, sizeof(AudioStreamBasicDescription));
+
+            info->mSampleRate       = fmt->srate;
+            info->mFormatFlags      = 0;
+            info->mChannelsPerFrame = uint32_t(fmt->channels);
+
+            // Choose codec
+            switch (codec & CFMT_MASK)
+            {
+                case CFMT_PCM:
+                    info->mFormatID         = kAudioFormatLinearPCM;
+                    break;
+
+                case CFMT_ULAW:
+                    info->mFormatID         = kAudioFormatULaw;
+                    info->mFormatFlags     |= kAudioFormatFlagIsPacked | kAudioFormatFlagIsSignedInteger;
+                    info->mBytesPerPacket   = 0;
+                    info->mBytesPerFrame    = uint32_t(8 * sizeof(int8_t) * fmt->channels);
+                    info->mFramesPerPacket  = 1;
+                    info->mBitsPerChannel   = 8 * sizeof(int8_t);
+                    break;
+
+                case CFMT_ALAW:
+                    info->mFormatID         = kAudioFormatALaw;
+                    info->mFormatFlags     |= kAudioFormatFlagIsPacked | kAudioFormatFlagIsSignedInteger;
+                    info->mBytesPerPacket   = 0;
+                    info->mBytesPerFrame    = uint32_t(8 * sizeof(int8_t) * fmt->channels);
+                    info->mFramesPerPacket  = 1;
+                    info->mBitsPerChannel   = 8 * sizeof(int8_t);
+                    break;
+
+                default:
+                    switch (codec & AFMT_MASK)
+                    {
+                        case AFMT_WAV:
+                            info->mFormatID     = kAudioFormatLinearPCM;
+                            break;
+                        case AFMT_FLAC:
+                            info->mFormatID     = kAudioFormatFLAC;
+                            break;
+                        default:
+                            info->mFormatID     = kAudioFormatLinearPCM;
+                            break;
+                    }
+                    break;
+            }
+
+            // Choose endianess
+            switch (sformat_endian(fmt->format))
+            {
+                case SFMT_DFL:
+                    if ((codec & AFMT_MASK) == AFMT_AU)
+                        info->mFormatFlags     |= kAudioFormatFlagIsBigEndian;
+                    break;
+                case SFMT_LE:
+                    break;
+                case SFMT_BE:
+                    info->mFormatFlags     |= kAudioFormatFlagIsBigEndian;
+                    break;
+                default:
+                    return false;
+            }
+
+            if (info->mFormatID == kAudioFormatLinearPCM)
+            {
+                info->mFormatFlags         |= kAudioFormatFlagIsPacked;
+
+                // Set sample format
+                switch (sformat_format(fmt->format))
+                {
+                    case SFMT_U8:
+                        info->mBytesPerPacket   = 0;
+                        info->mBytesPerFrame    = uint32_t(8 * sizeof(uint8_t) * fmt->channels);
+                        info->mFramesPerPacket  = 1;
+                        info->mBitsPerChannel   = 8 * sizeof(uint8_t);
+                        break;
+
+                    case SFMT_S8:
+                        info->mFormatFlags     |= kAudioFormatFlagIsSignedInteger;
+                        info->mBytesPerPacket   = 0;
+                        info->mBytesPerFrame    = uint32_t(8 * sizeof(int8_t) * fmt->channels);
+                        info->mFramesPerPacket  = 1;
+                        info->mBitsPerChannel   = 8 * sizeof(int8_t);
+                        break;
+
+                    case SFMT_U16:
+                        info->mBytesPerPacket   = 0;
+                        info->mBytesPerFrame    = uint32_t(8 * sizeof(uint16_t) * fmt->channels);
+                        info->mFramesPerPacket  = 1;
+                        info->mBitsPerChannel   = 8 * sizeof(uint16_t);
+                        break;
+
+                    case SFMT_S16:
+                        info->mFormatFlags     |= kAudioFormatFlagIsSignedInteger;
+                        info->mBytesPerPacket   = 0;
+                        info->mBytesPerFrame    = uint32_t(8 * sizeof(int16_t) * fmt->channels);
+                        info->mFramesPerPacket  = 1;
+                        info->mBitsPerChannel   = 8 * sizeof(int16_t);
+                        break;
+
+                    case SFMT_U24:
+                        info->mBytesPerPacket   = 0;
+                        info->mBytesPerFrame    = uint32_t(24 * sizeof(uint8_t) * fmt->channels);
+                        info->mFramesPerPacket  = 1;
+                        info->mBitsPerChannel   = 24 * sizeof(uint8_t);
+                        break;
+
+                    case SFMT_S24:
+                        info->mFormatFlags     |= kAudioFormatFlagIsSignedInteger;
+                        info->mBytesPerPacket   = 0;
+                        info->mBytesPerFrame    = uint32_t(24 * sizeof(int8_t) * fmt->channels);
+                        info->mFramesPerPacket  = 1;
+                        info->mBitsPerChannel   = 24 * sizeof(int8_t);
+                        break;
+
+                    case SFMT_U32:
+                        info->mBytesPerPacket   = 0;
+                        info->mBytesPerFrame    = uint32_t(8 * sizeof(uint32_t) * fmt->channels);
+                        info->mFramesPerPacket  = 1;
+                        info->mBitsPerChannel   = 8 * sizeof(uint32_t);
+                        break;
+
+                    case SFMT_S32:
+                        info->mFormatFlags     |= kAudioFormatFlagIsSignedInteger;
+                        info->mBytesPerPacket   = 0;
+                        info->mBytesPerFrame    = uint32_t(8 * sizeof(int32_t) * fmt->channels);
+                        info->mFramesPerPacket  = 1;
+                        info->mBitsPerChannel   = 8 * sizeof(int32_t);
+                        break;
+
+                    case SFMT_F32:
+                        info->mFormatFlags     |= kAudioFormatFlagIsFloat;
+                        info->mBytesPerPacket   = 0;
+                        info->mBytesPerFrame    = uint32_t(8 * sizeof(float) * fmt->channels);
+                        info->mFramesPerPacket  = 1;
+                        info->mBitsPerChannel   = 8 * sizeof(float);
+                        break;
+
+                    case SFMT_F64:
+                        info->mFormatFlags     |= kAudioFormatFlagIsFloat;
+                        info->mBytesPerPacket   = 0;
+                        info->mBytesPerFrame    = uint32_t(8 * sizeof(double) * fmt->channels);
+                        info->mFramesPerPacket  = 1;
+                        info->mBitsPerChannel   = 8 * sizeof(double);
+                        break;
+
+                    default:
+                        return false;
+                }
+            }
+
+            return true;
+        }
+    #else
         status_t OutAudioFileStream::decode_sf_error(SNDFILE *fd)
         {
             switch (sf_error(fd))
@@ -223,7 +398,20 @@ namespace lsp
 
             return true;
         }
-    #endif /* USE_LIBSNDFILE */
+    #endif
+
+        OutAudioFileStream::OutAudioFileStream()
+        {
+            hHandle         = NULL;
+            nCodec          = 0;
+            bSeekable       = false;
+        }
+
+        OutAudioFileStream::~OutAudioFileStream()
+        {
+            IOutAudioStream::close();
+            do_close();
+        }
 
         status_t OutAudioFileStream::open(const char *path, const audio_stream_t *fmt, size_t codec)
         {
@@ -249,27 +437,7 @@ namespace lsp
             if (fmt == NULL)
                 return set_error(STATUS_BAD_ARGUMENTS);
 
-        #ifdef USE_LIBSNDFILE
-            audio_stream_t tmp;
-            SF_INFO info;
-            tmp     = *fmt;
-
-            if (!select_sndfile_format(&info, &tmp, codec))
-                return set_error(STATUS_UNSUPPORTED_FORMAT);
-
-            // Open handle
-            SNDFILE *sf = sf_open(path->get_native(), SFM_WRITE, &info);
-            if (sf == NULL)
-                return -set_error(decode_sf_error(sf));
-
-            // Commit new state
-            sFormat             = tmp;
-            hHandle             = sf;
-            nOffset             = 0;
-            bSeekable           = info.seekable;
-
-            return set_error(STATUS_OK);
-        #else
+        #if defined(PLATFORM_WINDOWS)
             if ((codec & AFMT_MASK) != AFMT_WAV)
                 return set_error(STATUS_UNSUPPORTED_FORMAT);
 
@@ -377,7 +545,153 @@ namespace lsp
             // Commit the new handle and return success
             lsp::swap(hHandle, h);
             return set_error(STATUS_OK);
-        #endif /* USE_LIBSNDFILE */
+        #elif defined(PLATFORM_MACOSX)
+            // Form the URL to open
+            CFStringRef str_ref = CFStringCreateWithCString(
+                kCFAllocatorDefault,
+                path->get_utf8(),
+                kCFStringEncodingUTF8);
+            lsp_finally { CFRelease(str_ref); };
+            CFURLRef url_ref = CFURLCreateWithFileSystemPath(
+                kCFAllocatorDefault,
+                str_ref,
+                kCFURLPOSIXPathStyle,
+                false);
+            lsp_finally { CFRelease(url_ref); };
+
+            const AudioFileTypeID file_type = select_file_format(codec);
+            if (file_type == 0)
+                return set_error(STATUS_UNSUPPORTED_FORMAT);
+
+            AudioStreamBasicDescription info;
+            if (!select_sample_format(&info, fmt, codec))
+                return set_error(STATUS_UNSUPPORTED_FORMAT);
+
+            // Open file
+            ExtAudioFileRef eaf = NULL;
+            OSStatus os_res = ExtAudioFileCreateWithURL(
+                url_ref,
+                file_type,
+                &info,
+                NULL,
+                kAudioFileFlags_EraseFile,
+                &eaf);
+            if (os_res != kAudio_NoError)
+                return set_error(decode_os_status(os_res));
+            lsp_finally {
+                if (eaf != NULL)
+                    ExtAudioFileDispose(eaf);
+            };
+
+            // Decode sample format
+            size_t format       = 0;
+            size_t be_flag      = (info.mFormatFlags & kAudioFormatFlagIsBigEndian) ? mm::SFMT_BE : mm::SFMT_LE;
+            bool need_convert   = info.mFormatID != kAudioFormatLinearPCM;
+            if (!need_convert)
+            {
+                if (info.mFormatFlags & kAudioFormatFlagIsFloat)
+                {
+                    if (info.mBitsPerChannel == sizeof(float) * 8)
+                        format          = mm::SFMT_F32 | be_flag;
+                    else if (info.mBitsPerChannel == sizeof(double) * 8)
+                        format          = mm::SFMT_F64 | be_flag;
+                    else
+                    {
+                        format          = mm::SFMT_F32_CPU;
+                        need_convert    = true;
+                    }
+                }
+                else if (info.mFormatFlags & kAudioFormatFlagIsSignedInteger)
+                {
+                    if (info.mBitsPerChannel == sizeof(int8_t) * 8)
+                        format          = mm::SFMT_S8 | be_flag;
+                    else if (info.mBitsPerChannel == sizeof(int16_t) * 8)
+                        format          = mm::SFMT_S16 | be_flag;
+                    else if (info.mBitsPerChannel == sizeof(int8_t) * 24)
+                        format          = mm::SFMT_S24 | be_flag;
+                    else if (info.mBitsPerChannel == sizeof(int32_t) * 8)
+                        format          = mm::SFMT_S32 | be_flag;
+                    else
+                    {
+                        format          = mm::SFMT_F32_CPU;
+                        need_convert    = true;
+                    }
+                }
+                else
+                {
+                    if (info.mBitsPerChannel == sizeof(uint8_t) * 8)
+                        format          = mm::SFMT_U8 | be_flag;
+                    else if (info.mBitsPerChannel == sizeof(uint16_t) * 8)
+                        format          = mm::SFMT_U16 | be_flag;
+                    else if (info.mBitsPerChannel == sizeof(uint8_t) * 24)
+                        format          = mm::SFMT_U24 | be_flag;
+                    else if (info.mBitsPerChannel == sizeof(uint32_t) * 8)
+                        format          = mm::SFMT_U32 | be_flag;
+                    else
+                    {
+                        format          = mm::SFMT_F32_CPU;
+                        need_convert    = true;
+                    }
+                }
+            }
+
+            // Initialize audio converter if needed to match the selected sample format
+            if (need_convert)
+            {
+                AudioStreamBasicDescription cvt;
+                bzero(&cvt, sizeof(AudioStreamBasicDescription));
+                cvt.mSampleRate       = info.mSampleRate;
+                cvt.mFormatID         = kAudioFormatLinearPCM;
+                cvt.mFormatFlags      = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
+
+                cvt.mBytesPerPacket   = sizeof(float) * info.mChannelsPerFrame;
+                cvt.mFramesPerPacket  = 1;
+                cvt.mBytesPerFrame    = sizeof(float) * info.mChannelsPerFrame;
+                cvt.mChannelsPerFrame = info.mChannelsPerFrame;
+                cvt.mBitsPerChannel   = sizeof(float) * 8;
+
+                os_res = ExtAudioFileSetProperty(
+                    eaf,
+                    kExtAudioFileProperty_ClientDataFormat,
+                    sizeof(AudioStreamBasicDescription),
+                    &cvt);
+
+                if (os_res != kAudio_NoError)
+                    return set_error(decode_os_status(os_res));
+            }
+
+            // Update state and return
+            sFormat.srate       = info.mSampleRate;
+            sFormat.channels    = info.mChannelsPerFrame;
+            sFormat.frames      = fmt->frames;
+            sFormat.format      = format;
+
+            nOffset             = 0;
+            bSeekable           = false;
+            hHandle             = release_ptr(eaf);
+
+            return set_error(STATUS_OK);
+        #else
+            audio_stream_t tmp;
+            SF_INFO info;
+            tmp     = *fmt;
+
+            if (!select_sndfile_format(&info, &tmp, codec))
+                return set_error(STATUS_UNSUPPORTED_FORMAT);
+
+            // Open handle
+            SNDFILE *sf = sf_open(path->get_native(), SFM_WRITE, &info);
+            if (sf == NULL)
+                return -set_error(decode_sf_error(sf));
+
+            // Commit new state
+            sFormat             = tmp;
+            hHandle             = sf;
+            nOffset             = 0;
+            bSeekable           = info.seekable;
+
+            return set_error(STATUS_OK);
+        #endif
         }
 
         status_t OutAudioFileStream::close_handle(handle_t *h)
@@ -386,10 +700,7 @@ namespace lsp
                 return STATUS_OK;
             lsp_finally { h = NULL; };
 
-        #ifdef USE_LIBSNDFILE
-            int res     = sf_close(h);
-            return (res == 0) ? STATUS_OK : STATUS_IO_ERROR;
-        #else
+        #if defined(PLATFORM_WINDOWS)
             status_t res = STATUS_OK;
 
             // Flush all previously encoded data and close ACM
@@ -414,7 +725,13 @@ namespace lsp
             free(h);
 
             return res;
-        #endif /* USE_LIBSNDFILE */
+        #elif defined(PLATFORM_MACOSX)
+            OSStatus res = ExtAudioFileDispose(eaf_ref(h));
+            return decode_os_status(res);
+        #else
+            int res     = sf_close(h);
+            return (res == 0) ? STATUS_OK : STATUS_IO_ERROR;
+        #endif
         }
 
         status_t OutAudioFileStream::do_close()
@@ -433,7 +750,7 @@ namespace lsp
             return set_error((res == STATUS_OK) ? res2 : res);
         }
 
-    #ifndef USE_LIBSNDFILE
+    #if defined(PLATFORM_WINDOWS)
         status_t OutAudioFileStream::flush_handle(handle_t *hHandle, bool eof)
         {
             if (hHandle->pACM == NULL)
@@ -458,16 +775,19 @@ namespace lsp
 
             return STATUS_OK;
         }
-    #endif /* USE_LIBSNDFILE */
+    #endif /* PLATFORM_WINDOWS */
 
         status_t OutAudioFileStream::flush_internal(bool eof)
         {
-        #ifdef USE_LIBSNDFILE
-            sf_write_sync(hHandle);
+        #if defined(PLATFORM_WINDOWS)
+            status_t res = flush_handle(hHandle, eof);
+
+            return (res == STATUS_OK) ? hHandle->pMMIO->flush() : res;
+        #elif defined(PLATFORM_MACOSX)
             return STATUS_OK;
         #else
-            status_t res = flush_handle(hHandle, eof);
-            return (res == STATUS_OK) ? hHandle->pMMIO->flush() : res;
+            sf_write_sync(hHandle);
+            return STATUS_OK;
         #endif /* USE_LIBSNDFILE */
         }
 
@@ -487,7 +807,35 @@ namespace lsp
 
         ssize_t OutAudioFileStream::direct_write(const void *src, size_t nframes, size_t fmt)
         {
-        #ifdef USE_LIBSNDFILE
+        #if defined(PLATFORM_WINDOWS)
+            size_t fsize    = hHandle->pFormat->nBlockAlign;
+            if (hHandle->pMMIO != NULL)
+            {
+                if (hHandle->pACM != NULL)
+                    return write_acm_convert(src, nframes);
+
+                ssize_t nwritten    = hHandle->pMMIO->write(src, fsize * nframes);
+                return (nwritten < 0) ? nwritten : nwritten / fsize;
+            }
+
+            return -STATUS_NOT_SUPPORTED;
+        #elif defined(PLATFORM_MACOSX)
+            const size_t fsize          = sformat_size_of(sFormat.format) * sFormat.channels;
+
+            AudioBufferList list;
+            AudioBuffer *buf = &list.mBuffers[0];
+
+            list.mNumberBuffers         = 1;
+            buf->mNumberChannels        = UInt32(sFormat.channels);
+            buf->mDataByteSize          = UInt32(fsize * nframes);
+            buf->mData                  = const_cast<void *>(src);
+
+            UInt32 count                = UInt32(nframes);
+            OSStatus os_res             = ExtAudioFileWrite(eaf_ref(hHandle), count, &list);
+            if (os_res != kAudio_NoError)
+                return -set_error(decode_os_status(os_res));
+            return count;
+        #else
             sf_count_t count;
             status_t res;
 
@@ -520,22 +868,10 @@ namespace lsp
 
             res = decode_sf_error(hHandle);
             return -((res == STATUS_OK) ? STATUS_EOF : res);
-        #else
-            size_t fsize    = hHandle->pFormat->nBlockAlign;
-            if (hHandle->pMMIO != NULL)
-            {
-                if (hHandle->pACM != NULL)
-                    return write_acm_convert(src, nframes);
-
-                ssize_t nwritten    = hHandle->pMMIO->write(src, fsize * nframes);
-                return (nwritten < 0) ? nwritten : nwritten / fsize;
-            }
-
-            return -STATUS_NOT_SUPPORTED;
-        #endif /* USE_LIBSNDFILE */
+        #endif
         }
 
-    #ifndef USE_LIBSNDFILE
+    #if defined(PLATFORM_WINDOWS)
         ssize_t OutAudioFileStream::conv_write(const void *src, size_t nframes, size_t fmt)
         {
             ssize_t res = IOutAudioStream::conv_write(src, nframes, fmt);
@@ -590,11 +926,31 @@ namespace lsp
             return nwritten / fsize;
         }
 
-    #endif /* USE_LIBSNDFILE */
+    #endif /* PLATFORM_WINDOWS */
 
         size_t OutAudioFileStream::select_format(size_t rfmt)
         {
-        #ifdef USE_LIBSNDFILE
+        #if defined(PLATFORM_WINDOWS)
+            if (hHandle->pFormat->wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
+                return SFMT_F32_LE;
+
+            if (hHandle->pFormat->wFormatTag == WAVE_FORMAT_PCM)
+            {
+                switch (hHandle->pFormat->wBitsPerSample)
+                {
+                    case 8: return SFMT_U8_CPU;
+                    case 16: return SFMT_S16_LE;
+                    case 24: return SFMT_S24_LE;
+                    case 32: return SFMT_S32_LE;
+                    default:
+                        break;
+                }
+            }
+
+            return -1;
+        #elif defined(PLATFORM_MACOSX)
+            return sFormat.format;
+        #else
             switch (sformat_format(rfmt))
             {
             #ifdef AFS_S32_CPU
@@ -624,24 +980,6 @@ namespace lsp
             }
 
             return SFMT_F32_CPU;
-        #else
-            if (hHandle->pFormat->wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
-                return SFMT_F32_LE;
-
-            if (hHandle->pFormat->wFormatTag == WAVE_FORMAT_PCM)
-            {
-                switch (hHandle->pFormat->wBitsPerSample)
-                {
-                    case 8: return SFMT_U8_CPU;
-                    case 16: return SFMT_S16_LE;
-                    case 24: return SFMT_S24_LE;
-                    case 32: return SFMT_S32_LE;
-                    default:
-                        break;
-                }
-            }
-
-            return -1;
         #endif
         }
 
@@ -650,14 +988,7 @@ namespace lsp
             if (is_closed())
                 return -set_error(STATUS_CLOSED);
 
-        #ifdef USE_LIBSNDFILE
-            sf_count_t offset = sf_seek(hHandle, nframes, SEEK_SET);
-            if (offset < 0)
-                return -set_error(decode_sf_error(hHandle));
-
-            set_error(STATUS_OK);
-            return nOffset = offset;
-        #else
+        #if defined(PLATFORM_WINDOWS)
             size_t fsize    = hHandle->pFormat->nBlockAlign;
             if ((hHandle->pMMIO != NULL) && (bSeekable))
             {
@@ -673,6 +1004,21 @@ namespace lsp
             }
 
             return -set_error(STATUS_NOT_IMPLEMENTED);
+        #elif defined(PLATFORM_MACOSX)
+            OSStatus os_res             = ExtAudioFileSeek(eaf_ref(hHandle), nframes);
+            if (os_res != kAudio_NoError)
+                return -set_error(decode_os_status(os_res));
+
+            nOffset     = nframes;
+            set_error(STATUS_OK);
+            return nframes;
+        #else
+            sf_count_t offset = sf_seek(hHandle, nframes, SEEK_SET);
+            if (offset < 0)
+                return -set_error(decode_sf_error(hHandle));
+
+            set_error(STATUS_OK);
+            return nOffset = offset;
         #endif /* USE_LIBSNDFILE */
         }
     } /* namespace mm */

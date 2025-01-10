@@ -86,7 +86,6 @@ namespace lsp
                 case SFMT_U16:  return SFMT_S16 | endian;
                 case SFMT_U24:  return SFMT_S24 | endian;
                 case SFMT_U32:  return SFMT_S32 | endian;
-                    return 0;
 
                 case SFMT_S8:
                 case SFMT_S16:
@@ -112,7 +111,6 @@ namespace lsp
                 case SFMT_S16:  return SFMT_U16 | endian;
                 case SFMT_S24:  return SFMT_U24 | endian;
                 case SFMT_S32:  return SFMT_U32 | endian;
-                    return 0;
 
                 case SFMT_U8:
                 case SFMT_U16:

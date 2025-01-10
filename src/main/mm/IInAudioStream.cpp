@@ -132,7 +132,7 @@ namespace lsp
                 {
                     if (nread > 0)
                         break;
-                    set_error(-nread);
+                    set_error(-status_t(nread));
                     return nread;
                 }
 
@@ -226,7 +226,7 @@ namespace lsp
                     {
                         if (nread > 0)
                             break;
-                        set_error(-read);
+                        set_error(-status_t(read));
                         return read;
                     }
 
@@ -253,7 +253,7 @@ namespace lsp
                     {
                         if (nread > 0)
                             break;
-                        set_error(-read);
+                        set_error(-status_t(read));
                         return read;
                     }
 

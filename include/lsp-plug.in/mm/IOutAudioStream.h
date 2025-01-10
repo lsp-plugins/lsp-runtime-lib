@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 16 апр. 2020 г.
@@ -68,7 +68,7 @@ namespace lsp
 
                 /**
                  * Perform write with conversion
-                 * @param dst source buffer with frame data
+                 * @param src source buffer with frame data
                  * @param nframes number of frames to write
                  * @param fmt sample format
                  * @return status if operation
@@ -180,7 +180,7 @@ namespace lsp
                 /**
                  * Strict type reads
                  * @param dst destination buffer to perform read
-                 * @param nframe number of frames to read
+                 * @param nframes number of frames to read
                  */
                 inline ssize_t      write_u8(const void *dst, size_t nframes)     { return write(static_cast<const uint8_t *>(dst), nframes);   }
                 inline ssize_t      write_s8(const void *dst, size_t nframes)     { return write(static_cast<const int8_t *>(dst), nframes);    }

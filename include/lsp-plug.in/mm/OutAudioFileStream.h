@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 20 апр. 2020 г.
@@ -37,18 +37,21 @@ namespace lsp
 {
     namespace mm
     {
-    #ifndef USE_LIBSNDFILE
+    #if defined(PLATFORM_WINDOWS)
         struct WAVEFILE;
-    #endif /* USE_LIBSNDFILE */
+    #endif /* PLATFORM_WINDOWS */
 
         class OutAudioFileStream: public IOutAudioStream
         {
             protected:
 
-            #ifdef USE_LIBSNDFILE
-                typedef SNDFILE                 handle_t;
-            #else
+            #if defined(PLATFORM_WINDOWS)
                 typedef struct WAVEFILE         handle_t;
+            #elif defined(PLATFORM_MACOSX)
+                typedef void                    handle_t;
+            #else
+                typedef SNDFILE                 handle_t;
+                
             #endif
 
             protected:
@@ -57,28 +60,31 @@ namespace lsp
                 bool                bSeekable;
 
             protected:
-            #ifdef USE_LIBSNDFILE
-                static status_t     decode_sf_error(SNDFILE *fd);
-                static bool         select_sndfile_format(SF_INFO *info, audio_stream_t *fmt, size_t codec);
-            #else
+            #if defined(PLATFORM_WINDOWS)
                 virtual ssize_t     conv_write(const void *src, size_t nframes, size_t fmt);
                 ssize_t             write_acm_convert(const void *src, size_t nframes);
                 status_t            flush_handle(handle_t *hHandle, bool eof);
+            #elif defined(PLATFORM_MACOSX)
+                static status_t     decode_os_status(uint32_t code);
+                static uint32_t     select_file_format(size_t codec);
+            #else
+                static status_t     decode_sf_error(SNDFILE *fd);
+                static bool         select_sndfile_format(SF_INFO *info, audio_stream_t *fmt, size_t codec);
             #endif
-
-                virtual ssize_t     direct_write(const void *src, size_t nframes, size_t fmt);
-
-                virtual size_t      select_format(size_t rfmt);
 
                 status_t            flush_internal(bool eof);
                 status_t            do_close();
                 static status_t     close_handle(handle_t *h);
 
+            protected:
+                virtual ssize_t     direct_write(const void *src, size_t nframes, size_t fmt) override;
+                virtual size_t      select_format(size_t rfmt) override;
+            
             public:
                 explicit OutAudioFileStream();
                 OutAudioFileStream(const OutAudioFileStream &) = delete;
                 OutAudioFileStream(OutAudioFileStream &&) = delete;
-                virtual ~OutAudioFileStream();
+                virtual ~OutAudioFileStream() override;
 
                 OutAudioFileStream & operator = (const OutAudioFileStream &) = delete;
                 OutAudioFileStream & operator = (OutAudioFileStream &&) = delete;
@@ -111,11 +117,10 @@ namespace lsp
                  */
                 virtual status_t    open(const io::Path *path, const audio_stream_t *fmt, size_t codec);
 
-                virtual status_t    close();
-
-                virtual status_t    flush();
-
-                virtual wssize_t    seek(wsize_t nframes);
+            public: // IOutAudioStream
+                virtual status_t    close() override;
+                virtual status_t    flush() override;
+                virtual wssize_t    seek(wsize_t nframes) override;
         };
     
     } /* namespace mm */
