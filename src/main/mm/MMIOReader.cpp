@@ -19,6 +19,8 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/common/types.h>
+
 #ifdef PLATFORM_WINDOWS
 
 #include <lsp-plug.in/common/alloc.h>
@@ -230,4 +232,5 @@ namespace lsp
     
     } /* namespace mm */
 } /* namespace lsp */
+
 #endif /* PLATFORM_WINDOWS */
