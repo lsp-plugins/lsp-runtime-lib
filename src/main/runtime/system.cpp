@@ -24,6 +24,7 @@
 #include <lsp-plug.in/io/Dir.h>
 #include <lsp-plug.in/ipc/Process.h>
 #include <lsp-plug.in/lltl/darray.h>
+#include <lsp-plug.in/lltl/parray.h>
 #include <lsp-plug.in/runtime/system.h>
 #include <lsp-plug.in/stdlib/stdlib.h>
 
@@ -49,13 +50,13 @@
     #include <mntent.h>
 #endif /* PLATFORM_LINUX */
 
-#if defined PLATFORM_BSD
+#if defined(PLATFORM_BSD) || defined (PLATFORM_MACOSX)
     #include <sys/mount.h>
     #include <sys/param.h>
     #include <sys/ucred.h>
-#endif /* PLATFORM_BSD */
+#endif /* PLATFORM_BSD || PLATFORM_MACOSX */
 
-#if defined PLATFORM_HAIKU
+#ifdef PLATFORM_HAIKU
     #include <posix/stdlib.h>
     #include <sys/mount.h>
     #include <sys/param.h>
@@ -1008,20 +1009,54 @@ namespace lsp
         }
     #endif /* PLATFORM_LINUX */
 
-    #ifdef PLATFORM_BSD
-        static status_t read_bsd_mntinfo(lltl::parray<volume_info_t> *volumes)
+    #if defined(PLATFORM_BSD) || defined(PLATFORM_MACOSX)
+        static status_t read_fsstat(lltl::darray<struct statfs> *list)
         {
-            struct statfs *fsp;
+            if (!list->add_n(32))
+                return STATUS_NO_MEM;
+
+            while (true)
+            {
+                int res = getfsstat(list->array(), list->size() * sizeof(struct statfs), MNT_WAIT);
+                if (res < 0)
+                {
+                    int error = errno;
+                    switch (error)
+                    {
+                        case EFAULT: return STATUS_INVALID_VALUE;
+                        case EIO: return STATUS_IO_ERROR;
+                        default: return STATUS_UNKNOWN_ERR;
+                    }
+                }
+                else if (size_t(res) < list->size())
+                {
+                    list->pop_n(list->size() - size_t(res));
+                    return STATUS_OK;
+                }
+
+                // Grow the size of the list
+                if (!list->add_n(list->size() >> 1))
+                    return STATUS_NO_MEM;
+            }
+        }
+
+        static status_t read_fsstat_mntinfo(lltl::parray<volume_info_t> *volumes)
+        {
+            // Read fsstat data
+            lltl::darray<struct statfs> fspl;
+            status_t res = read_fsstat(&fspl);
+            if (res != STATUS_OK)
+                return res;
+
+            // Parse fsstat data
             lltl::parray<volume_info_t> list;
             lsp_finally { free_volume_info(&list); };
 
-            // Get mount information
-            int entries = getmntinfo (&fsp, MNT_NOWAIT);
-            if (entries < 0)
-                return STATUS_NOT_SUPPORTED;
-
-            for (int i=0; i < entries; ++fsp, ++i)
+            for (size_t i=0, n=fspl.size(); i<n; ++i)
             {
+                // Process one single structure
+                const struct statfs *fsp = fspl.uget(i);
+
                 // Create record
                 volume_info_t *info = new volume_info_t();
                 if (info == NULL)
@@ -1056,7 +1091,7 @@ namespace lsp
             list.swap(volumes);
             return STATUS_OK;
         }
-    #endif /* PLATFORM_BSD */
+    #endif /* PLATFORM_BSD || PLATFORM_MACOSX */
 
     #ifdef PLATFORM_WINDOWS
         status_t read_pathnames(const WCHAR *volume, WCHAR **list, size_t *cap)
@@ -1326,7 +1361,7 @@ namespace lsp
                 return STATUS_BAD_ARGUMENTS;
 
             status_t res = STATUS_NOT_IMPLEMENTED;
-        #ifdef PLATFORM_LINUX
+        #if defined(PLATFORM_LINUX)
             if ((res = read_linux_mountinfo(volumes)) != STATUS_NOT_SUPPORTED)
                 return res;
             if ((res = read_linux_mntent("/proc/self/mounts", volumes)) != STATUS_NOT_SUPPORTED)
@@ -1335,16 +1370,14 @@ namespace lsp
                 return res;
             if ((res = read_linux_mntent("/etc/mtab", volumes)) != STATUS_NOT_SUPPORTED)
                 return res;
-        #endif /* PLATFORM_LINUX */
-        #ifdef PLATFORM_BSD
-            if ((res = read_bsd_mntinfo(volumes)) != STATUS_NOT_SUPPORTED)
+        #elif defined(PLATFORM_BSD) || defined(PLATFORM_MACOSX)
+            if ((res = read_fsstat_mntinfo(volumes)) != STATUS_NOT_SUPPORTED)
                 return res;
-        #endif /* PLATFORM_BSD */
-        #ifdef PLATFORM_WINDOWS
+        #elif defined(PLATFORM_WINDOWS)
             res = read_windows_mntinfo(volumes);
             if (res == STATUS_OK)
                 res = read_windows_netinfo(volumes);
-        #endif /* PLATFORM_WINDOWS */
+        #endif
 
             return res;
         }
