@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 1 мар. 2021 г.
@@ -42,10 +42,6 @@ namespace lsp
          */
         class Compressor
         {
-            private:
-                Compressor & operator = (const Compressor &);
-                Compressor (const Compressor &);
-
             protected:
                 lltl::darray<raw_resource_t>    vEntries;
                 io::OutMemoryStream             sTemp;          // Temporary buffer
@@ -64,7 +60,12 @@ namespace lsp
 
             public:
                 explicit Compressor();
+                Compressor(const Compressor &) = delete;
+                Compressor(Compressor &&) = delete;
                 ~Compressor();
+
+                Compressor & operator = (const Compressor &) = delete;
+                Compressor & operator = (Compressor &&) = delete;
 
             public:
                 /**
@@ -120,8 +121,9 @@ namespace lsp
                 status_t                create_dir(const LSPString *name);
                 status_t                create_dir(const io::Path *name);
         };
-    }
-}
+
+    } /* namespace resource */
+} /* namespace lsp */
 
 
 
