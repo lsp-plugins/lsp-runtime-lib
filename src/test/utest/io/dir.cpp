@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 18 мар. 2019 г.
@@ -141,16 +141,16 @@ UTEST_BEGIN("runtime.io", dir)
         char path[PATH_MAX];
         char c = FILE_SEPARATOR_C;
 
-        ::sprintf(path, "%s" "%c" "io" "%c" "iconv",
+        ::snprintf(path, sizeof(path), "%s" "%c" "io" "%c" "iconv",
                 resources(), c, c);
 
         testReadDir(path, false);
         testReadDir(path, true);
 
-        ::sprintf(path, "some" "%c" "long" "%c" "path", c, c);
+        ::snprintf(path, sizeof(path), "some" "%c" "long" "%c" "path", c, c);
         testCreateDir(path, true);
 
-        ::sprintf(path, "another" "%c" "long" "%c" "path", c, c);
+        ::snprintf(path, sizeof(path), "another" "%c" "long" "%c" "path", c, c);
         testCreateDir(path, false);
     }
 
