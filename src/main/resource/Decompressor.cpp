@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 16 мар. 2021 г.
@@ -119,11 +119,11 @@ namespace lsp
                 bits       += stepping;
             }
 
-            size_t v        = 0;
+            fixed_size_t v  = 0;
             if ((res = sIn.readv(&v, bits)) != bits)
                 return (res < 0) ? -res : STATUS_IO_ERROR;
 
-            *out            = value + v;
+            *out            = value + size_t(v);
             return STATUS_OK;
         }
 
