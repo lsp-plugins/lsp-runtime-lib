@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 29 авг. 2019 г.
@@ -31,8 +31,6 @@ namespace lsp
 {
     namespace java
     {
-
-
         /**
          * This is implementation of storage for handles read from
          * the object stream
@@ -46,7 +44,12 @@ namespace lsp
 
             public:
                 explicit Handles();
+                Handles(const Handles &) = delete;
+                Handles(Handles &&) = delete;
                 ~Handles();
+            
+                Handles & operator = (const Handles &) = delete;
+                Handles & operator = (Handles &&) = delete;
 
             public:
                 /**
@@ -70,7 +73,6 @@ namespace lsp
 
                 /**
                  * Bind object to the specified handle
-                 * @param handle handle
                  * @param obj java object
                  * @return status of operation
                  */

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 16 сент. 2019 г.
@@ -132,7 +132,7 @@ namespace lsp
 
                 /**
                  * Evaluate the specific expression
-                 * @param index expression index
+                 * @param idx expression index
                  * @param result pointer to return value of the specified expression
                  * @return status of operation
                  */

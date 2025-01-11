@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 17 мар. 2019 г.
@@ -398,7 +398,7 @@ namespace lsp
             ::clock_gettime(CLOCK_REALTIME, &t);
 
             time->seconds   = t.tv_sec;
-            time->nanos     = t.tv_nsec;
+            time->nanos     = uint32_t(t.tv_nsec);
         }
 
         time_millis_t get_time_millis()
@@ -437,7 +437,7 @@ namespace lsp
             local->hour     = t->tm_hour;
             local->min      = t->tm_min;
             local->sec      = t->tm_sec;
-            local->nanos    = stime.tv_nsec;
+            local->nanos    = uint32_t(stime.tv_nsec);
         }
 
         status_t sleep_msec(size_t delay)
@@ -1017,7 +1017,7 @@ namespace lsp
 
             while (true)
             {
-                int res = getfsstat(list->array(), list->size() * sizeof(struct statfs), MNT_WAIT);
+                int res = getfsstat(list->array(), int(list->size() * sizeof(struct statfs)), MNT_WAIT);
                 if (res < 0)
                 {
                     int error = errno;

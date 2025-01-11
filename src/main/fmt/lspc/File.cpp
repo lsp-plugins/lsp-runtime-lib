@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 янв. 2018 г.
@@ -366,8 +366,15 @@ namespace lsp
             status_t res;
             chunk_header_t hdr;
             wsize_t pos         = nHdrSize;
-            while ((res = pFile->read(pos, &hdr, sizeof(chunk_header_t))) == sizeof(chunk_header_t))
+            while (true)
             {
+                const wssize_t num_read = pFile->read(pos, &hdr, sizeof(chunk_header_t));
+                if (num_read != sizeof(chunk_header_t))
+                {
+                    res = status_t(num_read);
+                    break;
+                }
+
                 hdr.magic   = BE_TO_CPU(hdr.magic);
                 hdr.uid     = BE_TO_CPU(hdr.uid);
                 hdr.flags   = BE_TO_CPU(hdr.flags);
@@ -421,8 +428,15 @@ namespace lsp
             status_t res;
             chunk_header_t hdr;
             wsize_t pos         = nHdrSize;
-            while ((res = pFile->read(pos, &hdr, sizeof(chunk_header_t))) == sizeof(chunk_header_t))
+            while (true)
             {
+                const wssize_t num_read = pFile->read(pos, &hdr, sizeof(chunk_header_t));
+                if (num_read != sizeof(chunk_header_t))
+                {
+                    res = status_t(num_read);
+                    break;
+                }
+                
                 hdr.magic   = BE_TO_CPU(hdr.magic);
                 hdr.uid     = BE_TO_CPU(hdr.uid);
                 hdr.flags   = BE_TO_CPU(hdr.flags);

@@ -130,7 +130,7 @@ namespace lsp
 
                 /**
                  * Fill the internal byte buffer with additional data directly from input stream
-                 * @param fd file to read data
+                 * @param is input stream to read data
                  * @param count maximum number of bytes to read, 0 means maximum possible value
                  * @return number of bytes read into internal buffer
                  */

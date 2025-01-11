@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 24 окт. 2022 г.
@@ -84,7 +84,7 @@ namespace lsp
             // Write data to configuration entry
             io::IOutStream *os = wr->stream();
             wssize_t written = is->sink(os, buf_size);
-            res = (written < 0) ? -written : STATUS_OK;
+            res = (written < 0) ? status_t(-written) : STATUS_OK;
 
             // Close stream, writer and exit
             res = update_status(res, os->close());
@@ -245,7 +245,10 @@ namespace lsp
             io::OutMemoryStream os;
             status_t res = read_config(chunk_id, file, &os, buf_size);
             if (res == STATUS_OK)
-                res         = os.writeb('\0');
+            {
+                const ssize_t written = os.writeb('\0');
+                res         = (written < 0) ? status_t(-written) : STATUS_OK;
+            }
 
             res         = update_status(res, os.close());
 
@@ -309,7 +312,7 @@ namespace lsp
             lspc::chunk_text_config_t hdr;
             ssize_t nread = rd->read_header(&hdr, sizeof(hdr));
             if (nread < 0)
-                return -nread;
+                return status_t(-nread);
             else if (nread != sizeof(hdr))
                 return STATUS_CORRUPTED;
             else if (hdr.common.version != 0)
@@ -319,7 +322,7 @@ namespace lsp
             wssize_t written = rd->stream()->sink(os, buf_size);
             status_t res = rd->close();
 
-            return (written < 0) ? -written : res;
+            return (written < 0) ? status_t(-written) : res;
         }
 
         LSP_RUNTIME_LIB_PUBLIC
@@ -341,7 +344,7 @@ namespace lsp
             lspc::chunk_text_config_t hdr;
             ssize_t nread = rd->read_header(&hdr, sizeof(hdr));
             if (nread < 0)
-                return -nread;
+                return status_t(-nread);
             else if (nread != sizeof(hdr))
                 return STATUS_CORRUPTED;
             else if (hdr.common.version != 0)

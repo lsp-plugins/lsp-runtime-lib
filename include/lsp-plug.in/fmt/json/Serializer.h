@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 17 окт. 2019 г.
@@ -135,7 +135,6 @@ namespace lsp
                 /**
                  * Wrap input stream with serializer
                  * @param os output stream
-                 * @param version JSON version
                  * @param settings serialization flags
                  * @param flags wrapping flags
                  * @param charset character set
@@ -308,7 +307,6 @@ namespace lsp
                 /**
                  * Write property in UTF-8 encoding
                  * @param name property name
-                 * @param charset character set
                  * @return status of operation
                  */
                 status_t    write_property(const char *name);

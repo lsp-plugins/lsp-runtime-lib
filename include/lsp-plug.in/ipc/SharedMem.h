@@ -78,7 +78,7 @@ namespace lsp
                 /**
                  * Create shared segment with unique name
                  * @param name pointer to store generated shared memory segment name
-                 * @param potfix postfix added to the name, can be NULL
+                 * @param postfix postfix added to the name, can be NULL
                  * @param mode open mode, the SHM_CREATE flag is interpreted as being always set
                  * @param size size of the shared memory segment
                  * @return status of operation
@@ -88,7 +88,7 @@ namespace lsp
                 /**
                  * Create shared segment with unique name
                  * @param name pointer to store shared memory segment name
-                 * @param potfix postfix added to the name, can be NULL
+                 * @param postfix postfix added to the name, can be NULL
                  * @param mode open mode, the SHM_CREATE flag is interpreted as being always set
                  * @param size size of the shared memory segment
                  * @return status of operation
@@ -100,7 +100,6 @@ namespace lsp
                  * @param name shared memory segment identifier (UTF-8)
                  * @param mode memory access mode
                  * @param size the size of shared memory segment if it should be created
-                 * @param offset the offset relative to the beginning of the shared memory segment
                  * @return status of operation
                  */
                 status_t open(const char *name, size_t mode, size_t size);
@@ -110,7 +109,6 @@ namespace lsp
                  * @param name shared memory segment identifier
                  * @param mode memory access mode
                  * @param size the size of shared memory segment if it should be created
-                 * @param offset the offset relative to the beginning of the shared memory segment
                  * @return status of operation
                  */
                 status_t open(const LSPString *name, size_t mode, size_t size);

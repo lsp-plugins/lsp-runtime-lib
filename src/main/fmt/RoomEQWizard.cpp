@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 6 сент. 2019 г.
@@ -644,7 +644,7 @@ namespace lsp
                 return res;
 
             // Now we are ready to allocate the data
-            config_t *cfg   = build_config(&eq, &notes, major, minor, vfilters.size());
+            config_t *cfg   = build_config(&eq, &notes, int32_t(major), int32_t(minor), vfilters.size());
             if (cfg == NULL)
                 return STATUS_NO_MEM;
 
@@ -701,14 +701,21 @@ namespace lsp
             // Try to load unicode character sets
             for (const char **cset=charsets; *cset != NULL; ++cset)
             {
-                if ((res = is->seek(0)) != STATUS_OK)
-                    return res;
+                const wssize_t position = is->seek(0);
+                if (position < 0)
+                    return status_t(-res);
+                else if (position != 0)
+                    return STATUS_IO_ERROR;
                 if ((res = load_text_file(is, dst, *cset)) == STATUS_OK)
                     return res;
             }
-
-            if ((res = is->seek(0)) != STATUS_OK)
-                return res;
+            
+            // Try default system charset
+            const wssize_t position = is->seek(0);
+            if (position < 0)
+                return status_t(-res);
+            else if (position != 0)
+                return STATUS_IO_ERROR;
             return load_text_file(is, dst, NULL);
         }
 
@@ -810,7 +817,7 @@ namespace lsp
             if (bytes < 0)
             {
                 os.close();
-                return -bytes;
+                return status_t(-bytes);
             }
 
             // Load the file
@@ -852,7 +859,7 @@ namespace lsp
             is.close();
             return res;
         }
-    }
-}
+    } /* namespace room_ew */
+} /* namespace lsp */
 
 

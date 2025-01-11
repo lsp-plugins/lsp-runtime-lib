@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 28 авг. 2019 г.
@@ -105,31 +105,31 @@ namespace lsp
 
         class Object;
 
-        #pragma pack(push, 1)
-            typedef struct obj_stream_hdr_t
-            {
-                uint16_t    magic;
-                uint16_t    version;
-            } obj_stream_hdr_t;
+    #pragma pack(push, 1)
+        typedef struct obj_stream_hdr_t
+        {
+            uint16_t    magic;
+            uint16_t    version;
+        } obj_stream_hdr_t;
 
-            typedef union prim_ptr_t
-            {
-                int8_t         *p_byte      __lsp_packed;
-                uint8_t        *p_ubyte     __lsp_packed;
-                int16_t        *p_short     __lsp_packed;
-                uint16_t       *p_ushort    __lsp_packed;
-                int32_t        *p_int       __lsp_packed;
-                uint32_t       *p_uint      __lsp_packed;
-                int64_t        *p_long      __lsp_packed;
-                uint64_t       *p_ulong     __lsp_packed;
-                lsp_utf16_t    *p_char      __lsp_packed;
-                double_t       *p_double    __lsp_packed;
-                float_t        *p_float     __lsp_packed;
-                bool_t         *p_bool      __lsp_packed;
-                Object        **p_object    __lsp_packed;
-                void           *p_void      __lsp_packed;
-            } prim_ptr_t;
-        #pragma pack(pop)
+        typedef union prim_ptr_t
+        {
+            int8_t         *p_byte      __lsp_packed;
+            uint8_t        *p_ubyte     __lsp_packed;
+            int16_t        *p_short     __lsp_packed;
+            uint16_t       *p_ushort    __lsp_packed;
+            int32_t        *p_int       __lsp_packed;
+            uint32_t       *p_uint      __lsp_packed;
+            int64_t        *p_long      __lsp_packed;
+            uint64_t       *p_ulong     __lsp_packed;
+            lsp_utf16_t    *p_char      __lsp_packed;
+            double_t       *p_double    __lsp_packed;
+            float_t        *p_float     __lsp_packed;
+            bool_t         *p_bool      __lsp_packed;
+            Object        **p_object    __lsp_packed;
+            void           *p_void      __lsp_packed;
+        } prim_ptr_t;
+    #pragma pack(pop)
 
         struct obj_ptr_t
         {
@@ -141,9 +141,8 @@ namespace lsp
                 inline obj_ptr_t & operator = (Object **p)  { obj   = p; return *this; }
                 inline operator Object **()     { return obj; }
 
-
                 template <typename type_t>
-                    inline obj_ptr_t(type_t **p)
+                inline obj_ptr_t(type_t **p)
                 {
                     union { Object **o; type_t **t; } x;
                     x.t     = p;
@@ -151,26 +150,26 @@ namespace lsp
                 }
 
                 template <typename type_t>
-                    inline obj_ptr_t & operator = (type_t **p)
-                    {
-                        union { Object **o; type_t **t; } x;
-                        x.t     = p;
-                        obj     = x.o;
-                        return *this;
-                    }
+                inline obj_ptr_t & operator = (type_t **p)
+                {
+                    union { Object **o; type_t **t; } x;
+                    x.t     = p;
+                    obj     = x.o;
+                    return *this;
+                }
 
                 template <typename type_t>
-                    inline operator type_t **()
-                    {
-                        union { Object **o; type_t **t; } x;
-                        x.o     = obj;
-                        return x.t;
-                    }
+                inline operator type_t **()
+                {
+                    union { Object **o; type_t **t; } x;
+                    x.o     = obj;
+                    return x.t;
+                }
         };
 
         /**
          * Decode primitive type
-         * @param primitive type
+         * @param tcode type code
          * @return decoded result
          */
         ftype_t     decode_primitive_type(size_t tcode);
@@ -181,7 +180,8 @@ namespace lsp
          * @return primitive type name or NULL if type is non-primitive
          */
         const char *primitive_type_name(ftype_t tcode);
-    }
-}
+
+    } /* namespace java */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_FMT_JAVA_HEADERS_H_ */

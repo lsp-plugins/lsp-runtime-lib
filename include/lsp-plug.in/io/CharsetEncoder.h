@@ -133,8 +133,8 @@ namespace lsp
                 ssize_t     fetch(void *buf, size_t count);
 
                 /**
-                 * Fetch output byte data into buffer
-                 * @param buf buffer to perform fetch
+                 * Fetch output byte data into file object
+                 * @param out file to store the fetch result
                  * @param count maximum number of bytes to fetch, 0 means maximum possible value
                  * @return number of bytes fetched or negative error code
                  */
@@ -142,7 +142,7 @@ namespace lsp
 
                 /**
                  * Fetch output byte data into output stream
-                 * @param buf buffer to perform fetch
+                 * @param out buffer to store the fetch result
                  * @param count maximum number of bytes to fetch, 0 means maximum possible value
                  * @return number of bytes fetched or negative error code
                  */

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 нояб. 2017 г.
@@ -59,7 +59,7 @@ namespace lsp
             ssize_t n = write(&b, 1);
             if (n == 1)
                 return STATUS_OK;
-            return (n < 0) ? n : STATUS_IO_ERROR;
+            return (n < 0) ? status_t(n) : STATUS_IO_ERROR;
         }
 
         wssize_t IOutStream::seek(wsize_t position)

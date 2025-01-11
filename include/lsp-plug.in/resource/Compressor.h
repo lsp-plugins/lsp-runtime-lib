@@ -114,8 +114,8 @@ namespace lsp
 
                 /**
                  * Create directory
-                 * @param name
-                 * @return
+                 * @param name name of the directory
+                 * @return status of operation
                  */
                 status_t                create_dir(const char *name);
                 status_t                create_dir(const LSPString *name);

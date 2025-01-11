@@ -197,24 +197,68 @@ namespace lsp
             /** Insert data at specified position
              *
              * @param pos position
-             * @param src source string to insert
+             * @param ch character to insert
              * @return true on success
              */
             bool insert(ssize_t pos, lsp_wchar_t ch);
+        
+            /** Insert character data at specified position
+             *
+             * @param pos position
+             * @param arr array of characters to insert
+             * @param n number of characters in array
+             * @return true on success
+             */
             bool insert(ssize_t pos, const lsp_wchar_t *arr, ssize_t n);
-            bool insert(ssize_t pos, const LSPString *src);
-            bool insert(ssize_t pos, const LSPString *src, ssize_t first);
-            bool insert(ssize_t pos, const LSPString *src, ssize_t first, ssize_t last);
-
-            /** Append data at the tail of string
+        
+            /** Insert string at specified position
              *
              * @param pos position
              * @param src source string to insert
              * @return true on success
              */
+            bool insert(ssize_t pos, const LSPString *src);
+        
+            /** Insert substring at specified position
+             *
+             * @param pos position
+             * @param src source string to use substring for insert
+             * @param first index of first character to use as sub-string of the source string
+             * @return true on success
+             */
+            bool insert(ssize_t pos, const LSPString *src, ssize_t first);
+        
+            /** Insert substring at specified position
+             *
+             * @param pos position
+             * @param src source string to use substring for insert
+             * @param first index of first character to use as sub-string of the source string
+             * @param last index of last character to use as sub-string of the source string
+             * @return true on success
+             */
+            bool insert(ssize_t pos, const LSPString *src, ssize_t first, ssize_t last);
+
+            /** Append data at the tail of string
+             *
+             * @param ch ASCII character to append
+             * @return true on success
+             */
             bool append(char ch);
+        
+            /** Append data at the tail of string
+             *
+             * @param ch character to append
+             * @return true on success
+             */
             bool append(lsp_wchar_t ch);
+        
+            /** Append data at the tail of string
+             *
+             * @param ch character to append
+             * @return true on success
+             */
             bool append(lsp_swchar_t ch);
+
             bool append_ascii(const char *arr, size_t n);
             bool append_utf8(const char *arr, size_t n);
             bool append_utf16(const lsp_utf16_t *arr, size_t n);
@@ -267,17 +311,30 @@ namespace lsp
              */
             void shuffle();
 
-            /** Copy contents from another string
-             * @param src source string
-             */
+
             bool set(lsp_wchar_t ch);
             inline bool set(char ch)        { return set(lsp_wchar_t(uint8_t(ch))); };
             bool set(ssize_t pos, lsp_wchar_t ch);
             inline bool set_at(ssize_t pos, lsp_wchar_t ch) { return set(pos, ch); }
             bool set(const lsp_wchar_t *arr);
             bool set(const lsp_wchar_t *arr, size_t n);
+        
+            /** Copy contents from another string
+             * @param src source string
+             */
             bool set(const LSPString *src);
+
+            /** Copy contents from substring of another string
+             * @param src source string
+             * @param first the first character of source substring
+             */
             bool set(const LSPString *src, ssize_t first);
+        
+            /** Copy contents from substring of another string
+             * @param src source string to obtain a substring
+             * @param first the first character of source substring
+             * @param last the last character of source substring
+             */
             bool set(const LSPString *src, ssize_t first, ssize_t last);
 
             /** Different conversion routines
@@ -434,10 +491,19 @@ namespace lsp
             inline bool ends_with_nocase(char ch) const                 { return ends_with_nocase(lsp_wchar_t(uint8_t(ch)));    };
             bool ends_with_nocase(const LSPString *src) const;
 
-            /** Check starting of the string
-             *
+            /**
+             * Check that string starts with specified character
+             * @param ch character to check
+             * @param offset the offset to the beginning of the string
+             * @return true if string starts with specified character
              */
             bool starts_with(lsp_wchar_t ch, size_t offset) const;
+        
+            /**
+             * Check that string starts with specified character
+             * @param ch character to check
+             * @return true if string starts with specified character
+             */
             bool starts_with(lsp_wchar_t ch) const                      { return starts_with(ch, 0);                            };
 
             inline bool starts_with(char ch) const                      { return starts_with(lsp_wchar_t(uint8_t(ch)), 0);      };
@@ -504,14 +570,20 @@ namespace lsp
             ssize_t rindex_of_nocase(lsp_wchar_t ch) const;
             inline ssize_t rindex_of_nocase(char ch) const { return rindex_of_nocase(lsp_wchar_t(uint8_t(ch))); };
 
-            /** Produce new object as substring of a string
-             *
-             * @param start start character
-             * @param last end character
-             * @return
+            /**
+             * Produce new object as substring of a string
+             * @param first index of first character for a substring
+             * @return pointer to substring or NULL on error
+             */
+            LSPString *substring(ssize_t first) const;
+        
+            /**
+             * Produce new object as substring of a string
+             * @param first index of first character for a substring
+             * @param last index of last character for a substring
+             * @return pointer to substring or NULL on error
              */
             LSPString *substring(ssize_t first, ssize_t last) const;
-            LSPString *substring(ssize_t first) const;
 
             /** Compare to another string
              *

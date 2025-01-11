@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 22 апр. 2020 г.
@@ -33,9 +33,6 @@ namespace lsp
         
         class PushParser
         {
-            private:
-                PushParser & operator = (const PushParser &);
-
             protected:
                 PullParser      sParser;
 
@@ -44,7 +41,12 @@ namespace lsp
 
             public:
                 explicit PushParser();
+                PushParser(const PushParser &) = delete;
+                PushParser(PushParser &&) = delete;
                 virtual ~PushParser();
+            
+                PushParser & operator = (const PushParser &) = delete;
+                PushParser & operator = (PushParser &&) = delete;
 
             public:
                 /**

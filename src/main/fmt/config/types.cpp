@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 29 апр. 2020 г.
@@ -227,8 +227,8 @@ namespace lsp
             {
                 case SF_TYPE_I32:   return v.i32;
                 case SF_TYPE_U32:   return v.u32;
-                case SF_TYPE_I64:   return v.i64;
-                case SF_TYPE_U64:   return v.u64;
+                case SF_TYPE_I64:   return int32_t(v.i64);
+                case SF_TYPE_U64:   return int32_t(v.u64);
                 case SF_TYPE_F32:   return v.f32;
                 case SF_TYPE_F64:   return v.f64;
                 case SF_TYPE_BOOL:  return (v.bval) ? 1 : 0;
@@ -244,8 +244,8 @@ namespace lsp
             {
                 case SF_TYPE_I32:   return v.i32;
                 case SF_TYPE_U32:   return v.u32;
-                case SF_TYPE_I64:   return v.i64;
-                case SF_TYPE_U64:   return v.u64;
+                case SF_TYPE_I64:   return uint32_t(v.i64);
+                case SF_TYPE_U64:   return uint32_t(v.u64);
                 case SF_TYPE_F32:   return v.f32;
                 case SF_TYPE_F64:   return v.f64;
                 case SF_TYPE_BOOL:  return (v.bval) ? 1 : 0;

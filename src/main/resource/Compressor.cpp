@@ -143,7 +143,7 @@ namespace lsp
 
                     // Initialize
                     found->type     = type;
-                    found->parent   = index;
+                    found->parent   = int32_t(index);
                     found->segment  = -1;
                     found->offset   = -1;
                     found->length   = 0;
@@ -168,7 +168,7 @@ namespace lsp
                             return STATUS_NO_MEM;
 
                         found->type     = RES_DIR;
-                        found->parent   = index;
+                        found->parent   = int32_t(index);
                         found->segment  = -1;
                         found->offset   = -1;
                         found->length   = 0;
@@ -284,9 +284,9 @@ namespace lsp
 //            )
 
             // Remember the actual coordinates of the entry within data array
-            r->segment          = nSegment;
-            r->offset           = nOffset;
-            r->length           = flength;
+            r->segment          = int32_t(nSegment);
+            r->offset           = int32_t(nOffset);
+            r->length           = int32_t(flength);
             nOffset            += flength;
 
 //            lsp_trace("  compressed entry segment=%d, offset=%d length=%d",

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 15 мар. 2021 г.
@@ -143,7 +143,7 @@ namespace lsp
             {
                 wssize_t skipped = d->skip(ent->offset);
                 if (skipped != ent->offset)
-                    res = (skipped < 0) ? -skipped : STATUS_CORRUPTED;
+                    res = (skipped < 0) ? status_t(-skipped) : STATUS_CORRUPTED;
             }
 
             if (res == STATUS_OK)

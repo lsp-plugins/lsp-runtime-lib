@@ -111,7 +111,7 @@ namespace lsp
             while (true)
             {
                 if ((res = sIn.readb(&flag)) != 1)
-                    return (res < 0) ? -res : STATUS_IO_ERROR;
+                    return (res < 0) ? status_t(-res) : STATUS_IO_ERROR;
                 if (!flag)
                     break;
 
@@ -121,7 +121,7 @@ namespace lsp
 
             fixed_size_t v  = 0;
             if ((res = sIn.readv(&v, bits)) != bits)
-                return (res < 0) ? -res : STATUS_IO_ERROR;
+                return (res < 0) ? status_t(-res) : STATUS_IO_ERROR;
 
             *out            = value + size_t(v);
             return STATUS_OK;
@@ -332,7 +332,7 @@ namespace lsp
                 }
             } while ((res = fill_buf()) == STATUS_OK);
 
-            set_error(res);
+            set_error(status_t(res));
             return res;
         }
     } /* namespace resource */

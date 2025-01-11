@@ -161,7 +161,7 @@ namespace lsp
             size_t hdr_size             = BE_TO_CPU(shdr.size);
             if (hdr_size < sizeof(header_t)) // header size should be at least of sizeof(lspc_header_t)
                 return -set_error(STATUS_CORRUPTED_FILE);
-            dhdr->common.size           = hdr_size;
+            dhdr->common.size           = uint32_t(hdr_size);
             dhdr->common.version        = BE_TO_CPU(shdr.version);
             hdr_size                   -= sizeof(header_t);
             size                       -= sizeof(header_t);
@@ -186,7 +186,7 @@ namespace lsp
                     return -set_error(STATUS_EOF); // Unexpected end of file
 
                 // Patch the header size to be at most of size bytes
-                dhdr->common.size           = size + sizeof(header_t);
+                dhdr->common.size           = uint32_t(size + sizeof(header_t));
             }
             else if (size > hdr_size)
                 bzero(&dhdr->data[count], size - hdr_size);

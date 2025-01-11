@@ -100,7 +100,7 @@ namespace lsp
                  * The implementation should write the most possible amount
                  * of bytes before exit. Such behaviour will simplify the caller's
                  * implementation.
-                 * @param dst source buffer to perform write
+                 * @param src source buffer to perform write
                  * @param count number of bytes to write
                  * @return status of operation
                  */
@@ -109,7 +109,7 @@ namespace lsp
                 /**
                  * Perform positioned write of binary file
                  * @param pos offset in bytes relative to the beginning of the file
-                 * @param dst source buffer to perform write
+                 * @param src source buffer to perform write
                  * @param count number of bytes to write
                  * @return status of operation
                  */
@@ -138,7 +138,7 @@ namespace lsp
                 /**
                  * Get file attributes
                  * @param attr file attributes
-                 * @return
+                 * @return status of operation
                  */
                 virtual status_t stat(fattr_t *attr);
 

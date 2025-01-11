@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 нояб. 2017 г.
@@ -95,7 +95,7 @@ namespace lsp
 
             ssize_t read = read_fully(dst, count);
             if (read < 0)
-                return -read;
+                return set_error(status_t(-read));
 
             return set_error((size_t(read) == count) ? STATUS_OK : STATUS_EOF);
         }
@@ -150,7 +150,7 @@ namespace lsp
                         return count;
                     }
 
-                    set_error(-nread);
+                    set_error(status_t(-nread));
                     return nread;
                 }
                 count += nread;
@@ -162,14 +162,13 @@ namespace lsp
                     ssize_t nwritten = os->write(&buf[off], nread-off);
                     if (nwritten < 0)
                     {
-                        set_error(-nwritten);
+                        set_error(status_t(-nwritten));
                         return nwritten;
                     }
                     off    += nwritten;
                 }
             }
         }
-
 
         status_t IInStream::close()
         {

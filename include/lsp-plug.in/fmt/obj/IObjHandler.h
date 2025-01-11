@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 21 апр. 2017 г.
@@ -44,7 +44,6 @@ namespace lsp
             public:
                 /** Start object
                  *
-                 * @param id object id
                  * @param name object name
                  * @return status of operation
                  */
@@ -52,7 +51,6 @@ namespace lsp
 
                 /** Start object
                  *
-                 * @param id object id
                  * @param name object name
                  * @return status of operation
                  */
@@ -60,7 +58,6 @@ namespace lsp
 
                 /** End object
                  *
-                 * @param id object id
                  * @return status of operation
                  */
                 virtual status_t end_object();
@@ -74,7 +71,6 @@ namespace lsp
 
                 /** Add vertex
                  *
-                 * @param idx index
                  * @param x vertex X coordinate
                  * @param y vertex Y coordinate
                  * @param z vertex Z coordinate
@@ -85,7 +81,6 @@ namespace lsp
 
                 /** Add parameter vertex
                  *
-                 * @param idx index
                  * @param x vertex X coordinate
                  * @param y vertex Y coordinate
                  * @param z vertex Z coordinate
@@ -119,29 +114,29 @@ namespace lsp
                  * @param vn array of normal indexes starting with 0 (negative value if not present)
                  * @param vt array of texture vertex indexes starting with 0 (negative value if not present)
                  * @param n number of elements in vv, vn and vt
-                 * @return status of operation
+                 * @return number of added face or negative error code
                  */
-                virtual status_t add_face(const index_t *vv, const index_t *vn, const index_t *vt, size_t n);
+                virtual ssize_t add_face(const index_t *vv, const index_t *vn, const index_t *vt, size_t n);
 
                 /** Add points
                  *
                  * @param vv array of vertex indexes starting with 1 (0 if not present)
                  * @param n number of elements in vv
-                 * @return status of operation
+                 * @return number of added points object or negative error code
                  */
-                virtual status_t add_points(const index_t *vv, size_t n);
+                virtual ssize_t add_points(const index_t *vv, size_t n);
 
                 /** Add line
                  *
                  * @param vv array of vertex indexes starting with 0 (negative value if not present)
                  * @param vt array of texture vertex indexes starting with 0 (negative value if not present)
                  * @param n number of elements in vv
-                 * @return status of operation
+                 * @return number of added line or negative error code
                  */
-                virtual status_t add_line(const index_t *vv, const index_t *vt, size_t n);
+                virtual ssize_t add_line(const index_t *vv, const index_t *vt, size_t n);
         };
-    }
-
+    
+    } /* namespace obj */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_FMT_OBJ_IOBJHANDLER_H_ */

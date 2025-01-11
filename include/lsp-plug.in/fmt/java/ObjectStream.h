@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 28 авг. 2019 г.
@@ -57,7 +57,7 @@ namespace lsp
             protected:
                 io::IInStream      *pIS;
                 size_t              nFlags;
-                ssize_t             nToken;
+                status_t            nToken;
                 stream_token_t      enToken;
                 size_t              nDepth;
                 ssize_t             nVersion;
@@ -72,7 +72,7 @@ namespace lsp
 
             protected:
                 status_t    initial_read(io::IInStream *is);
-                ssize_t     get_token();
+                status_t    get_token();
                 status_t    lookup_token();
                 inline void clear_token();
 
@@ -131,7 +131,7 @@ namespace lsp
                 /**
                  * Wrap memory buffer with stream reader
                  * @param buf data contents
-                 * @param size size of data
+                 * @param count size of data
                  * @return status of operation
                  */
                 status_t    wrap(const void *buf, size_t count);
@@ -139,7 +139,7 @@ namespace lsp
                 /**
                  * Wrap memory buffer with stream reader
                  * @param buf data contents
-                 * @param size size of data
+                 * @param count size of data
                  * @param drop drop operation on close()
                  * @return status of operation
                  */

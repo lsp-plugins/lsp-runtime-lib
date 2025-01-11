@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 29 мая 2019 г.
@@ -48,7 +48,7 @@ namespace lsp
         /**
          * Get original format text of the pattern
          * @param pattern pattern to retrieve text format
-         * @param text text
+         * @param format pointer to store the output format
          * @return status of operation
          */
         status_t    pattern_get_format(pattern_t *pattern, const char **format);
@@ -67,8 +67,8 @@ namespace lsp
          * @return status of operation
          */
         status_t    pattern_destroy(pattern_t *pattern);
-    }
-}
+    } /* namespace osc */
+} /* namespace lsp */
 
 
 

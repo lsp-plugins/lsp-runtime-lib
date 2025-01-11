@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2022 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 12 авг. 2022 г.
@@ -36,7 +36,7 @@ namespace lsp
         {
             wssize_t res = is->read_fully(dst, count);
             if (res < 0)
-                return -res;
+                return status_t(-res);
             return (res == wssize_t(count)) ? STATUS_OK : code;
         }
 
@@ -44,7 +44,7 @@ namespace lsp
         {
             wssize_t res = is->skip(count);
             if (res < 0)
-                return -res;
+                return status_t(-res);
             return (res == wssize_t(count)) ? STATUS_OK : code;
         }
 

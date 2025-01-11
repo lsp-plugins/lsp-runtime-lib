@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 7 мар. 2019 г.
@@ -116,7 +116,6 @@ namespace lsp
                  * Create temporary file and open it for writing.
                  * The caller is responsible for deleting the file.
                  * @param path output pointer to store the file name
-                 * @param prefix file name prefix
                  * @param prefix optional file name prefix in UTF-8
                  * @return status of operation
                  */
@@ -160,7 +159,7 @@ namespace lsp
 
                 /**
                  * Write binary file
-                 * @param dst source buffer to perform write
+                 * @param src source buffer to perform write
                  * @param count number of bytes to write
                  * @return number of bytes written or negative status of operation
                  */
@@ -169,7 +168,7 @@ namespace lsp
                 /**
                  * Perform positioned write of binary file
                  * @param pos offset in bytes relative to the beginning of the file
-                 * @param dst source buffer to perform write
+                 * @param src source buffer to perform write
                  * @param count number of bytes to write
                  * @return status of operation
                  */
@@ -198,7 +197,7 @@ namespace lsp
                 /**
                  * Get file attributes
                  * @param attr file attributes
-                 * @return
+                 * @return status of operation
                  */
                 virtual status_t stat(fattr_t *attr);
 

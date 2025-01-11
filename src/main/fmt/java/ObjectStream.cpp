@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 28 авг. 2019 г.
@@ -206,7 +206,7 @@ namespace lsp
             obj_stream_hdr_t hdr;
             ssize_t nread = is->read_fully(&hdr, sizeof(hdr));
             if (nread != sizeof(hdr))
-                return ((nread >= 0) || (nread == -STATUS_EOF)) ? STATUS_BAD_FORMAT : -nread;
+                return ((nread >= 0) || (nread == -STATUS_EOF)) ? STATUS_BAD_FORMAT : status_t(-nread);
             if (BE_TO_CPU(hdr.magic) != JAVA_STREAM_MAGIC)
                 return STATUS_BAD_FORMAT;
             uint8_t *block  = reinterpret_cast<uint8_t *>(::malloc(JAVA_MAX_BLOCK_SIZE));
@@ -230,7 +230,7 @@ namespace lsp
                     ssize_t amount  = (sBlock.unread <= JAVA_MAX_BLOCK_SIZE) ? sBlock.unread : JAVA_MAX_BLOCK_SIZE;
                     ssize_t read    = pIS->read_fully(sBlock.data, amount);
                     if (read != amount)
-                        return (read >= 0) ? STATUS_CORRUPTED : -read;
+                        return (read >= 0) ? STATUS_CORRUPTED : status_t(-read);
 
                     sBlock.size     = read;
                     sBlock.offset   = 0;
@@ -255,18 +255,18 @@ namespace lsp
                     case TC_BLOCKDATA:
                     {
                         uint8_t blen;
-                        res             = pIS->read_fully(&blen, sizeof(blen));
-                        if (res != sizeof(blen))
-                            return (res < 0) ? res : -STATUS_CORRUPTED;
+                        const ssize_t nread     = pIS->read_fully(&blen, sizeof(blen));
+                        if (nread != sizeof(blen))
+                            return (nread < 0) ? status_t(nread) : -STATUS_CORRUPTED;
                         sBlock.unread   = blen;
                         break;
                     }
                     case TC_BLOCKDATALONG:
                     {
                         int32_t blen;
-                        res             = pIS->read_fully(&blen, sizeof(blen));
-                        if (res != sizeof(blen))
-                            return (res < 0) ? res : -STATUS_CORRUPTED;
+                        const ssize_t nread     = pIS->read_fully(&blen, sizeof(blen));
+                        if (nread != sizeof(blen))
+                            return (nread < 0) ? status_t(nread) : -STATUS_CORRUPTED;
                         sBlock.unread   = blen;
                         break;
                     }
@@ -287,7 +287,7 @@ namespace lsp
             {
                 ssize_t bytes = pIS->read_fully(dst, count);
                 if (bytes < 0)
-                    return -bytes;
+                    return status_t(-bytes);
                 return (size_t(bytes) == count) ? STATUS_OK : STATUS_CORRUPTED;
             }
 
@@ -312,7 +312,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        ssize_t ObjectStream::get_token()
+        status_t ObjectStream::get_token()
         {
             // Read and parse token
             ssize_t token   = pIS->read_byte();
@@ -336,7 +336,7 @@ namespace lsp
                 JDEC(TC_ENUM, JST_ENUM)
                 #undef JDEC
                 default:
-                    nToken      = (token < 0) ? token : -STATUS_CORRUPTED;
+                    nToken      = (token < 0) ? status_t(token) : -STATUS_CORRUPTED;
                     enToken     = JST_UNDEFINED;
                     break;
             }
@@ -787,11 +787,12 @@ namespace lsp
                     // Read the left data
                     if (sBlock.unread > 0)
                     {
-                        res             = pIS->read_fully(&xptr[capacity], sBlock.unread);
-                        if (res == ssize_t(sBlock.unread))
+                        const ssize_t nread   = pIS->read_fully(&xptr[capacity], sBlock.unread);
+                        if (nread == ssize_t(sBlock.unread))
                         {
                             capacity       += res;
                             sBlock.unread   = 0;
+                            res             = STATUS_OK;
                         }
                         else
                             res = STATUS_CORRUPTED;
@@ -816,10 +817,10 @@ namespace lsp
                     case TC_BLOCKDATA:
                     {
                         uint8_t blen;
-                        res             = pIS->read_fully(&blen, sizeof(blen));
-                        if (res != sizeof(blen))
+                        const ssize_t nread     = pIS->read_fully(&blen, sizeof(blen));
+                        if (nread != sizeof(blen))
                         {
-                            res = (res < 0) ? -res : STATUS_CORRUPTED;
+                            res             = (nread < 0) ? status_t(-nread) : STATUS_CORRUPTED;
                             break;
                         }
 
@@ -834,10 +835,10 @@ namespace lsp
                     case TC_BLOCKDATALONG:
                     {
                         int32_t blen;
-                        res             = pIS->read_fully(&blen, sizeof(blen));
-                        if (res != sizeof(blen))
+                        const ssize_t nread     = pIS->read_fully(&blen, sizeof(blen));
+                        if (nread != sizeof(blen))
                         {
-                            res = (res < 0) ? -res : STATUS_CORRUPTED;
+                            res             = (nread < 0) ? status_t(-nread) : STATUS_CORRUPTED;
                             break;
                         }
 
@@ -1037,7 +1038,7 @@ namespace lsp
             // Fetch token
             ssize_t token   = lookup_token();
             if (token != TC_ARRAY)
-                return (token >= 0) ? STATUS_CORRUPTED : -token;
+                return (token >= 0) ? STATUS_CORRUPTED : status_t(-token);
             clear_token();
 
             // Read class descriptor
@@ -1099,7 +1100,7 @@ namespace lsp
         status_t ObjectStream::parse_enum(Enum **dst)
         {
             // Fetch token
-            ssize_t token   = lookup_token();
+            status_t token  = lookup_token();
             if (token != TC_ENUM)
                 return (token >= 0) ? STATUS_CORRUPTED : -token;
             clear_token();
@@ -1284,7 +1285,7 @@ namespace lsp
         status_t ObjectStream::parse_ordinary_object(Object **dst)
         {
             // Fetch token
-            ssize_t token   = lookup_token();
+            status_t token  = lookup_token();
             if (token != TC_OBJECT)
                 return (token >= 0) ? STATUS_CORRUPTED : -token;
             clear_token();
@@ -1321,7 +1322,7 @@ namespace lsp
         status_t ObjectStream::parse_object(Object **dst)
         {
             // Fetch token
-            ssize_t token = lookup_token();
+            status_t token  = lookup_token();
             if (token < 0)
                 return token;
 
@@ -1372,7 +1373,7 @@ namespace lsp
         status_t ObjectStream::read_string(String **dst)
         {
             // Fetch token
-            ssize_t token = lookup_token();
+            status_t token = lookup_token();
             if (token < 0)
                 return token;
 
@@ -1422,7 +1423,7 @@ namespace lsp
         status_t ObjectStream::read_array(RawArray **dst)
         {
             // Fetch token
-            ssize_t token = lookup_token();
+            status_t token  = lookup_token();
             if (token < 0)
                 return token;
 
@@ -1454,7 +1455,7 @@ namespace lsp
         status_t ObjectStream::read_enum(Enum **dst)
         {
             // Fetch token
-            ssize_t token = lookup_token();
+            status_t token  = lookup_token();
             if (token < 0)
                 return token;
 
@@ -1486,7 +1487,7 @@ namespace lsp
         status_t ObjectStream::read_class_descriptor(ObjectStreamClass **dst)
         {
             // Fetch token
-            ssize_t token = lookup_token();
+            status_t token  = lookup_token();
             if (token < 0)
                 return token;
 

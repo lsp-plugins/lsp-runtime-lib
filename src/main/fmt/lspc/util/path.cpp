@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2022 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 24 окт. 2022 г.
@@ -68,7 +68,7 @@ namespace lsp
                 return NULL;
 
             // Fill entry with data
-            res->flags          = flags;
+            res->flags          = uint32_t(flags);
             res->chunk_id       = reference_id;
             memcpy(res->path, path, path_len);
 
@@ -162,7 +162,7 @@ namespace lsp
             // Write the entry
             path_entry_t pe;
             pe.path     = const_cast<char *>(tmp.get_utf8());
-            pe.flags    = flags;
+            pe.flags    = uint32_t(flags);
             pe.chunk_id = reference_id;
 
             return write_path(chunk_id, file, &pe);
@@ -183,7 +183,7 @@ namespace lsp
             // Write the entry
             path_entry_t pe;
             pe.path     = const_cast<char *>(tmp.get_utf8());
-            pe.flags    = flags;
+            pe.flags    = uint32_t(flags);
             pe.chunk_id = reference_id;
 
             return write_path(chunk_id, file, &pe);
@@ -205,7 +205,7 @@ namespace lsp
             // Write the entry
             path_entry_t pe;
             pe.path     = const_cast<char *>(tmp.get_utf8());
-            pe.flags    = flags;
+            pe.flags    = uint32_t(flags);
             pe.chunk_id = reference_id;
 
             return write_path(chunk_id, file, &pe);
@@ -228,7 +228,7 @@ namespace lsp
             chunk_path_t hdr;
             ssize_t read = rd->read_header(&hdr, sizeof(hdr));
             if (read < 0)
-                return -read;
+                return status_t(-read);
             else if (read != sizeof(hdr))
                 return STATUS_CORRUPTED;
             else if (hdr.common.version != 0)
@@ -258,7 +258,7 @@ namespace lsp
             // Read the path string
             read = rd->read(pe->path, hdr.path_size);
             if (read < 0)
-                return -read;
+                return status_t(-read);
             else if (read != hdr.path_size)
                 return STATUS_CORRUPTED;
             pe->path[hdr.path_size] = '\0';    // Do not forget the trailing zero

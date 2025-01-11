@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2022 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 12 авг. 2022 г.
@@ -71,7 +71,7 @@ namespace lsp
                 static void get_bookmark_name(LSPString *dst, const LSPString *href)
                 {
                     ssize_t idx = lsp_max(href->rindex_of(FS_CHAR_MAIN), href->rindex_of(FS_CHAR_ALT));
-                    idx         = lsp_max(0, idx + 1);
+                    idx         = lsp_max(idx + 1, ssize_t(0));
 
                     io::OutMemoryStream os;
                     lsp_finally { os.close(); };

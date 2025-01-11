@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 21 апр. 2017 г.
@@ -69,19 +69,20 @@ namespace lsp
             return 0;
         }
 
-        status_t IObjHandler::add_face(const index_t *vv, const index_t *vn, const index_t *vt, size_t n)
+        ssize_t IObjHandler::add_face(const index_t *vv, const index_t *vn, const index_t *vt, size_t n)
         {
-            return STATUS_OK;
+            return 0;
         }
 
-        status_t IObjHandler::add_points(const index_t *vv, size_t n)
+        ssize_t IObjHandler::add_points(const index_t *vv, size_t n)
         {
-            return STATUS_OK;
+            return 0;
         }
 
-        status_t IObjHandler::add_line(const index_t *vv, const index_t *vt, size_t n)
+        ssize_t IObjHandler::add_line(const index_t *vv, const index_t *vt, size_t n)
         {
-            return STATUS_OK;
+            return 0;
         }
-    }
+
+    } /* namespace obj */
 } /* namespace lsp */

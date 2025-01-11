@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 18 июн. 2018 г.
@@ -250,7 +250,7 @@ namespace lsp
             } while (fetch > 0);
 
             if ((fetch < 0) && (fetch != -STATUS_EOF))
-                return set_error(-fetch);
+                return set_error(status_t(-fetch));
 
             return set_error((force) ? pOS->flush() : STATUS_OK);
         }
@@ -301,9 +301,9 @@ namespace lsp
 
                 // Analyze errors
                 if (filled < 0)
-                    return -set_error(-filled);
+                    return -set_error(status_t(-filled));
                 else if (fetched < 0)
-                    return -set_error(-fetched);
+                    return -set_error(status_t(-fetched));
 
                 break;
             }
@@ -340,9 +340,9 @@ namespace lsp
 
                 // Analyze errors
                 if (filled < 0)
-                    return -set_error(-filled);
+                    return -set_error(status_t(-filled));
                 else if (fetched < 0)
-                    return -set_error(-fetched);
+                    return -set_error(status_t(-fetched));
 
                 break;
             }

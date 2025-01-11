@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 12 февр. 2021 г.
@@ -120,7 +120,7 @@ namespace lsp
             {
                 nread = pSequence->read(dst, count);
                 if (nread < 0)
-                    set_error(-nread);
+                    set_error(status_t(-nread));
                 return nread;
             }
 
@@ -161,7 +161,7 @@ namespace lsp
                         return total;
                     }
 
-                    set_error(-nread);
+                    set_error(status_t(-nread));
                     return nread;
                 }
 
@@ -193,7 +193,7 @@ namespace lsp
                 set_error(STATUS_OK);
                 return total;
             }
-            set_error(-nread);
+            set_error(status_t(-nread));
             return nread;
         }
 
@@ -254,7 +254,7 @@ namespace lsp
             if (nMarkMax < 0)
             {
                 ssize_t res = pSequence->skip(count);
-                set_error((res < 0) ? -res : STATUS_OK);
+                set_error((res < 0) ? status_t(-res) : STATUS_OK);
                 return res;
             }
 
@@ -290,7 +290,7 @@ namespace lsp
                         return skipped;
                     }
 
-                    set_error(-nread);
+                    set_error(status_t(-nread));
                     return nread;
                 }
 
@@ -319,7 +319,7 @@ namespace lsp
                 set_error(STATUS_OK);
                 return skipped;
             }
-            set_error(-step);
+            set_error(status_t(-step));
             return step;
         }
 
@@ -350,5 +350,5 @@ namespace lsp
         }
 
 
-    }
-}
+    } /* namespace io */
+} /* namespace lsp */

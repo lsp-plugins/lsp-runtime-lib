@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 29 мая 2019 г.
@@ -560,7 +560,7 @@ namespace lsp
             uint8_t x[4];
             ssize_t n       = midi::encode(x, event);
             if (n < 0)
-                return -n;
+                return status_t(-n);
             return forge_parameter(ref, FPT_MIDI_MESSAGE, &x, n);
         }
 
@@ -625,7 +625,7 @@ namespace lsp
                             uint32_t   *u32;
                         } xptr;
 
-                        uint32_t size       = buf->offset - ref->offset - sizeof(uint32_t);
+                        const uint32_t size = uint32_t(buf->offset - ref->offset - sizeof(uint32_t));
                         xptr.u8             = &buf->data[ref->offset];
                         *(xptr.u32)         = CPU_TO_BE(size);
                     }

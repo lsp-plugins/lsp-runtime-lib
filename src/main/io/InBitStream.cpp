@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 мар. 2021 г.
@@ -238,7 +238,7 @@ namespace lsp
                 {
                     if (nread > 0)
                         break;
-                    set_error(-n);
+                    set_error(status_t(-n));
                     return n;
                 }
 
@@ -281,7 +281,7 @@ namespace lsp
                 {
                     if (skipped > 0)
                         break;
-                    set_error(-n);
+                    set_error(status_t(-n));
                     return n;
                 }
                 bytes      -= n;
@@ -296,7 +296,7 @@ namespace lsp
                 ssize_t n   = readv(&v, amount);
                 if ((n < 0) && (skipped <= 0))
                 {
-                    set_error(-n);
+                    set_error(status_t(-n));
                     return n;
                 }
             }
@@ -362,7 +362,7 @@ namespace lsp
 
                 // Estimate number of bits to read
                 size_t to_read      = lsp_min(nBits, bits - nread);
-                v                   = (v << to_read) | (nBuffer >> (BITSTREAM_BUFSZ - to_read));
+                v                   = uint32_t((v << to_read) | (nBuffer >> (BITSTREAM_BUFSZ - to_read)));
                 nBuffer           <<= to_read;
                 nBits              -= to_read;
                 nread              += to_read;
@@ -419,7 +419,7 @@ namespace lsp
             nBuffer     = 0;
             ssize_t n   = pIS->read(&nBuffer, sizeof(umword_t));
             if (n <= 0)
-                return -n;
+                return status_t(-n);
 
             nBits       = n << 3;
             nBuffer     = BE_TO_CPU(nBuffer);
@@ -427,7 +427,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-    }
-}
+    } /* namespace io */
+} /* namespace lsp */
 
 

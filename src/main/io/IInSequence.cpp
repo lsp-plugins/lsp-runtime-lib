@@ -111,7 +111,7 @@ namespace lsp
                         return count;
                     }
 
-                    set_error(-nread);
+                    set_error(status_t(-nread));
                     return nread;
                 }
                 count += nread;

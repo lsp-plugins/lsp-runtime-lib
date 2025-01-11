@@ -1183,7 +1183,7 @@ namespace lsp
         // Read components
         while (n--)
         {
-            int v       = 0;
+            size_t v    = 0;
             for (size_t i=0; i<hex_len; ++i, ++src)
                 v   = (v << 4) | hex_char(*src);
 

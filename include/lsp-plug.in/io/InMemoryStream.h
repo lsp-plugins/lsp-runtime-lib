@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 21 авг. 2019 г.
@@ -80,7 +80,6 @@ namespace lsp
                  * Wrap the memory buffer, drop previous buffer using specified mechanism
                  * @param data associated buffer
                  * @param size size of buffer
-                 * @param drop the method how to drop data on close()
                  */
                 void wrap(const void *data, size_t size);
 

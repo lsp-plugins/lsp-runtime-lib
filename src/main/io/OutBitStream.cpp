@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 3 мар. 2021 г.
@@ -322,7 +322,7 @@ namespace lsp
                 written     = pOS->write(&buf, sizeof(umword_t));
 
                 if (written != sizeof(umword_t))
-                    return -set_error(-written);
+                    return -set_error(status_t(-written));
             }
             else
             {
@@ -337,7 +337,7 @@ namespace lsp
 
                 written     = pOS->write(data, bytes);
                 if (written != bytes)
-                    return -set_error(-written);
+                    return -set_error(status_t(-written));
             }
 
             nBits       = 0;
@@ -438,7 +438,7 @@ namespace lsp
             #endif
         }
 
-    }
-}
+    } /* namespace io */
+} /* namespace lsp */
 
 
