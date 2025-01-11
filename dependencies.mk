@@ -76,8 +76,9 @@ endif
 #------------------------------------------------------------------------------
 # MacOS dependencies
 MACOS_DEPENDENCIES = \
+  LIBAUDIOTOOLBOX \
   LIBCOREFOUNDATION \
-  LIBAUDIOTOOLBOX
+  LIBICONV  
 
 MACOS_TEST_DEPENDENCIES =
 
