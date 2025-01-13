@@ -114,7 +114,7 @@ namespace lsp
 
         static bool select_sample_format(AudioStreamBasicDescription *info, const audio_stream_t *fmt, size_t codec)
         {
-            bzero(&info, sizeof(AudioStreamBasicDescription));
+            bzero(info, sizeof(AudioStreamBasicDescription));
 
             info->mSampleRate       = fmt->srate;
             info->mFormatFlags      = 0;
@@ -131,8 +131,8 @@ namespace lsp
                     info->mFormatID         = kAudioFormatULaw;
                     info->mFormatFlags     |= kAudioFormatFlagIsPacked | kAudioFormatFlagIsSignedInteger;
                     info->mBytesPerPacket   = 0;
-                    info->mBytesPerFrame    = uint32_t(8 * sizeof(int8_t) * fmt->channels);
                     info->mFramesPerPacket  = 1;
+                    info->mBytesPerFrame    = uint32_t(8 * sizeof(int8_t) * fmt->channels);
                     info->mBitsPerChannel   = 8 * sizeof(int8_t);
                     break;
 
@@ -140,8 +140,8 @@ namespace lsp
                     info->mFormatID         = kAudioFormatALaw;
                     info->mFormatFlags     |= kAudioFormatFlagIsPacked | kAudioFormatFlagIsSignedInteger;
                     info->mBytesPerPacket   = 0;
-                    info->mBytesPerFrame    = uint32_t(8 * sizeof(int8_t) * fmt->channels);
                     info->mFramesPerPacket  = 1;
+                    info->mBytesPerFrame    = uint32_t(8 * sizeof(int8_t) * fmt->channels);
                     info->mBitsPerChannel   = 8 * sizeof(int8_t);
                     break;
 
@@ -185,79 +185,80 @@ namespace lsp
                 switch (sformat_format(fmt->format))
                 {
                     case SFMT_U8:
-                        info->mBytesPerPacket   = 0;
-                        info->mBytesPerFrame    = uint32_t(8 * sizeof(uint8_t) * fmt->channels);
+                        info->mBytesPerPacket   = uint32_t(sizeof(uint8_t) * fmt->channels);
                         info->mFramesPerPacket  = 1;
+                        info->mBytesPerFrame    = info->mBytesPerPacket;
                         info->mBitsPerChannel   = 8 * sizeof(uint8_t);
                         break;
 
                     case SFMT_S8:
                         info->mFormatFlags     |= kAudioFormatFlagIsSignedInteger;
-                        info->mBytesPerPacket   = 0;
-                        info->mBytesPerFrame    = uint32_t(8 * sizeof(int8_t) * fmt->channels);
+                        info->mBytesPerPacket   = uint32_t(sizeof(int8_t) * fmt->channels);
                         info->mFramesPerPacket  = 1;
+                        info->mBytesPerFrame    = info->mBytesPerPacket;
                         info->mBitsPerChannel   = 8 * sizeof(int8_t);
                         break;
 
                     case SFMT_U16:
-                        info->mBytesPerPacket   = 0;
-                        info->mBytesPerFrame    = uint32_t(8 * sizeof(uint16_t) * fmt->channels);
+                        info->mBytesPerPacket   = uint32_t(sizeof(uint16_t) * fmt->channels);
                         info->mFramesPerPacket  = 1;
+                        info->mBytesPerFrame    = info->mBytesPerPacket;
                         info->mBitsPerChannel   = 8 * sizeof(uint16_t);
                         break;
 
                     case SFMT_S16:
                         info->mFormatFlags     |= kAudioFormatFlagIsSignedInteger;
-                        info->mBytesPerPacket   = 0;
-                        info->mBytesPerFrame    = uint32_t(8 * sizeof(int16_t) * fmt->channels);
+                        info->mBytesPerPacket   = uint32_t(sizeof(int16_t) * fmt->channels);
                         info->mFramesPerPacket  = 1;
+                        info->mBytesPerFrame    = info->mBytesPerPacket;
                         info->mBitsPerChannel   = 8 * sizeof(int16_t);
                         break;
 
                     case SFMT_U24:
-                        info->mBytesPerPacket   = 0;
-                        info->mBytesPerFrame    = uint32_t(24 * sizeof(uint8_t) * fmt->channels);
+                        info->mBytesPerPacket   = uint32_t(3 * sizeof(uint8_t) * fmt->channels);
                         info->mFramesPerPacket  = 1;
+                        info->mFramesPerPacket  = 1;
+                        info->mBytesPerFrame    = info->mBytesPerPacket;
                         info->mBitsPerChannel   = 24 * sizeof(uint8_t);
                         break;
 
                     case SFMT_S24:
                         info->mFormatFlags     |= kAudioFormatFlagIsSignedInteger;
-                        info->mBytesPerPacket   = 0;
-                        info->mBytesPerFrame    = uint32_t(24 * sizeof(int8_t) * fmt->channels);
+                        info->mBytesPerPacket   = uint32_t(3 * sizeof(int8_t) * fmt->channels);
                         info->mFramesPerPacket  = 1;
+                        info->mBytesPerFrame    = info->mBytesPerPacket;
                         info->mBitsPerChannel   = 24 * sizeof(int8_t);
                         break;
 
                     case SFMT_U32:
-                        info->mBytesPerPacket   = 0;
-                        info->mBytesPerFrame    = uint32_t(8 * sizeof(uint32_t) * fmt->channels);
+                        info->mBytesPerPacket   = uint32_t(sizeof(uint32_t) * fmt->channels);
                         info->mFramesPerPacket  = 1;
+                        info->mBytesPerFrame    = info->mBytesPerPacket;
                         info->mBitsPerChannel   = 8 * sizeof(uint32_t);
                         break;
 
                     case SFMT_S32:
                         info->mFormatFlags     |= kAudioFormatFlagIsSignedInteger;
-                        info->mBytesPerPacket   = 0;
-                        info->mBytesPerFrame    = uint32_t(8 * sizeof(int32_t) * fmt->channels);
+                        info->mBytesPerPacket   = uint32_t(sizeof(int32_t) * fmt->channels);
                         info->mFramesPerPacket  = 1;
+                        info->mBytesPerFrame    = info->mBytesPerPacket;
                         info->mBitsPerChannel   = 8 * sizeof(int32_t);
                         break;
 
                     case SFMT_F32:
                         info->mFormatFlags     |= kAudioFormatFlagIsFloat;
-                        info->mBytesPerPacket   = 0;
-                        info->mBytesPerFrame    = uint32_t(8 * sizeof(float) * fmt->channels);
+                        info->mBytesPerPacket   = uint32_t(sizeof(f32_t) * fmt->channels);
                         info->mFramesPerPacket  = 1;
-                        info->mBitsPerChannel   = 8 * sizeof(float);
+                        info->mBytesPerFrame    = info->mBytesPerPacket;
+                        info->mBitsPerChannel   = 8 * sizeof(f32_t);
                         break;
 
                     case SFMT_F64:
                         info->mFormatFlags     |= kAudioFormatFlagIsFloat;
-                        info->mBytesPerPacket   = 0;
-                        info->mBytesPerFrame    = uint32_t(8 * sizeof(double) * fmt->channels);
+                        info->mBytesPerPacket   = uint32_t(sizeof(f64_t) * fmt->channels);
                         info->mFramesPerPacket  = 1;
-                        info->mBitsPerChannel   = 8 * sizeof(double);
+                        info->mBytesPerFrame    = info->mBytesPerPacket;
+                        info->mBitsPerChannel   = 8 * sizeof(f64_t);
                         break;
 
                     default:
@@ -596,10 +597,7 @@ namespace lsp
                     else if (info.mBitsPerChannel == sizeof(double) * 8)
                         format          = mm::SFMT_F64 | be_flag;
                     else
-                    {
-                        format          = mm::SFMT_F32_CPU;
                         need_convert    = true;
-                    }
                 }
                 else if (info.mFormatFlags & kAudioFormatFlagIsSignedInteger)
                 {
@@ -612,10 +610,7 @@ namespace lsp
                     else if (info.mBitsPerChannel == sizeof(int32_t) * 8)
                         format          = mm::SFMT_S32 | be_flag;
                     else
-                    {
-                        format          = mm::SFMT_F32_CPU;
                         need_convert    = true;
-                    }
                 }
                 else
                 {
@@ -628,10 +623,7 @@ namespace lsp
                     else if (info.mBitsPerChannel == sizeof(uint32_t) * 8)
                         format          = mm::SFMT_U32 | be_flag;
                     else
-                    {
-                        format          = mm::SFMT_F32_CPU;
                         need_convert    = true;
-                    }
                 }
             }
 
@@ -644,11 +636,24 @@ namespace lsp
                 cvt.mFormatID         = kAudioFormatLinearPCM;
                 cvt.mFormatFlags      = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
 
-                cvt.mBytesPerPacket   = sizeof(float) * info.mChannelsPerFrame;
-                cvt.mFramesPerPacket  = 1;
-                cvt.mBytesPerFrame    = sizeof(float) * info.mChannelsPerFrame;
-                cvt.mChannelsPerFrame = info.mChannelsPerFrame;
-                cvt.mBitsPerChannel   = sizeof(float) * 8;
+                if (info.mBitsPerChannel <= sizeof(f32_t)*8)
+                {
+                    cvt.mBytesPerPacket   = sizeof(f32_t) * info.mChannelsPerFrame;
+                    cvt.mFramesPerPacket  = 1;
+                    cvt.mBytesPerFrame    = sizeof(f32_t) * info.mChannelsPerFrame;
+                    cvt.mChannelsPerFrame = info.mChannelsPerFrame;
+                    cvt.mBitsPerChannel   = sizeof(f32_t) * 8;
+                    format                = mm::SFMT_F32 | be_flag;
+                }
+                else
+                {
+                    cvt.mBytesPerPacket   = sizeof(f64_t) * info.mChannelsPerFrame;
+                    cvt.mFramesPerPacket  = 1;
+                    cvt.mBytesPerFrame    = sizeof(f64_t) * info.mChannelsPerFrame;
+                    cvt.mChannelsPerFrame = info.mChannelsPerFrame;
+                    cvt.mBitsPerChannel   = sizeof(f64_t) * 8;
+                    format                = mm::SFMT_F64 | be_flag;
+                }
 
                 os_res = ExtAudioFileSetProperty(
                     eaf,
