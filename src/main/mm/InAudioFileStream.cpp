@@ -376,12 +376,11 @@ namespace lsp
             SInt64 num_frames = -1;
             os_res = ExtAudioFileGetProperty(
                 eaf,
-                kExtAudioFileProperty_FileDataFormat,
+                kExtAudioFileProperty_FileLengthFrames,
                 &szof_info,
-                &info);
+                &num_frames);
             if (os_res != kAudio_NoError)
                 num_frames = -1;
-
 
             // Decode sample format
             size_t format       = 0;
@@ -391,9 +390,9 @@ namespace lsp
             {
                 if (info.mFormatFlags & kAudioFormatFlagIsFloat)
                 {
-                    if (info.mBitsPerChannel == sizeof(float) * 8)
+                    if (info.mBitsPerChannel == sizeof(f32_t) * 8)
                         format          = mm::SFMT_F32 | be_flag;
-                    else if (info.mBitsPerChannel == sizeof(double) * 8)
+                    else if (info.mBitsPerChannel == sizeof(f64_t) * 8)
                         format          = mm::SFMT_F64 | be_flag;
                     else
                     {
@@ -412,10 +411,7 @@ namespace lsp
                     else if (info.mBitsPerChannel == sizeof(int32_t) * 8)
                         format          = mm::SFMT_S32 | be_flag;
                     else
-                    {
-                        format          = mm::SFMT_F32_CPU;
                         need_convert    = true;
-                    }
                 }
                 else
                 {
@@ -428,10 +424,7 @@ namespace lsp
                     else if (info.mBitsPerChannel == sizeof(uint32_t) * 8)
                         format          = mm::SFMT_U32 | be_flag;
                     else
-                    {
-                        format          = mm::SFMT_F32_CPU;
                         need_convert    = true;
-                    }
                 }
             }
 
@@ -443,12 +436,25 @@ namespace lsp
                 cvt.mSampleRate       = info.mSampleRate;
                 cvt.mFormatID         = kAudioFormatLinearPCM;
                 cvt.mFormatFlags      = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
-
-                cvt.mBytesPerPacket   = sizeof(float) * info.mChannelsPerFrame;
-                cvt.mFramesPerPacket  = 1;
-                cvt.mBytesPerFrame    = sizeof(float) * info.mChannelsPerFrame;
-                cvt.mChannelsPerFrame = info.mChannelsPerFrame;
-                cvt.mBitsPerChannel   = sizeof(float) * 8;
+                
+                if (info.mBitsPerChannel <= sizeof(f32_t)*8)
+                {
+                    cvt.mBytesPerPacket   = sizeof(f32_t) * info.mChannelsPerFrame;
+                    cvt.mFramesPerPacket  = 1;
+                    cvt.mBytesPerFrame    = sizeof(f32_t) * info.mChannelsPerFrame;
+                    cvt.mChannelsPerFrame = info.mChannelsPerFrame;
+                    cvt.mBitsPerChannel   = sizeof(f32_t) * 8;
+                    format                = mm::SFMT_F32 | be_flag;
+                }
+                else
+                {
+                    cvt.mBytesPerPacket   = sizeof(f64_t) * info.mChannelsPerFrame;
+                    cvt.mFramesPerPacket  = 1;
+                    cvt.mBytesPerFrame    = sizeof(f64_t) * info.mChannelsPerFrame;
+                    cvt.mChannelsPerFrame = info.mChannelsPerFrame;
+                    cvt.mBitsPerChannel   = sizeof(f64_t) * 8;
+                    format                = mm::SFMT_F64 | be_flag;
+                }
 
                 os_res = ExtAudioFileSetProperty(
                     eaf,
