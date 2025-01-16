@@ -220,8 +220,14 @@ namespace lsp
             while (true)
             {
                 // Form the name of the shared segment
+                // For MacOS there is a serious limitation on the shared memory
+                // segment name, so we use Base64 with custom table instead.
                 generate_uuid(&uuid);
+            #ifdef PLATFORM_MACOSX
+                format_uuid_base64(utext, &uuid);
+            #else
                 format_uuid_dashed(utext, &uuid, false);
+            #endif /* PLATFORM_MACOSX */
 
                 if (!tmp.set_ascii(utext))
                     return STATUS_NO_MEM;
@@ -635,7 +641,7 @@ namespace lsp
                 S_IRUSR | S_IWUSR |
                 S_IRGRP | S_IWGRP |
                 S_IROTH | S_IWOTH;
-
+            
             // Open/create shared memory segment
             const int fd = shm_open(path, o_flags, open_mode);
             if (fd < 0)
