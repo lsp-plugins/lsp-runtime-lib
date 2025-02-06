@@ -373,6 +373,93 @@ namespace lsp
             }
             return 0;
         }
+
+        void param_t::set_i32(int32_t value)
+        {
+            clear();
+            flags       = SF_TYPE_I32;
+            v.i32       = value;
+        }
+
+        void param_t::set_u32(uint32_t value)
+        {
+            clear();
+            flags       = SF_TYPE_U32;
+            v.u32       = value;
+        }
+
+        void param_t::set_i64(int64_t value)
+        {
+            clear();
+            flags       = SF_TYPE_I64;
+            v.i64       = value;
+        }
+
+        void param_t::set_u64(uint64_t value)
+        {
+            clear();
+            flags       = SF_TYPE_U64;
+            v.u64       = value;
+        }
+
+        void param_t::set_f32(float value)
+        {
+            clear();
+            flags       = SF_TYPE_F32;
+            v.f32       = value;
+        }
+
+        void param_t::set_f64(double value)
+        {
+            clear();
+            flags       = SF_TYPE_F64;
+            v.f64       = value;
+        }
+
+        void param_t::set_bool(bool value)
+        {
+            clear();
+            flags       = SF_TYPE_BOOL;
+            v.bval      = value;
+        }
+
+        bool param_t::set_string(const char *value)
+        {
+            char *s     = strdup(value);
+            if (s == NULL)
+                return false;
+
+            clear();
+            flags       = SF_TYPE_STR | SF_QUOTED;
+            v.str       = s;
+            return true;
+        }
+
+        bool param_t::set_blob(const blob_t *value)
+        {
+            return set_blob(value->length, value->ctype, value->data);
+        }
+
+        bool param_t::set_blob(size_t length, const char *ctype, const char *data)
+        {
+            char *st    = strdup(ctype);
+            if (st == NULL)
+                return false;
+            char *dt    = strdup(data);
+            if (dt == NULL)
+            {
+                free(st);
+                return false;
+            }
+
+            clear();
+            flags           = SF_TYPE_BLOB;
+            v.blob.length   = length;
+            v.blob.ctype    = st;
+            v.blob.data     = dt;
+
+            return true;
+        }
     } /* namespace config */
 } /* namespace lsp */
 

@@ -4,6 +4,7 @@
 
 === 1.0.27 ===
 * Better support of MacOS.
+* Added possibility to modify configuration parameters.
 
 === 1.0.26 ===
 * Updated build scripts.

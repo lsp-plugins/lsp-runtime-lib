@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 29 апр. 2020 г.
@@ -86,10 +86,6 @@ namespace lsp
          */
         typedef struct param_t
         {
-            private:
-                param_t &operator = (const param_t &);
-                param_t (const param_t &);
-
             public:
                 LSPString   name;           // Name of parameter
                 LSPString   comment;        // Comment
@@ -98,7 +94,12 @@ namespace lsp
 
             public:
                 explicit param_t();
+                param_t(const param_t &) = delete;
+                param_t(param_t &&) = delete;
                 ~param_t();
+
+                param_t &operator = (const param_t &) = delete;
+                param_t &operator = (param_t &&) = delete;
 
             public:
                 bool            copy(const param_t *src);
@@ -154,8 +155,23 @@ namespace lsp
                 inline float    to_float() const            { return to_f32();                                  }
                 inline double   to_double() const           { return to_f64();                                  }
                 bool            to_bool() const;
+
+                // Updates
+                void            set_i32(int32_t value);
+                void            set_u32(uint32_t value);
+                void            set_i64(int64_t value);
+                void            set_u64(uint64_t value);
+                void            set_f32(float value);
+                void            set_f64(double value);
+                inline void     set_float(float value)      { set_f32(value); }
+                inline void     set_doublet(double value)   { set_f64(value); }
+                void            set_bool(bool value);
+                bool            set_string(const char *value);
+                bool            set_blob(const blob_t *value);
+                bool            set_blob(size_t length, const char *ctype, const char *data);
         } param_t;
-    }
-}
+
+    } /* namespace config */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_FMT_CONFIG_TYPES_H_ */
