@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 11 июл. 2020 г.
@@ -263,10 +263,7 @@ namespace lsp
                         else if (name->equals_ascii("pitch"))
                             res = read_float(p, &layer->pitch);
                         else
-                        {
-                            lsp_warn("Unexpected tag: %s", name->get_native());
                             res = skip_tags(p);
-                        }
                         break;
                     }
 
@@ -313,10 +310,7 @@ namespace lsp
                             res = read_layer(p, layer);
                         }
                         else
-                        {
-                            lsp_warn("Unexpected tag: %s", name->get_native());
                             res = skip_tags(p);
-                        }
                         break;
                     }
 
@@ -425,10 +419,7 @@ namespace lsp
                         else if (name->equals_ascii("instrumentComponent"))
                             res = read_instrument_component(p, inst);
                         else
-                        {
-                            lsp_warn("Unexpected tag: %s", name->get_native());
                             res = skip_tags(p);
-                        }
                         break;
                     }
 
@@ -476,10 +467,7 @@ namespace lsp
                             res = read_instrument(p, inst);
                         }
                         else
-                        {
-                            lsp_warn("Unexpected tag: %s", name->get_native());
                             res = skip_tags(p);
-                        }
                         break;
                     }
 
@@ -525,10 +513,7 @@ namespace lsp
                         else if (name->equals_ascii("instrumentList"))
                             res = read_instruments(p, &dst->instruments);
                         else
-                        {
-                            lsp_warn("Unexpected tag: %s", name->get_native());
                             res = skip_tags(p);
-                        }
                         break;
                     }
 
@@ -652,6 +637,7 @@ namespace lsp
             status_t res = p.wrap(is, WRAP_NONE);
             return (res == STATUS_OK) ? load_document(&p, dst) : res;
         }
-    }
-}
+
+    } /* namespace hydrogen */
+} /* namespace lsp */
 
