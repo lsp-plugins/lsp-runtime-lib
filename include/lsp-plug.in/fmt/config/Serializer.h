@@ -108,7 +108,6 @@ namespace lsp
                 /**
                  * Wrap input stream with parser
                  * @param os output stream
-                 * @param version JSON version
                  * @param flags wrapping flags
                  * @param charset character set
                  * @return status of operation
@@ -124,7 +123,6 @@ namespace lsp
             public:
                 /**
                  * Write comment to the output stream
-                 * @param key key
                  * @param v comment
                  * @return status of operation
                  */
@@ -132,7 +130,6 @@ namespace lsp
 
                 /**
                  * Write comment to the output stream
-                 * @param key key
                  * @param v UTF-8 encoded comment
                  * @return status of operation
                  */
@@ -157,7 +154,7 @@ namespace lsp
                 /**
                  * Write 32-bit signed integer to the output stream
                  * @param key key
-                 * @param v value
+                 * @param value value
                  * @param flags value flags
                  * @return status of operation
                  */
@@ -167,7 +164,7 @@ namespace lsp
                 /**
                  * Write 32-bit unsigned integer to the output stream
                  * @param key key
-                 * @param v value
+                 * @param value value
                  * @param flags value flags
                  * @return status of operation
                  */
@@ -177,7 +174,7 @@ namespace lsp
                 /**
                  * Write 32-bit floating-point to the output stream
                  * @param key key
-                 * @param v value
+                 * @param value value
                  * @param flags value flags
                  * @return status of operation
                  */
@@ -187,7 +184,7 @@ namespace lsp
                 /**
                  * Write 64-bit signed integer to the output stream
                  * @param key key
-                 * @param v value
+                 * @param value value
                  * @param flags value flags
                  * @return status of operation
                  */
@@ -197,7 +194,7 @@ namespace lsp
                 /**
                  * Write 64-bit unsigned integer to the output stream
                  * @param key key
-                 * @param v value
+                 * @param value value
                  * @param flags value flags
                  * @return status of operation
                  */
@@ -207,7 +204,7 @@ namespace lsp
                 /**
                  * Write 64-bit floating-point to the output stream
                  * @param key key
-                 * @param v value
+                 * @param value value
                  * @param flags value flags
                  * @return status of operation
                  */
@@ -217,7 +214,7 @@ namespace lsp
                 /**
                  * Write boolean value to the output stream
                  * @param key key
-                 * @param v value
+                 * @param value value
                  * @param flags value flags
                  * @return status of operation
                  */

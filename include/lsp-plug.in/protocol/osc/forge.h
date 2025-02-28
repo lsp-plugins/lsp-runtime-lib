@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 29 мая 2019 г.
@@ -104,8 +104,7 @@ namespace lsp
          * Forge message
          * @param ref forge reference
          * @param address message address
-         * @param params message parameters
-         * @param args list of arguments
+         * @param params message parameters followed by arguments
          * @return status of operation
          */
         status_t forge_message(forge_frame_t *ref, const char *address, const char *params...);
@@ -156,7 +155,7 @@ namespace lsp
          * Complete serialization of OSC packet
          * @param packet packet to store size and pointer to the data, for dynamic mode data should be freed
          *   by forge_free();
-         * @param ref current frame descriptor
+         * @param forge the forge object to close
          * @return status of operation
          */
         status_t forge_close(packet_t *packet, forge_t *forge);
@@ -171,11 +170,11 @@ namespace lsp
         /**
          * Free mamory allocated by the OSC serializator
          * @param ptr ponter to memory
-         * @return status of operation
          */
         void forge_free(void *ptr);
-    }
-}
+
+    } /* namespace osc */
+} /* namespace lsp */
 
 
 

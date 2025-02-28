@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2022 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 21 окт. 2022 г.
@@ -55,7 +55,7 @@ namespace lsp
                 set_error(STATUS_OK);
                 return res;
             }
-            return -set_error(-res);
+            return -set_error(status_t(-res));
         }
 
         ssize_t ChunkReaderStream::read(void *dst, size_t count)
@@ -70,7 +70,7 @@ namespace lsp
             }
             else if (res == 0)
                 return -set_error(STATUS_EOF);
-            return -set_error(-res);
+            return -set_error(status_t(-res));
         }
 
         ssize_t ChunkReaderStream::read_byte()
@@ -86,7 +86,7 @@ namespace lsp
             }
             else if (res == 0)
                 return -set_error(STATUS_EOF);
-            return -set_error(-res);
+            return -set_error(status_t(-res));
         }
 
         wssize_t ChunkReaderStream::skip(wsize_t amount)
@@ -99,7 +99,7 @@ namespace lsp
                 set_error(STATUS_OK);
                 return res;
             }
-            return -set_error(-res);
+            return -set_error(status_t(-res));
         }
 
         status_t ChunkReaderStream::close()

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 29 апр. 2020 г.
@@ -239,7 +239,7 @@ namespace lsp
             return do_close();
         }
 
-        status_t PullParser::next(param_t *param)
+        status_t PullParser::next(param_t *ev)
         {
             if (pIn == NULL)
                 return STATUS_CLOSED;
@@ -264,8 +264,8 @@ namespace lsp
                 if (result == STATUS_OK)
                 {
                     result  = commit_param(&sKey, &sValue, flags);
-                    if ((result == STATUS_OK) && (param != NULL))
-                        result = (param->copy(&sParam)) ? STATUS_OK : STATUS_NO_MEM;
+                    if ((result == STATUS_OK) && (ev != NULL))
+                        result = (ev->copy(&sParam)) ? STATUS_OK : STATUS_NO_MEM;
                     break;
                 }
                 else if (result != STATUS_SKIP)
@@ -596,7 +596,7 @@ namespace lsp
             if ((errno != 0) || (*end != '\0'))
                 return STATUS_BAD_FORMAT;
 
-            *dst = value;
+            *dst = int32_t(value);
             return STATUS_OK;
         }
 
@@ -615,7 +615,7 @@ namespace lsp
             if ((errno != 0) || (*end != '\0'))
                 return STATUS_BAD_FORMAT;
 
-            *dst = value;
+            *dst = uint32_t(value);
             return STATUS_OK;
         }
 

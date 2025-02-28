@@ -320,7 +320,7 @@ namespace lsp
             ssize_t nchars   = decode_buffer();
             if (nchars > 0)
                 return *(cBufHead++);
-            return (nchars < 0) ? nchars : -STATUS_EOF;
+            return (nchars < 0) ? lsp_swchar_t(nchars) : -STATUS_EOF;
         }
 
         ssize_t CharsetDecoder::fetch(lsp_wchar_t *outbuf, size_t count)

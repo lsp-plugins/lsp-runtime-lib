@@ -140,7 +140,7 @@ namespace lsp
 
                 // Symbol matched, update index it if needed
                 if ((ixp >= 0) && (!ix[ixp]))
-                    ix[ixp]     = i - ixp;
+                    ix[ixp]     = uint32_t(i - ixp);
                 ixp = i;                            // Save index as previous match
                 di  = (ix[i]) ? ix[i] : 1;
 

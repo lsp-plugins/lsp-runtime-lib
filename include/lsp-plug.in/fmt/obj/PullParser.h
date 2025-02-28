@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 21 апр. 2017 г.
@@ -153,7 +153,6 @@ namespace lsp
 
                 /**
                  * Get current event
-                 * @param ev pointer to structure to store the event
                  * @return NULL if there is no current event
                  */
                 const event_t      *current() const;
@@ -166,7 +165,7 @@ namespace lsp
                 status_t           current(event_t *ev) const;
 
         };
-    }
+    } /* namespace obj */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_FMT_OBJ_PULLPARSER_H_ */

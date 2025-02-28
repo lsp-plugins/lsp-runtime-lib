@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 8 нояб. 2018 г.
@@ -197,7 +197,7 @@ UTEST_BEGIN("runtime.fmt.lspc", audio)
             UTEST_ASSERT(d->valid());
             if (!s->equals_relative(*d, 1e-2))
             {
-                int diff = s->last_diff();
+                const ssize_t diff = s->last_diff();
                 UTEST_FAIL_MSG("Buffer data for channel %d differs at sample %d: %.6f vs %.6f",
                         int(i), int(diff), s->get(diff), d->get(diff));
             }

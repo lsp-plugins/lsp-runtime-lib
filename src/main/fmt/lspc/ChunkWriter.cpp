@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 янв. 2018 г.
@@ -52,7 +52,7 @@ namespace lsp
             {
                 chunk_header_t hdr;
                 hdr.magic       = nMagic;
-                hdr.size        = nBufPos;
+                hdr.size        = uint32_t(nBufPos);
                 hdr.flags       = (flags & F_LAST) ? LSPC_CHUNK_FLAG_LAST : 0;
                 hdr.uid         = nUID;
 
@@ -104,7 +104,7 @@ namespace lsp
                     if (nBufPos >= nBufSize)
                     {
                         hdr.magic       = nMagic;
-                        hdr.size        = nBufSize;
+                        hdr.size        = uint32_t(nBufSize);
                         hdr.flags       = 0;
                         hdr.uid         = nUID;
 
@@ -130,7 +130,7 @@ namespace lsp
                 else // Write directly avoiding buffer
                 {
                     hdr.magic       = nMagic;
-                    hdr.size        = can_write;
+                    hdr.size        = uint32_t(can_write);
                     hdr.flags       = 0;
                     hdr.uid         = nUID;
 
@@ -190,6 +190,6 @@ namespace lsp
             status_t result2 = ChunkAccessor::close();
             return set_error((result == STATUS_OK) ? result2 : result);
         }
-    }
 
+    } /* namespace lspc */
 } /* namespace lsp */

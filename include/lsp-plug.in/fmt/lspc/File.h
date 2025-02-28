@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 янв. 2018 г.
@@ -114,7 +114,7 @@ namespace lsp
 
                 /** Read chunk
                  *
-                 * @param magic magic number of the chunk type
+                 * @param uid magic number of the chunk type
                  * @return pointer to chunk reader
                  */
                 ChunkReader     *read_chunk(uint32_t uid);

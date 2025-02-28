@@ -56,8 +56,15 @@ These modules provide currently:
 
 The following packages need to be installed for building:
 
-* gcc >= 4.9
+* gcc >= 4.9 or clang >= 11.0.1
 * make >= 4.0
+
+## Supported platforms
+
+* FreeBSD
+* GNU/Linux
+* MacOS
+* Windows
 
 ## Building
 

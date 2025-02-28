@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 22 апр. 2020 г.
@@ -127,6 +127,7 @@ namespace lsp
 
         status_t PushParser::parse_document(IObjHandler *handler)
         {
+            ssize_t object_id;
             status_t res = STATUS_OK;
             size_t nobj = 0;
 
@@ -136,7 +137,7 @@ namespace lsp
                 const event_t *ev = sParser.current();
                 if (ev == NULL)
                     return STATUS_BAD_STATE;
-
+                
                 // Analyze event
                 switch (ev->type)
                 {
@@ -151,38 +152,38 @@ namespace lsp
                         break;
 
                     case EV_VERTEX:
-                        if ((res = handler->add_vertex(ev->vertex.x, ev->vertex.y, ev->vertex.z, ev->vertex.w)) < 0)
-                            return -res;
+                        if ((object_id = handler->add_vertex(ev->vertex.x, ev->vertex.y, ev->vertex.z, ev->vertex.w)) < 0)
+                            return status_t(-object_id);
                         break;
 
                     case EV_PVERTEX:
-                        if ((res = handler->add_param_vertex(ev->vertex.x, ev->vertex.y, ev->vertex.z, ev->vertex.w)) < 0)
-                            return -res;
+                        if ((object_id = handler->add_param_vertex(ev->vertex.x, ev->vertex.y, ev->vertex.z, ev->vertex.w)) < 0)
+                            return status_t(-object_id);
                         break;
 
                     case EV_NORMAL:
-                        if ((res = handler->add_normal(ev->normal.dx, ev->normal.dy, ev->normal.dz, ev->normal.dw)) < 0)
-                            return -res;
+                        if ((object_id = handler->add_normal(ev->normal.dx, ev->normal.dy, ev->normal.dz, ev->normal.dw)) < 0)
+                            return status_t(-object_id);
                         break;
 
                     case EV_TEXCOORD:
-                        if ((res = handler->add_texture_vertex(ev->texcoord.u, ev->texcoord.v, ev->texcoord.w)) < 0)
-                            return -res;
+                        if ((object_id = handler->add_texture_vertex(ev->texcoord.u, ev->texcoord.v, ev->texcoord.w)) < 0)
+                            return status_t(-object_id);
                         break;
 
                     case EV_FACE:
-                        if ((res = handler->add_face(ev->ivertex.array(), ev->inormal.array(), ev->itexcoord.array(), ev->ivertex.size())) < 0)
-                            return -res;
+                        if ((object_id = handler->add_face(ev->ivertex.array(), ev->inormal.array(), ev->itexcoord.array(), ev->ivertex.size())) < 0)
+                            return status_t(-object_id);
                         break;
 
                     case EV_LINE:
-                        if ((res = handler->add_line(ev->ivertex.array(), ev->itexcoord.array(), ev->ivertex.size())) < 0)
-                            return -res;
+                        if ((object_id = handler->add_line(ev->ivertex.array(), ev->itexcoord.array(), ev->ivertex.size())) < 0)
+                            return status_t(-object_id);
                         break;
 
                     case EV_POINT:
-                        if ((res = handler->add_points(ev->ivertex.array(), ev->ivertex.size())) < 0)
-                            return -res;
+                        if ((object_id = handler->add_points(ev->ivertex.array(), ev->ivertex.size())) < 0)
+                            return status_t(-object_id);
                         break;
 
                     default:

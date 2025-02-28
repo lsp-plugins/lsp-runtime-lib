@@ -74,6 +74,20 @@ ifeq ($(PLATFORM),Windows)
 endif
 
 #------------------------------------------------------------------------------
+# MacOS dependencies
+MACOS_DEPENDENCIES = \
+  LIBAUDIOTOOLBOX \
+  LIBCOREFOUNDATION \
+  LIBICONV  
+
+MACOS_TEST_DEPENDENCIES =
+
+ifeq ($(PLATFORM),MacOS)
+  DEPENDENCIES             += $(MACOS_DEPENDENCIES)
+  TEST_DEPENDENCIES        += $(MACOS_TEST_DEPENDENCIES)
+endif
+
+#------------------------------------------------------------------------------
 # Haiku dependencies
 HAIKU_DEPENDENCIES = \
   LIBPTHREAD \
@@ -95,10 +109,12 @@ ALL_DEPENDENCIES = \
   $(LINUX_DEPENDENCIES) \
   $(BSD_DEPENDENCIES) \
   $(WINDOWS_DEPENDENCIES) \
+  $(MACOS_DEPENDENCIES) \
   $(HAIKU_DEPENDENCIES) \
   $(TEST_DEPENDENCIES) \
   $(LINUX_TEST_DEPENDENCIES) \
   $(BSD_TEST_DEPENDENCIES) \
   $(WINDOWS_TEST_DEPENDENCIES) \
+  $(MACOS_TEST_DEPENDENCIES) \
   $(HAIKU_TEST_DEPENDENCIES)
 

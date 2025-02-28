@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2022 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 27 окт. 2022 г.
@@ -66,9 +66,8 @@ namespace lsp
             if (pReader == NULL)
                 return -set_error(STATUS_CLOSED);
             ssize_t nskipped = pReader->skip_frames(nframes);
-            if (nskipped < 0)
-                set_error(-nskipped);
-            set_error(STATUS_OK);
+            set_error((nskipped < 0) ? status_t(-nskipped) : STATUS_OK);
+
             return nskipped;
         }
 
@@ -83,7 +82,7 @@ namespace lsp
 
             ssize_t nread = pReader->read_frames(reinterpret_cast<float *>(dst), nframes);
             if (nread < 0)
-                set_error(-nread);
+                set_error(status_t(-nread));
             else if (nread == 0)
                 return -set_error(STATUS_EOF);
 

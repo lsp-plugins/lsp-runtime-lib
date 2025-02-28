@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 15 окт. 2020 г.
@@ -209,7 +209,7 @@ namespace lsp
             {
                 destroy_cmd(next);
                 destroy_cmd(out);
-                return -tok;
+                return status_t(-tok);
             }
             else if (out == NULL)
             {
@@ -477,7 +477,7 @@ namespace lsp
             {
                 ssize_t tok = get_token(&it);
                 if (tok < 0)
-                    return -tok;
+                    return status_t(-tok);
                 else if (tok != T_EOF)
                     return STATUS_BAD_FORMAT;
 

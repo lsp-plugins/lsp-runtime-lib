@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 23 февр. 2023 г.
@@ -118,7 +118,6 @@ namespace lsp
                 /**
                  * Open processor
                  * @param path UTF-8 path to the file
-                 * @param version JSON version
                  * @return status of operation
                  */
                 status_t    open(const char *path);
@@ -126,54 +125,42 @@ namespace lsp
                 /**
                  * Open processor
                  * @param path string representation of path to the file
-                 * @param version JSON version
-                 * @param charset character set, ASCII if not specified
                  * @return status of operation
                  */
                 status_t    open(const LSPString *path);
 
                 /**
                  * Open processor
-                 * @param handler the document handler
                  * @param path path to the file
-                 * @param version JSON version
                  * @return status of operation
                  */
                 status_t    open(const io::Path *path);
 
                 /**
                  * Wrap string with processor
-                 * @param handler the document handler
                  * @param str string to wrap
-                 * @param version JSON version
                  * @return status of operation
                  */
                 status_t    wrap(const char *str);
 
                 /**
                  * Wrap string with parser
-                 * @param handler the document handler
                  * @param buf buffer to wrap
                  * @param len length of buffer to wrap
-                 * @param version JSON version
                  * @return status of operation
                  */
                 status_t    wrap(const void *buf, size_t len);
 
                 /**
                  * Wrap string with processor
-                 * @param handler the document handler
                  * @param str string to wrap
-                 * @param version JSON version, ASCII if not specified
                  * @return status of operation
                  */
                 status_t    wrap(const LSPString *str);
 
                 /**
                  * Wrap input stream with processor
-                 * @param handler the document handler
                  * @param is input stream
-                 * @param version JSON version
                  * @param flags wrap flags
                  * @return status of operation
                  */
@@ -181,9 +168,7 @@ namespace lsp
 
                 /**
                  * Wrap pull parser with the processor
-                 * @param handler the document handler
-                 * @param is input stream
-                 * @param version JSON version
+                 * @param parser parser to wrap
                  * @param flags wrap flags
                  * @return status of operation
                  */

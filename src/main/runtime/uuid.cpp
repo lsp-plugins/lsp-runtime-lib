@@ -26,6 +26,11 @@ namespace lsp
 {
     static const char *hex_lower = "0123456789abcdef";
     static const char *hex_upper = "0123456789ABCDEF";
+    static const char *base64 =
+        "0123456789abcdef"
+        "ghijklmnopqrstuv"
+        "wxyzABCDEFGHIJKL"
+        "MNOPQRSTUVWXYZ_-";
 
     static char *fmt_bytes(char *dst, const uint8_t *ptr, const char *table, size_t count)
     {
@@ -83,6 +88,41 @@ namespace lsp
         dst = fmt_bytes(dst, u, table, 6);
         *dst = '\0';
 
+        return dst;
+    }
+
+    static void fmt_triple(char *dst, const uint8_t *ptr)
+    {
+        uint32_t value =
+            uint32_t(ptr[0]) |
+            (uint32_t(ptr[1]) << 8) |
+            (uint32_t(ptr[2]) << 16);
+        for (size_t i=0; i<4; ++i)
+        {
+            dst[i]      = base64[value & 0x3f];
+            value     >>= 6;
+        }
+    }
+
+    char *format_uuid_base64(char *dst, const uuid_t *uuid)
+    {
+        const uint8_t *ptr = uuid->u8;
+        for (size_t i=0; i<5; ++i)
+        {
+            fmt_triple(dst, ptr);
+            ptr        += 3;
+            dst        += 4;
+        }
+        
+        uint32_t value = uint32_t(ptr[0]);
+        for (size_t i=0; i<2; ++i)
+        {
+            dst[i]      = base64[value & 0x3f];
+            value     >>= 6;
+        }
+        
+        dst += 2;
+        *dst = '\0';
         return dst;
     }
 

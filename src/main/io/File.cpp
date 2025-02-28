@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 6 мар. 2019 г.
@@ -745,7 +745,7 @@ namespace lsp
                             ssize_t nread = src.read(buf, io_buf_size);
                             if (nread < 0)
                             {
-                                res = (nread == -STATUS_EOF) ? STATUS_OK : -nread;
+                                res = (nread == -STATUS_EOF) ? STATUS_OK : status_t(-nread);
                                 break;
                             }
 
@@ -755,7 +755,7 @@ namespace lsp
                                 ssize_t nwritten = dst.write(&buf[i], nread - i);
                                 if (nwritten < 0)
                                 {
-                                    res     = - nwritten;
+                                    res     = status_t(-nwritten);
                                     break;
                                 }
 

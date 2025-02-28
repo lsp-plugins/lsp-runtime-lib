@@ -73,7 +73,7 @@ namespace lsp
 
                 /**
                  * Write a single byte to underlying storage
-                 * @param b byte to write
+                 * @param v byte to write
                  * @deprecated use write_byte
                  * @return number of bytes actually written or negative error code
                  */
@@ -82,7 +82,7 @@ namespace lsp
 
                 /**
                  * Write a single byte to underlying storage
-                 * @param b byte to write
+                 * @param v byte to write
                  * @return number of bytes actually written or negative error code
                  */
                 virtual status_t    write_byte(int v);

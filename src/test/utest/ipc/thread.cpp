@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 25 февр. 2019 г.
@@ -113,18 +113,18 @@ UTEST_BEGIN("runtime.ipc", thread)
         for (i=0; i<4; ++i)
         {
             pt[i] = &t[i];
-            t[i].bind(&res[i], i+1);
+            t[i].bind(&res[i], int(i+1));
         }
 
         // Create thread as wrapper of runnable
-        TestRunnable r(&res[i], i+1);
+        TestRunnable r(&res[i], int(i+1));
         ipc::Thread rt(&r);
         pt[i++]     = &rt;
 
         // Create thread as a wrapper around thread_proc
         binding_t binding;
         binding.res         = &res[i];
-        binding.exit_code   = i + 1;
+        binding.exit_code   = int(i + 1);
         ipc::Thread bt(thread_proc, &binding);
         pt[i++]     = &bt;
 

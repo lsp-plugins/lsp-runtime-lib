@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 25 апр. 2020 г.
@@ -19,10 +19,13 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/common/types.h>
+
+#ifdef PLATFORM_WINDOWS
+
 #include <lsp-plug.in/common/endian.h>
 #include <private/mm/MMIOWriter.h>
 
-#ifndef USE_LIBSNDFILE
 namespace lsp
 {
     namespace mm
@@ -225,4 +228,4 @@ namespace lsp
     } /* namespace mm */
 } /* namespace lsp */
 
-#endif /* USE_LIBSNDFILE */
+#endif /* PLATFORM_WINDOWS */

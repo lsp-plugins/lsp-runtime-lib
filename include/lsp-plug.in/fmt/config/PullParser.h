@@ -144,11 +144,10 @@ namespace lsp
                  * @param ev pointer to structure to store the event
                  * @return status of operation
                  */
-                virtual status_t            next(param_t *param = NULL);
+                virtual status_t            next(param_t *ev = NULL);
 
                 /**
                  * Get current event
-                 * @param ev pointer to structure to store the event
                  * @return NULL if there is no current event
                  */
                 virtual const param_t      *current() const;

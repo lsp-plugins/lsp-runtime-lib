@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 29 мая 2019 г.
@@ -847,7 +847,7 @@ namespace lsp
                     midi::event_t ev;
                     ssize_t res = midi::decode(&ev, &buf->data[buf->offset]);
                     if (res < 0)
-                        return -res;
+                        return status_t(-res);
                     if (event != NULL)
                         *event  = ev;
 
@@ -885,7 +885,7 @@ namespace lsp
                     midi::event_t ev;
                     ssize_t res = midi::decode(&ev, &buf->data[buf->offset]);
                     if (res < 0)
-                        return -res;
+                        return status_t(-res);
                     if (event != NULL)
                         *event  = &buf->data[buf->offset];
                     if (len != NULL)

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 21 февр. 2023 г.
@@ -99,14 +99,12 @@ namespace lsp
                  * Wrap the memory buffer, drop previous buffer using specified mechanism
                  * @param data associated buffer
                  * @param size size of buffer
-                 * @param drop the method how to drop data on close()
                  */
                 status_t            wrap(const void *data, size_t size);
 
                 /**
                  * Wrap the data contained inside of another shared memory stream
                  * @param src source stream to wrap
-                 * @return status of operation
                  */
                 void                wrap(const InSharedMemoryStream &src);
                 void                wrap(const InSharedMemoryStream *src);
@@ -115,7 +113,6 @@ namespace lsp
                  * Wrap the data contained inside of another shared memory stream
                  * @param src source stream to wrap
                  * @param offset initial read offset
-                 * @return status of operation
                  */
                 void                wrap(const InSharedMemoryStream &src, wsize_t offset);
                 void                wrap(const InSharedMemoryStream *src, wsize_t offset);
@@ -151,20 +148,13 @@ namespace lsp
                 status_t            take(OutMemoryStream &src);
                 status_t            take(OutMemoryStream *src);
 
-            public:
-
+            public: // IInStream
                 virtual wssize_t    avail() override;
-
                 virtual wssize_t    position() override;
-
                 virtual ssize_t     read(void *dst, size_t count) override;
-
                 virtual ssize_t     read_byte() override;
-
                 virtual wssize_t    seek(wsize_t position) override;
-
                 virtual wssize_t    skip(wsize_t amount) override;
-
                 virtual status_t    close() override;
         };
 

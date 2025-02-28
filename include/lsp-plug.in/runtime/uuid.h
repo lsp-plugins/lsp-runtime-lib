@@ -55,12 +55,20 @@ namespace lsp
 
     /**
      * Format UUID (plain hex values with dashes)
-     * @param dst buffer to store UUID (should be at least 33 characters long)
+     * @param dst buffer to store UUID (should be at least 37 characters long)
      * @param upper use upper case for hex digits
      * @param uuid UUID to format
      * @return ponter to the zero-terminating character stored to buffer
      */
     char *format_uuid_dashed(char *dst, const uuid_t *uuid, bool upper = false);
+
+    /**
+     * Format UID (plain text values without dashes), non-standard Base64 table is used because
+     * standard Base64 table allows to use file separator characters
+     * @param dst buffer to store UUID (should be at least 23 characters long)
+     * @return ponter to the zero-terminating character stored to buffer
+     */
+    char *format_uuid_base64(char *dst, const uuid_t *uuid);
 
 } /* namespace lsp */
 

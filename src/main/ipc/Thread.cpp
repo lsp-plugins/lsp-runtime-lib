@@ -349,25 +349,26 @@ namespace lsp
 
         thread_id_t Thread::current_thread_id()
         {
-            thread_id_t result  = INVALID_THREAD_ID;
+            thread_id_t result      = INVALID_THREAD_ID;
 
         #if defined(PLATFORM_WINDOWS)
             return GetCurrentThreadId();
         #elif defined(PLATFORM_LINUX)
-            result              = syscall( __NR_gettid );
+            result                  = syscall( __NR_gettid );
         #elif defined(PLATFORM_SOLARIS)
-            result              = pthread_self();
+            result                  = pthread_self();
         #elif defined(PLATFORM_MACOSX)
-            result              = mach_thread_self();
-            mach_port_deallocate(mach_task_self(), result);
+            const mach_port_t port  = mach_thread_self();
+            mach_port_deallocate(mach_task_self(), port);
+            result                  = port;
         #elif defined(PLATFORM_NETBSD)
-            result              = _lwp_self();
+            result                  = _lwp_self();
         #elif defined(PLATFORM_FREEBSD)
             long lwpid;
             thr_self( &lwpid );
-            result              = lwpid;
+            result                  = lwpid;
         #elif defined(PLATFORM_DRAGONFLYBSD)
-            result              = lwp_gettid();
+            result                  = lwp_gettid();
         #else
             #warning "need to implement Thread::current_thread_id"
         #endif

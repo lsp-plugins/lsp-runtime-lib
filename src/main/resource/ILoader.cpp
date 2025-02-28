@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 23 окт. 2020 г.
@@ -183,10 +183,10 @@ namespace lsp
                 return -res;
 
             // Detach data pointer from the collection and return as result
-            res         = xlist.size();
+            const ssize_t return_size = xlist.size();
             *list       = xlist.release();
 
-            return res;
+            return return_size;
         }
 
     } /* namespace resource */

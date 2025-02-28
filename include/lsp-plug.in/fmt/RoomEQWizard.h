@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 6 сент. 2019 г.
@@ -132,7 +132,7 @@ namespace lsp
 
         /**
          * Load configuration from character input stream
-         * @param input stream pointer
+         * @param is input stream pointer
          * @param dst pointer to store configuration,
          *   configuration should be free()'d after use
          * @return status of operation
@@ -141,7 +141,7 @@ namespace lsp
 
         /**
          * Load configuration from file
-         * @param input stream pointer
+         * @param fd input file pointer
          * @param dst pointer to store configuration,
          *   configuration should be free()'d after use
          * @return status of operation
@@ -157,7 +157,8 @@ namespace lsp
          * @return status of operation
          */
         status_t load(const void *data, size_t size, config_t **dst);
-    }
-}
+
+    } /* namespace room_ew */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_FMT_ROOMEQWIZARD_H_ */

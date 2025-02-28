@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 16 мар. 2021 г.
@@ -111,7 +111,7 @@ namespace lsp
             while (true)
             {
                 if ((res = sIn.readb(&flag)) != 1)
-                    return (res < 0) ? -res : STATUS_IO_ERROR;
+                    return (res < 0) ? status_t(-res) : STATUS_IO_ERROR;
                 if (!flag)
                     break;
 
@@ -119,11 +119,11 @@ namespace lsp
                 bits       += stepping;
             }
 
-            size_t v        = 0;
+            fixed_size_t v  = 0;
             if ((res = sIn.readv(&v, bits)) != bits)
-                return (res < 0) ? -res : STATUS_IO_ERROR;
+                return (res < 0) ? status_t(-res) : STATUS_IO_ERROR;
 
-            *out            = value + v;
+            *out            = value + size_t(v);
             return STATUS_OK;
         }
 
@@ -332,7 +332,7 @@ namespace lsp
                 }
             } while ((res = fill_buf()) == STATUS_OK);
 
-            set_error(res);
+            set_error(status_t(res));
             return res;
         }
     } /* namespace resource */

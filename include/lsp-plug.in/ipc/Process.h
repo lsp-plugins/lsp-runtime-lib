@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 24 июл. 2019 г.
@@ -236,7 +236,7 @@ namespace lsp
                 /**
                  * Remove the specific environment variable
                  * @param key the name of environment variable
-                 * @param pointer to store value of the removed environment variable
+                 * @param value pointer to store value of the removed environment variable
                  * @return status of operation
                  */
                 status_t    remove_env(const LSPString *key, LSPString *value = NULL);
@@ -244,7 +244,7 @@ namespace lsp
                 /**
                  * Remove the specific environment variable
                  * @param key the name of environment variable
-                 * @param pointer to store value of the removed environment variable
+                 * @param value pointer to store value of the removed environment variable
                  * @return status of operation
                  */
                 status_t    remove_env(const char *key, LSPString *value = NULL);
@@ -252,7 +252,7 @@ namespace lsp
                 /**
                  * Remove the specific environment variable
                  * @param key the name of environment variable in UTF-8 encoding
-                 * @param pointer to store value of the removed environment variable in UTF-8 encoding.
+                 * @param value pointer to store value of the removed environment variable in UTF-8 encoding.
                  *        The obtained pointer should be free()'d after use
                  * @return status of operation
                  */
@@ -261,7 +261,7 @@ namespace lsp
                 /**
                  * Obtain the value of the specific environment variable
                  * @param key the name of environment variable
-                 * @param pointer to store value of the environment variable
+                 * @param value pointer to store value of the environment variable
                  * @return status of operation
                  */
                 status_t    get_env(const LSPString *key, LSPString *value = NULL);
@@ -269,7 +269,7 @@ namespace lsp
                 /**
                  * Obtain the value of the specific environment variable
                  * @param key the name of environment variable
-                 * @param pointer to store value of the environment variable
+                 * @param value pointer to store value of the environment variable
                  * @return status of operation
                  */
                 status_t    get_env(const char *key, LSPString *value = NULL);
@@ -277,7 +277,7 @@ namespace lsp
                 /**
                  * Obtain the value of the specific environment variable
                  * @param key the name of environment variable in UTF-8 encoding
-                 * @param pointer to store value of the environment variable in UTF-8 encoding.
+                 * @param value pointer to store value of the environment variable in UTF-8 encoding.
                  *        The obtained pointer should be free()'d after use
                  * @return status of operation
                  */
@@ -297,7 +297,7 @@ namespace lsp
                  * @param idx the environment variable index
                  * @param key the name of environment variable in UTF-8 encoding
                  *        The obtained pointer should be free()'d after use
-                 * @param pointer to store value of the environment variable in UTF-8 encoding.
+                 * @param value pointer to store value of the environment variable in UTF-8 encoding.
                  *        The obtained pointer should be free()'d after use
                  * @return status of operation
                  */

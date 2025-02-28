@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 24 окт. 2022 г.
@@ -78,7 +78,6 @@ namespace lsp
          * @param chunk_id pointer to store allocated chunk identifier, can be NULL
          * @param file the LSPC file to write the chunk
          * @param os pointer to store the created output stream that should be deleted after use
-         * @param buf_size size of buffer for I/O operations
          * @return status of operation
          */
         LSP_RUNTIME_LIB_PUBLIC
@@ -109,7 +108,6 @@ namespace lsp
          */
         LSP_RUNTIME_LIB_PUBLIC
         status_t write_config_data(chunk_id_t *chunk_id, File *file, const void *data, size_t bytes, size_t buf_size = 0x1000);
-
 
         /**
          * Read configuration chunk to the file

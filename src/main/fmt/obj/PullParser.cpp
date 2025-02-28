@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 21 апр. 2017 г.
@@ -345,7 +345,7 @@ namespace lsp
                         if (sLine.length() > 0)
                             return STATUS_OK;
 
-                        return -n;
+                        return status_t(-n);
                     }
                     nBufLen     = n;
                     nBufOff     = 0;
@@ -437,7 +437,8 @@ namespace lsp
 
                 if (r != w)
                     sLine.set_at(w, ch);
-                ++r, ++w;
+                ++r;
+                ++w;
             }
 
             if (slash)

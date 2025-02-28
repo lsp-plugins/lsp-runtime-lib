@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 19 апр. 2020 г.
@@ -37,17 +37,19 @@ namespace lsp
 {
     namespace mm
     {
-    #ifndef USE_LIBSNDFILE
+    #if defined(PLATFORM_WINDOWS)
         struct WAVEFILE;
-    #endif /* USE_LIBSNDFILE */
+    #endif /* PLATFORM_WINDOWS */
 
         class InAudioFileStream: public IInAudioStream
         {
             protected:
-            #ifdef USE_LIBSNDFILE
-                typedef SNDFILE                 handle_t;
-            #else
+            #if defined(PLATFORM_WINDOWS)
                 typedef struct WAVEFILE         handle_t;
+            #elif defined(PLATFORM_MACOSX)
+                typedef void                    handle_t;
+            #else
+                typedef SNDFILE                 handle_t;
             #endif
 
             protected:
@@ -57,10 +59,12 @@ namespace lsp
                 bool                bSeekable;
 
             protected:
-            #ifdef USE_LIBSNDFILE
-                static status_t     decode_sf_error(SNDFILE *fd);
-            #else
+            #if defined(PLATFORM_WINDOWS)
                 ssize_t             read_acm_convert(void *dst, size_t nframes, size_t fmt);
+            #elif defined(PLATFORM_MACOSX)
+                static status_t     decode_os_status(uint32_t code);
+            #else
+                static status_t     decode_sf_error(SNDFILE *fd);
             #endif
 
                 virtual ssize_t     direct_read(void *dst, size_t nframes, size_t fmt) override;

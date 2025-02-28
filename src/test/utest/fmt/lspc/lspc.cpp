@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 28 авг. 2018 г.
@@ -136,7 +136,7 @@ UTEST_BEGIN("runtime.fmt.lspc", lspc)
 
             prof2.common.version    = 2;
             prof2.common.size       = sizeof(lspc_chunk_audio_profile_v2_t);
-            prof2.chunk_id          = chunk_id;
+            prof2.chunk_id          = lspc::chunk_id_t(chunk_id);
             prof2.chirp_order       = 1;
             prof2.alpha             = 1.0;
             prof2.beta              = 2.0;
@@ -167,7 +167,7 @@ UTEST_BEGIN("runtime.fmt.lspc", lspc)
 
             prof1.common.version    = 1;
             prof1.common.size       = sizeof(lspc::chunk_audio_profile_t);
-            prof1.chunk_id          = chunk_id;
+            prof1.chunk_id          = lspc::chunk_id_t(chunk_id);
             prof1.chirp_order       = 1;
             prof1.alpha             = 1.0;
             prof1.beta              = 2.0;

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 6 мар. 2019 г.
@@ -55,7 +55,7 @@ namespace lsp
                 explicit StdioFile();
                 StdioFile(const StdioFile &) = delete;
                 StdioFile(StdioFile &&) = delete;
-                virtual ~StdioFile();
+                virtual ~StdioFile() override;
 
                 StdioFile &operator = (const StdioFile &) = delete;
                 StdioFile &operator = (StdioFile &&) = delete;
@@ -110,7 +110,7 @@ namespace lsp
                  * @return number of bytes read or negative status of operation,
                  *   on end of file -STATUS_EOF is returned
                  */
-                virtual ssize_t read(void *dst, size_t count);
+                virtual ssize_t read(void *dst, size_t count) override;
 
                 /**
                  * Perform positioned read of binary file
@@ -119,24 +119,24 @@ namespace lsp
                  * @param count amount of bytes to read
                  * @return number of bytes read or status of operation
                  */
-                virtual ssize_t pread(wsize_t pos, void *dst, size_t count);
+                virtual ssize_t pread(wsize_t pos, void *dst, size_t count) override;
 
                 /**
                  * Write binary file
-                 * @param dst source buffer to perform write
+                 * @param src source buffer to perform write
                  * @param count number of bytes to write
                  * @return number of bytes written or negative status of operation
                  */
-                virtual ssize_t write(const void *src, size_t count);
+                virtual ssize_t write(const void *src, size_t count) override;
 
                 /**
                  * Perform positioned write of binary file
                  * @param pos offset in bytes relative to the beginning of the file
-                 * @param dst source buffer to perform write
+                 * @param src source buffer to perform write
                  * @param count number of bytes to write
                  * @return status of operation
                  */
-                virtual ssize_t pwrite(wsize_t pos, const void *src, size_t count);
+                virtual ssize_t pwrite(wsize_t pos, const void *src, size_t count) override;
 
                 /**
                  * Perform seek to the specified position
@@ -144,51 +144,51 @@ namespace lsp
                  * @param type seek type
                  * @return status of operation
                  */
-                virtual status_t seek(wssize_t pos, size_t type);
+                virtual status_t seek(wssize_t pos, size_t type) override;
 
                 /**
                  * Obtain current file's position
                  * @return current file's position or negative error code
                  */
-                virtual wssize_t position();
+                virtual wssize_t position() override;
 
                 /**
                  * Obtain current file's size
                  * @return current file's size or negative error code
                  */
-                virtual wssize_t size();
+                virtual wssize_t size() override;
 
                 /**
                  * Get file attributes
                  * @param attr file attributes
-                 * @return
+                 * @return status of operation
                  */
-                virtual status_t stat(fattr_t *attr);
+                virtual status_t stat(fattr_t *attr) override;
 
                 /**
                  * Truncate the file
                  * @param length the final file length
                  * @return status of operation
                  */
-                virtual status_t truncate(wsize_t length);
+                virtual status_t truncate(wsize_t length) override;
 
                 /**
                  * Flush file buffer to underlying storage
                  * @return status of operation
                  */
-                virtual status_t flush();
+                virtual status_t flush() override;
 
                 /**
                  * Sync file with the underlying storage
                  * @return status of operation
                  */
-                virtual status_t sync();
+                virtual status_t sync() override;
 
                 /**
                  * Close file
                  * @return status of operation
                  */
-                virtual status_t close();
+                virtual status_t close() override;
         };
     
     } /* namespace io */

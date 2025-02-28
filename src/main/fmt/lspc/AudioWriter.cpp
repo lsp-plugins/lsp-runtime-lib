@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 6 нояб. 2018 г.
@@ -348,8 +348,8 @@ namespace lsp
             hdr.common.version  = 1;
             hdr.channels        = sParams.channels;
             hdr.sample_format   = sParams.sample_format;
-            hdr.sample_rate     = sParams.sample_rate;
-            hdr.codec           = sParams.codec;
+            hdr.sample_rate     = uint32_t(sParams.sample_rate);
+            hdr.codec           = uint32_t(sParams.codec);
             hdr.frames          = sParams.frames;
             hdr.offset          = 0;
 
@@ -632,6 +632,6 @@ namespace lsp
 
             return pWD->magic();
         }
-    }
-
+    
+    } /* namespace lspc */
 } /* namespace lsp */

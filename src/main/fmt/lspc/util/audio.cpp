@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2022 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 24 окт. 2022 г.
@@ -116,7 +116,7 @@ namespace lsp
                 size_t to_do        = lsp_min(max_frames, ifmt.frames - frame);
                 ssize_t nread       = is->read(data, to_do);
                 if (nread < 0)
-                    return -nread;
+                    return status_t(-nread);
                 if ((res = wr.write_frames(data, nread)) != STATUS_OK)
                     return res;
                 frame              += nread;
@@ -179,10 +179,10 @@ namespace lsp
                 size_t to_do        = lsp_min(max_frames, params->frames - frame);
                 ssize_t nread       = is->read_frames(data, to_do);
                 if (nread < 0)
-                    return -nread;
+                    return status_t(-nread);
                 ssize_t nwritten    = os->write(data, nread);
                 if (nwritten < 0)
-                    return -nwritten;
+                    return status_t(-nwritten);
                 else if (nwritten < nread)
                     return STATUS_IO_ERROR;
                 frame              += nread;
@@ -292,7 +292,7 @@ namespace lsp
             // Read the contents and close stream
             wssize_t read       = rd.read_frames(data, aparams.frames);
             if (read < 0)
-                return -read;
+                return status_t(-read);
             else if (read < wssize_t(aparams.frames))
                 return STATUS_CORRUPTED;
             if ((res = rd.close()) != STATUS_OK)

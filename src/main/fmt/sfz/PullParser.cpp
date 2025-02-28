@@ -260,7 +260,7 @@ namespace lsp
                 }
                 return ch;
             }
-            return pIn->read_byte();
+            return lsp_swchar_t(pIn->read_byte());
         }
 
         status_t PullParser::peek_pending_event(event_t *ev)

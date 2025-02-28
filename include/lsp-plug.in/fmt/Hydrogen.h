@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 11 июл. 2020 г.
@@ -138,7 +138,7 @@ namespace lsp
 
         /**
          * Load drumkit from character input stream
-         * @param input stream pointer
+         * @param is input stream pointer
          * @param dst pointer to store drumkit data
          * @return status of operation
          */
@@ -146,12 +146,13 @@ namespace lsp
 
         /**
          * Load drumkit from character input stream
-         * @param input sequence pointer
+         * @param is input sequence pointer
          * @param dst pointer to store drumkit data
          * @return status of operation
          */
         status_t load(io::IInSequence *is, drumkit_t *dst);
-    }
-}
+
+    } /* namespace hydrogen */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_FMT_HYDROGEN_H_ */

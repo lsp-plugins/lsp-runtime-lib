@@ -2704,7 +2704,7 @@ namespace lsp
     ssize_t LSPString::vfmt_prepend_utf8(const char *fmt, va_list args)
     {
         LSPString tmp;
-        status_t res = tmp.vfmt_utf8(fmt, args);
+        ssize_t res = tmp.vfmt_utf8(fmt, args);
         if (res < 0)
             return res;
         return (prepend(&tmp)) ? res : -STATUS_NO_MEM;

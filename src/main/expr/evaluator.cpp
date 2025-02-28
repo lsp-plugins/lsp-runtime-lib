@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 18 сент. 2019 г.
@@ -1383,19 +1383,19 @@ namespace lsp
             {
                 case VT_STRING:
                 {
-                    int len         = value->v_str->length();
+                    const size_t len    = value->v_str->length();
                     destroy_value(value);
-                    value->type     = VT_INT;
-                    value->v_int    = len;
+                    value->type         = VT_INT;
+                    value->v_int        = len;
                     break;
                 }
                 case VT_NULL:
-                    value->type     = VT_UNDEF;
+                    value->type         = VT_UNDEF;
                     break;
                 case VT_UNDEF:
                     break;
                 default:
-                    res             = STATUS_BAD_TYPE;
+                    res                 = STATUS_BAD_TYPE;
                     break;
             }
 

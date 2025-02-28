@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 20 мар. 2021 г.
@@ -104,10 +104,11 @@ namespace lsp
             if (res >= 0)
             {
                 nPosition      += res;
+                set_error(STATUS_OK);
                 return res;
             }
 
-            set_error(-res);
+            set_error(status_t(-res));
             return res;
         }
 
@@ -118,9 +119,12 @@ namespace lsp
 
             wssize_t pos = pOS->seek(position);
             if (pos >= 0)
+            {
                 nPosition = pos;
+                set_error(STATUS_OK);
+            }
             else
-                set_error(-pos);
+                set_error(status_t(-pos));
 
             return pos;
         }
@@ -130,7 +134,7 @@ namespace lsp
             return (pOS != NULL) ? pOS->flush() : set_error(STATUS_CLOSED);
         }
 
-    }
-}
+    } /* namespace resource */
+} /* namespace lsp */
 
 

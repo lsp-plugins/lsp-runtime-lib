@@ -197,14 +197,12 @@ namespace lsp
                 /**
                  * Remove last element from the path object and return the removed element
                  * @param path string to store the value
-                 * @param maxlen maximum length of the buffer
                  * @return status of operation
                  */
                 status_t        remove_last(LSPString *path);
                 /**
                  * Remove last element from the path object and return the removed element
                  * @param path string to store the value
-                 * @param maxlen maximum length of the buffer
                  * @return status of operation
                  */
                 status_t        remove_last(Path *path);
@@ -266,14 +264,12 @@ namespace lsp
                 /**
                  * Remove first element from the path object and return the removed element
                  * @param path string to store the value
-                 * @param maxlen maximum length of the buffer
                  * @return status of operation
                  */
                 status_t        remove_first(LSPString *path);
                 /**
                  * Remove first element from the path object and return the removed element
                  * @param path string to store the value
-                 * @param maxlen maximum length of the buffer
                  * @return status of operation
                  */
                 status_t        remove_first(Path *path);
@@ -422,7 +418,7 @@ namespace lsp
                  * Convert current path to the final path of the physical file/device. That means, if the path name
                  * is a symbolic link or a chain of symbolic links, the function reads them until the object associated
                  * with the path name becomes the non-symbolic link.
-                 * @return
+                 * @return status of operation
                  */
                 status_t        to_final_path();
 

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 25 февр. 2019 г.
@@ -50,8 +50,8 @@ namespace lsp
 
         /**
          * Thread procedure that can be launched
-         * @param arg
-         * @return
+         * @param arg additional argument passed to a thread procedure
+         * @return status of thread execution
          */
         typedef status_t (* thread_proc_t)(void *arg);
 
@@ -134,7 +134,7 @@ namespace lsp
 
                 /**
                  * Force current thread to leep for amount of milliseconds
-                 * @param millis
+                 * @param millis interval in milliseconds to perform a sleep
                  */
                 static status_t sleep(wsize_t millis);
 

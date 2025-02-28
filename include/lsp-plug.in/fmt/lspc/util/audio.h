@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2022 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 24 окт. 2022 г.
@@ -40,7 +40,8 @@ namespace lsp
          * Write audio file as a dedicated chunk to the LSPC file
          * @param chunk_id pointer to store allocated chunk identifier, can be NULL
          * @param file the LSPC file to write the chunk
-         * @param is audio input stream to read data
+         * @param path path to file to write
+         * @param selector audio format selector, default one will be used if none provided
          * @param buf_size size of buffer for I/O operations
          * @return status of operation
          */
@@ -144,7 +145,6 @@ namespace lsp
          * @param chunk_id chunk identifier
          * @param file the LSPC file to read the chunk
          * @param is pointer to store the multimedia audio stream
-         * @param buf_size size of buffer of I/O operations
          * @return status of operation
          */
         LSP_RUNTIME_LIB_PUBLIC

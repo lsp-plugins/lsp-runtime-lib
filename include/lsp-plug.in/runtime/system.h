@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 17 мар. 2019 г.
@@ -174,7 +174,7 @@ namespace lsp
 
         /**
          * Convert time structure to the local time
-         * @param ltime pointer to store the result
+         * @param local pointer to store the result
          * @param time time structure to convert, use current time if NULL
          */
         void get_localtime(localtime_t *local, const time_t *time = NULL);

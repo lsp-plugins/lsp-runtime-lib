@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 29 янв. 2023 г.
@@ -77,13 +77,17 @@ namespace lsp
 
             public:
                 explicit PullParser();
+                PullParser(const PullParser &) = delete;
+                PullParser(PullParser &&) = delete;
                 ~PullParser();
+            
+                PullParser & operator = (const PullParser &) = delete;
+                PullParser & operator = (PullParser &&) = delete;
 
             public:
                 /**
                  * Open parser
                  * @param path UTF-8 path to the file
-                 * @param version JSON version
                  * @return status of operation
                  */
                 status_t    open(const char *path);
@@ -91,8 +95,6 @@ namespace lsp
                 /**
                  * Open parser
                  * @param path string representation of path to the file
-                 * @param version JSON version
-                 * @param charset character set, ASCII if not specified
                  * @return status of operation
                  */
                 status_t    open(const LSPString *path);
@@ -100,7 +102,6 @@ namespace lsp
                 /**
                  * Open parser
                  * @param path path to the file
-                 * @param version JSON version
                  * @return status of operation
                  */
                 status_t    open(const io::Path *path);
@@ -108,7 +109,6 @@ namespace lsp
                 /**
                  * Wrap string with parser
                  * @param str string to wrap
-                 * @param version JSON version
                  * @return status of operation
                  */
                 status_t    wrap(const char *str);
@@ -117,7 +117,6 @@ namespace lsp
                  * Wrap string with parser
                  * @param buf buffer to wrap
                  * @param len length of buffer to wrap
-                 * @param version JSON version
                  * @return status of operation
                  */
                 status_t    wrap(const void *buf, size_t len);
@@ -125,7 +124,6 @@ namespace lsp
                 /**
                  * Wrap string with parser
                  * @param str string to wrap
-                 * @param version JSON version, ASCII if not specified
                  * @return status of operation
                  */
                 status_t    wrap(const LSPString *str);
@@ -133,7 +131,6 @@ namespace lsp
                 /**
                  * Wrap input stream with parser
                  * @param is input stream
-                 * @param version JSON version
                  * @param flags wrap flags
                  * @return status of operation
                  */

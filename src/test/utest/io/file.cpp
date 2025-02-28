@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 6 мар. 2019 г.
@@ -71,7 +71,7 @@ UTEST_BEGIN("runtime.io", file)
         for (size_t i=0; i<0x100; ++i)
         {
             for (size_t j=0; j<0x100; ++j)
-                tmpbuf[j] = (i << 8) | j;
+                tmpbuf[j] = uint32_t((i << 8) | j);
 
             UTEST_ASSERT(fd.write(tmpbuf, sizeof(tmpbuf)) == sizeof(tmpbuf));
             written += sizeof(tmpbuf);
@@ -134,7 +134,7 @@ UTEST_BEGIN("runtime.io", file)
             if (read != 0x1000)
             {
                 for (size_t j=0; j<0x100; ++j)
-                    ckbuf[j] = (i << 8) | j;
+                    ckbuf[j] = uint32_t((i << 8) | j);
             }
             else
                 ::memset(ckbuf, 0x55, sizeof(ckbuf));

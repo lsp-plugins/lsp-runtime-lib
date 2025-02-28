@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 июн. 2018 г.
@@ -88,7 +88,6 @@ namespace lsp
                 /**
                  * Write null-terminated ASCII string to output
                  * @param s ASCII string to write
-                 * @param count number of characters to write
                  * @return status of operation
                  */
                 virtual status_t    write_ascii(const char *s);
@@ -104,7 +103,6 @@ namespace lsp
                 /**
                  * Write zero-terminated ASCII string to output and end-of-line
                  * @param s ASCII string to write
-                 * @param count number of characters to write
                  * @return status of operation
                  */
                 virtual status_t    writeln_ascii(const char *s);
