@@ -3,6 +3,8 @@
 *******************************************************************************
 
 === 1.0.28 ===
+* Fixed invalid access to missing built-in resources.
+* Fixed some command line options that caused JACK version to crash.
 * Updated build scripts.
 
 === 1.0.27 ===

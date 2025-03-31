@@ -139,6 +139,8 @@ namespace lsp
 
         ssize_t ILoader::enumerate(const io::Path *path, resource_t **list)
         {
+            lsp_trace("path = %s", path->as_utf8());
+
             lltl::darray<resource_t> xlist;
             io::Dir dir;
             LSPString item;
@@ -146,7 +148,7 @@ namespace lsp
 
             status_t res = dir.open(path);
             if (res != STATUS_OK)
-                return -res;
+                return -set_error(res);
 
             while ((res = dir.reads(&item, &attr)) == STATUS_OK)
             {
@@ -160,13 +162,13 @@ namespace lsp
                 if (r == NULL)
                 {
                     dir.close();
-                    return -STATUS_NO_MEM;
+                    return -set_error(STATUS_NO_MEM);
                 }
                 const char *name = item.get_utf8();
                 if (name == NULL)
                 {
                     dir.close();
-                    return -STATUS_NO_MEM;
+                    return -set_error(STATUS_NO_MEM);
                 }
 
                 r->type = (attr.type == io::fattr_t::FT_DIRECTORY) ? RES_DIR : RES_FILE;
@@ -177,15 +179,18 @@ namespace lsp
             if (res != STATUS_EOF)
             {
                 dir.close();
-                return -res;
+                return -set_error(res);
             }
             else if ((res = dir.close()) != STATUS_OK)
-                return -res;
+                return -set_error(res);
 
             // Detach data pointer from the collection and return as result
             const ssize_t return_size = xlist.size();
             *list       = xlist.release();
 
+            lsp_trace("return %d resources %p", int(return_size), *list);
+
+            set_error(STATUS_OK);
             return return_size;
         }
 

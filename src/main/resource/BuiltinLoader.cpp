@@ -168,11 +168,11 @@ namespace lsp
                 // Find entry and check that it is of directory type
                 status_t res = find_entry(&index, path);
                 if (res != STATUS_OK)
-                    return res;
+                    return -set_error(res);
 
                 ent = &pCatalog[index];
                 if (ent->type != RES_DIR)
-                    return STATUS_NOT_DIRECTORY;
+                    return -set_error(STATUS_NOT_DIRECTORY);
             }
 
             // Now create list of nested items
@@ -184,7 +184,7 @@ namespace lsp
 
                 resource_t *item = xlist.add();
                 if (item == NULL)
-                    return STATUS_NO_MEM;
+                    return -set_error(STATUS_NO_MEM);
 
                 strncpy(item->name, ent->name, RESOURCE_NAME_MAX);
                 item->name[RESOURCE_NAME_MAX - 1] = '\0';
@@ -194,6 +194,8 @@ namespace lsp
             // Return result
             index = xlist.size();
             *list = xlist.release();
+
+            set_error(STATUS_OK);
             return index;
         }
     } /* namespace resource */

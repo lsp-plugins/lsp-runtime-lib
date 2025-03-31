@@ -303,6 +303,7 @@ namespace lsp
 
         ssize_t PrefixLoader::enumerate(const char *path, resource::resource_t **list)
         {
+            lsp_trace("path = %s", path);
             LSPString tmp;
             ILoader *ldr = lookup_prefix(&tmp, path);
             if (ldr != NULL)
@@ -317,6 +318,7 @@ namespace lsp
 
         ssize_t PrefixLoader::enumerate(const LSPString *path, resource::resource_t **list)
         {
+            lsp_trace("path = %s", path->get_utf8());
             LSPString tmp;
             ILoader *ldr = lookup_prefix(&tmp, path);
             if (ldr != NULL)
