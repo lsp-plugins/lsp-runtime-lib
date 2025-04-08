@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.28 ===
+* Reduced poll interval for ipc::NativeExecutor to 20 milliseconds.
 * Fixed invalid access to missing built-in resources.
 * Fixed some command line options that caused JACK version to crash.
 * Updated build scripts.

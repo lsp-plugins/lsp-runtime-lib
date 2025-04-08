@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 27 янв. 2016 г.
@@ -26,6 +26,8 @@ namespace lsp
 {
     namespace ipc
     {
+        static constexpr size_t POLL_INTERVAL = 20;
+
         NativeExecutor::NativeExecutor():
             hThread(execute, this)
         {
@@ -88,7 +90,7 @@ namespace lsp
                     atomic_unlock(nLock);
                 }
 
-                ipc::Thread::sleep(100);
+                ipc::Thread::sleep(POLL_INTERVAL);
             }
 
             // Now there are no pending tasks, terminate thread
@@ -105,7 +107,7 @@ namespace lsp
                 // Sleep until critical section is acquired
                 while (!atomic_trylock(nLock))
                 {
-                    if (ipc::Thread::sleep(100) == STATUS_CANCELLED)
+                    if (ipc::Thread::sleep(POLL_INTERVAL) == STATUS_CANCELLED)
                         return;
                 }
 
@@ -117,7 +119,7 @@ namespace lsp
                     atomic_unlock(nLock);
 
                     // Wait for a while
-                    if (ipc::Thread::sleep(100) == STATUS_CANCELLED)
+                    if (ipc::Thread::sleep(POLL_INTERVAL) == STATUS_CANCELLED)
                         return;
                 }
                 else
@@ -132,8 +134,13 @@ namespace lsp
 
                     // Execute task
                     lsp_trace("executing task %p", task);
+                    const system::time_millis_t start = system::get_time_millis();
+
                     run_task(task);
-                    lsp_trace("executed task %p with code %d", task, int(task->code()));
+
+                    const system::time_millis_t end = system::get_time_millis();
+                    lsp_trace("executed task %p with code %d, time=%d ms",
+                        task, int(task->code()), int(end - start));
                 }
             }
         }
