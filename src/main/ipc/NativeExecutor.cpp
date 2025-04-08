@@ -133,14 +133,18 @@ namespace lsp
                     atomic_unlock(nLock);
 
                     // Execute task
+                #ifdef LSP_TRACE
                     lsp_trace("executing task %p", task);
                     const system::time_millis_t start = system::get_time_millis();
+                #endif /* LSP_TRACE */
 
                     run_task(task);
 
+                #ifdef LSP_TRACE
                     const system::time_millis_t end = system::get_time_millis();
                     lsp_trace("executed task %p with code %d, time=%d ms",
                         task, int(task->code()), int(end - start));
+                #endif /* LSP_TRACE */
                 }
             }
         }
