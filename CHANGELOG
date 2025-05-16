@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.29 ===
+
+
 === 1.0.28 ===
 * Reduced poll interval for ipc::NativeExecutor to 20 milliseconds.
 * Fixed invalid access to missing built-in resources.
