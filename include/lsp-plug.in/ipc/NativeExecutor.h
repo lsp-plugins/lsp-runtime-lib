@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 27 янв. 2016 г.
@@ -19,8 +19,8 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef IPC_NATIVEEXECUTOR_H_
-#define IPC_NATIVEEXECUTOR_H_
+#ifndef LSP_PLUG_IN_IPC_NATIVEEXECUTOR_H_
+#define LSP_PLUG_IN_IPC_NATIVEEXECUTOR_H_
 
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/common/atomic.h>
@@ -81,4 +81,4 @@ namespace lsp
     } /* namespace ipc */
 } /* namespace lsp */
 
-#endif /* IPC_NATIVEEXECUTOR_H_ */
+#endif /* LSP_PLUG_IN_IPC_NATIVEEXECUTOR_H_ */

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 24 апр. 2024 г.
@@ -189,8 +189,8 @@ namespace lsp
             return (hLock != NULL) ? STATUS_OK : STATUS_IO_ERROR;
         #elif defined(LSP_ROBUST_MUTEX_SUPPORTED)
             int error;
-            const char *path = name->get_native();
-            if (name == NULL)
+            const char *path = (name != NULL) ? name->get_native() : NULL;
+            if (path == NULL)
                 return STATUS_NO_MEM;
 
             static constexpr int open_mode =
@@ -286,7 +286,7 @@ namespace lsp
                     if ((error = pthread_mutexattr_init(&attr)) != 0)
                         return STATUS_UNKNOWN_ERR;
 
-                    if ((error = pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED) != 0))
+                    if ((error = pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED)) != 0)
                     {
                         switch (error)
                         {
