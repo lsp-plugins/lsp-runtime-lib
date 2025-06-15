@@ -357,6 +357,7 @@ UTEST_BEGIN("runtime.expr", expression)
         test_float("arcsin 0.5", &v, M_PI / 6);
         test_float("arccos 0.5", &v, M_PI / 3);
         test_float("abs -10.1 - abs 4", &v, 6.1);
+        test_float("2.0 ** 2.0 ** 4.0", &v, 256.0);
 
         test_int("0b1011_0010", &v, 0xb2);
         test_int("0o1_1", &v, 9);
@@ -376,6 +377,9 @@ UTEST_BEGIN("runtime.expr", expression)
         test_int("undef <=> :za", &v, -1);
         test_int("int :ba + int :fg", &v, 15);
         test_int("abs -10 - abs 4", &v, 6);
+        test_int("10 - 3 - 2", &v, 5);
+        test_int("40/10/2", &v, 2);
+        test_int("0x3f band 0xdf band 0xfe", &v, 0x1e);
 
         test_bool(":zoom1 le -9 db", &v, true);
         test_bool(":zoom2 le -9 db", &v, false);

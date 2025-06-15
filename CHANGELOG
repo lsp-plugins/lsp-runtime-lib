@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.29 ===
-
+* Fixed bug in associativity of add, sub, mul, div and bit-and expressions.
 
 === 1.0.28 ===
 * Reduced poll interval for ipc::NativeExecutor to 20 milliseconds.
