@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 24 апр. 2024 г.
@@ -20,6 +20,7 @@
  */
 
 #include <lsp-plug.in/test-fw/utest.h>
+#include <lsp-plug.in/common/atomic.h>
 #include <lsp-plug.in/ipc/Thread.h>
 #include <lsp-plug.in/ipc/Mutex.h>
 #include <lsp-plug.in/ipc/SharedMutex.h>
@@ -34,6 +35,8 @@ UTEST_BEGIN("runtime.ipc", shmutex)
     {
         ipc::Mutex lock;
         LSPString data;
+        uatomic_t sequence_latch;
+        size_t errors;
 
         void log(status_t code, const char *event, status_t expected)
         {
@@ -42,22 +45,42 @@ UTEST_BEGIN("runtime.ipc", shmutex)
 
             data.append_ascii(event);
             data.append('=');
-            data.append_ascii((code == expected) ? "true" : "false");
+            if (code == expected)
+                data.append_ascii("true");
+            else
+            {
+                data.fmt_append_ascii("false(code=%d)", int(code));
+                ++errors;
+            }
             data.append(';');
         }
     } context_t;
-
 
     static status_t thread_func1(void *arg)
     {
         ipc::SharedMutex mutex;
         context_t *ctx = static_cast<context_t *>(arg);
 
-        ipc::Thread::sleep(500);
+        wait_latch(ctx->sequence_latch, 0);
         ctx->log(mutex.open("test-lsp.lock"), "open1", STATUS_OK);
-        ctx->log(mutex.lock(), "SYNC1", STATUS_OK);
-        ipc::Thread::sleep(800);
-        ctx->log(mutex.unlock(), "SYNC2", STATUS_OK);
+        atomic_add(&ctx->sequence_latch, 1); // 0 -> 1
+
+        // Sleep 500 ms and lock the mutex
+        wait_latch(ctx->sequence_latch, 3);
+        ipc::Thread::sleep(500);
+        ctx->log(mutex.lock(), "SYNC1.lock", STATUS_OK);
+        atomic_add(&ctx->sequence_latch, 1); // 3 -> 6
+
+        // Sleep 200 ms and unlock the mutex
+        wait_latch(ctx->sequence_latch, 7);
+        ipc::Thread::sleep(200);
+        ctx->log(mutex.unlock(), "SYNC2.unlock", STATUS_OK);
+        atomic_add(&ctx->sequence_latch, 1); // 7 -> 9
+
+        // Close the mutex
+        wait_latch(ctx->sequence_latch, 10);
+        ctx->log(mutex.close(), "close1", STATUS_OK);
+        atomic_add(&ctx->sequence_latch, 1); // 10 -> 11
 
         return STATUS_OK;
     }
@@ -67,22 +90,45 @@ UTEST_BEGIN("runtime.ipc", shmutex)
         ipc::SharedMutex mutex;
         context_t *ctx = static_cast<context_t *>(arg);
 
+        wait_latch(ctx->sequence_latch, 1);
         ctx->log(mutex.open("test-lsp.lock"), "open2", STATUS_OK);
+        atomic_add(&ctx->sequence_latch, 1); // 1 -> 2
+
+        // Lock mutex immediately, sleep 500 ms and unlock it
+        wait_latch(ctx->sequence_latch, 3);
         ctx->log(mutex.lock(), "lock2", STATUS_OK);
-
         ipc::Thread::sleep(500);
+        ctx->log(mutex.unlock(), "SYNC1.unlock", STATUS_OK);
+        atomic_add(&ctx->sequence_latch, 1); // 3 -> 6
 
-        ctx->log(mutex.unlock(), "SYNC1", STATUS_OK);
-
-        ipc::Thread::sleep(100);
-
+        // Call mutltiple times lock, succeed on last call
+        wait_latch(ctx->sequence_latch, 6);
         ctx->log(mutex.try_lock(), "trylock2", STATUS_RETRY);
         ctx->log(mutex.lock(500), "timedlock2", STATUS_TIMED_OUT);
-        ctx->log(mutex.lock(500), "SYNC2", STATUS_OK);
+        atomic_add(&ctx->sequence_latch, 1); // 6 -> 7
+
+        // Succeed on timed mutex lock
+        wait_latch(ctx->sequence_latch, 7);
+        ctx->log(mutex.lock(800), "SYNC2.lock", STATUS_OK);
+        atomic_add(&ctx->sequence_latch, 1); // 7 -> 9
+
+        // Sleep 200 milliseconds and unlock the mutex
+        wait_latch(ctx->sequence_latch, 9);
         ipc::Thread::sleep(200);
-        ctx->log(mutex.unlock(), "SYNC3", STATUS_OK);
+        ctx->log(mutex.unlock(), "SYNC3.unlock", STATUS_OK);
+
+        // Close the mutex
+        wait_latch(ctx->sequence_latch, 11);
+        ctx->log(mutex.close(), "close2", STATUS_OK);
+        atomic_add(&ctx->sequence_latch, 1); // 11 -> 12
 
         return STATUS_OK;
+    }
+
+    static void wait_latch(uatomic_t & latch, uatomic_t value)
+    {
+        while (atomic_load(&latch) != value)
+            ipc::Thread::yield();
     }
 
     void test_simple()
@@ -122,6 +168,8 @@ UTEST_BEGIN("runtime.ipc", shmutex)
     {
         ipc::SharedMutex mutex;
         context_t ctx;
+        atomic_store(&ctx.sequence_latch, uatomic_t(0));
+        ctx.errors = 0;
 
         printf("Testing simple multi-threaded mutex locks\n");
 
@@ -134,29 +182,29 @@ UTEST_BEGIN("runtime.ipc", shmutex)
         ctx.log(STATUS_OK, "start", STATUS_OK);
         t1.start();
         t2.start();
+        wait_latch(ctx.sequence_latch, 2);
+        atomic_add(&ctx.sequence_latch, 1); // 2 -> 3
 
+        // Sleep 200 ms and unlock the mutex
         ctx.log(STATUS_OK, "sleep", STATUS_OK);
         ipc::Thread::sleep(200);
-
         ctx.log(STATUS_OK, "unlock", STATUS_OK);
         UTEST_ASSERT(mutex.unlock() == STATUS_OK);
+        atomic_add(&ctx.sequence_latch, 1); // 3 -> 6
 
-        ipc::Thread::sleep(2000);
-        ctx.log(mutex.lock(), "SYNC3", STATUS_OK);
+        // Lock the mutex, unlock it and return result
+        wait_latch(ctx.sequence_latch, 9);
+        ctx.log(mutex.lock(), "SYNC3.lock", STATUS_OK);
         ctx.log(mutex.unlock(), "unlock", STATUS_OK);
 
         ctx.log(mutex.close(), "close", STATUS_OK);
+        atomic_add(&ctx.sequence_latch, 1); // 9 -> 10
 
-        static const char *expected =
-            "open=true;lock=true;start=true;sleep=true;open2=true;unlock=true;lock2=true;open1=true;"
-            "SYNC1=true;SYNC1=true;trylock2=true;timedlock2=true;"
-            "SYNC2=true;SYNC2=true;"
-            "SYNC3=true;SYNC3=true;unlock=true;close=true;";
+        // Do final comparison
+        wait_latch(ctx.sequence_latch, 12);
 
-        printf("Result content:   %s\n", ctx.data.get_ascii());
-        printf("Expected content: %s\n", expected);
-
-        UTEST_ASSERT(ctx.data.equals_ascii(expected));
+        printf("Result sequence:    %s\n", ctx.data.get_ascii());
+        UTEST_ASSERT(ctx.errors == 0);
     }
 
     UTEST_MAIN

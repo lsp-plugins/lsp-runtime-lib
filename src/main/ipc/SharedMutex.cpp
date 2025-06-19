@@ -536,7 +536,8 @@ namespace lsp
             {
                 case 0: break;
                 case EDEADLK: return STATUS_BAD_STATE;
-                case EBUSY: return STATUS_LOCKED;
+                case EBUSY:
+                    return STATUS_LOCKED;
                 case ETIMEDOUT: return STATUS_TIMED_OUT;
                 case EOWNERDEAD:
                 {
