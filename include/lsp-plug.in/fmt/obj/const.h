@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 21 апр. 2020 г.
@@ -23,6 +23,7 @@
 #define LSP_PLUG_IN_FMT_OBJ_CONST_H_
 
 #include <lsp-plug.in/runtime/version.h>
+#include <lsp-plug.in/common/endian.h>
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
 
@@ -45,6 +46,32 @@ namespace lsp
             EV_POINT,       ///< Point event
         };
 
+        enum compressed_event_type_t
+        {
+            CEV_OBJECT,
+            CEV_VERTEX2,
+            CEV_VERTEX3,
+            CEV_VERTEX4,
+            CEV_PVERTEX2,
+            CEV_PVERTEX3,
+            CEV_PVERTEX4,
+            CEV_NORMAL2,
+            CEV_NORMAL3,
+            CEV_NORMAL4,
+            CEV_TEXCOORD1,
+            CEV_TEXCOORD2,
+            CEV_TEXCOORD3,
+            CEV_FACE,
+            CEV_FACE_T,
+            CEV_FACE_N,
+            CEV_FACE_TN,
+            CEV_LINE,
+            CEV_LINE_T,
+            CEV_POINT,
+
+            CEV_BITS = 5,
+        };
+
         typedef ssize_t     index_t;
 
         typedef struct event_t
@@ -63,8 +90,25 @@ namespace lsp
             lltl::darray<index_t>   inormal;        // Indexes of normals
             lltl::darray<index_t>   itexcoord;      // Indexes of texture coordinates
         } event_t;
-    }
-}
+
+    #pragma pack(push, 1)
+        typedef struct compressed_header_t
+        {
+            uint32_t    signature;
+            uint8_t     version;
+            uint8_t     float_bits;
+            uint8_t     index_bits;
+            uint8_t     pad;
+        } compressed_header_t;
+    #pragma pack(pop)
+
+        constexpr uint32_t COMPRESSED_SIGNATURE     = __IF_LEBE(0x4a424f43, 0x434f424a); /* COBJ */
+        constexpr size_t MIN_FLOAT_BUF_BITS         = 4;
+        constexpr size_t MAX_FLOAT_BUF_BITS         = 16;
+        constexpr size_t MIN_INDEX_BUF_BITS         = 4;
+        constexpr size_t MAX_INDEX_BUF_BITS         = 16;
+    } /* namesoace obj */
+} /* namespace lsp */
 
 
 #endif /* LSP_PLUG_IN_FMT_OBJ_CONST_H_ */
