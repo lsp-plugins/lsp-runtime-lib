@@ -56,6 +56,17 @@ namespace lsp
             { 0x39, 6 },    // CEV_POINT
         };
 
+        static inline int32_t float_to_bin(float v)
+        {
+            union {
+                float f32;
+                int32_t i32;
+            } cvt;
+
+            cvt.f32 = v;
+            return cvt.i32;
+        }
+
         Compressor::Compressor()
         {
             pOut        = NULL;
@@ -381,9 +392,11 @@ namespace lsp
 
         status_t Compressor::write_float(float value)
         {
+            // Step 1
             // Find index of float in buffer
             int32_t index       = -1;
             const uint32_t base = nFloatHead + nFloatCap - 1;
+            const int32_t image = float_to_bin(value);
             for (size_t i=0; i<nFloatSize; ++i)
             {
                 const uint32_t idx  = (base - i) % nFloatCap;
@@ -410,23 +423,42 @@ namespace lsp
                 return pOut->writev(index, nFloatBits);
             }
 
+            // Step 2
+            // Find nearest relative float
+            int32_t delta       = 0x7fffffff;
+            index               = -1;
+            for (size_t i=0; i<nFloatSize; ++i)
+            {
+                const uint32_t idx  = (base - i) % nFloatCap;
+                const int32_t d     = vIntBuf[idx] - image;
+                if ((d <= 0x1fff) && (d >= -0x2000) && (d < delta))
+                {
+                    index               = i;
+                    delta               = d;
+                    break;
+                }
+            }
 
             // Push item to buffer
             vFloatBuf[nFloatHead]   = value;
             nFloatHead              = (nFloatHead + 1) % nFloatCap;
-            nFloatSize              = lsp_min(nFloatSize + 1, nFloatCap - 1);
+            nFloatSize              = lsp_min(nFloatSize + 1, nFloatCap - 2);
 
-            status_t res = pOut->writev(nFloatCap - 1, nFloatBits); // Indicate that new value has been added
-            if (res == STATUS_OK)
+            // Emit new floating-point value if we can do an incremental coding
+            status_t res;
+            if (index >= 0)
             {
-                // Write value and negative value
-                union {
-                    float f32;
-                    uint32_t u32;
-                } cvt;
-
-                cvt.f32 = value;
-                res     = pOut->writev(CPU_TO_LE(cvt.u32));
+                res = pOut->writev(nFloatCap - 1, nFloatBits);  // Indicate that new incremental value has been added
+                if (res == STATUS_OK)
+                    res     = pOut->writev(index, nFloatBits);  // Write index of original floating-point
+                if (res == STATUS_OK)
+                    res     = write_varint(image & 0x3fff);     // Write delta
+            }
+            else
+            {
+                res = pOut->writev(nFloatCap - 2, nFloatBits);  // Indicate that new value has been added
+                if (res == STATUS_OK)
+                    res     = pOut->writev(CPU_TO_LE(image));
             }
 
             return res;

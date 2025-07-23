@@ -42,7 +42,11 @@ namespace lsp
             protected:
                 io::OutBitStream   *pOut;
 
-                float              *vFloatBuf;
+                union
+                {
+                    float              *vFloatBuf;
+                    uint32_t           *vIntBuf;
+                };
                 uint32_t            nFloatHead;
                 uint32_t            nFloatSize;
                 uint32_t            nFloatCap;
