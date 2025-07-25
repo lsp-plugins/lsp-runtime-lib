@@ -213,15 +213,15 @@ namespace lsp
             {
                 // Estimate the length of match
                 size_t length       = sBuffer.lookup(&offset, head, tail-head);
-                const size_t emit   = lsp_min(length, 1u);
+                const size_t emit   = lsp_max(length, 1u);
 
                 // Calc number of repeats
                 size_t rep          = calc_repeats(&head[emit], tail);
                 size_t append       = emit + lsp_min(rep, REPEAT_BUF_MAX);
 
                 // Estimate size of output
-                const size_t est1   = est_uint(sBuffer.size() + *head, 5, 5);     // How many bits used to encode buffer replay command
-                const size_t est2   = (length > 0) ? est_uint(offset, 5, 5) + est_uint(emit - 1, 5, 5) : est1 + 1; // How many bits used to encode octet command
+                const size_t est1   = est_uint(sBuffer.size() + *head, 5, 5) * length; // How many bits used to emit octet command
+                const size_t est2   = (length > 0) ? est_uint(offset, 5, 5) + est_uint(emit - 1, 5, 5) : est1 + 1;    // How many bits used to encode buffer replay command
 
 //                IF_TRACE(
 //                    if (rep)
@@ -234,7 +234,7 @@ namespace lsp
                     // Emit Offset
                     if ((res = emit_uint(offset, 5, 5)) != STATUS_OK)
                         break;
-                    // Emit Length
+                    // Emit Length - 1
                     if ((res = emit_uint(emit - 1, 5, 5)) != STATUS_OK)
                         break;
 
