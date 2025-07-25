@@ -109,9 +109,9 @@ namespace lsp
         {
             public:
                 uint8_t    *data;       // Buffer data (2 x capacity)
-                ssize_t     head;       // Head of the buffer
-                ssize_t     tail;       // Buffer tail
-                ssize_t     cap;        // Buffer capacity
+                uint32_t    length;     // Actual size of buffer
+                uint32_t    head;       // Head of the buffer
+                uint32_t    cap;        // Buffer capacity
 
             public:
                 explicit dbuffer_t();
@@ -121,10 +121,38 @@ namespace lsp
                 void            destroy();
 
             public:
+                /**
+                 * Extract data from buffer
+                 * @param dst destination pointer to store result
+                 * @param offset relative offset of the subsequence in the buffer to the last byte store in the buffer
+                 * @param count number of bytes to extract
+                 * @return status of operation (error on buffer underflow)
+                 */
+                status_t        extract(void *dst, size_t offset, size_t count);
+
+                /**
+                 * Append multiple bytes to the buffer
+                 * @param src data to append to the buffer
+                 * @param count number of bytes to append
+                 */
                 void            append(const void *src, ssize_t count);
+
+                /**
+                 * Append single byte to the buffer
+                 * @param v byt to append
+                 */
                 void            append(uint8_t v);
+
+                /**
+                 * Clear buffer state
+                 */
                 void            clear();
-                inline size_t   size() const { return tail - head; }
+
+                /**
+                 * Get size of data currently stored in the buffer
+                 * @return size of data currently stored in the buffer
+                 */
+                inline size_t   size() const { return length; }
 
         } duffer_t;
 

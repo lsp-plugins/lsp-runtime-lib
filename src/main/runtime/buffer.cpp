@@ -79,7 +79,7 @@ namespace lsp
 
         void cbuffer_t::append(const void *src, size_t count)
         {
-            const uint8_t *v        = reinterpret_cast<const uint8_t *>(src);
+            const uint8_t *v        = static_cast<const uint8_t *>(src);
             if (count >= cap)
             {
                 // Cleanup root index and reset head
@@ -130,7 +130,7 @@ namespace lsp
 
         size_t cbuffer_t::lookup(size_t *out, const void *src, size_t avail)
         {
-            const uint8_t *v    = reinterpret_cast<const uint8_t *>(src);
+            const uint8_t *v    = static_cast<const uint8_t *>(src);
             const size_t dmax   = size();
 
             size_t len          = 0;
@@ -187,8 +187,8 @@ namespace lsp
         dbuffer_t::dbuffer_t()
         {
             data        = NULL;
+            length      = 0;
             head        = 0;
-            tail        = 0;
             cap         = 0;
         }
 
@@ -199,14 +199,14 @@ namespace lsp
 
         status_t dbuffer_t::init(size_t capacity)
         {
-            size_t dbuf     = capacity * 2 * sizeof(uint8_t);
+            size_t dbuf     = capacity * sizeof(uint8_t);
             uint8_t *ptr    = static_cast<uint8_t *>(realloc(data, dbuf));
             if (ptr == NULL)
                 return STATUS_NO_MEM;
 
             data            = ptr;
+            length          = 0;
             head            = 0;
-            tail            = 0;
             cap             = capacity;
 
             return STATUS_OK;
@@ -217,55 +217,73 @@ namespace lsp
             if (data != NULL)
                 free(data);
             data            = NULL;
+            length          = 0;
             head            = 0;
-            tail            = 0;
             cap             = 0;
         }
 
         void dbuffer_t::append(const void *src, ssize_t count)
         {
-            const uint8_t *v    = reinterpret_cast<const uint8_t *>(src);
-            ssize_t avail       = ((cap << 1) - tail);
-            if (count < avail)
+            const uint8_t *v    = static_cast<const uint8_t *>(src);
+            if (count >= cap)
             {
-                memcpy(&data[tail], v, count * sizeof(uint8_t));
-                tail      += count;
-                head       = lsp_max(head, tail - cap);
+                // Replace data in the buffer
+                memcpy(data, &v[count - cap], cap * sizeof(uint8_t));
+                length      = cap;
+                head        = 0;
+                return;
             }
-            else if (count < cap)
+
+            // Copy data to the buffer
+            size_t ohead        = head;
+            head                = (head + count) % cap;
+            if (head < ohead)
             {
-                ssize_t head    = tail + count - cap;
-                memmove(data, &data[head], tail - head);
-                memcpy(&data[tail - head], v, count);
+                const size_t split  = cap - ohead;
+                memcpy(&data[ohead], v, split * sizeof(uint8_t));
+                memcpy(&data[0], &v[split], head * sizeof(uint8_t));
             }
             else
+                memcpy(&data[ohead], v, count * sizeof(uint8_t));
+
+            length              = lsp_min(length + count, cap);
+        }
+
+        status_t dbuffer_t::extract(void *dst, size_t offset, size_t count)
+        {
+            if (offset >= length)
+                return STATUS_UNDERFLOW;
+
+            const size_t shift  = offset + 1;
+            if (count > shift)
+                return STATUS_UNDERFLOW;
+
+            uint8_t *dptr       = static_cast<uint8_t *>(dst);
+            uint32_t soff       = (head + cap - shift) % cap;
+
+            if ((soff + count) > cap)
             {
-                memcpy(data, &v[count - cap], cap * sizeof(uint8_t));
-                head       = 0;
-                tail       = cap;
+                const size_t split = cap - soff;
+                memcpy(dptr, &data[soff], split * sizeof(uint8_t));
+                memcpy(&dptr[split], data, (count - split) * sizeof(uint8_t));
             }
+            else
+                memcpy(dptr, &data[soff], count * sizeof(uint8_t));
+
+            return STATUS_OK;
         }
 
         void dbuffer_t::append(uint8_t v)
         {
-            // Shift buffer if needed
-            if (tail >= (cap << 1))
-            {
-                memmove(data, &data[cap], cap * sizeof(uint8_t));
-                head  -= cap;
-                tail  -= cap;
-            }
-
-            // Append byte
-            data[tail]      = v;        // Data byte
-            ++tail;
-            head            = lsp_max(head, tail - cap);
+            data[head]      = v;
+            head            = (head + 1) % cap;
+            length          = lsp_min(length + 1, cap);
         }
 
         void dbuffer_t::clear()
         {
+            length          = 0;
             head            = 0;
-            tail            = 0;
         }
 
     } /* namespace resource */

@@ -26,7 +26,7 @@ using namespace lsp;
 
 UTEST_BEGIN("runtime.resource", cbuffer)
 
-    void test_buffer()
+    UTEST_MAIN
     {
         resource::cbuffer_t buf;
         size_t offset = 0, length = 0;
@@ -168,11 +168,6 @@ UTEST_BEGIN("runtime.resource", cbuffer)
         length = buf.lookup(&offset, "YZ012345ABCD", 12);
         UTEST_ASSERT(length == 8);
         UTEST_ASSERT(offset == 7);
-    }
-
-    UTEST_MAIN
-    {
-        test_buffer();
     }
 
 UTEST_END

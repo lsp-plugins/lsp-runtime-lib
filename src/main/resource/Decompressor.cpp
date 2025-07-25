@@ -137,7 +137,7 @@ namespace lsp
             // Need to allocate data?
             if ((sReplay.cap < count) || (sReplay.data == NULL))
             {
-                size_t cap      = align_size(count, BUFFER_QUANTITY);
+                size_t cap      = align_size(lsp_max(sReplay.cap + (sReplay.cap >> 1), count), BUFFER_QUANTITY);
                 uint8_t *ptr    = reinterpret_cast<uint8_t *>(realloc(sReplay.data, cap));
                 if (ptr == NULL)
                     return STATUS_NO_MEM;
@@ -147,7 +147,10 @@ namespace lsp
             }
 
             // Copy data to replay buffer
-            memcpy(sReplay.data, &sBuffer.data[sBuffer.head + off], count);
+            status_t res = sBuffer.extract(sReplay.data, off, count);
+            if (res != STATUS_OK)
+                return res;
+
             sReplay.off     = 0;
             sReplay.size    = count;
             sReplay.rep     = rep;
@@ -235,7 +238,7 @@ namespace lsp
 
             if (offset < sBuffer.size())
             {
-                // REPLAY
+                // REPLAY BUFFER
                 // Length
                 if ((res = read_uint(&length, 5, 5)) != STATUS_OK)
                     return res;
@@ -255,7 +258,7 @@ namespace lsp
             }
             else
             {
-                // OCTET
+                // EMIT OCTET
                 // Repeat
                 if ((res = read_uint(&rep, 0, 4)) != STATUS_OK)
                     return res;
