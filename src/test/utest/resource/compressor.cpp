@@ -31,7 +31,7 @@
 
 using namespace lsp;
 
-#define BUFFER_SIZE     0x100000
+#define BUFFER_SIZE     0x40000
 
 UTEST_BEGIN("runtime.resource", compressor)
 

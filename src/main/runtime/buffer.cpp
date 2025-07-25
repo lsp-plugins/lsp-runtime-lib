@@ -143,14 +143,20 @@ namespace lsp
             uint32_t delta      = length - root[*v];
             while (delta <= dmax)
             {
-                // Byte matched, compute the length of the sub-sequence
+                // Byte matched, do some heuristics
                 const size_t soff       = (head + cap - delta) % cap;
+                if ((len > 1) && (data[(soff + len - 1) % cap] != v[len-1]))
+                {
+                    delta                   = length - index[soff];
+                    continue;
+                }
+
+                // Compute the length of the sub-sequence
                 const size_t lookup     = lsp_min(avail, delta);
                 size_t slen             = 1;
                 for (size_t i=1; i<lookup; ++i)
                 {
-                    const uint8_t b         = data[(soff + i) % cap];
-                    if (v[i] != b)
+                    if (v[i] != data[(soff + i) % cap])
                         break;
                     ++slen;
                 }
