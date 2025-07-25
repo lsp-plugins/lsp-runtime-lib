@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 13 мар. 2021 г.
@@ -31,8 +31,9 @@ namespace lsp
         {
             data        = NULL;
             index       = NULL;
+            root        = NULL;
             head        = 0;
-            tail        = 0;
+            length      = 0;
             cap         = 0;
         }
 
@@ -43,18 +44,23 @@ namespace lsp
 
         status_t cbuffer_t::init(size_t capacity)
         {
-            size_t dbuf     = capacity * 2 * sizeof(uint8_t);
-            size_t ibuf     = capacity * 2 * sizeof(uint32_t);
+            const size_t dbuf   = capacity * sizeof(uint8_t);
+            const size_t ibuf   = capacity * sizeof(uint32_t);
+            const size_t rbuf   = 0x100 * sizeof(uint32_t);
 
-            uint8_t *ptr    = static_cast<uint8_t *>(realloc(data, dbuf + ibuf));
+            uint8_t *ptr    = static_cast<uint8_t *>(realloc(data, dbuf + ibuf + rbuf));
             if (ptr == NULL)
                 return STATUS_NO_MEM;
 
-            data            = ptr;
-            index           = reinterpret_cast<uint32_t *>(&ptr[dbuf]);
+            data            = advance_ptr_bytes<uint8_t>(ptr, dbuf);
+            index           = advance_ptr_bytes<uint32_t>(ptr, ibuf);
+            root            = advance_ptr_bytes<uint32_t>(ptr, rbuf);
             head            = 0;
-            tail            = 0;
+            length          = 0;
             cap             = capacity;
+
+            for (size_t i=0; i < 0x100; ++i)
+                root[i]     = -1;
 
             return STATUS_OK;
         }
@@ -65,121 +71,117 @@ namespace lsp
                 free(data);
             data            = NULL;
             index           = NULL;
+            root            = NULL;
             head            = 0;
-            tail            = 0;
+            length          = 0;
             cap             = 0;
         }
 
-        void cbuffer_t::append(const void *src, ssize_t count)
+        void cbuffer_t::append(const void *src, size_t count)
         {
-            const uint8_t *v    = reinterpret_cast<const uint8_t *>(src);
-            ssize_t avail       = ((cap << 1) - tail);
-            if (count < avail)
+            const uint8_t *v        = reinterpret_cast<const uint8_t *>(src);
+            if (count >= cap)
             {
-                memcpy(&data[tail], v, count * sizeof(uint8_t));
-                bzero(&index[tail], count * sizeof(uint32_t));
-                tail      += count;
-                head       = lsp_max(head, tail - cap);
-            }
-            else if (count < cap)
-            {
-                ssize_t head    = tail + count - cap;
-                memmove(data, &data[head], tail - head);
-                memcpy(&data[tail - head], v, count);
+                // Cleanup root index and reset head
+                for (size_t i=0; i<0x100; ++i)
+                    root[i]         = -1;
+                length              = 0;
+                head                = 0;
 
-                memmove(index, &index[head], (tail - head) * sizeof(uint32_t));
-                bzero(&index[tail - head], count * sizeof(uint32_t));
+                // Append tail only
+                v                  += count - cap;
+                count               = cap;
+            }
+
+            // Fill the buffer
+            const size_t ohead  = head;
+            head                = (head + count) % cap;
+            if (head < ohead)
+            {
+                const size_t split  = cap - ohead;
+                memcpy(&data[ohead], v, split * sizeof(uint8_t));
+                memcpy(&data[0], &v[split], (count - split) * sizeof(uint8_t));
             }
             else
-            {
-                memcpy(data, &v[count - cap], cap * sizeof(uint8_t));
-                bzero(index, cap * sizeof(uint32_t));
+                memcpy(&data[ohead], v, count * sizeof(uint8_t));
 
-                head       = 0;
-                tail       = cap;
+            // Update index
+            uint32_t new_length = length;
+            for (size_t i=0; i<count; ++i)
+            {
+                const size_t off    = (ohead + i) % cap;        // Compute offset
+                const uint8_t b     = v[i];                     // Fetch byte
+                index[off]          = root[b];                  // Store offset of previous element
+                root[b]             = new_length++;             // Update absolute root offset
             }
+
+            // Update buffer length and sequence counter
+            length              = new_length;
         }
 
-        void cbuffer_t::append(uint8_t v)
+        void cbuffer_t::append(uint8_t b)
         {
-            // Shift buffer if needed
-            if (tail >= (cap << 1))
-            {
-                memmove(data, &data[cap],   cap * sizeof(uint8_t));
-                memmove(index, &index[cap], cap * sizeof(uint32_t));
-                head  -= cap;
-                tail  -= cap;
-            }
-
             // Append byte
-            data[tail]      = v;        // Data byte
-            index[tail]     = 0;        // No index
-            ++tail;
-            head            = lsp_max(head, tail - cap);
+            data[head]      = b;                        // Data byte
+            index[head]     = root[b];                  // Store offset of previous element
+            root[b]         = length++;                 // Update length
+            head            = (head + 1) % cap;         // Update head
         }
 
-        size_t cbuffer_t::lookup(ssize_t *out, const void *src, size_t avail)
+        size_t cbuffer_t::lookup(size_t *out, const void *src, size_t avail)
         {
-            ssize_t offset      = -1;
+            const uint8_t *v    = reinterpret_cast<const uint8_t *>(src);
+            const size_t dmax   = size();
+
             size_t len          = 0;
+            ssize_t offset      = 0;
 
-            const uint8_t *s    = reinterpret_cast<const uint8_t *>(src);
-            const uint8_t *p    = &data[head];
-            uint32_t *ix        = &index[head];
-            ssize_t ixp         = -1;
-            size_t di           = 0;
+            // We can not find sequence larger than 'length' bytes
+            avail               = lsp_min(avail, dmax);
 
-            for (size_t i=0, n=tail - head; i<(n - len); i += di)
+            // Lookup among all matches
+            uint32_t delta      = length - root[*v];
+            while (delta <= dmax)
             {
-                // Find first character match
-                if (p[i] != *s)
+                // Byte matched, compute the length of the sub-sequence
+                const size_t soff       = (head + cap - delta) % cap;
+                const size_t lookup     = lsp_min(avail, delta);
+                size_t slen             = 1;
+                for (size_t i=1; i<lookup; ++i)
                 {
-                    di          = 1;
-                    continue;
-                }
-
-                // Symbol matched, update index it if needed
-                if ((ixp >= 0) && (!ix[ixp]))
-                    ix[ixp]     = uint32_t(i - ixp);
-                ixp = i;                            // Save index as previous match
-                di  = (ix[i]) ? ix[i] : 1;
-
-                // Quick test
-                if (len >= 3)
-                {
-                    // Check last byte
-                    size_t last   = len - 1;
-                    if (p[i + last] != s[last])
-                        continue;
-
-                    // Check middle byte
-                    last >>= 1;
-                    if (p[i + last] != s[last])
-                        continue;
-                }
-
-                // Perform full test
-                size_t slen     = 1; // Sequence length
-                size_t count    = lsp_min(avail, n - i);
-                for (size_t j=1; j<count; ++j, ++slen)
-                    if (p[i+j] != s[j])
+                    const uint8_t b         = data[(soff + i) % cap];
+                    if (v[i] != b)
                         break;
+                    ++slen;
+                }
 
+                // Update lookup result
                 if (len < slen)
                 {
-                    offset          = i;
-                    len             = slen;
+                    offset              = delta;
+                    len                 = slen;
+                    if (len >= avail)
+                        break;
                 }
+
+                // Update search position
+                delta                   = length - index[soff];
             }
 
-            *out        = offset;
+            *out        = offset - 1;
             return len;
         }
 
         void cbuffer_t::clear()
         {
             head            = 0;
-            tail            = 0;
+            length          = 0;
+
+            if (root != NULL)
+            {
+                for (size_t i=0; i < 0x100; ++i)
+                    root[i]     = -1;
+            }
         }
 
         dbuffer_t::dbuffer_t()
@@ -265,7 +267,8 @@ namespace lsp
             head            = 0;
             tail            = 0;
         }
-    }
-}
+
+    } /* namespace resource */
+} /* namespace lsp */
 
 

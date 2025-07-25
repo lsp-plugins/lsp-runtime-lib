@@ -200,8 +200,7 @@ namespace lsp
             status_t res = STATUS_OK;
             const uint8_t *head = sTemp.data();
             const uint8_t *tail = &head[flength];
-            ssize_t offset = 0, length = 0, append = 0;
-            size_t rep = 0;
+            size_t offset = 0;
 
 //            IF_TRACE(
 //                wssize_t coffset    = sOS.position();
@@ -213,37 +212,31 @@ namespace lsp
             while (head < tail)
             {
                 // Estimate the length of match
-                length      = sBuffer.lookup(&offset, head, tail-head);
-                if (length == 0)
-                    length      = 1;
+                size_t length       = sBuffer.lookup(&offset, head, tail-head);
+                const size_t emit   = lsp_min(length, 1u);
 
                 // Calc number of repeats
-                rep         = calc_repeats(&head[length], tail);
-                append      = length + lsp_min(rep, REPEAT_BUF_MAX);
+                size_t rep          = calc_repeats(&head[emit], tail);
+                size_t append       = emit + lsp_min(rep, REPEAT_BUF_MAX);
 
                 // Estimate size of output
-                size_t est1 = (est_uint(sBuffer.size() + *head, 5, 5) + est_uint(rep, 0, 4)) * length;     // How many bits per octet
-                size_t est2 = (offset < 0) ? est1 + 1 :
-                                est_uint(offset, 5, 5) +
-                                est_uint(length - 1, 5, 5) +
-                                est_uint(rep, 0, 4);
+                const size_t est1   = est_uint(sBuffer.size() + *head, 5, 5);     // How many bits used to encode buffer replay command
+                const size_t est2   = (length > 0) ? est_uint(offset, 5, 5) + est_uint(emit - 1, 5, 5) : est1 + 1; // How many bits used to encode octet command
 
-                if (est1 > est2) // Prefer buffer over dictionary
+//                IF_TRACE(
+//                    if (rep)
+//                        ++ repeats;
+//                )
+
+                if (est2 < est1) // Prefer buffer replay over octet emission
                 {
-                    // REPLAY
-                    // Offset
+                    // REPLAY BUFFER
+                    // Emit Offset
                     if ((res = emit_uint(offset, 5, 5)) != STATUS_OK)
                         break;
-                    // Length
-                    if ((res = emit_uint(length - 1, 5, 5)) != STATUS_OK)
+                    // Emit Length
+                    if ((res = emit_uint(emit - 1, 5, 5)) != STATUS_OK)
                         break;
-                    // Repeat
-                    if ((res = emit_uint(rep, 0, 4)) != STATUS_OK)
-                        break;
-
-                    // Append data to buffer
-                    sBuffer.append(head, append);
-                    head           += length + rep;
 
 //                    IF_TRACE(
 //                        ++ replays;
@@ -253,20 +246,22 @@ namespace lsp
                 }
                 else
                 {
-                    // OCTET
-                    // Value
+                    // EMIT OCTET
+                    // Emit Value
                     if ((res = emit_uint(sBuffer.size() + *head, 5, 5)) != STATUS_OK)
                         break;
-                    // Repeat
-                    if ((res = emit_uint(rep, 0, 4)) != STATUS_OK)
-                        break;
-
-                    // Append data to buffer
-                    sBuffer.append(head, append);
-                    head           += length + rep;
 
 //                    IF_TRACE(++octets);
                 }
+
+                // Emit Repeat counter
+                if ((res = emit_uint(rep, 0, 4)) != STATUS_OK)
+                    break;
+
+
+                // Append data to buffer
+                sBuffer.append(head, append);
+                head           += emit + rep;
             }
 
             // Flush the bit sequence
