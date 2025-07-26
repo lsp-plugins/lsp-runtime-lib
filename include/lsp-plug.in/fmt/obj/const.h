@@ -23,6 +23,7 @@
 #define LSP_PLUG_IN_FMT_OBJ_CONST_H_
 
 #include <lsp-plug.in/runtime/version.h>
+#include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/common/endian.h>
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
@@ -68,6 +69,7 @@ namespace lsp
             CEV_LINE,
             CEV_LINE_T,
             CEV_POINT,
+            CEV_EOF,
 
             CEV_BITS = 5,
         };

@@ -54,6 +54,7 @@ namespace lsp
             { 0x1b, 5 },    // CEV_LINE
             { 0x38, 6 },    // CEV_LINE_T
             { 0x39, 6 },    // CEV_POINT
+            { 0xfb, 8 },    // CEV_EOF
         };
 
         static inline int32_t float_to_bin(float v)
@@ -308,9 +309,11 @@ namespace lsp
             if (pOut == NULL)
                 return STATUS_OK;
 
-            status_t res = STATUS_OK;
+            // Write End-of-File signature
+            status_t res = write_event(CEV_EOF);
+
             if (nWFlags & WRAP_CLOSE)
-                res =   pOut->close();
+                res = update_status(res, pOut->close());
             if (nWFlags & WRAP_DELETE)
                 delete pOut;
 
@@ -342,8 +345,8 @@ namespace lsp
                 if (ptr == NULL)
                     return STATUS_NO_MEM;
 
-                vFloatBuf               = advance_ptr<float>(ptr, nFloatCap);
-                vIndexBuf               = advance_ptr<int32_t>(ptr, nIndexCap);
+                vFloatBuf               = advance_ptr<float>(ptr, float_cap);
+                vIndexBuf               = advance_ptr<int32_t>(ptr, index_cap);
             }
 
             nFloatCap               = float_cap;
@@ -627,7 +630,7 @@ namespace lsp
             if ((pOut == NULL) || (vFloatBuf == NULL))
                 return STATUS_BAD_STATE;
 
-            const uint32_t ev   = (nw != 1.0f) ? CEV_NORMAL4 :
+            const uint32_t ev   = (nw != 0.0f) ? CEV_NORMAL4 :
                                   (nz != 0.0f) ? CEV_NORMAL3 :
                                   CEV_NORMAL2;
 

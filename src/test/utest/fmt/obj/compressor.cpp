@@ -48,7 +48,9 @@ UTEST_BEGIN("runtime.fmt.obj", compressor)
         const wssize_t dst_size = dst.size();
         UTEST_ASSERT(dst_size >= 0);
 
-        printf("Compression ratio: %.2f %%\n", 100.0 * double(src_size) / double(dst_size));
+        printf("Stats: uncompressed size = %d, compressed size = %d, ratio: %.2f %%\n",
+            int(src_size), int(dst_size),
+            100.0 * double(src_size) / double(dst_size));
     }
 
     UTEST_MAIN
