@@ -61,18 +61,27 @@ namespace lsp
             CEV_EOF,        // 0xfb
         };
 
+        static inline float bin_to_float(int32_t v)
+        {
+            union {
+                float f32;
+                int32_t i32;
+            } cvt;
+
+            cvt.i32 = v;
+            return cvt.f32;
+        }
+
         Decompressor::Decompressor()
         {
             vFloatBuf   = NULL;
+
             nFloatHead  = 0;
             nFloatSize  = 0;
             nFloatCap   = 0;
             nFloatBits  = 0;
-            vIndexBuf   = NULL;
-            nIndexHead  = 0;
-            nIndexSize  = 0;
-            nIndexCap   = 0;
-            nIndexBits  = 0;
+
+            nLastEvent  = compressed_event_type_t(-1);
         }
 
         Decompressor::~Decompressor()
@@ -82,6 +91,11 @@ namespace lsp
 
         void Decompressor::clear_state()
         {
+            if (vFloatBuf != NULL)
+            {
+                free(vFloatBuf);
+                vFloatBuf       = NULL;
+            }
         }
 
         status_t Decompressor::parse_file(IObjHandler *handler, const char *path)
@@ -156,33 +170,22 @@ namespace lsp
             if (hdr.version != 0)
                 return STATUS_UNSUPPORTED_FORMAT;
 
-            if ((hdr.float_bits > MAX_FLOAT_BUF_BITS) || (hdr.index_bits > MAX_INDEX_BUF_BITS))
+            if ((hdr.float_bits > MAX_FLOAT_BUF_BITS) || (hdr.float_bits < MIN_FLOAT_BUF_BITS))
                 return STATUS_CORRUPTED;
-            if ((hdr.float_bits < MIN_FLOAT_BUF_BITS) || (hdr.index_bits < MIN_INDEX_BUF_BITS))
-                return STATUS_CORRUPTED;
-            if (hdr.pad != 'L')
+            if ((hdr.pad[0] != 'L') || (hdr.pad[1] != 'S'))
                 return STATUS_BAD_FORMAT;
 
             // Check that there is nothing to change
             const size_t float_cap  = 1 << hdr.float_bits;
-            const size_t index_cap  = 1 << hdr.index_bits;
-
-            const size_t to_alloc   = sizeof(float) * float_cap + sizeof(int32_t) * index_cap;
-            uint8_t *ptr            = static_cast<uint8_t *>(realloc(vFloatBuf, to_alloc));
+            float *ptr              = static_cast<float *>(malloc(float_cap * sizeof(float)));
             if (ptr == NULL)
                 return STATUS_NO_MEM;
 
-            vFloatBuf               = advance_ptr<float>(ptr, float_cap);
+            vFloatBuf               = ptr;
             nFloatHead              = 0;
             nFloatSize              = 0;
             nFloatCap               = float_cap;
             nFloatBits              = uint32_t(hdr.float_bits);
-
-            vIndexBuf               = advance_ptr<int32_t>(ptr, index_cap);
-            nIndexHead              = 0;
-            nIndexSize              = 0;
-            nIndexCap               = index_cap;
-            nIndexBits              = uint32_t(hdr.index_bits);
 
             return STATUS_OK;
         }
@@ -192,7 +195,16 @@ namespace lsp
             bool b;
             size_t group = 0;
             uint32_t cmd = 0;
-            status_t res;
+
+            // Check if command has been repeated
+            status_t res = sStream.readb(&b);
+            if (res != STATUS_OK)
+                return res;
+            if (b)
+            {
+                *event  = nLastEvent;
+                return STATUS_OK;
+            }
 
             // Determine group of commands
             while ((res = sStream.readb(&b)) == STATUS_OK)
@@ -221,13 +233,107 @@ namespace lsp
 
         status_t Decompressor::read_float(float *dst)
         {
-            // TODO
+            // Read index
+            uint32_t index = 0;
+            status_t res = sStream.readv(&index, nFloatBits);
+            if (res != STATUS_OK)
+                return res;
+
+            // Analyze index
+            const uint32_t base = nFloatHead + nFloatCap - 1;
+
+            if (index < nFloatSize)
+            {
+                *dst    = vFloatBuf[(base - index) % nFloatCap];
+                if (index > 0)
+                {
+                    // Advance position of item one step forward if it is not the first one
+                    const uint32_t idx  = (base - index) % nFloatCap;
+                    lsp::swap(vFloatBuf[idx], vFloatBuf[(idx + 1) % nFloatCap]);
+                }
+
+                return STATUS_OK;
+            }
+
+            float value;
+            if (index == nFloatSize)
+            {
+                // Read index of base float
+                if ((res = sStream.readv(&index, nFloatBits)) != STATUS_OK)
+                    return res;
+                // Read delta
+                size_t delta;
+                if ((res = read_varint(&delta)) != STATUS_OK)
+                    return res;
+                const int32_t dvalue    = (int32_t(delta) >> 1) ^ -(int32_t(delta) & 1); // Zig-zag reverse conversion
+
+                // Compute floating-point value
+                const int32_t image     = vIntBuf[(base - index) % nFloatCap] + dvalue;
+                value                   = bin_to_float(image);
+            }
+            else
+            {
+                // Read just the floating-point value
+                int32_t image;
+                if ((res = sStream.readv(&image)) != STATUS_OK)
+                    return res;
+                value                   = bin_to_float(LE_TO_CPU(image));
+            }
+
+            // Push item to buffer and return result
+            vFloatBuf[nFloatHead]   = value;
+            nFloatHead              = (nFloatHead + 1) % nFloatCap;
+            nFloatSize              = lsp_min(nFloatSize + 1, nFloatCap - 2);
+
+            *dst                    = value;
+
             return STATUS_OK;
         }
 
         status_t Decompressor::read_varint(size_t *dst)
         {
-            // TODO
+            size_t value        = 0;
+            uint8_t b;
+
+            do
+            {
+                status_t res        = sStream.readv(&b, 7);
+                if (res != STATUS_OK)
+                    return res;
+
+                value               = (value << 6) | (b & 0x3f);
+            } while (b & 0x40);
+
+            *dst                = value;
+
+            return STATUS_OK;
+        }
+
+        status_t Decompressor::read_varint_icount(size_t *dst)
+        {
+            size_t bits         = 3;
+            size_t max          = 1 << (bits + 1);
+            size_t value        = 0;
+            size_t b            = 0;
+
+            while (true)
+            {
+                status_t res        = sStream.readv(fixed_int(&b), bits + 1);
+                if (res != STATUS_OK)
+                    return res;
+
+                // Decode value
+                value               = (value << bits) | (b & (max - 1));
+                if (!(value & max))
+                    break;
+
+                // Update bit count
+                bits               += 2;
+                max               <<= 2;
+            } while (value > 0);
+
+            *dst                = value;
+
             return STATUS_OK;
         }
 

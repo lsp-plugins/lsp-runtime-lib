@@ -99,16 +99,13 @@ namespace lsp
             uint32_t    signature;
             uint8_t     version;
             uint8_t     float_bits;
-            uint8_t     index_bits;
-            uint8_t     pad;
+            uint8_t     pad[2];
         } compressed_header_t;
     #pragma pack(pop)
 
         constexpr uint32_t COMPRESSED_SIGNATURE     = __IF_LEBE(0x4a424f43, 0x434f424a); /* COBJ */
         constexpr size_t MIN_FLOAT_BUF_BITS         = 4;
         constexpr size_t MAX_FLOAT_BUF_BITS         = 16;
-        constexpr size_t MIN_INDEX_BUF_BITS         = 4;
-        constexpr size_t MAX_INDEX_BUF_BITS         = 16;
     } /* namesoace obj */
 } /* namespace lsp */
 

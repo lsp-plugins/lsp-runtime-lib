@@ -68,19 +68,23 @@ namespace lsp
             return cvt.i32;
         }
 
+        static inline uint32_t zigzag_encode(int32_t value)
+        {
+            return (value >> 31) ^ (value << 1);
+        }
+
         Compressor::Compressor()
         {
             pOut        = NULL;
             vFloatBuf   = NULL;
+
             nFloatHead  = 0;
             nFloatSize  = 0;
             nFloatCap   = 0;
             nFloatBits  = 0;
-            vIndexBuf   = NULL;
-            nIndexHead  = 0;
-            nIndexSize  = 0;
-            nIndexCap   = 0;
-            nIndexBits  = 0;
+
+            nLastEvent  = -1;
+
             nWFlags     = 0;
         }
 
@@ -92,7 +96,6 @@ namespace lsp
             {
                 free(vFloatBuf);
                 vFloatBuf       = NULL;
-                vIndexBuf       = NULL;
             }
         }
 
@@ -103,8 +106,8 @@ namespace lsp
             hdr.signature   = COMPRESSED_SIGNATURE;
             hdr.version     = 0;
             hdr.float_bits  = uint8_t(nFloatBits);
-            hdr.index_bits  = uint8_t(nIndexBits);
-            hdr.pad         = 'L';
+            hdr.pad[0]      = 'L';
+            hdr.pad[1]      = 'S';
             ssize_t written = obs->write(&hdr, sizeof(compressed_header_t));
             if (written != sizeof(compressed_header_t))
                 return STATUS_IO_ERROR;
@@ -112,8 +115,6 @@ namespace lsp
             pOut        = release_ptr(obs);
             nFloatHead  = 0;
             nFloatSize  = 0;
-            nIndexHead  = 0;
-            nIndexSize  = 0;
             nWFlags     = flags;
 
             return STATUS_OK;
@@ -321,11 +322,9 @@ namespace lsp
             return res;
         }
 
-        status_t Compressor::set_buffer_size(size_t float_bits, size_t index_bits)
+        status_t Compressor::set_buffer_size(size_t float_bits)
         {
-            if ((float_bits > MAX_FLOAT_BUF_BITS) || (index_bits > MAX_INDEX_BUF_BITS))
-                return STATUS_INVALID_VALUE;
-            if ((float_bits < MIN_FLOAT_BUF_BITS) || (index_bits < MIN_INDEX_BUF_BITS))
+            if ((float_bits > MAX_FLOAT_BUF_BITS) || (float_bits < MIN_FLOAT_BUF_BITS))
                 return STATUS_INVALID_VALUE;
 
             // We can only change buffer size if there is no active operations.
@@ -334,25 +333,17 @@ namespace lsp
 
             // Check that there is nothing to change
             const size_t float_cap  = 1 << float_bits;
-            const size_t index_cap  = 1 << index_bits;
-
-            const size_t to_alloc   = sizeof(float) * float_cap + sizeof(int32_t) * index_cap;
-            const size_t allocated  = sizeof(float) * nFloatCap + sizeof(int32_t) * nIndexCap;
-            if (to_alloc != allocated)
+            if (float_cap != nFloatCap)
             {
                 // Re-allocate data
-                uint8_t *ptr            = static_cast<uint8_t *>(realloc(vFloatBuf, to_alloc));
+                float *ptr              = static_cast<float *>(realloc(vFloatBuf, float_cap * sizeof(float)));
                 if (ptr == NULL)
                     return STATUS_NO_MEM;
-
-                vFloatBuf               = advance_ptr<float>(ptr, float_cap);
-                vIndexBuf               = advance_ptr<int32_t>(ptr, index_cap);
+                vFloatBuf               = ptr;
             }
 
             nFloatCap               = float_cap;
             nFloatBits              = uint32_t(float_bits);
-            nIndexCap               = index_cap;
-            nIndexBits              = uint32_t(index_bits);
 
             return STATUS_OK;
         }
@@ -360,19 +351,43 @@ namespace lsp
         status_t Compressor::write_event(uint32_t event)
         {
             const c_event_t *code = &event_codes[event];
-            return pOut->writev(code->code, code->bits);
+            if (nLastEvent == code->code)
+                return pOut->bwrite(true);
+
+            nLastEvent = code->code;
+            return pOut->writev(code->code, code->bits + 1);
         }
 
         status_t Compressor::write_varint(size_t value)
         {
             do
             {
-                const uint8_t b     = (value >= 0x80) ? 0x80 | (value & 0x7f) : value;
-                value     >>= 7;
+                const uint8_t b     = (value >= 0x40) ? 0x40 | (value & 0x3f) : value;
+                value     >>= 6;
 
-                status_t res        = pOut->bwrite(b);
+                status_t res        = pOut->writev(b, 7);
                 if (res != STATUS_OK)
                     return res;
+            } while (value > 0);
+
+            return STATUS_OK;
+        }
+
+        status_t Compressor::write_varint_icount(size_t value)
+        {
+            size_t bits = 3;
+            size_t max  = 1 << (bits + 1);
+            do
+            {
+                const size_t b      = (value >= max) ? max | (value & (max - 1)) : value;
+                status_t res        = pOut->writev(fixed_int(b), bits + 1);
+                if (res != STATUS_OK)
+                    return res;
+
+                // Update count
+                value             >>= bits;
+                bits               += 2;
+                max               <<= 2;
             } while (value > 0);
 
             return STATUS_OK;
@@ -434,7 +449,7 @@ namespace lsp
             {
                 const uint32_t idx  = (base - i) % nFloatCap;
                 const int32_t d     = vIntBuf[idx] - image;
-                if ((d <= 0x1fff) && (d >= -0x2000) && (d < delta))
+                if ((d <= 0x1ffff) && (d >= -0x20000) && (d < delta))
                 {
                     index               = i;
                     delta               = d;
@@ -445,21 +460,22 @@ namespace lsp
             // Push item to buffer
             vFloatBuf[nFloatHead]   = value;
             nFloatHead              = (nFloatHead + 1) % nFloatCap;
-            nFloatSize              = lsp_min(nFloatSize + 1, nFloatCap - 2);
+            if (nFloatSize < (nFloatCap - 2))
+                ++nFloatSize;
 
             // Emit new floating-point value if we can do an incremental coding
             status_t res;
             if (index >= 0)
             {
-                res = pOut->writev(nFloatCap - 1, nFloatBits);  // Indicate that new incremental value has been added
+                res = pOut->writev(nFloatSize, nFloatBits);  // Indicate that new incremental value has been added
                 if (res == STATUS_OK)
                     res     = pOut->writev(index, nFloatBits);  // Write index of original floating-point
                 if (res == STATUS_OK)
-                    res     = write_varint(image & 0x3fff);     // Write delta
+                    res     = write_varint(zigzag_encode(delta) & 0x3ffff);     // Write delta
             }
             else
             {
-                res = pOut->writev(nFloatCap - 2, nFloatBits);  // Indicate that new value has been added
+                res = pOut->writev(nFloatSize + 1, nFloatBits);  // Indicate that new value has been added
                 if (res == STATUS_OK)
                     res     = pOut->writev(CPU_TO_LE(image));
             }
@@ -467,55 +483,16 @@ namespace lsp
             return res;
         }
 
-        status_t Compressor::write_index(index_t value)
-        {
-            // Find index of value in buffer
-            int32_t index       = -1;
-            const uint32_t base = nIndexHead + nIndexCap - 1;
-            for (size_t i=0; i<nIndexSize; ++i)
-            {
-                const uint32_t idx  = (base - i) % nIndexCap;
-                if (vIndexBuf[idx] == value)
-                {
-                    index               = i;
-                    break;
-                }
-            }
-
-            // Depending on index value do the stuff
-            if (index > 0)
-            {
-                // Advance position of item one step forward if it is not the first one
-                const uint32_t idx  = (base - index) % nIndexCap;
-                lsp::swap(vIndexBuf[idx], vIndexBuf[(idx + 1) % nIndexCap]);
-
-                // We're ready to emit index
-                return pOut->writev(index, nIndexBits);
-            }
-            else if (index == 0)
-            {
-                // We're ready to emit index
-                return pOut->writev(index, nIndexBits);
-            }
-
-
-            // Push item to buffer
-            vIndexBuf[nIndexHead]   = value;
-            nIndexHead              = (nIndexHead + 1) % nIndexCap;
-            nIndexSize              = lsp_min(nIndexSize + 1, nIndexCap - 1);
-
-            status_t res            = pOut->writev(nIndexCap - 1, nIndexBits); // Indicate that new value has been added
-            if (res == STATUS_OK)
-                res     = write_varint(value);
-
-            return res;
-        }
-
         status_t Compressor::write_indices(const index_t *value, size_t count)
         {
-            for (size_t i=0; i<count; ++i)
+            int32_t delta   = value[0];
+            status_t res    = write_varint_icount(zigzag_encode(delta));
+            if (res != STATUS_OK)
+                return res;
+
+            for (size_t i=1; i<count; ++i)
             {
-                status_t res = write_index(value[i]);
+                status_t res            = write_varint_icount(zigzag_encode(value[i] - value[0]));
                 if (res != STATUS_OK)
                     return res;
             }
@@ -680,7 +657,7 @@ namespace lsp
 
             status_t res            = write_event(ev);
             if (res == STATUS_OK)
-                res                     = write_varint(n);
+                res                     = write_varint_icount(n);
             if (res == STATUS_OK)
                 res                     = write_indices(vv, n);
             if ((res == STATUS_OK) && (has_texcoord))
@@ -699,7 +676,7 @@ namespace lsp
             const uint32_t ev       = CEV_POINT;
             status_t res            = write_event(ev);
             if (res == STATUS_OK)
-                res                     = write_varint(n);
+                res                     = write_varint_icount(n);
             if (res == STATUS_OK)
                 res                     = write_indices(vv, n);
 
@@ -716,7 +693,7 @@ namespace lsp
             const uint32_t ev       = (has_texcoord) ? CEV_LINE_T : CEV_LINE;
             status_t res            = write_event(ev);
             if (res == STATUS_OK)
-                res                     = write_varint(n);
+                res                     = write_varint_icount(n);
             if (res == STATUS_OK)
                 res                     = write_indices(vv, n);
             if ((res == STATUS_OK) && (has_texcoord))

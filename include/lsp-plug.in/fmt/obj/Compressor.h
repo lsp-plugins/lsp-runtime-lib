@@ -47,24 +47,21 @@ namespace lsp
                     float              *vFloatBuf;
                     uint32_t           *vIntBuf;
                 };
+
                 uint32_t            nFloatHead;
                 uint32_t            nFloatSize;
                 uint32_t            nFloatCap;
                 uint32_t            nFloatBits;
 
-                int32_t            *vIndexBuf;
-                uint32_t            nIndexHead;
-                uint32_t            nIndexSize;
-                uint32_t            nIndexCap;
-                uint32_t            nIndexBits;
+                uint32_t            nLastEvent;
 
                 size_t              nWFlags;
 
             protected:
                 status_t            do_wrap(io::OutBitStream * & obs, size_t flags = WRAP_CLOSE | WRAP_DELETE);
                 status_t            write_varint(size_t value);
+                status_t            write_varint_icount(size_t value);
                 status_t            write_float(float value);
-                status_t            write_index(index_t value);
                 inline status_t     write_indices(const index_t *value, size_t count);
                 inline status_t     write_event(uint32_t event);
                 inline status_t     write_utf8(const char *text);
@@ -96,10 +93,9 @@ namespace lsp
                 /**
                  * Set buffer size
                  * @param float_bits
-                 * @param index_bits
-                 * @return
+                 * @return status of operation
                  */
-                status_t            set_buffer_size(size_t float_bits, size_t index_bits);
+                status_t            set_buffer_size(size_t float_bits);
 
             public:
                 virtual status_t    begin_object(const char *name) override;

@@ -42,16 +42,13 @@ namespace lsp
                     float              *vFloatBuf;
                     uint32_t           *vIntBuf;
                 };
+
                 uint32_t            nFloatHead;
                 uint32_t            nFloatSize;
                 uint32_t            nFloatCap;
                 uint32_t            nFloatBits;
 
-                int32_t            *vIndexBuf;
-                uint32_t            nIndexHead;
-                uint32_t            nIndexSize;
-                uint32_t            nIndexCap;
-                uint32_t            nIndexBits;
+                compressed_event_type_t nLastEvent;
 
             protected:
                 status_t            parse_data(IObjHandler *handler);
@@ -68,6 +65,7 @@ namespace lsp
                 status_t            parse_object(IObjHandler *handler);
                 status_t            read_float(float *dst);
                 status_t            read_varint(size_t *dst);
+                status_t            read_varint_icount(size_t *dst);
                 status_t            read_indices(lltl::darray<index_t> *dst, size_t count, bool read);
                 status_t            read_utf8(LSPString *dst);
 

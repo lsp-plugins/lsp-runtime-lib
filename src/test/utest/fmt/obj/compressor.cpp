@@ -38,7 +38,7 @@ UTEST_BEGIN("runtime.fmt.obj", compressor)
         obj::Compressor c;
         obj::PushParser p;
 
-        UTEST_ASSERT(c.set_buffer_size(5, 5) == STATUS_OK);
+        UTEST_ASSERT(c.set_buffer_size(7) == STATUS_OK);
         UTEST_ASSERT(c.open(&dst, io::File::FM_WRITE_NEW) == STATUS_OK);
         UTEST_ASSERT(p.parse_file(&c, &src) == STATUS_OK);
         UTEST_ASSERT(c.close() == STATUS_OK);
@@ -48,9 +48,9 @@ UTEST_BEGIN("runtime.fmt.obj", compressor)
         const wssize_t dst_size = dst.size();
         UTEST_ASSERT(dst_size >= 0);
 
-        printf("Stats: uncompressed size = %d, compressed size = %d, ratio: %.2f %%\n",
+        printf("Stats: uncompressed size = %d, compressed size = %d, ratio: %.3f\n",
             int(src_size), int(dst_size),
-            100.0 * double(src_size) / double(dst_size));
+            double(src_size) / double(dst_size));
     }
 
     UTEST_MAIN
