@@ -46,6 +46,7 @@ namespace lsp
         {
             nSegment        = 0;
             nOffset         = 0;
+//            hFD             = fopen("/tmp/compressor.log", "w");
         }
 
         Compressor::~Compressor()
@@ -200,8 +201,7 @@ namespace lsp
             status_t res = STATUS_OK;
             const uint8_t *head = sTemp.data();
             const uint8_t *tail = &head[flength];
-            ssize_t offset = 0, length = 0, append = 0;
-            size_t rep = 0;
+            size_t offset = 0;
 
 //            IF_TRACE(
 //                wssize_t coffset    = sOS.position();
@@ -213,59 +213,71 @@ namespace lsp
             while (head < tail)
             {
                 // Estimate the length of match
-                length      = sBuffer.lookup(&offset, head, tail-head);
-                if (length == 0)
-                    length      = 1;
-
-                // Calc number of repeats
-                rep         = calc_repeats(&head[length], tail);
-                append      = length + lsp_min(rep, REPEAT_BUF_MAX);
+                const size_t length = sBuffer.lookup(&offset, head, tail-head);
 
                 // Estimate size of output
-                size_t est1 = (est_uint(sBuffer.size() + *head, 5, 5) + est_uint(rep, 0, 4)) * length;     // How many bits per octet
-                size_t est2 = (offset < 0) ? est1 + 1 :
-                                est_uint(offset, 5, 5) +
-                                est_uint(length - 1, 5, 5) +
-                                est_uint(rep, 0, 4);
+                const size_t est1   = est_uint(sBuffer.size() + *head, 5, 5) * length; // How many bits used to emit octet command
+                const size_t est2   = (length > 0) ? est_uint(offset, 5, 5) + est_uint(length - 1, 5, 5) : est1 + 1;    // How many bits used to encode buffer replay command
 
-                if (est1 > est2) // Prefer buffer over dictionary
+                if (est2 < est1) // Prefer buffer replay over octet emission
                 {
-                    // REPLAY
-                    // Offset
+                    const size_t repeats    = calc_repeats(&head[length], tail);
+
+//                    fprintf(hFD, "BUFFER replays=%d, off=%d, length=%d, sequence=",
+//                        int(repeats), int(offset), int(length));
+//                    for (size_t i=0; i<length; ++i)
+//                        fprintf(hFD, "%02x ", head[i]);
+//                    for (size_t i=0; i<repeats; ++i)
+//                        fprintf(hFD, "%02x ", head[length - 1]);
+//                    fprintf(hFD, "\n");
+
+                    // REPLAY BUFFER
+                    // Emit Offset
                     if ((res = emit_uint(offset, 5, 5)) != STATUS_OK)
                         break;
-                    // Length
+                    // Emit Length - 1
                     if ((res = emit_uint(length - 1, 5, 5)) != STATUS_OK)
                         break;
-                    // Repeat
-                    if ((res = emit_uint(rep, 0, 4)) != STATUS_OK)
+                    // Emit Repeat counter
+                    if ((res = emit_uint(repeats, 0, 4)) != STATUS_OK)
                         break;
 
                     // Append data to buffer
-                    sBuffer.append(head, append);
-                    head           += length + rep;
+                    sBuffer.append(head, length + lsp_min(repeats, REPEAT_BUF_MAX));
+                    head           += length + repeats;
 
 //                    IF_TRACE(
-//                        ++ replays;
+//                        ++replays;
 //                        if (rep)
-//                            ++ repeats;
-//                    )
+//                            ++repeats;
+//                    );
                 }
                 else
                 {
-                    // OCTET
-                    // Value
+                    const size_t repeats    = calc_repeats(&head[1], tail);
+
+//                    fprintf(hFD, "OCTET  replays=%d, sequence=%02x ",
+//                        int(repeats), int(*head));
+//                    for (size_t i=0; i<repeats; ++i)
+//                        fprintf(hFD, "%02x ", int(*head));
+//                    fprintf(hFD, "\n");
+
+                    // EMIT OCTET
+                    // Emit Value
                     if ((res = emit_uint(sBuffer.size() + *head, 5, 5)) != STATUS_OK)
                         break;
-                    // Repeat
-                    if ((res = emit_uint(rep, 0, 4)) != STATUS_OK)
+                    // Emit Repeat counter
+                    if ((res = emit_uint(repeats, 0, 4)) != STATUS_OK)
                         break;
 
                     // Append data to buffer
-                    sBuffer.append(head, append);
-                    head           += length + rep;
-
-//                    IF_TRACE(++octets);
+                    sBuffer.append(head, 1 + lsp_min(repeats, REPEAT_BUF_MAX));
+                    head           += 1 + repeats;
+//                    IF_TRACE(
+//                        ++octets;
+//                        if (rep)
+//                            ++repeats;
+//                    );
                 }
             }
 

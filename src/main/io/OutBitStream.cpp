@@ -234,7 +234,7 @@ namespace lsp
 
             size_t written          = 0;
 
-            #if defined(ARCH_X86)
+            #ifdef LSP_UNALIGNED_MEMORY_SAFE
                 // x86 allows unaligned access, write with machine words first
                 const umword_t *wptr    = reinterpret_cast<const umword_t *>(buf);
                 size_t blocks           = count & (~(sizeof(umword_t) - 1));
@@ -250,7 +250,7 @@ namespace lsp
                 }
 
                 buf = wptr;
-            #endif /* ARCH_X86 */
+            #endif /* LSP_UNALIGNED_MEMORY_SAFE */
 
             // Write the rest data with bytes
             const uint8_t *bptr     = reinterpret_cast<const uint8_t *>(buf);
@@ -274,7 +274,7 @@ namespace lsp
 
             size_t written          = 0;
 
-            #if defined(ARCH_X86)
+            #ifdef LSP_UNALIGNED_MEMORY_SAFE
                 // x86 allows unaligned memory access, write with machine words first
                 const umword_t *wptr    = reinterpret_cast<const umword_t *>(buf);
                 size_t blocks           = bits & (~((sizeof(umword_t) << 3) - 1));
@@ -289,7 +289,7 @@ namespace lsp
                 }
 
                 buf                     = wptr;
-            #endif
+            #endif /* LSP_UNALIGNED_MEMORY_SAFE */
 
             // Write the rest data with bytes
             const uint8_t *bptr     = reinterpret_cast<const uint8_t *>(buf);

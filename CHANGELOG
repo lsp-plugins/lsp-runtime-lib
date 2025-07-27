@@ -3,6 +3,8 @@
 *******************************************************************************
 
 === 1.0.29 ===
+* Fixed bug in determining file size for Unix-like systems.
+* Several optimizations of standard compression algorithm.
 * Fixed bug in associativity of add, sub, mul, div and bit-and expressions.
 * Added MacOS CI builds.
 

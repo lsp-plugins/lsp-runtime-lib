@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 13 мар. 2021 г.
@@ -54,9 +54,10 @@ namespace lsp
             public:
                 uint8_t    *data;       // Buffer data (2 x capacity)
                 uint32_t   *index;      // Index
-                ssize_t     head;       // Head of the buffer
-                ssize_t     tail;       // Buffer tail
-                ssize_t     cap;        // Buffer capacity
+                uint32_t   *root;       // Root index
+                uint32_t    head;       // Head of the buffer
+                uint32_t    length;     // Buffer length
+                uint32_t    cap;        // Buffer capacity
 
             public:
                 explicit cbuffer_t();
@@ -66,11 +67,45 @@ namespace lsp
                 void            destroy();
 
             public:
-                void            append(const void *src, ssize_t count);
+                /**
+                 * Append buffer to compression buffer
+                 * @param src buffer to append
+                 * @param count the length of the buffer to append
+                 */
+                void            append(const void *src, size_t count);
+
+                /**
+                 * Append single byte to compression buffer
+                 * @param v byte to append
+                 */
                 void            append(uint8_t v);
-                size_t          lookup(ssize_t *out, const void *src, size_t avail);
+
+                /**
+                 * Lookup for byte sequence inside of the buffer
+                 * @param out relative offset of the sub-sequence in the buffer to the last byte stored in the buffer
+                 * @param src byte sequence to search inside of the buffer
+                 * @param avail number of bytes available in the sequence
+                 * @return the length of sub-sequence found in the buffer
+                 */
+                size_t          lookup(size_t *out, const void *src, size_t avail);
+
+                /**
+                 * Get byte relative to the last written byte
+                 * @param offset offset relative to the last written byte
+                 * @return byte
+                 */
+                uint8_t         byte_at(size_t offset);
+
+                /**
+                 * Cleanup state of the buffer
+                 */
                 void            clear();
-                inline size_t   size() const { return tail - head; }
+
+                /**
+                 * Get size of data currently stored in the buffer
+                 * @return size of data currently stored in the buffer
+                 */
+                inline size_t   size() const { return lsp_min(length, cap); }
 
         } cbuffer_t;
 
@@ -81,9 +116,9 @@ namespace lsp
         {
             public:
                 uint8_t    *data;       // Buffer data (2 x capacity)
-                ssize_t     head;       // Head of the buffer
-                ssize_t     tail;       // Buffer tail
-                ssize_t     cap;        // Buffer capacity
+                uint32_t    length;     // Actual size of buffer
+                uint32_t    head;       // Head of the buffer
+                uint32_t    cap;        // Buffer capacity
 
             public:
                 explicit dbuffer_t();
@@ -93,14 +128,43 @@ namespace lsp
                 void            destroy();
 
             public:
+                /**
+                 * Extract data from buffer
+                 * @param dst destination pointer to store result
+                 * @param offset relative offset of the subsequence in the buffer to the last byte store in the buffer
+                 * @param count number of bytes to extract
+                 * @return status of operation (error on buffer underflow)
+                 */
+                status_t        extract(void *dst, size_t offset, size_t count);
+
+                /**
+                 * Append multiple bytes to the buffer
+                 * @param src data to append to the buffer
+                 * @param count number of bytes to append
+                 */
                 void            append(const void *src, ssize_t count);
+
+                /**
+                 * Append single byte to the buffer
+                 * @param v byt to append
+                 */
                 void            append(uint8_t v);
+
+                /**
+                 * Clear buffer state
+                 */
                 void            clear();
-                inline size_t   size() const { return tail - head; }
+
+                /**
+                 * Get size of data currently stored in the buffer
+                 * @return size of data currently stored in the buffer
+                 */
+                inline size_t   size() const { return length; }
 
         } duffer_t;
-    }
-}
+
+    } /* namespace resource */
+} /* namespace lsp */
 
 
 
