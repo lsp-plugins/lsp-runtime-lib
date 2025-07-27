@@ -90,6 +90,13 @@ namespace lsp
                 size_t          lookup(size_t *out, const void *src, size_t avail);
 
                 /**
+                 * Get byte relative to the last written byte
+                 * @param offset offset relative to the last written byte
+                 * @return byte
+                 */
+                uint8_t         byte_at(size_t offset);
+
+                /**
                  * Cleanup state of the buffer
                  */
                 void            clear();

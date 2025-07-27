@@ -50,6 +50,7 @@ namespace lsp
                 size_t                          nSegment;       // Start of data segment
                 size_t                          nOffset;        // Current offset in segment
                 cbuffer_t                       sBuffer;        // Buffer for caching
+//                FILE                           *hFD;
 
             protected:
                 status_t            alloc_entry(raw_resource_t **r, io::Path *path, resource_type_t type);

@@ -178,6 +178,11 @@ namespace lsp
             return len;
         }
 
+        uint8_t cbuffer_t::byte_at(size_t offset)
+        {
+            return (offset < cap) ? data[(head + cap - offset - 1) % cap] : 0;
+        }
+
         void cbuffer_t::clear()
         {
             head            = 0;
