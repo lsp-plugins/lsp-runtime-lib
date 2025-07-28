@@ -44,13 +44,15 @@ namespace lsp
             { 0x3b, 6 },    // CEV_NORMAL2
             { 0x01, 3 },    // CEV_NORMAL3
             { 0x7b, 7 },    // CEV_NORMAL4
-            { 0x08, 4 },    // CEV_TEXCOORD1
-            { 0x09, 4 },    // CEV_TEXCOORD2
-            { 0x0a, 4 },    // CEV_TEXCOORD3
+            { 0xf8, 8 },    // CEV_TEXCOORD1
+            { 0x08, 4 },    // CEV_TEXCOORD2
+            { 0xf9, 8 },    // CEV_TEXCOORD3
             { 0x03, 3 },    // CEV_FACE
             { 0x18, 5 },    // CEV_FACE_T
             { 0x02, 3 },    // CEV_FACE_N
+            { 0x09, 4 },    // CEV_FACE_NF
             { 0x19, 5 },    // CEV_FACE_TN
+            { 0x0a, 4 },    // CEV_FACE_TNF
             { 0x1b, 5 },    // CEV_LINE
             { 0x38, 6 },    // CEV_LINE_T
             { 0x39, 6 },    // CEV_POINT
@@ -511,6 +513,15 @@ namespace lsp
             return false;
         }
 
+        bool Compressor::has_equal_indices(const index_t *v, size_t count)
+        {
+            for (size_t i=0; i<count; ++i)
+            if (v[i] != v[0])
+                return false;
+
+            return true;
+        }
+
         status_t Compressor::begin_object(const char *name)
         {
             if ((pOut == NULL) || (vFloatBuf == NULL))
@@ -653,11 +664,14 @@ namespace lsp
             if ((pOut == NULL) || (vFloatBuf == NULL))
                 return STATUS_BAD_STATE;
 
-            const bool has_normals  = has_nonempty_index(vn, n);
+            const bool equal_normals= has_equal_indices(vn, n);
+            const bool has_normals  = (vn[0] >= 0) || (!equal_normals);
             const bool has_texcoord = has_nonempty_index(vt, n);
 
-            const uint32_t ev       = (has_texcoord) ? ((has_normals) ? CEV_FACE_TN : CEV_FACE_T) :
-                                      ((has_normals) ? CEV_FACE_N : CEV_FACE);
+            const compressed_event_type_t ev =
+                (has_texcoord)
+                    ? ((has_normals) ? ((equal_normals) ? CEV_FACE_TNF : CEV_FACE_TN) : CEV_FACE_T)
+                    : ((has_normals) ? ((equal_normals) ? CEV_FACE_NF : CEV_FACE_N) : CEV_FACE);
 
             status_t res            = write_event(ev);
             if (res == STATUS_OK)
@@ -667,7 +681,12 @@ namespace lsp
             if ((res == STATUS_OK) && (has_texcoord))
                 res                     = write_indices(vt, n);
             if ((res == STATUS_OK) && (has_normals))
-                res                     = write_indices(vn, n);
+            {
+                if (equal_normals)
+                    res                     = write_varint_icount(n); // Write the fill index
+                else
+                    res                     = write_indices(vn, n);
+            }
 
             return res;
         }

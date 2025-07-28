@@ -59,7 +59,7 @@ namespace lsp
                 status_t            parse_pvertex(IObjHandler *handler, size_t coords);
                 status_t            parse_normal(IObjHandler *handler, size_t coords);
                 status_t            parse_texcoord(IObjHandler *handler, size_t coords);
-                status_t            parse_face(IObjHandler *handler, bool texcoords, bool normals);
+                status_t            parse_face(IObjHandler *handler, bool texcoords, bool normals, bool fill);
                 status_t            parse_line(IObjHandler *handler, bool texcoords);
                 status_t            parse_points(IObjHandler *handler);
                 status_t            parse_object(IObjHandler *handler);

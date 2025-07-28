@@ -66,6 +66,7 @@ namespace lsp
                 inline status_t     write_event(uint32_t event);
                 inline status_t     write_utf8(const char *text);
                 static bool         has_nonempty_index(const index_t *v, size_t count);
+                static bool         has_equal_indices(const index_t *v, size_t count);
 
             public:
                 Compressor();

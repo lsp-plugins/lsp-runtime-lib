@@ -35,9 +35,9 @@ namespace lsp
             CEV_FACE_N,     // 0x02
             CEV_FACE,       // 0x03
 
-            CEV_TEXCOORD1,  // 0x08
-            CEV_TEXCOORD2,  // 0x09
-            CEV_TEXCOORD3,  // 0x0a
+            CEV_TEXCOORD2,  // 0x08
+            CEV_FACE_NF,    // 0x09
+            CEV_FACE_TNF,   // 0x0a
             CEV_OBJECT,     // 0x0b
 
             CEV_FACE_T,     // 0x18
@@ -55,8 +55,8 @@ namespace lsp
             CEV_PVERTEX4,   // 0x7a
             CEV_NORMAL4,    // 0x7b
 
-            CEV_EOF,        // 0xf8
-            CEV_EOF,        // 0xf9
+            CEV_TEXCOORD1,  // 0xf8
+            CEV_TEXCOORD3,  // 0xf9
             CEV_EOF,        // 0xfa
             CEV_EOF,        // 0xfb
         };
@@ -478,7 +478,7 @@ namespace lsp
             return res;
         }
 
-        status_t Decompressor::parse_face(IObjHandler *handler, bool texcoords, bool normals)
+        status_t Decompressor::parse_face(IObjHandler *handler, bool texcoords, bool normals, bool fill)
         {
             size_t count    = 0;
             status_t res    = read_varint_icount(&count);
@@ -494,10 +494,24 @@ namespace lsp
                 return res;
             if ((res = read_indices(&vv[count], count, texcoords)) != STATUS_OK)
                 return res;
-            if ((res = read_indices(&vv[count << 1], count, normals)) != STATUS_OK)
-                return res;
 
-            return handler->add_face(vv, &vv[count], &vv[count << 1], count);
+            index_t *vn     = &vv[count << 1];
+            if (fill)
+            {
+                size_t index    = 0;
+                if ((res = read_varint_icount(&index)) != STATUS_OK)
+                    return res;
+                for (size_t i=0; i<count; ++i)
+                    vn[i]           = index;
+            }
+            else
+            {
+                if ((res = read_indices(vn, count, normals)) != STATUS_OK)
+                    return res;
+            }
+
+
+            return handler->add_face(vv, &vv[count], vn, count);
         }
 
         status_t Decompressor::parse_line(IObjHandler *handler, bool texcoords)
@@ -604,16 +618,22 @@ namespace lsp
                         break;
 
                     case CEV_FACE:
-                        res     = parse_face(handler, false, false);
+                        res     = parse_face(handler, false, false, false);
                         break;
                     case CEV_FACE_T:
-                        res     = parse_face(handler, true, false);
+                        res     = parse_face(handler, true, false, false);
                         break;
                     case CEV_FACE_N:
-                        res     = parse_face(handler, false, true);
+                        res     = parse_face(handler, false, true, false);
+                        break;
+                    case CEV_FACE_NF:
+                        res     = parse_face(handler, false, true, true);
                         break;
                     case CEV_FACE_TN:
-                        res     = parse_face(handler, true, true);
+                        res     = parse_face(handler, true, true, false);
+                        break;
+                    case CEV_FACE_TNF:
+                        res     = parse_face(handler, true, true, true);
                         break;
 
                     case CEV_LINE:
