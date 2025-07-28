@@ -376,7 +376,7 @@ namespace lsp
         status_t Compressor::write_varint_icount(size_t value)
         {
             size_t bits = 3;
-            size_t max  = 1 << (bits + 1);
+            size_t max  = 1 << bits;
             do
             {
                 const size_t b      = (value >= max) ? max | (value & (max - 1)) : value;
@@ -443,25 +443,23 @@ namespace lsp
 
             // Step 2
             // Find nearest relative float
-            int32_t delta       = 0x7fffffff;
+            uint32_t delta      = 0x7fffffff;
             index               = -1;
             for (size_t i=0; i<nFloatSize; ++i)
             {
-                const uint32_t idx  = (base - i) % nFloatCap;
-                const int32_t d     = vIntBuf[idx] - image;
-                if ((d <= 0x1ffff) && (d >= -0x20000) && (d < delta))
+                const int32_t diff  = image - vIntBuf[(base - i) % nFloatCap];
+                if ((diff > 0x1ffff) || (diff < -0x20000))
+                    continue;
+
+                // Convert to zigzag representation and compare with previous value for minimization
+                const uint32_t dval = zigzag_encode(diff);
+                if (dval < delta)
                 {
                     index               = i;
-                    delta               = d;
+                    delta               = dval;
                     break;
                 }
             }
-
-            // Push item to buffer
-            vFloatBuf[nFloatHead]   = value;
-            nFloatHead              = (nFloatHead + 1) % nFloatCap;
-            if (nFloatSize < (nFloatCap - 2))
-                ++nFloatSize;
 
             // Emit new floating-point value if we can do an incremental coding
             status_t res;
@@ -471,7 +469,7 @@ namespace lsp
                 if (res == STATUS_OK)
                     res     = pOut->writev(index, nFloatBits);  // Write index of original floating-point
                 if (res == STATUS_OK)
-                    res     = write_varint(zigzag_encode(delta) & 0x3ffff);     // Write delta
+                    res     = write_varint(delta);              // Write delta
             }
             else
             {
@@ -479,6 +477,12 @@ namespace lsp
                 if (res == STATUS_OK)
                     res     = pOut->writev(CPU_TO_LE(image));
             }
+
+            // Push item to buffer
+            vFloatBuf[nFloatHead]   = value;
+            nFloatHead              = (nFloatHead + 1) % nFloatCap;
+            if (nFloatSize < (nFloatCap - 2))
+                ++nFloatSize;
 
             return res;
         }

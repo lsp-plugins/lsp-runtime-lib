@@ -66,7 +66,7 @@ namespace lsp
                 status_t            read_float(float *dst);
                 status_t            read_varint(size_t *dst);
                 status_t            read_varint_icount(size_t *dst);
-                status_t            read_indices(lltl::darray<index_t> *dst, size_t count, bool read);
+                status_t            read_indices(index_t *dst, size_t count, bool read);
                 status_t            read_utf8(LSPString *dst);
 
             public:

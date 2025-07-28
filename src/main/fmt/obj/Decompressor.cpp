@@ -72,6 +72,11 @@ namespace lsp
             return cvt.f32;
         }
 
+        static inline int32_t zigzag_decode(uint32_t value)
+        {
+            return (int32_t(value) >> 1) ^ -(int32_t(value) & 1);
+        }
+
         Decompressor::Decompressor()
         {
             vFloatBuf   = NULL;
@@ -160,9 +165,11 @@ namespace lsp
             compressed_header_t hdr;
 
             // Read header
-            status_t res = sStream.read_fully(&hdr, sizeof(compressed_header_t));
-            if (res != STATUS_OK)
-                return res;
+            ssize_t nread = sStream.read_fully(&hdr, sizeof(compressed_header_t));
+            if (nread < 0)
+                return status_t(-nread);
+            else if (nread != sizeof(compressed_header_t))
+                return STATUS_BAD_FORMAT;
 
             // Validate header
             if (hdr.signature != COMPRESSED_SIGNATURE)
@@ -197,47 +204,53 @@ namespace lsp
             uint32_t cmd = 0;
 
             // Check if command has been repeated
-            status_t res = sStream.readb(&b);
-            if (res != STATUS_OK)
-                return res;
+            ssize_t nread = sStream.readb(&b);
+            if (nread != 1)
+                return (nread < 0) ? status_t(-nread) : STATUS_CORRUPTED;
+
             if (b)
             {
+                if (nLastEvent == compressed_event_type_t(-1))
+                    return STATUS_CORRUPTED;
+
                 *event  = nLastEvent;
                 return STATUS_OK;
             }
 
             // Determine group of commands
-            while ((res = sStream.readb(&b)) == STATUS_OK)
+            while (true)
             {
-                sStream.readb(&b);
+                nread = sStream.readb(&b);
+                if (nread != 1)
+                    return (nread < 0) ? status_t(-nread) : STATUS_CORRUPTED;
                 if (!b)
                     break;
                 ++group;
             }
 
             // Read subcommand identifier
-            if (res == STATUS_OK)
-                res = sStream.readv(&cmd, 2);
-            if (res == STATUS_OK)
-            {
-                // Convert subcommand + group to event code
-                cmd     = (group << 2) | cmd;
-                if (cmd >= sizeof(event_codes))
-                    return STATUS_CORRUPTED;
+            nread = sStream.readv(&cmd, 2);
+            if (nread != 2)
+                return (nread < 0) ? status_t(-nread) : STATUS_CORRUPTED;
 
-                *event  = compressed_event_type_t(event_codes[cmd]);
-            }
+            // Convert subcommand + group to event code
+            cmd     = (group << 2) | cmd;
+            if (cmd >= sizeof(event_codes))
+                return STATUS_CORRUPTED;
 
-            return res;
+            nLastEvent  = compressed_event_type_t(event_codes[cmd]);
+            *event      = nLastEvent;
+
+            return STATUS_OK;
         }
 
         status_t Decompressor::read_float(float *dst)
         {
             // Read index
             uint32_t index = 0;
-            status_t res = sStream.readv(&index, nFloatBits);
-            if (res != STATUS_OK)
-                return res;
+            ssize_t nread = sStream.readv(&index, nFloatBits);
+            if (nread != ssize_t(nFloatBits))
+                return (nread < 0) ? status_t(-nread) : STATUS_CORRUPTED;
 
             // Analyze index
             const uint32_t base = nFloatHead + nFloatCap - 1;
@@ -259,15 +272,18 @@ namespace lsp
             if (index == nFloatSize)
             {
                 // Read index of base float
-                if ((res = sStream.readv(&index, nFloatBits)) != STATUS_OK)
-                    return res;
+                nread                   = sStream.readv(&index, nFloatBits);
+                if (nread != ssize_t(nFloatBits))
+                    return (nread < 0) ? status_t(-nread) : STATUS_CORRUPTED;
+
                 // Read delta
                 size_t delta;
-                if ((res = read_varint(&delta)) != STATUS_OK)
+                status_t res            = read_varint(&delta);
+                if (res != STATUS_OK)
                     return res;
-                const int32_t dvalue    = (int32_t(delta) >> 1) ^ -(int32_t(delta) & 1); // Zig-zag reverse conversion
 
                 // Compute floating-point value
+                int32_t dvalue          = zigzag_decode(delta);
                 const int32_t image     = vIntBuf[(base - index) % nFloatCap] + dvalue;
                 value                   = bin_to_float(image);
             }
@@ -275,16 +291,20 @@ namespace lsp
             {
                 // Read just the floating-point value
                 int32_t image;
-                if ((res = sStream.readv(&image)) != STATUS_OK)
-                    return res;
+                nread                   = sStream.readv(&image);
+                if (nread != ssize_t(sizeof(image) * 8))
+                    return (nread < 0) ? status_t(-nread) : STATUS_CORRUPTED;
+
                 value                   = bin_to_float(LE_TO_CPU(image));
             }
 
             // Push item to buffer and return result
             vFloatBuf[nFloatHead]   = value;
             nFloatHead              = (nFloatHead + 1) % nFloatCap;
-            nFloatSize              = lsp_min(nFloatSize + 1, nFloatCap - 2);
+            if (nFloatSize < (nFloatCap - 2))
+                ++nFloatSize;
 
+            // Return value
             *dst                    = value;
 
             return STATUS_OK;
@@ -293,15 +313,17 @@ namespace lsp
         status_t Decompressor::read_varint(size_t *dst)
         {
             size_t value        = 0;
+            size_t shift        = 0;
             uint8_t b;
 
             do
             {
-                status_t res        = sStream.readv(&b, 7);
-                if (res != STATUS_OK)
-                    return res;
+                ssize_t nread       = sStream.readv(&b, 7);
+                if (nread != 7)
+                    return (nread < 0) ? status_t(-nread) : STATUS_CORRUPTED;
 
-                value               = (value << 6) | (b & 0x3f);
+                value              |= size_t(b & 0x3f) << shift;
+                shift              += 6;
             } while (b & 0x40);
 
             *dst                = value;
@@ -312,40 +334,82 @@ namespace lsp
         status_t Decompressor::read_varint_icount(size_t *dst)
         {
             size_t bits         = 3;
-            size_t max          = 1 << (bits + 1);
+            size_t max          = 1 << bits;
             size_t value        = 0;
             size_t b            = 0;
+            size_t shift        = 0;
 
             while (true)
             {
-                status_t res        = sStream.readv(fixed_int(&b), bits + 1);
-                if (res != STATUS_OK)
-                    return res;
+                ssize_t nread       = sStream.readv(fixed_int(&b), bits + 1);
+                if (nread != ssize_t(bits + 1))
+                    return (nread < 0) ? status_t(-nread) : STATUS_CORRUPTED;
 
                 // Decode value
-                value               = (value << bits) | (b & (max - 1));
-                if (!(value & max))
+                value              |= (b & (max - 1)) << shift;
+                if (!(b & max))
                     break;
 
                 // Update bit count
+                shift              += bits;
                 bits               += 2;
                 max               <<= 2;
-            } while (value > 0);
+            }
 
             *dst                = value;
 
             return STATUS_OK;
         }
 
-        status_t Decompressor::read_indices(lltl::darray<index_t> *dst, size_t count, bool read)
+        status_t Decompressor::read_indices(index_t *dst, size_t count, bool read)
         {
-            // TODO
+            if (!read)
+            {
+                for (size_t i=0; i<count; ++i)
+                    dst[i]          = -1;
+                return STATUS_OK;
+            }
+
+            size_t value    = 0;
+            status_t res    = read_varint_icount(&value);
+            if (res != STATUS_OK)
+                return res;
+            dst[0]          = zigzag_decode(value);
+
+            for (size_t i=1; i<count; ++i)
+            {
+                status_t res            = read_varint_icount(&value);
+                if (res != STATUS_OK)
+                    return res;
+                dst[i]                  = dst[0] + zigzag_decode(value);
+            }
+
             return STATUS_OK;
         }
 
         status_t Decompressor::read_utf8(LSPString *dst)
         {
-            // TODO
+            // Read length of the string
+            size_t length   = 0;
+            status_t res    = read_varint(&length);
+            if (res != STATUS_OK)
+                return res;
+
+            // Allocate contents for the string data
+            char *buf       = static_cast<char *>(malloc(length * sizeof(char)));
+            if (buf == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally { free(buf); };
+
+            // Read UTF-8 sequence
+            ssize_t nread = sStream.read_fully(buf, length);
+            if (nread != ssize_t(length))
+                return (nread < 0) ? status_t(-nread) : STATUS_CORRUPTED;
+
+            // Fill string with UTF-8 sequence
+            if (!dst->set_utf8(buf, length))
+                return STATUS_NO_MEM;
+
             return STATUS_OK;
         }
 
@@ -417,7 +481,7 @@ namespace lsp
         status_t Decompressor::parse_face(IObjHandler *handler, bool texcoords, bool normals)
         {
             size_t count    = 0;
-            status_t res    = read_varint(&count);
+            status_t res    = read_varint_icount(&count);
             if (res != STATUS_OK)
                 return res;
 
@@ -425,21 +489,21 @@ namespace lsp
             if (!data.reserve(count * 3))
                 return STATUS_NO_MEM;
 
-            if ((res = read_indices(&data, count, true)) != STATUS_OK)
+            index_t *vv             = data.array();
+            if ((res = read_indices(vv, count, true)) != STATUS_OK)
                 return res;
-            if ((res = read_indices(&data, count, texcoords)) != STATUS_OK)
+            if ((res = read_indices(&vv[count], count, texcoords)) != STATUS_OK)
                 return res;
-            if ((res = read_indices(&data, count, normals)) != STATUS_OK)
+            if ((res = read_indices(&vv[count << 1], count, normals)) != STATUS_OK)
                 return res;
 
-            const index_t *vv = data.array();
             return handler->add_face(vv, &vv[count], &vv[count << 1], count);
         }
 
         status_t Decompressor::parse_line(IObjHandler *handler, bool texcoords)
         {
             size_t count    = 0;
-            status_t res    = read_varint(&count);
+            status_t res    = read_varint_icount(&count);
             if (res != STATUS_OK)
                 return res;
 
@@ -447,19 +511,19 @@ namespace lsp
             if (!data.reserve(count * 2))
                 return STATUS_NO_MEM;
 
-            if ((res = read_indices(&data, count, true)) != STATUS_OK)
+            index_t *vv             = data.array();
+            if ((res = read_indices(vv, count, true)) != STATUS_OK)
                 return res;
-            if ((res = read_indices(&data, count, texcoords)) != STATUS_OK)
+            if ((res = read_indices(&vv[count], count, texcoords)) != STATUS_OK)
                 return res;
 
-            const index_t *vv = data.array();
             return handler->add_line(vv, &vv[count], count);
         }
 
         status_t Decompressor::parse_points(IObjHandler *handler)
         {
             size_t count    = 0;
-            status_t res    = read_varint(&count);
+            status_t res    = read_varint_icount(&count);
             if (res != STATUS_OK)
                 return res;
 
@@ -467,10 +531,11 @@ namespace lsp
             if (!data.reserve(count))
                 return STATUS_NO_MEM;
 
-            if ((res = read_indices(&data, count, true)) != STATUS_OK)
+            index_t *vv             = data.array();
+            if ((res = read_indices(vv, count, true)) != STATUS_OK)
                 return res;
 
-            return handler->add_points(data.array(), count);
+            return handler->add_points(vv, count);
         }
 
         status_t Decompressor::parse_object(IObjHandler *handler)
