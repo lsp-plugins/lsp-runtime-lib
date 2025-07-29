@@ -484,8 +484,10 @@ UTEST_BEGIN("runtime.fmt.obj", compressor)
         printf("Validating result...\n");
         ObjRecorder osrc, odst;
 
-        UTEST_ASSERT(read_obj_file(&osrc, &src) == STATUS_OK);
-        UTEST_ASSERT(read_compressed_obj_file(&odst, &dst) == STATUS_OK);
+        status_t res = read_obj_file(&osrc, &src);
+        UTEST_ASSERT_MSG(res == STATUS_OK, "read_obj_file failed with code=%d", int(res));
+        res = read_compressed_obj_file(&odst, &dst);
+        UTEST_ASSERT_MSG(res == STATUS_OK, "read_compressed_obj_file failed with code=%d", int(res));
         ssize_t diff = compare(&osrc, &odst);
         UTEST_ASSERT_MSG(diff < 0, "Source and destination records #%d differ", int(diff));
     }

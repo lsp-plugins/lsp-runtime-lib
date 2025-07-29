@@ -277,7 +277,7 @@ namespace lsp
                     return (nread < 0) ? status_t(-nread) : STATUS_CORRUPTED;
 
                 // Read delta
-                size_t delta;
+                size_t delta            = 0;
                 status_t res            = read_varint(&delta);
                 if (res != STATUS_OK)
                     return res;
