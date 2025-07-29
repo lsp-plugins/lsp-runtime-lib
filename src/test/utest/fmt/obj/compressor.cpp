@@ -217,6 +217,13 @@ namespace lsp
                     memcpy(call->indices.t, vt, n * sizeof(obj::index_t));
                     memcpy(call->indices.n, vn, n * sizeof(obj::index_t));
 
+                    printf("#%04d: f ", int(vCalls.size() - 1));
+                    for (size_t i=0; i<n; ++i)
+                    {
+                        printf("%d/%d/%d ", int(vv[i]), int(vt[i]), int(vn[i]));
+                    }
+                    printf("\n");
+
                     return STATUS_OK;
                 }
 
@@ -370,7 +377,7 @@ UTEST_BEGIN("runtime.fmt.obj", compressor)
                             int(i), int(ca->indices.count), int(cb->indices.count));
                         return i;
                     }
-                    for (size_t j=0; i<ca->indices.count; ++i)
+                    for (size_t j=0; j<ca->indices.count; ++j)
                     {
                         if (ca->indices.v[j] != cb->indices.v[j])
                         {
@@ -379,7 +386,7 @@ UTEST_BEGIN("runtime.fmt.obj", compressor)
                             return i;
                         }
                     }
-                    for (size_t j=0; i<ca->indices.count; ++i)
+                    for (size_t j=0; j<ca->indices.count; ++j)
                     {
                         if (ca->indices.t[j] != cb->indices.t[j])
                         {
@@ -388,7 +395,7 @@ UTEST_BEGIN("runtime.fmt.obj", compressor)
                             return i;
                         }
                     }
-                    for (size_t j=0; i<ca->indices.count; ++i)
+                    for (size_t j=0; j<ca->indices.count; ++j)
                     {
                         if (ca->indices.n[j] != cb->indices.n[j])
                         {
@@ -406,7 +413,7 @@ UTEST_BEGIN("runtime.fmt.obj", compressor)
                             int(i), int(ca->indices.count), int(cb->indices.count));
                         return i;
                     }
-                    for (size_t j=0; i<ca->indices.count; ++i)
+                    for (size_t j=0; j<ca->indices.count; ++j)
                     {
                         if (ca->indices.v[j] != cb->indices.v[j])
                         {
@@ -425,7 +432,7 @@ UTEST_BEGIN("runtime.fmt.obj", compressor)
                         return i;
                     }
 
-                    for (size_t j=0; i<ca->indices.count; ++i)
+                    for (size_t j=0; j<ca->indices.count; ++j)
                     {
                         if (ca->indices.v[j] != cb->indices.v[j])
                         {
@@ -434,7 +441,7 @@ UTEST_BEGIN("runtime.fmt.obj", compressor)
                             return i;
                         }
                     }
-                    for (size_t j=0; i<ca->indices.count; ++i)
+                    for (size_t j=0; j<ca->indices.count; ++j)
                     {
                         if (ca->indices.t[j] != cb->indices.t[j])
                         {
@@ -494,14 +501,12 @@ UTEST_BEGIN("runtime.fmt.obj", compressor)
 
     UTEST_MAIN
     {
-        printf("Testing compression of complicated OBJ file...\n");
+        printf("Testing compression of complicated OBJ files...\n");
         test_compress_obj_file("fmt/obj/parking.obj", "parking");
-        printf("Testing compression of complicated OBJ file...\n");
         test_compress_obj_file("fmt/obj/coliseum.obj", "coliseum");
-        printf("Testing compression of complicated OBJ file...\n");
         test_compress_obj_file("fmt/obj/forest.obj", "forest");
-        printf("Testing compression of complicated OBJ file...\n");
         test_compress_obj_file("fmt/obj/cooling-tower.obj", "cooling-tower");
+        test_compress_obj_file("fmt/obj/church.obj", "church");
     }
 
 UTEST_END

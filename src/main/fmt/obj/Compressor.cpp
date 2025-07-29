@@ -683,7 +683,7 @@ namespace lsp
             if ((res == STATUS_OK) && (has_normals))
             {
                 if (equal_normals)
-                    res                     = write_varint_icount(n); // Write the fill index
+                    res                     = write_varint_icount(vn[0]); // Write the fill index
                 else
                     res                     = write_indices(vn, n);
             }

@@ -490,12 +490,14 @@ namespace lsp
                 return STATUS_NO_MEM;
 
             index_t *vv             = data.array();
+            index_t *vt             = &vv[count];
+            index_t *vn             = &vt[count];
+
             if ((res = read_indices(vv, count, true)) != STATUS_OK)
                 return res;
-            if ((res = read_indices(&vv[count], count, texcoords)) != STATUS_OK)
+            if ((res = read_indices(vt, count, texcoords)) != STATUS_OK)
                 return res;
 
-            index_t *vn     = &vv[count << 1];
             if (fill)
             {
                 size_t index    = 0;
@@ -511,7 +513,7 @@ namespace lsp
             }
 
 
-            return handler->add_face(vv, &vv[count], vn, count);
+            return handler->add_face(vv, vn, vt, count);
         }
 
         status_t Decompressor::parse_line(IObjHandler *handler, bool texcoords)
@@ -526,12 +528,13 @@ namespace lsp
                 return STATUS_NO_MEM;
 
             index_t *vv             = data.array();
+            index_t *vt             = &vv[count];
             if ((res = read_indices(vv, count, true)) != STATUS_OK)
                 return res;
-            if ((res = read_indices(&vv[count], count, texcoords)) != STATUS_OK)
+            if ((res = read_indices(vt, count, texcoords)) != STATUS_OK)
                 return res;
 
-            return handler->add_line(vv, &vv[count], count);
+            return handler->add_line(vv, vt, count);
         }
 
         status_t Decompressor::parse_points(IObjHandler *handler)
