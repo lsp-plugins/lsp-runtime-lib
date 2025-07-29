@@ -36,7 +36,7 @@ namespace lsp
             protected:
                 PullParser      sParser;
 
-            public:
+            protected:
                 status_t parse_document(IObjHandler *handler);
 
             public:
