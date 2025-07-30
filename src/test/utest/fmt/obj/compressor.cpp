@@ -217,13 +217,6 @@ namespace lsp
                     memcpy(call->indices.t, vt, n * sizeof(obj::index_t));
                     memcpy(call->indices.n, vn, n * sizeof(obj::index_t));
 
-                    printf("#%04d: f ", int(vCalls.size() - 1));
-                    for (size_t i=0; i<n; ++i)
-                    {
-                        printf("%d/%d/%d ", int(vv[i]), int(vt[i]), int(vn[i]));
-                    }
-                    printf("\n");
-
                     return STATUS_OK;
                 }
 

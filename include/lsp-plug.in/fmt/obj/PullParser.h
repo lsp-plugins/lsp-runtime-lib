@@ -49,7 +49,6 @@ namespace lsp
                 lsp_wchar_t        *pBuffer;        // Buffer for character data
                 size_t              nBufOff;        // Buffer offset
                 size_t              nBufLen;        // Buffer length
-                bool                bSkipLF;        // Skip line-feed character
                 size_t              nLines;         // Number of lines read
 
                 event_t             sEvent;
