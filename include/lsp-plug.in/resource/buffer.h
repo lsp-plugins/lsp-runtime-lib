@@ -142,7 +142,7 @@ namespace lsp
                  * @param src data to append to the buffer
                  * @param count number of bytes to append
                  */
-                void            append(const void *src, ssize_t count);
+                void            append(const void *src, size_t count);
 
                 /**
                  * Append single byte to the buffer

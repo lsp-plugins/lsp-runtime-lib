@@ -233,7 +233,7 @@ namespace lsp
             cap             = 0;
         }
 
-        void dbuffer_t::append(const void *src, ssize_t count)
+        void dbuffer_t::append(const void *src, size_t count)
         {
             const uint8_t *v    = static_cast<const uint8_t *>(src);
             if (count >= cap)
