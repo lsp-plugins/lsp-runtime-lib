@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.30 ===
+
+
 === 1.0.29 ===
 * Implemented simple compressor for Wavefront OBJ files.
 * Fixed bug in determining file size for Unix-like systems.
