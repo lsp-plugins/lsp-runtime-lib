@@ -41,7 +41,6 @@ namespace lsp
             nBufOff         = 0;
             nBufLen         = 0;
             nLines          = 0;
-            bSkipLF         = false;
             nVx             = 0;
             nParVx          = 0;
             nTexVx          = 0;
@@ -210,7 +209,6 @@ namespace lsp
             pBuffer         = b;
             nBufOff         = 0;
             nBufLen         = 0;
-            bSkipLF         = false;
             nLines          = 0;
             nVx             = 0;
             nParVx          = 0;
@@ -234,7 +232,6 @@ namespace lsp
             nBufOff         = 0;
             nBufLen         = 0;
             nLines          = 0;
-            bSkipLF         = false;
 
             // Release input sequence
             if (pIn != NULL)
@@ -351,27 +348,13 @@ namespace lsp
                     nBufOff     = 0;
                 }
 
-                // Scan for line ending
-                if (bSkipLF)
-                {
-                    bSkipLF = false;
-                    if (pBuffer[nBufOff] == '\r')
-                    {
-                        if ((++nBufOff) >= nBufLen)
-                            continue;
-                    }
-                }
-
                 // Scan for line ending character
                 size_t tail = nBufOff;
                 while (tail < nBufLen)
                 {
                     lsp_wchar_t ch = pBuffer[tail++];
                     if (ch == '\n') // Found!
-                    {
-                        bSkipLF = true;
                         break;
-                    }
                 }
 
                 // Append data to string and update buffer state
@@ -383,6 +366,8 @@ namespace lsp
                 if (sLine.last() != '\n') // Not end of line?
                     continue;
                 sLine.set_length(--len);
+                if (sLine.last() == '\r') // Remove carriage-return symbol if it is present
+                    sLine.set_length(--len);
 
                 // Compute number of terminating '\\' characters
                 ssize_t slashes = 0, xoff = len-1;

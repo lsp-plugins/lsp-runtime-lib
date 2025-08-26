@@ -23,13 +23,13 @@
 #include <lsp-plug.in/io/OutFileStream.h>
 #include <lsp-plug.in/common/endian.h>
 
-#define BITSTREAM_BUFSZ     (sizeof(umword_t) * 8)
-#define BITSTREAM_BUFSZ32   (sizeof(uint32_t) * 8)
-
 namespace lsp
 {
     namespace io
     {
+        static constexpr size_t BITSTREAM_BUFSZ     = sizeof(umword_t) * 8;
+        static constexpr size_t BITSTREAM_BUFSZ32   = sizeof(uint32_t) * 8;
+
         OutBitStream::OutBitStream()
         {
             pOS         = NULL;
@@ -234,23 +234,23 @@ namespace lsp
 
             size_t written          = 0;
 
-            #if defined(ARCH_X86)
-                // x86 allows unaligned access, write with machine words first
-                const umword_t *wptr    = reinterpret_cast<const umword_t *>(buf);
-                size_t blocks           = count & (~(sizeof(umword_t) - 1));
+        #ifdef LSP_UNALIGNED_MEMORY_SAFE
+            // x86 allows unaligned access, write with machine words first
+            const umword_t *wptr    = reinterpret_cast<const umword_t *>(buf);
+            size_t blocks           = count & (~(sizeof(umword_t) - 1));
 
-                for ( ; written < blocks; written += sizeof(umword_t))
+            for ( ; written < blocks; written += sizeof(umword_t))
+            {
+                status_t res            = writev(BE_TO_CPU(*(wptr++)), sizeof(umword_t)*8);
+                if (res != STATUS_OK)
                 {
-                    status_t res            = writev(BE_TO_CPU(*(wptr++)), sizeof(umword_t)*8);
-                    if (res != STATUS_OK)
-                    {
-                        set_error(res);
-                        return (written <= 0) ? -res : written;
-                    }
+                    set_error(res);
+                    return (written <= 0) ? -res : written;
                 }
+            }
 
-                buf = wptr;
-            #endif /* ARCH_X86 */
+            buf = wptr;
+        #endif /* LSP_UNALIGNED_MEMORY_SAFE */
 
             // Write the rest data with bytes
             const uint8_t *bptr     = reinterpret_cast<const uint8_t *>(buf);
@@ -274,22 +274,22 @@ namespace lsp
 
             size_t written          = 0;
 
-            #if defined(ARCH_X86)
-                // x86 allows unaligned memory access, write with machine words first
-                const umword_t *wptr    = reinterpret_cast<const umword_t *>(buf);
-                size_t blocks           = bits & (~((sizeof(umword_t) << 3) - 1));
-                for ( ; written < blocks; written += sizeof(umword_t)*8)
+        #ifdef LSP_UNALIGNED_MEMORY_SAFE
+            // x86 allows unaligned memory access, write with machine words first
+            const umword_t *wptr    = reinterpret_cast<const umword_t *>(buf);
+            size_t blocks           = bits & (~((sizeof(umword_t) << 3) - 1));
+            for ( ; written < blocks; written += sizeof(umword_t)*8)
+            {
+                status_t res            = writev(BE_TO_CPU(*(wptr++)), sizeof(umword_t)*8);
+                if (res != STATUS_OK)
                 {
-                    status_t res            = writev(BE_TO_CPU(*(wptr++)), sizeof(umword_t)*8);
-                    if (res != STATUS_OK)
-                    {
-                        set_error(res);
-                        return (written <= 0) ? -res : written;
-                    }
+                    set_error(res);
+                    return (written <= 0) ? -res : written;
                 }
+            }
 
-                buf                     = wptr;
-            #endif
+            buf                     = wptr;
+        #endif /* LSP_UNALIGNED_MEMORY_SAFE */
 
             // Write the rest data with bytes
             const uint8_t *bptr     = reinterpret_cast<const uint8_t *>(buf);
@@ -389,7 +389,7 @@ namespace lsp
                 }
 
                 size_t avail    = lsp_min(bits, BITSTREAM_BUFSZ - nBits);
-                nBuffer         = (nBuffer << avail) | (value >> (BITSTREAM_BUFSZ32 - avail));
+                nBuffer         = (avail < BITSTREAM_BUFSZ) ? (nBuffer << avail) | (value >> (BITSTREAM_BUFSZ32 - avail)) : value;
                 nBits          += avail;
                 bits           -= avail;
                 value         <<= avail;
@@ -401,10 +401,22 @@ namespace lsp
         status_t OutBitStream::writev(uint64_t value, size_t bits)
         {
             status_t res;
-            if (pOS == NULL)
-                return set_error(STATUS_CLOSED);
 
-            #if defined(ARCH_64BIT)
+            #if defined(ARCH_32BIT)
+                // Need to write high part?
+                if (bits > BITSTREAM_BUFSZ32)
+                {
+                    if ((res = writev(uint32_t(value >> BITSTREAM_BUFSZ32), bits - BITSTREAM_BUFSZ32)) != STATUS_OK)
+                        return res;
+                    bits    = BITSTREAM_BUFSZ32;
+                }
+
+                // Write low part
+                return writev(uint32_t(value), bits);
+            #else
+                if (pOS == NULL)
+                    return set_error(STATUS_CLOSED);
+
                 value  <<= (BITSTREAM_BUFSZ - bits);
                 while (bits > 0)
                 {
@@ -416,26 +428,14 @@ namespace lsp
                     }
 
                     size_t avail    = lsp_min(bits, BITSTREAM_BUFSZ - nBits);
-                    nBuffer         = (nBuffer << avail) | (value >> (BITSTREAM_BUFSZ - avail));
+                    nBuffer         = (avail < BITSTREAM_BUFSZ) ? (nBuffer << avail) | (value >> (BITSTREAM_BUFSZ - avail)) : value;
                     nBits          += avail;
                     bits           -= avail;
                     value         <<= avail;
                 }
 
                 return set_error(STATUS_OK);
-
-            #else
-                // Need to write high part?
-                if (bits > BITSTREAM_BUFSZ)
-                {
-                    if ((res = writev(uint32_t(value >> BITSTREAM_BUFSZ), bits - BITSTREAM_BUFSZ)) != STATUS_OK)
-                        return res;
-                    bits    = BITSTREAM_BUFSZ;
-                }
-
-                // Write low part
-                return writev(uint32_t(value), bits);
-            #endif
+            #endif /* ARCH_32BIT */
         }
 
     } /* namespace io */

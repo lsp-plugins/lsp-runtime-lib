@@ -31,7 +31,8 @@
 
 using namespace lsp;
 
-#define BUFFER_SIZE     0x100000
+#define BUFFER_SIZE     0x1000
+#define FLUSH_LIMIT     0x10000
 
 UTEST_BEGIN("runtime.resource", compressor)
 
@@ -44,6 +45,7 @@ UTEST_BEGIN("runtime.resource", compressor)
         LSPString str;
         io::Path child, relative;
         io::fattr_t fattr;
+        size_t compressed = 0;
 
         UTEST_ASSERT(dir.open(path) == STATUS_OK);
         while ((res = dir.reads(&str, &fattr, false)) == STATUS_OK)
@@ -66,6 +68,12 @@ UTEST_BEGIN("runtime.resource", compressor)
                 UTEST_ASSERT(ifs.close() == STATUS_OK);
 
                 *data_size += len;
+                compressed += len;
+                if (compressed >= FLUSH_LIMIT)
+                {
+                    UTEST_ASSERT(c->flush() == STATUS_OK);
+                    compressed  = 0;
+                }
             }
             else if (fattr.type == io::fattr_t::FT_DIRECTORY)
             {

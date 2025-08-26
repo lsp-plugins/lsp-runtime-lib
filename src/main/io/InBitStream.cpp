@@ -23,12 +23,13 @@
 #include <lsp-plug.in/io/InBitStream.h>
 #include <lsp-plug.in/io/InFileStream.h>
 
-#define BITSTREAM_BUFSZ         (sizeof(umword_t) * 8)
-
 namespace lsp
 {
     namespace io
     {
+        static constexpr size_t BITSTREAM_BUFSZ     = sizeof(umword_t) * 8;
+        static constexpr size_t BITSTREAM_BUFSZ32   = sizeof(uint32_t) * 8;
+
         InBitStream::InBitStream()
         {
             pIS         = NULL;
@@ -361,8 +362,9 @@ namespace lsp
                 }
 
                 // Estimate number of bits to read
-                size_t to_read      = lsp_min(nBits, bits - nread);
-                v                   = uint32_t((v << to_read) | (nBuffer >> (BITSTREAM_BUFSZ - to_read)));
+                const size_t to_read= lsp_min(nBits, bits - nread);
+                uint32_t x          = uint32_t(nBuffer >> (BITSTREAM_BUFSZ - to_read));
+                v                   = (to_read < BITSTREAM_BUFSZ32) ? uint32_t((v << to_read) | x) : x;
                 nBuffer           <<= to_read;
                 nBits              -= to_read;
                 nread              += to_read;
@@ -394,7 +396,7 @@ namespace lsp
 
                 // Estimate number of bits to read
                 size_t to_read      = lsp_min(nBits, bits - nread);
-                v                   = (v << to_read) | (nBuffer >> (BITSTREAM_BUFSZ - to_read));
+                v                   = (to_read < BITSTREAM_BUFSZ) ? (v << to_read) | (nBuffer >> (BITSTREAM_BUFSZ - to_read)) : nBuffer;
                 nBuffer           <<= to_read;
                 nBits              -= to_read;
                 nread              += to_read;
@@ -407,7 +409,9 @@ namespace lsp
 
         void InBitStream::unread(umword_t v, size_t bits)
         {
-            nBuffer     = (nBuffer >> bits) | (v << (BITSTREAM_BUFSZ - bits));
+            if (bits < BITSTREAM_BUFSZ)
+                v         <<= BITSTREAM_BUFSZ - bits;
+            nBuffer     = (nBuffer >> bits) | v;
             nBits      += bits;
         }
 

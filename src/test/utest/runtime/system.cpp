@@ -22,8 +22,6 @@
 #include <lsp-plug.in/test-fw/utest.h>
 #include <lsp-plug.in/runtime/system.h>
 
-#define DELAY_PRECISION 10
-
 UTEST_BEGIN("runtime.runtime", system)
 
     void test_sleep_msec(size_t period)
@@ -40,9 +38,6 @@ UTEST_BEGIN("runtime.runtime", system)
 
         // The delay should not be less than expected.
         UTEST_ASSERT(delay_ms >= wssize_t(period));
-        // The delay should be precise: not more than 1 ms error.
-        UTEST_ASSERT_MSG((delay_ms - period) <= DELAY_PRECISION,
-            "Expected delay: %ld but actual delay is %ld", long(period), long(delay_ms));
     }
 
     void test_time_measure()

@@ -622,38 +622,40 @@ namespace lsp
             if (res != STATUS_OK)
                 return res;
 
-            // Check token
-            token_t tok = t->get_token(TF_NONE);
-            if (tok != TT_POW)
+            while (true)
             {
-                *expr   = left;
-                return STATUS_OK;
-            }
+                // Check token
+                token_t tok = t->get_token(TF_NONE);
+                if (tok != TT_POW)
+                {
+                    *expr   = left;
+                    return STATUS_OK;
+                }
 
-            // Parse right part
-            res = parse_power(&right, t, TF_GET);
-            if (res != STATUS_OK)
-            {
-                parse_destroy(left);
-                return res;
-            }
+                // Parse right part
+                res = parse_not(&right, t, TF_GET);
+                if (res != STATUS_OK)
+                {
+                    parse_destroy(left);
+                    return res;
+                }
 
-            // Create binding between left and right
-            expr_t *bind        = parse_create_expr();
-            if (bind == NULL)
-            {
-                parse_destroy(left);
-                parse_destroy(right);
-                return STATUS_NO_MEM;
-            }
-            bind->eval          = eval_power;
-            bind->type          = ET_CALC;
-            bind->calc.left     = left;
-            bind->calc.right    = right;
-            bind->calc.cond     = NULL;
+                // Create binding between left and right
+                expr_t *bind        = parse_create_expr();
+                if (bind == NULL)
+                {
+                    parse_destroy(left);
+                    parse_destroy(right);
+                    return STATUS_NO_MEM;
+                }
+                bind->eval          = eval_power;
+                bind->type          = ET_CALC;
+                bind->calc.left     = left;
+                bind->calc.right    = right;
+                bind->calc.cond     = NULL;
 
-            *expr               = bind;
-            return STATUS_OK;
+                left                = bind;
+            }
         }
 
         status_t parse_muldiv(expr_t **expr, Tokenizer *t, size_t flags)
@@ -665,55 +667,58 @@ namespace lsp
             if (res != STATUS_OK)
                 return res;
 
-            // Check token
-            token_t tok = t->get_token(TF_NONE);
-            switch (tok)
+            while (true)
             {
-                case TT_MUL:
-                case TT_DIV:
-                case TT_IMUL:
-                case TT_IDIV:
-                case TT_FMOD:
-                case TT_IMOD:
-                    break;
-                default:
-                    *expr = left;
+                // Check token
+                token_t tok = t->get_token(TF_NONE);
+                switch (tok)
+                {
+                    case TT_MUL:
+                    case TT_DIV:
+                    case TT_IMUL:
+                    case TT_IDIV:
+                    case TT_FMOD:
+                    case TT_IMOD:
+                        break;
+                    default:
+                        *expr = left;
+                        return res;
+                }
+
+                // Parse right part
+                res = parse_power(&right, t, TF_GET);
+                if (res != STATUS_OK)
+                {
+                    parse_destroy(left);
                     return res;
-            }
+                }
 
-            // Parse right part
-            res = parse_muldiv(&right, t, TF_GET);
-            if (res != STATUS_OK)
-            {
-                parse_destroy(left);
-                return res;
-            }
+                // Create binding between left and right
+                expr_t *bind        = parse_create_expr();
+                if (bind == NULL)
+                {
+                    parse_destroy(left);
+                    parse_destroy(right);
+                    return STATUS_NO_MEM;
+                }
+                switch (tok)
+                {
+                    case TT_MUL:            bind->eval  = eval_mul; break;
+                    case TT_DIV:            bind->eval  = eval_div; break;
+                    case TT_IMUL:           bind->eval  = eval_imul; break;
+                    case TT_IDIV:           bind->eval  = eval_idiv; break;
+                    case TT_FMOD:           bind->eval  = eval_fmod; break;
+                    case TT_IMOD:           bind->eval  = eval_imod; break;
+                    default:                bind->eval  = NULL; break;
+                }
+                bind->type          = ET_CALC;
+                bind->calc.left     = left;
+                bind->calc.right    = right;
+                bind->calc.cond     = NULL;
 
-            // Create binding between left and right
-            expr_t *bind        = parse_create_expr();
-            if (bind == NULL)
-            {
-                parse_destroy(left);
-                parse_destroy(right);
-                return STATUS_NO_MEM;
+                // Update left expression
+                left                = bind;
             }
-            switch (tok)
-            {
-                case TT_MUL:            bind->eval  = eval_mul; break;
-                case TT_DIV:            bind->eval  = eval_div; break;
-                case TT_IMUL:           bind->eval  = eval_imul; break;
-                case TT_IDIV:           bind->eval  = eval_idiv; break;
-                case TT_FMOD:           bind->eval  = eval_fmod; break;
-                case TT_IMOD:           bind->eval  = eval_imod; break;
-                default:                bind->eval  = NULL; break;
-            }
-            bind->type          = ET_CALC;
-            bind->calc.left     = left;
-            bind->calc.right    = right;
-            bind->calc.cond     = NULL;
-
-            *expr               = bind;
-            return STATUS_OK;
         }
 
         status_t parse_addsub(expr_t **expr, Tokenizer *t, size_t flags)
@@ -725,55 +730,59 @@ namespace lsp
             if (res != STATUS_OK)
                 return res;
 
-            // Check token
-            token_t tok = t->get_token(TF_NONE);
-            switch (tok)
-            {
-                case TT_ADD:
-                case TT_SUB:
-                case TT_ADDSYM:
-                case TT_SUBSYM:
-                case TT_IADD:
-                case TT_ISUB:
-                    break;
-                default:
-                    *expr = left;
-                    return res;
-            }
-
             // Parse right part
-            res = parse_addsub(&right, t, TF_GET);
-            if (res != STATUS_OK)
+            while (true)
             {
-                parse_destroy(left);
-                return res;
-            }
+                // Check token
+                token_t tok = t->get_token(TF_NONE);
+                switch (tok)
+                {
+                    case TT_ADD:
+                    case TT_SUB:
+                    case TT_ADDSYM:
+                    case TT_SUBSYM:
+                    case TT_IADD:
+                    case TT_ISUB:
+                        break;
+                    default:
+                        *expr = left;
+                        return res;
+                }
 
-            // Create binding between left and right
-            expr_t *bind        = parse_create_expr();
-            if (bind == NULL)
-            {
-                parse_destroy(left);
-                parse_destroy(right);
-                return STATUS_NO_MEM;
-            }
-            switch (tok)
-            {
-                case TT_ADD:            bind->eval  = eval_add; break;
-                case TT_SUB:            bind->eval  = eval_sub; break;
-                case TT_ADDSYM:         bind->eval  = eval_add; break;
-                case TT_SUBSYM:         bind->eval  = eval_sub; break;
-                case TT_IADD:           bind->eval  = eval_iadd; break;
-                case TT_ISUB:           bind->eval  = eval_isub; break;
-                default:                bind->eval  = NULL; break;
-            }
-            bind->type          = ET_CALC;
-            bind->calc.left     = left;
-            bind->calc.right    = right;
-            bind->calc.cond     = NULL;
+                // Parse right expression
+                res = parse_muldiv(&right, t, TF_GET);
+                if (res != STATUS_OK)
+                {
+                    parse_destroy(left);
+                    return res;
+                }
 
-            *expr               = bind;
-            return STATUS_OK;
+                // Create binding between left and right
+                expr_t *bind        = parse_create_expr();
+                if (bind == NULL)
+                {
+                    parse_destroy(left);
+                    parse_destroy(right);
+                    return STATUS_NO_MEM;
+                }
+                switch (tok)
+                {
+                    case TT_ADD:            bind->eval  = eval_add; break;
+                    case TT_SUB:            bind->eval  = eval_sub; break;
+                    case TT_ADDSYM:         bind->eval  = eval_add; break;
+                    case TT_SUBSYM:         bind->eval  = eval_sub; break;
+                    case TT_IADD:           bind->eval  = eval_iadd; break;
+                    case TT_ISUB:           bind->eval  = eval_isub; break;
+                    default:                bind->eval  = NULL; break;
+                }
+                bind->type          = ET_CALC;
+                bind->calc.left     = left;
+                bind->calc.right    = right;
+                bind->calc.cond     = NULL;
+
+                // Update left expression
+                left                = bind;
+            }
         }
 
         status_t parse_strrep(expr_t **expr, Tokenizer *t, size_t flags)
@@ -998,36 +1007,40 @@ namespace lsp
                 return res;
 
             // Check token
-            token_t tok = t->get_token(TF_NONE);
-            if (tok != TT_BAND)
+            while (true)
             {
-                *expr   = left;
-                return STATUS_OK;
-            }
+                token_t tok = t->get_token(TF_NONE);
+                if (tok != TT_BAND)
+                {
+                    *expr   = left;
+                    return STATUS_OK;
+                }
 
-            // Parse right part
-            res = parse_bit_and(&right, t, TF_GET);
-            if (res != STATUS_OK)
-            {
-                parse_destroy(left);
-                return res;
-            }
+                // Parse right part
+                res = parse_cmp_eq(&right, t, TF_GET);
+                if (res != STATUS_OK)
+                {
+                    parse_destroy(left);
+                    return res;
+                }
 
-            // Create binding between left and right
-            expr_t *bind        = parse_create_expr();
-            if (bind == NULL)
-            {
-                parse_destroy(left);
-                parse_destroy(right);
-                return STATUS_NO_MEM;
-            }
-            bind->eval          = eval_bit_and;
-            bind->type          = ET_CALC;
-            bind->calc.left     = left;
-            bind->calc.right    = right;
-            bind->calc.cond     = NULL;
+                // Create binding between left and right
+                expr_t *bind        = parse_create_expr();
+                if (bind == NULL)
+                {
+                    parse_destroy(left);
+                    parse_destroy(right);
+                    return STATUS_NO_MEM;
+                }
+                bind->eval          = eval_bit_and;
+                bind->type          = ET_CALC;
+                bind->calc.left     = left;
+                bind->calc.right    = right;
+                bind->calc.cond     = NULL;
 
-            *expr               = bind;
+                // Store left
+                left                = bind;
+            }
             return STATUS_OK;
         }
 
