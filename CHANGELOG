@@ -8,6 +8,7 @@
 * Several optimizations of standard compression algorithm.
 * Fixed bug in associativity of add, sub, mul, div and bit-and expressions.
 * Added MacOS CI builds.
+* Updated module versions in dependencies.
 
 === 1.0.28 ===
 * Reduced poll interval for ipc::NativeExecutor to 20 milliseconds.
