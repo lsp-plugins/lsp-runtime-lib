@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 16 сент. 2019 г.
@@ -141,10 +141,85 @@ namespace lsp
          */
         void        destroy_value(value_t *value);
 
+        /**
+         * Ensure that value is integer and read it
+         * @param dst pointer to store value
+         * @param v value to read
+         * @return status STATUS_BAD_TYPE error code on type mismatch
+         */
         status_t    fetch_int(ssize_t *dst, const value_t *v);
+
+        /**
+         * Ensure that value is floating-point and read it
+         * @param dst pointer to store value
+         * @param v value to read
+         * @return status STATUS_BAD_TYPE error code on type mismatch
+         */
         status_t    fetch_float(float *dst, const value_t *v);
+
+        /**
+         * Ensure that value is floating-point and read it
+         * @param dst pointer to store value
+         * @param v value to read
+         * @return status STATUS_BAD_TYPE error code on type mismatch
+         */
+        status_t    fetch_float(double *dst, const value_t *v);
+
+        /**
+         * Ensure that value is boolean and read it
+         * @param dst pointer to store value
+         * @param v value to read
+         * @return status STATUS_BAD_TYPE error code on type mismatch
+         */
         status_t    fetch_bool(bool *dst, const value_t *v);
+
+        /**
+         * Ensure that value is string and read it
+         * @param dst pointer to store value
+         * @param v value to read
+         * @return status STATUS_BAD_TYPE error code on type mismatch
+         */
         status_t    fetch_string(LSPString *dst, const value_t *v);
+
+        /**
+         * Try to cast value to int and fetch it
+         * @param dst pointer to store value
+         * @param v value to read
+         * @return status of operation
+         */
+        status_t    fetch_as_int(ssize_t *dst, const value_t *v);
+
+        /**
+         * Try to cast value to floating-pont value and fetch it
+         * @param dst pointer to store value
+         * @param v value to read
+         * @return status of operation
+         */
+        status_t    fetch_as_float(float *dst, const value_t *v);
+
+        /**
+         * Try to cast value to floating-pont value and fetch it
+         * @param dst pointer to store value
+         * @param v value to read
+         * @return status of operation
+         */
+        status_t    fetch_as_float(double *dst, const value_t *v);
+
+        /**
+         * Try to cast value to boolean value and fetch it
+         * @param dst pointer to store value
+         * @param v value to read
+         * @return status of operation
+         */
+        status_t    fetch_as_bool(bool *dst, const value_t *v);
+
+        /**
+         * Try to cast value to string and fetch it
+         * @param dst pointer to store value
+         * @param v value to read
+         * @return status of operation
+         */
+        status_t    fetch_as_string(LSPString *dst, const value_t *v);
 
         status_t    cast_value(value_t *v, value_type_t type);
         status_t    cast_value(value_t *dst, const value_t *v, value_type_t type);

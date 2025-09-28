@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.30 ===
-
+* Added possibility to perform casted fetch from expr::value_t.
 
 === 1.0.29 ===
 * Implemented simple compressor for Wavefront OBJ files.

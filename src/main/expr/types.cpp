@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 19 сент. 2019 г.
@@ -210,6 +210,14 @@ namespace lsp
             return STATUS_OK;
         }
 
+        status_t fetch_float(double *dst, const value_t *v)
+        {
+            if (v->type != VT_FLOAT)
+                return STATUS_BAD_TYPE;
+            *dst = v->v_float;
+            return STATUS_OK;
+        }
+
         status_t fetch_bool(bool *dst, const value_t *v)
         {
             if (v->type != VT_BOOL)
@@ -223,6 +231,103 @@ namespace lsp
             if (v->type != VT_STRING)
                 return STATUS_BAD_TYPE;
             return (dst->set(v->v_str)) ? STATUS_OK : STATUS_NO_MEM;
+        }
+
+        status_t fetch_as_int(ssize_t *dst, const value_t *v)
+        {
+            if (v->type == VT_INT)
+            {
+                *dst    = v->v_int;
+                return STATUS_OK;
+            }
+
+            // Perform cast
+            value_t tmp;
+            init_value(&tmp);
+            lsp_finally { destroy_value(&tmp); };
+
+            status_t res = cast_int(&tmp, v);
+            if (res == STATUS_OK)
+                *dst    = tmp.v_int;
+
+            return res;
+        }
+
+        status_t fetch_as_float(float *dst, const value_t *v)
+        {
+            if (v->type == VT_FLOAT)
+            {
+                *dst    = v->v_float;
+                return STATUS_OK;
+            }
+
+            // Perform cast
+            value_t tmp;
+            init_value(&tmp);
+            lsp_finally { destroy_value(&tmp); };
+
+            status_t res = cast_int(&tmp, v);
+            if (res == STATUS_OK)
+                *dst    = tmp.v_float;
+
+            return res;
+        }
+
+        status_t fetch_as_float(double *dst, const value_t *v)
+        {
+            if (v->type == VT_FLOAT)
+            {
+                *dst    = v->v_float;
+                return STATUS_OK;
+            }
+
+            // Perform cast
+            value_t tmp;
+            init_value(&tmp);
+            lsp_finally { destroy_value(&tmp); };
+
+            status_t res = cast_int(&tmp, v);
+            if (res == STATUS_OK)
+                *dst    = tmp.v_float;
+
+            return res;
+        }
+
+        status_t fetch_as_bool(bool *dst, const value_t *v)
+        {
+            if (v->type == VT_BOOL)
+            {
+                *dst    = v->v_bool;
+                return STATUS_OK;
+            }
+
+            // Perform cast
+            value_t tmp;
+            init_value(&tmp);
+            lsp_finally { destroy_value(&tmp); };
+
+            status_t res = cast_int(&tmp, v);
+            if (res == STATUS_OK)
+                *dst    = tmp.v_bool;
+
+            return res;
+        }
+
+        status_t fetch_as_string(LSPString *dst, const value_t *v)
+        {
+            if (v->type == VT_STRING)
+                return (dst->set(v->v_str)) ? STATUS_OK : STATUS_NO_MEM;
+
+            // Perform cast
+            value_t tmp;
+            init_value(&tmp);
+            lsp_finally { destroy_value(&tmp); };
+
+            status_t res = cast_int(&tmp, v);
+            if (res == STATUS_OK)
+                dst->swap(v->v_str);
+
+            return res;
         }
 
         status_t cast_value(value_t *v, value_type_t type)
