@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.31 ===
+
+
 === 1.0.30 ===
 * Added possibility to perform casted fetch from expr::value_t.
 * Updated module versions in dependencies.
