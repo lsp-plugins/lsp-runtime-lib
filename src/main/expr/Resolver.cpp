@@ -86,8 +86,7 @@ namespace lsp
             if (func != NULL)
                 return func(value, num_args, args);
 
-            set_value_undef(value);
-            return STATUS_OK;
+            return STATUS_NOT_FOUND;
         }
 
         status_t Resolver::call(value_t *value, const LSPString *name, size_t num_args, const value_t *args)

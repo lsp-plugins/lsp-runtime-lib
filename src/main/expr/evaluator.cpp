@@ -1196,7 +1196,12 @@ namespace lsp
             }
 
             // Now we can perform call
-            return env->call(value, expr->call.name, expr->call.count, args);
+            res = env->call(value, expr->call.name, expr->call.count, args);
+            if (res != STATUS_NOT_FOUND)
+                return res;
+
+            set_value_undef(value);
+            return STATUS_OK;
         }
 
         status_t eval_value(value_t *value, const expr_t *expr, eval_env_t *env)
