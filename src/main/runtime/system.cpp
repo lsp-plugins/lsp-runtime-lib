@@ -293,11 +293,15 @@ namespace lsp
                 }
             }
 #else
-            status_t res = get_env_var("HOME", &upath);
+            status_t res = get_env_var("XDG_CONFIG_HOME", &upath);
             if (res != STATUS_OK)
-                return res;
-            if (!upath.append_ascii(FILE_SEPARATOR_S ".config"))
-                return STATUS_NO_MEM;
+            {
+                res = get_env_var("HOME", &upath);
+                if (res != STATUS_OK)
+                    return res;
+                if (!upath.append_ascii(FILE_SEPARATOR_S ".config"))
+                    return STATUS_NO_MEM;
+            }
 #endif /* PLATFORM_WINDOWS */
 
             path->swap(&upath);
