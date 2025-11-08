@@ -483,12 +483,12 @@ namespace lsp
                 return add_null(name);
 
             value_t v;
-            status_t res = init_value_string(&v, name, value);
-            if (res != STATUS_OK)
-                return res;
+            status_t res = init_value_string(&v, value);
+            if (res == STATUS_OK)
+                res = add_move(name, &v);
             lsp_finally { destroy_value(&v); };
 
-            return add_move(name, &v);
+            return res;
         }
 
         status_t Parameters::add_string(const char *name, const LSPString *value)
