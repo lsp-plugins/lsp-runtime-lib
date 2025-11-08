@@ -72,6 +72,61 @@ namespace lsp
         void        init_value(value_t *dst);
 
         /**
+         * Init value as NULL
+         * @param dst target to set
+         */
+        void        init_value_null(value_t *dst);
+
+        /**
+         * Init value as UNDEF
+         * @param dst target to set
+         */
+        void        init_value_undef(value_t *dst);
+
+        /**
+         * Init value as integer
+         * @param dst target to set
+         * @param value integer value to set
+         */
+        void        init_value_int(value_t *dst, ssize_t value);
+
+        /**
+         * Init value as floating point
+         * @param dst target to set
+         * @param value floating-point value to set
+         */
+        void        init_value_float(value_t *dst, double value);
+
+        /**
+         * Init value as boolean
+         * @param dst target to set
+         * @param value boolean value to set
+         */
+        void        init_value_bool(value_t *dst, bool value);
+
+        /**
+         * Init value as string
+         * @param dst target to set
+         * @param value string value to set
+         */
+        status_t    init_value_string(value_t *dst, const LSPString *value);
+
+        /**
+         * Init value as string
+         * @param dst target to set
+         * @param value UTF-8 string to set
+         */
+        status_t    init_value_string(value_t *dst, const char *value);
+
+        /**
+         * Init value as string
+         * @param dst target to set
+         * @param value native string to set
+         * @param charset native charset name
+         */
+        status_t    init_value_string(value_t *dst, const char *value, const char *charset);
+
+        /**
          * Initialize value with another value by copying contents
          * @param dst destination value
          * @param src source value to take data from
@@ -80,12 +135,35 @@ namespace lsp
         status_t    init_value(value_t *dst, const value_t *src);
 
         /**
+         * Initialize value with move. Moves contents of source value to destination value
+         * and resets source value to undef
+         * @param dst destination value to perform copy
+         * @param src source value to take data from
+         */
+        void        init_value_move(value_t *dst, value_t *src);
+
+        /**
          * Copy value. Frees previously used value if it was set
          * @param dst destination value to perform copy
          * @param src source value to take data from
          * @return status of operation
          */
         status_t    copy_value(value_t *dst, const value_t *src);
+
+        /**
+         * Move value. Moves contents of source value to destination value
+         * and resets source value to undef
+         * @param dst destination value to perform copy
+         * @param src source value to take data from
+         */
+        void        move_value(value_t *dst, value_t *src);
+
+        /**
+         * Swap value. Swaps contents of source value and destination value
+         * @param dst destination value to perform copy
+         * @param src source value to take data from
+         */
+        void        swap_value(value_t *dst, value_t *src);
 
         /**
          * Set value to NULL
@@ -125,7 +203,7 @@ namespace lsp
          * @param dst target to set
          * @param value string value to set
          */
-        status_t    set_value_string(value_t *dst, LSPString *value);
+        status_t    set_value_string(value_t *dst, const LSPString *value);
 
         /**
          * Set value to string
@@ -133,6 +211,15 @@ namespace lsp
          * @param value UTF-8 string to set
          */
         status_t    set_value_string(value_t *dst, const char *value);
+
+        /**
+         * Set value to string
+         * @param dst target to set
+         * @param value native string to set
+         * @param charset character set to use
+         */
+        status_t    set_value_string(value_t *dst, const char *value, const char *charset);
+
 
         /**
          * Destroy value and all internal contents associated with it

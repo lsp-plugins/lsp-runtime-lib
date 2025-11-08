@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 19 сент. 2019 г.
@@ -54,10 +54,13 @@ namespace lsp
 
             protected:
                 status_t            insert_var(const LSPString *name, const value_t *value, size_t idx);
+                status_t            insert_var_move(const LSPString *name, value_t *value, size_t idx);
                 ssize_t             index_of_var(const LSPString *name);
 
                 status_t            insert_func(const LSPString *name, function_t func, void *context, size_t idx);
                 ssize_t             index_of_func(const LSPString *name);
+
+                status_t            set_move(const LSPString *name, value_t *value);
 
             public:
                 explicit Variables();

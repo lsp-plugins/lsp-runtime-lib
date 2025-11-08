@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 19 сент. 2019 г.
@@ -94,25 +94,19 @@ namespace lsp
                 return STATUS_NO_MEM;
 
             value_t v;
-            LSPString tmp;
-
-            if (value != NULL)
+            if (value == NULL)
             {
-                if (!tmp.set_native(value, charset))
-                {
-                    delete v.v_str;
-                    return STATUS_NO_MEM;
-                }
-                v.type      = VT_STRING;
-                v.v_str     = &tmp;
-            }
-            else
-            {
-                v.type      = VT_NULL;
-                v.v_str     = NULL;
+                v.type          = VT_NULL;
+                v.v_str         = NULL;
+                return set(&key, &v);
             }
 
-            return set(&key, &v);
+            status_t res = init_value_string(&v, value, charset);
+            if (res == STATUS_OK)
+                res = set_move(&key, &v);
+
+            destroy_value(&v);
+            return res;
         }
 
         status_t Variables::set_string(const char *name, const LSPString *value)
@@ -125,18 +119,19 @@ namespace lsp
                 return STATUS_NO_MEM;
 
             value_t v;
-            if (value != NULL)
+            if (value == NULL)
             {
-                v.type      = VT_STRING;
-                v.v_str     = const_cast<LSPString *>(value);
-            }
-            else
-            {
-                v.type      = VT_NULL;
-                v.v_str     = NULL;
+                v.type          = VT_NULL;
+                v.v_str         = NULL;
+                return set(&key, &v);
             }
 
-            return set(&key, &v);
+            status_t res = init_value_string(&v, value);
+            if (res == STATUS_OK)
+                res = set_move(&key, &v);
+
+            destroy_value(&v);
+            return res;
         }
 
         status_t Variables::set_null(const char *name)
@@ -149,63 +144,59 @@ namespace lsp
 
             value_t v;
             v.type          = VT_NULL;
-            v.v_str         = NULL;
+            v.v_int         = 0;
             return set(&key, &v);
         }
 
         status_t Variables::set_int(const LSPString *name, ssize_t value)
         {
             value_t v;
-            v.type      = VT_INT;
-            v.v_int     = value;
+            v.type          = VT_INT;
+            v.v_int         = value;
             return set(name, &v);
         }
 
         status_t Variables::set_float(const LSPString *name, double value)
         {
             value_t v;
-            v.type      = VT_FLOAT;
-            v.v_float   = value;
+            v.type          = VT_FLOAT;
+            v.v_float       = value;
             return set(name, &v);
         }
 
         status_t Variables::set_bool(const LSPString *name, bool value)
         {
             value_t v;
-            v.type      = VT_BOOL;
-            v.v_bool    = value;
+            v.type          = VT_BOOL;
+            v.v_bool        = value;
             return set(name, &v);
         }
 
         status_t Variables::set_string(const LSPString *name, const char *value, const char *charset)
         {
             value_t v;
-            LSPString tmp;
 
-            if (value != NULL)
-            {
-                if (!tmp.set_native(value, charset))
-                {
-                    delete v.v_str;
-                    return STATUS_NO_MEM;
-                }
-                v.type      = VT_STRING;
-                v.v_str     = &tmp;
-            }
-            else
+            if (value == NULL)
             {
                 v.type      = VT_NULL;
                 v.v_str     = NULL;
+                return set(name, &v);
             }
 
-            return set(name, &v);
+            status_t res    = init_value_string(&v, value, charset);
+            if (res == STATUS_OK)
+                res             = set_move(name, &v);
+
+            destroy_value(&v);
+            return res;
         }
 
         status_t Variables::set_string(const LSPString *name, const LSPString *value)
         {
             value_t v;
-            v.type      = VT_STRING;
-            v.v_str     = const_cast<LSPString *>(value);
+            v.type          = VT_STRING;
+            v.v_str         = const_cast<LSPString *>(value);
+
             return set(name, &v);
         }
 
@@ -213,7 +204,7 @@ namespace lsp
         {
             value_t v;
             v.type          = VT_NULL;
-            v.v_str         = NULL;
+            v.v_int         = 0;
             return set(name, &v);
         }
 
@@ -406,10 +397,30 @@ namespace lsp
                 return STATUS_NO_MEM;
             }
 
-            init_value(&var->value);
-            status_t res = copy_value(&var->value, value);
+            status_t res = init_value(&var->value, value);
             if (res == STATUS_OK)
                 res = (vVars.insert(idx, var)) ? STATUS_OK : STATUS_NO_MEM;
+            if (res == STATUS_OK)
+                return res;
+
+            destroy_value(&var->value);
+            delete var;
+            return res;
+        }
+
+        status_t Variables::insert_var_move(const LSPString *name, value_t *value, size_t idx)
+        {
+            variable_t *var = new variable_t;
+            if (var == NULL)
+                return STATUS_NO_MEM;
+            if (!var->name.set(name))
+            {
+                delete var;
+                return STATUS_NO_MEM;
+            }
+
+            init_value_move(&var->value, value);
+            status_t res = (vVars.insert(idx, var)) ? STATUS_OK : STATUS_NO_MEM;
             if (res == STATUS_OK)
                 return res;
 
@@ -450,10 +461,7 @@ namespace lsp
                 variable_t *var = vVars.uget(idx);
                 int cmp = name->compare_to(&var->name);
                 if (cmp == 0)
-                {
-                    destroy_value(&var->value);
                     return copy_value(&var->value, value);
-                }
                 else if (cmp > 0)
                     ++idx;
             }
@@ -462,6 +470,31 @@ namespace lsp
 
             // Add non-existing value
             return insert_var(name, value, idx);
+        }
+
+        status_t Variables::set_move(const LSPString *name, value_t *value)
+        {
+            if (name == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            ssize_t idx     = index_of_var(name);
+            if (idx >= 0)
+            {
+                variable_t *var = vVars.uget(idx);
+                int cmp = name->compare_to(&var->name);
+                if (cmp == 0)
+                {
+                    move_value(&var->value, value);
+                    return STATUS_OK;
+                }
+                else if (cmp > 0)
+                    ++idx;
+            }
+            else
+                idx = 0;
+
+            // Add non-existing value
+            return insert_var_move(name, value, idx);
         }
 
         status_t Variables::unset(const LSPString *name, value_t *value)
