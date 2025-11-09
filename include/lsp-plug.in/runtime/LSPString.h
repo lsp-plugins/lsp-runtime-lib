@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 30 авг. 2017 г.
@@ -696,41 +696,78 @@ namespace lsp
     // LLTL specialization for String class
     namespace lltl
     {
+        // Non-const specifications
         template <>
-            struct hash_spec<LSPString>: public hash_iface
+        struct hash_spec<LSPString>: public hash_iface
+        {
+            static size_t hash_func(const void *ptr, size_t size);
+
+            explicit hash_spec()
             {
-                static size_t hash_func(const void *ptr, size_t size);
-
-                explicit hash_spec()
-                {
-                    hash        = hash_func;
-                }
-            };
-
-        template <>
-            struct compare_spec<LSPString>: public compare_iface
-            {
-                static ssize_t cmp_func(const void *a, const void *b, size_t size);
-
-                explicit compare_spec()
-                {
-                    compare     = cmp_func;
-                }
-            };
+                hash        = hash_func;
+            }
+        };
 
         template <>
-            struct allocator_spec<LSPString>: public allocator_iface
-            {
-                static void *clone_func(const void *src, size_t size);
-                static void free_func(void *ptr);
+        struct compare_spec<LSPString>: public compare_iface
+        {
+            static ssize_t cmp_func(const void *a, const void *b, size_t size);
 
-                explicit allocator_spec()
-                {
-                    clone       = clone_func;
-                    free        = free_func;
-                }
-            };
-    }
+            explicit compare_spec()
+            {
+                compare     = cmp_func;
+            }
+        };
+
+        template <>
+        struct allocator_spec<LSPString>: public allocator_iface
+        {
+            static void *clone_func(const void *src, size_t size);
+            static void free_func(void *ptr);
+
+            explicit allocator_spec()
+            {
+                clone       = clone_func;
+                free        = free_func;
+            }
+        };
+
+        // Const specifications
+        template <>
+        struct hash_spec<const LSPString>: public hash_iface
+        {
+            static size_t hash_func(const void *ptr, size_t size);
+
+            explicit hash_spec()
+            {
+                hash        = hash_func;
+            }
+        };
+
+        template <>
+        struct compare_spec<const LSPString>: public compare_iface
+        {
+            static ssize_t cmp_func(const void *a, const void *b, size_t size);
+
+            explicit compare_spec()
+            {
+                compare     = cmp_func;
+            }
+        };
+
+        template <>
+        struct allocator_spec<const LSPString>: public allocator_iface
+        {
+            static void *clone_func(const void *src, size_t size);
+            static void free_func(void *ptr);
+
+            explicit allocator_spec()
+            {
+                clone       = clone_func;
+                free        = free_func;
+            }
+        };
+    } /* namespace lltl */
 
 } /* namespace lsp */
 

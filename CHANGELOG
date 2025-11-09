@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.31 ===
+* Updated LLTL hashing specifications.
 * Fixed $XDG_CONFIG_HOME being ignored.
 
 === 1.0.30 ===
