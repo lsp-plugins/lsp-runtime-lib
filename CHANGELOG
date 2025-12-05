@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.31 ===
+* Task execution mechanism moved task state field from volatile to atomic.
 * Updated LLTL hashing specifications.
 * Fixed $XDG_CONFIG_HOME being ignored.
 

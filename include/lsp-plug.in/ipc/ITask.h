@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 27 янв. 2016 г.
@@ -23,6 +23,7 @@
 #define LSP_PLUG_IN_IPC_ITASK_H_
 
 #include <lsp-plug.in/runtime/version.h>
+#include <lsp-plug.in/common/atomic.h>
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/ipc/IRunnable.h>
 
@@ -50,7 +51,7 @@ namespace lsp
                 ITask                  *pNext;          // Pointer to next task queue
                 ipc::IExecutor         *pExecutor;      // Nested executor if present
                 int                     nCode;          // Execution code
-                volatile task_state_t   nState;         // Task state
+                int                     nState;         // Task state
 
             protected:
                 // Executor service
@@ -62,67 +63,65 @@ namespace lsp
                 ITask();
                 ITask(const ITask &) = delete;
                 ITask(ITask &&) = delete;
-                virtual ~ITask();
+                virtual ~ITask() override;
 
                 ITask & operator = (const ITask &) = delete;
                 ITask & operator = (ITask &&) = delete;
 
             public:
-                virtual status_t run();
+                virtual status_t run() override;
 
             public:
+                /** Get current state of task
+                 *
+                 * @return current task state
+                 */
+                inline task_state_t state() const   { return task_state_t(atomic_load(&nState));    }
+
                 /** Check that task status is idle
                  *
                  * @return true if task status is idle
                  */
-                inline bool idle() const        { return nState == TS_IDLE;         };
+                inline bool idle() const            { return state() == TS_IDLE;        }
 
                 /** Check that task status is submitted
                  *
                  * @return true if task status is submitted
                  */
-                inline bool submitted() const   { return nState == TS_SUBMITTED;    };
+                inline bool submitted() const       { return state() == TS_SUBMITTED;   }
 
                 /** Check that task status is running
                  *
                  * @return true if task status is running
                  */
-                inline bool running() const     { return nState == TS_RUNNING;      };
+                inline bool running() const         { return state() == TS_RUNNING;     }
 
                 /** Check that task status is completed
                  *
                  * @return true if task status is completed
                  */
-                inline bool completed() const   { return nState == TS_COMPLETED;    };
+                inline bool completed() const       { return state() == TS_COMPLETED;   }
 
                 /** Check that execution was successful
                  *
                  * @return true if execution was successful;
                  */
-                inline bool successful() const  { return successful(nCode);         };
+                inline bool successful() const      { return successful(nCode);         }
 
                 /** Get last execution code
                  *
                  * @return last execution code
                  */
-                inline int code() const         { return nCode;                     };
+                inline int code() const             { return nCode;                     }
 
-                /** Get current state of task
+                /**
+                 * Reset task state. The state can be reset only if task is in completed state.
                  *
-                 * @return current task state
-                 */
-                inline task_state_t state() const {return nState;                   };
-
-                /** Reset task state
-                 *
-                 * @return task state
+                 * @return true if task has been reset
                  */
                 inline bool reset()
                 {
-                    if (nState != TS_COMPLETED)
-                        return false;
-                    nState      = TS_IDLE;
-                    return true;
+                    return atomic_cas(&nState, TS_COMPLETED, TS_IDLE);
                 }
         };
 

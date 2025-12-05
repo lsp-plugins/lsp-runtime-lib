@@ -33,9 +33,14 @@ namespace lsp
         class IExecutor
         {
             protected:
-                static inline void change_task_state(ITask *task, ITask::task_state_t state)
+                static inline void set_task_state(ITask *task, ITask::task_state_t state)
                 {
-                    task->nState    = state;
+                    atomic_store(&task->nState, state);
+                }
+
+                static inline bool change_task_state(ITask *task, ITask::task_state_t old_state, ITask::task_state_t new_state)
+                {
+                    return atomic_cas(&task->nState, old_state, new_state);
                 }
 
                 static inline void link_task(ITask *tail, ITask *link)

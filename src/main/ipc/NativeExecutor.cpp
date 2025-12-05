@@ -49,16 +49,18 @@ namespace lsp
         bool NativeExecutor::submit(ITask *task)
         {
             lsp_trace("submit task=%p", task);
-            // Check task state
-            if (!task->idle())
+
+            // Update task state to SUBMITTED
+            if (!change_task_state(task, ITask::TS_IDLE, ITask::TS_SUBMITTED))
                 return false;
 
             // Try to acquire critical section
             if (!atomic_trylock(nLock))
+            {
+                set_task_state(task, ITask::TS_IDLE);
                 return false;
-
-            // Update task state to SUBMITTED
-            change_task_state(task, ITask::TS_SUBMITTED);
+            }
+            lsp_finally { atomic_unlock(nLock); };
 
             // Critical section acquired, bind new task
             // Check that queue is empty
@@ -68,8 +70,6 @@ namespace lsp
                 pHead   = task;
             pTail   = task;
 
-            // Release critical section
-            atomic_unlock(nLock);
             return true;
         }
 
@@ -151,8 +151,8 @@ namespace lsp
 
         status_t NativeExecutor::execute(void *params)
         {
-            NativeExecutor *_this = reinterpret_cast<NativeExecutor *>(params);
-            _this->run();
+            NativeExecutor *self = reinterpret_cast<NativeExecutor *>(params);
+            self->run();
             return STATUS_OK;
         }
 

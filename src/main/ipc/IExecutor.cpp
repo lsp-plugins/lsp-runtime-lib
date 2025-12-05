@@ -36,10 +36,12 @@ namespace lsp
 
         void IExecutor::run_task(ITask *task)
         {
-            task->nState    = ITask::TS_RUNNING;
+            atomic_store(&task->nState, ITask::TS_RUNNING);
             task->nCode     = 0;
+
             task->nCode     = task->run();
-            task->nState    = ITask::TS_COMPLETED;
+
+            atomic_store(&task->nState, ITask::TS_COMPLETED);
 
             // Run callback method
             task_finished(task);
