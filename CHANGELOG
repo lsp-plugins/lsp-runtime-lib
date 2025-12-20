@@ -6,6 +6,7 @@
 * Task execution mechanism moved task state field from volatile to atomic.
 * Updated LLTL hashing specifications.
 * Fixed $XDG_CONFIG_HOME being ignored.
+* Updated module versions in dependencies.
 
 === 1.0.30 ===
 * Added possibility to perform casted fetch from expr::value_t.
