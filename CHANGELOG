@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.32 ===
+
+
 === 1.0.31 ===
 * Task execution mechanism moved task state field from volatile to atomic.
 * Updated LLTL hashing specifications.
