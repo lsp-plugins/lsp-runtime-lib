@@ -31,7 +31,8 @@ namespace lsp
             pNext       = NULL;
             pExecutor   = NULL;
             nCode       = 0;
-            nState      = TS_IDLE;
+
+            atomic_store(&nState, TS_IDLE);
         }
 
         ITask::~ITask()

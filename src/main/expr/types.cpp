@@ -45,9 +45,96 @@ namespace lsp
             dst->v_str      = NULL;
         }
 
+        void init_value_null(value_t *dst)
+        {
+            dst->type       = VT_NULL;
+            dst->v_str      = NULL;
+        }
+
+        void init_value_undef(value_t *dst)
+        {
+            dst->type       = VT_UNDEF;
+            dst->v_str      = NULL;
+        }
+
+        void init_value_int(value_t *dst, ssize_t value)
+        {
+            dst->type       = VT_INT;
+            dst->v_int      = value;
+        }
+
+        void init_value_float(value_t *dst, double value)
+        {
+            dst->type       = VT_FLOAT;
+            dst->v_float    = value;
+        }
+
+        void init_value_bool(value_t *dst, bool value)
+        {
+            dst->type       = VT_BOOL;
+            dst->v_str      = NULL;
+            dst->v_bool     = value;
+        }
+
+        status_t init_value_string(value_t *dst, const LSPString *value)
+        {
+            LSPString *str  = value->clone();
+            if (str != NULL)
+            {
+                dst->type       = VT_STRING;
+                dst->v_str      = str;
+                return STATUS_OK;
+            }
+
+            dst->type       = VT_UNDEF;
+            dst->v_str      = NULL;
+
+            return STATUS_NO_MEM;
+        }
+
+        status_t init_value_string(value_t *dst, const char *value)
+        {
+            LSPString *str  = new LSPString();
+            if (str != NULL)
+            {
+                if (str->set_utf8(value))
+                {
+                    dst->type       = VT_STRING;
+                    dst->v_str      = str;
+                    return STATUS_OK;
+                }
+                delete str;
+            }
+
+            dst->type       = VT_UNDEF;
+            dst->v_str      = NULL;
+
+            return STATUS_NO_MEM;
+        }
+
+        status_t init_value_string(value_t *dst, const char *value, const char *charset)
+        {
+            LSPString *str  = new LSPString();
+            if (str != NULL)
+            {
+                if (str->set_native(value, charset))
+                {
+                    dst->type       = VT_STRING;
+                    dst->v_str      = str;
+                    return STATUS_OK;
+                }
+                delete str;
+            }
+
+            dst->type       = VT_UNDEF;
+            dst->v_str      = NULL;
+
+            return STATUS_NO_MEM;
+        }
+
         inline void destroy_value_internal(value_t *value)
         {
-            if ((value->type == VT_STRING) && (value->v_str != NULL))
+            if (value->type == VT_STRING)
             {
                 delete value->v_str;
                 value->v_str        = NULL;
@@ -102,22 +189,28 @@ namespace lsp
             }
             else if ((src->type == VT_STRING) && (src->v_str != NULL))
             {
-                dst->type       = VT_UNDEF;
-                dst->v_str      = NULL;
-
-                LSPString *copy = src->v_str->clone();
-                if (copy == NULL)
+                dst->v_str      = src->v_str->clone();
+                if (dst->v_str == NULL)
+                {
+                    dst->type       = VT_UNDEF;
                     return STATUS_NO_MEM;
+                }
 
                 dst->type       = VT_STRING;
-                dst->v_str      = copy;
             }
             else
                 *dst        = *src;
             return STATUS_OK;
         }
 
-        status_t set_value_string(value_t *dst, LSPString *value)
+        void init_value_move(value_t *dst, value_t *src)
+        {
+            *dst            = *src;
+            src->type       = VT_UNDEF;
+            src->v_str      = NULL;
+        }
+
+        status_t set_value_string(value_t *dst, const LSPString *value)
         {
             if (value == NULL)
             {
@@ -131,7 +224,6 @@ namespace lsp
             if (copy == NULL)
                 return STATUS_NO_MEM;
 
-            destroy_value_internal(dst);
             dst->type       = VT_STRING;
             dst->v_str      = copy;
             return STATUS_OK;
@@ -147,18 +239,41 @@ namespace lsp
             else if (dst->type == VT_STRING)
                 return (dst->v_str->set_utf8(value)) ? STATUS_OK : STATUS_NO_MEM;
 
-            LSPString *str = new LSPString();
-            if (str == NULL)
+            LSPString *tmp = new LSPString();
+            if (tmp == NULL)
                 return STATUS_NO_MEM;
-            if (!str->set_utf8(value))
+            if (!tmp->set_utf8(value))
             {
-                delete str;
+                delete tmp;
                 return STATUS_NO_MEM;
             }
 
-            destroy_value_internal(dst);
             dst->type       = VT_STRING;
-            dst->v_str      = str;
+            dst->v_str      = tmp;
+            return STATUS_OK;
+        }
+
+        status_t set_value_string(value_t *dst, const char *value, const char *charset)
+        {
+            if (value == NULL)
+            {
+                set_value_null(dst);
+                return STATUS_OK;
+            }
+            else if (dst->type == VT_STRING)
+                return (dst->v_str->set_native(value, charset)) ? STATUS_OK : STATUS_NO_MEM;
+
+            LSPString *tmp = new LSPString();
+            if (tmp == NULL)
+                return STATUS_NO_MEM;
+            if (!tmp->set_native(value, charset))
+            {
+                delete tmp;
+                return STATUS_NO_MEM;
+            }
+
+            dst->type       = VT_STRING;
+            dst->v_str      = tmp;
             return STATUS_OK;
         }
 
@@ -169,23 +284,58 @@ namespace lsp
                 set_value_null(dst);
                 return STATUS_OK;
             }
-            else if ((src->type == VT_STRING) && (src->v_str != NULL))
+            else if (src->type == VT_STRING)
             {
-                LSPString *copy = src->v_str->clone();
-                if (copy == NULL)
-                    return STATUS_NO_MEM;
+                if (dst->type == VT_STRING)
+                {
+                    if (!dst->v_str->set(src->v_str))
+                        return STATUS_NO_MEM;
+                }
+                else
+                {
+                    LSPString *copy = src->v_str->clone();
+                    if (copy == NULL)
+                        return STATUS_NO_MEM;
 
-                destroy_value_internal(dst);
-
-                dst->type       = VT_STRING;
-                dst->v_str      = copy;
+                    dst->type       = VT_STRING;
+                    dst->v_str      = copy;
+                }
             }
             else
             {
-                destroy_value_internal(dst);
+                if (dst->type == VT_STRING)
+                    delete dst->v_str;
+
                 *dst        = *src;
             }
             return STATUS_OK;
+        }
+
+        void move_value(value_t *dst, value_t *src)
+        {
+            if (src->type == VT_STRING)
+            {
+                if (dst->type == VT_STRING)
+                    delete dst->v_str;
+
+                dst->type   = VT_STRING;
+                dst->v_str  = src->v_str;
+            }
+            else
+            {
+                if (dst->type == VT_STRING)
+                    delete dst->v_str;
+
+                *dst        = *src;
+            }
+
+            src->type   = VT_UNDEF;
+            src->v_str  = NULL;
+        }
+
+        void swap_value(value_t *dst, value_t *src)
+        {
+            lsp::swap(*dst, *src);
         }
 
         void destroy_value(value_t *value)
@@ -266,7 +416,7 @@ namespace lsp
             init_value(&tmp);
             lsp_finally { destroy_value(&tmp); };
 
-            status_t res = cast_int(&tmp, v);
+            status_t res = cast_float(&tmp, v);
             if (res == STATUS_OK)
                 *dst    = tmp.v_float;
 
@@ -286,7 +436,7 @@ namespace lsp
             init_value(&tmp);
             lsp_finally { destroy_value(&tmp); };
 
-            status_t res = cast_int(&tmp, v);
+            status_t res = cast_float(&tmp, v);
             if (res == STATUS_OK)
                 *dst    = tmp.v_float;
 
@@ -306,7 +456,7 @@ namespace lsp
             init_value(&tmp);
             lsp_finally { destroy_value(&tmp); };
 
-            status_t res = cast_int(&tmp, v);
+            status_t res = cast_bool(&tmp, v);
             if (res == STATUS_OK)
                 *dst    = tmp.v_bool;
 
@@ -323,9 +473,9 @@ namespace lsp
             init_value(&tmp);
             lsp_finally { destroy_value(&tmp); };
 
-            status_t res = cast_int(&tmp, v);
+            status_t res = cast_string(&tmp, v);
             if (res == STATUS_OK)
-                dst->swap(v->v_str);
+                dst->swap(tmp.v_str);
 
             return res;
         }

@@ -56,6 +56,7 @@ namespace lsp
             SF_COMMENT      = 1 << 9,   //!< SF_COMMENT Parameter has comment
             SF_TYPE_SET     = 1 << 10,  //!< SF_TYPE_SET Explicitly specify type
             SF_DECIBELS     = 1 << 11,  //!< SF_DECIBELS Serialize value as decibels
+            SF_FRIENDLY     = 1 << 12,  //!< SF_FRIENDLY User-friendly values
         };
 
         /**

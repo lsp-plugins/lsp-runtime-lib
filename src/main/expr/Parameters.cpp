@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 19 февр. 2020 г.
@@ -373,6 +373,26 @@ namespace lsp
             return res;
         }
 
+        status_t Parameters::add_move(const LSPString *name, value_t *value)
+        {
+            if (name == NULL)
+                return add(value);
+
+            param_t *p = allocate(name);
+            if (p == NULL)
+                return STATUS_NO_MEM;
+
+            init_value_move(&p->value, value);
+            if (vParams.add(p))
+            {
+                modified();
+                return STATUS_OK;
+            }
+
+            destroy(p);
+            return STATUS_NO_MEM;
+        }
+
         status_t Parameters::add(const char *name, const value_t *value)
         {
             if (name == NULL)
@@ -382,6 +402,17 @@ namespace lsp
             if (!tmp.set_utf8(name))
                 return STATUS_NO_MEM;
             return add(&tmp, value);
+        }
+
+        status_t Parameters::add_move(const char *name, value_t *value)
+        {
+            if (name == NULL)
+                return add(value);
+
+            LSPString tmp;
+            if (!tmp.set_utf8(name))
+                return STATUS_NO_MEM;
+            return add_move(&tmp, value);
         }
 
         status_t Parameters::add(const value_t *value)
@@ -403,6 +434,23 @@ namespace lsp
 
             destroy(p);
             return res;
+        }
+
+        status_t Parameters::add_move(value_t *value)
+        {
+            param_t *p = allocate();
+            if (p == NULL)
+                return STATUS_NO_MEM;
+
+            init_value_move(&p->value, value);
+            if (vParams.add(p))
+            {
+                modified();
+                return STATUS_OK;
+            }
+
+            destroy(p);
+            return STATUS_NO_MEM;
         }
 
         status_t Parameters::add_int(const char *name, ssize_t value)
@@ -434,14 +482,13 @@ namespace lsp
             if (value == NULL)
                 return add_null(name);
 
-            LSPString s;
-            if (!s.set_utf8(value))
-                return STATUS_NO_MEM;
-
             value_t v;
-            v.type      = VT_STRING;
-            v.v_str     = &s;
-            return add(name, &v);
+            status_t res = init_value_string(&v, value);
+            if (res == STATUS_OK)
+                res = add_move(name, &v);
+            lsp_finally { destroy_value(&v); };
+
+            return res;
         }
 
         status_t Parameters::add_string(const char *name, const LSPString *value)
@@ -1951,5 +1998,5 @@ namespace lsp
             return STATUS_OK;
         }
 
-    } /* namespace calc */
+    } /* namespace expr */
 } /* namespace lsp */

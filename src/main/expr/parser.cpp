@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 18 сент. 2019 г.
@@ -36,7 +36,7 @@ namespace lsp
             switch (expr->type)
             {
                 case ET_VALUE:
-                    if ((expr->value.type == VT_STRING) && (expr->value.v_str != NULL))
+                    if (expr->value.type == VT_STRING)
                     {
                         delete expr->value.v_str;
                         expr->value.v_str = NULL;

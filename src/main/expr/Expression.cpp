@@ -231,13 +231,12 @@ namespace lsp
 
             right->type         = ET_VALUE;
             right->eval         = eval_value;
-            right->value.type   = VT_STRING;
-            right->value.v_str  = str->clone();
 
-            if (right->value.v_str == NULL)
+            status_t res        = init_value_string(&right->value, str);
+            if (res != STATUS_OK)
             {
                 parse_destroy(right);
-                return STATUS_NO_MEM;
+                return res;
             }
 
             // Do we need to immediately return?
@@ -393,9 +392,7 @@ namespace lsp
             else
             {
                 root->expr          = expr;
-                init_value(&root->result);
-                root->result.type   = VT_UNDEF;
-                root->result.v_str  = NULL;
+                init_value_undef(&root->result);
             }
 
             return res;

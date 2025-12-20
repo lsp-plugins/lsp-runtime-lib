@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 19 февр. 2020 г.
@@ -37,9 +37,6 @@ namespace lsp
          */
         class Parameters: public Resolver
         {
-            private:
-                Parameters & operator = (const Parameters &);
-
             protected:
                 typedef struct param_t
                 {
@@ -65,6 +62,9 @@ namespace lsp
                 status_t            drop_value(size_t index, value_type_t type, param_t **out);
                 status_t            drop_value(const char *name, value_type_t type, param_t **out);
                 status_t            drop_value(const LSPString *name, value_type_t type, param_t **out);
+                status_t            add_move(const LSPString *name, value_t *value);
+                status_t            add_move(const char *name, value_t *value);
+                status_t            add_move(value_t *value);
 
             protected:
                 /**
@@ -76,7 +76,12 @@ namespace lsp
 
             public:
                 explicit Parameters();
+                Parameters(const Parameters &) = delete;
+                Parameters(Parameters &&) = delete;
                 virtual ~Parameters();
+
+                Parameters & operator = (const Parameters &) = delete;
+                Parameters & operator = (Parameters &&) = delete;
 
             public:
                 virtual status_t    resolve(value_t *value, const char *name, size_t num_indexes = 0, const ssize_t *indexes = NULL);
@@ -275,7 +280,7 @@ namespace lsp
                 inline bool         contains(const LSPString *name) const   { return get_index(name) >= 0; }
         };
     
-    } /* namespace calc */
+    } /* namespace expr */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_EXPR_PARAMETERS_H_ */
