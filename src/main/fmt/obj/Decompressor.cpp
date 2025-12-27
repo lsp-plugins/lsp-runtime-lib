@@ -191,7 +191,7 @@ namespace lsp
             vFloatBuf               = ptr;
             nFloatHead              = 0;
             nFloatSize              = 0;
-            nFloatCap               = float_cap;
+            nFloatCap               = uint32_t(float_cap);
             nFloatBits              = uint32_t(hdr.float_bits);
 
             return STATUS_OK;
@@ -234,7 +234,7 @@ namespace lsp
                 return (nread < 0) ? status_t(-nread) : STATUS_CORRUPTED;
 
             // Convert subcommand + group to event code
-            cmd     = (group << 2) | cmd;
+            cmd     = uint32_t((group << 2) | cmd);
             if (cmd >= sizeof(event_codes))
                 return STATUS_CORRUPTED;
 
@@ -283,7 +283,7 @@ namespace lsp
                     return res;
 
                 // Compute floating-point value
-                int32_t dvalue          = zigzag_decode(delta);
+                int32_t dvalue          = zigzag_decode(int32_t(delta));
                 const int32_t image     = vIntBuf[(base - index) % nFloatCap] + dvalue;
                 value                   = bin_to_float(image);
             }
@@ -374,14 +374,14 @@ namespace lsp
             status_t res    = read_varint_icount(&value);
             if (res != STATUS_OK)
                 return res;
-            dst[0]          = zigzag_decode(value);
+            dst[0]          = zigzag_decode(int32_t(value));
 
             for (size_t i=1; i<count; ++i)
             {
                 status_t res            = read_varint_icount(&value);
                 if (res != STATUS_OK)
                     return res;
-                dst[i]                  = dst[0] + zigzag_decode(value);
+                dst[i]                  = dst[0] + zigzag_decode(int32_t(value));
             }
 
             return STATUS_OK;
@@ -425,7 +425,7 @@ namespace lsp
             if ((res == STATUS_OK) && (coords > 3))
                 res         = read_float(&w);
             if (res == STATUS_OK)
-                res         = handler->add_vertex(x, y, z, w);
+                res         = status_t(handler->add_vertex(x, y, z, w));
 
             return res;
         }
@@ -442,7 +442,7 @@ namespace lsp
             if ((res == STATUS_OK) && (coords > 3))
                 res             = read_float(&w);
             if (res == STATUS_OK)
-                res             = handler->add_param_vertex(x, y, z, w);
+                res             = status_t(handler->add_param_vertex(x, y, z, w));
 
             return res;
         }
@@ -459,7 +459,7 @@ namespace lsp
             if ((res == STATUS_OK) && (coords > 3))
                 res             = read_float(&nw);
             if (res == STATUS_OK)
-                res             = handler->add_normal(nx, ny, nz, nw);
+                res             = status_t(handler->add_normal(nx, ny, nz, nw));
 
             return res;
         }
@@ -474,7 +474,7 @@ namespace lsp
             if ((res == STATUS_OK) && (coords > 2))
                 res             = read_float(&w);
             if (res == STATUS_OK)
-                res             = handler->add_texture_vertex(u, v, w);
+                res             = status_t(handler->add_texture_vertex(u, v, w));
             return res;
         }
 
@@ -513,7 +513,7 @@ namespace lsp
             }
 
 
-            return handler->add_face(vv, vn, vt, count);
+            return status_t(handler->add_face(vv, vn, vt, count));
         }
 
         status_t Decompressor::parse_line(IObjHandler *handler, bool texcoords)
@@ -534,7 +534,7 @@ namespace lsp
             if ((res = read_indices(vt, count, texcoords)) != STATUS_OK)
                 return res;
 
-            return handler->add_line(vv, vt, count);
+            return status_t(handler->add_line(vv, vt, count));
         }
 
         status_t Decompressor::parse_points(IObjHandler *handler)
@@ -552,7 +552,7 @@ namespace lsp
             if ((res = read_indices(vv, count, true)) != STATUS_OK)
                 return res;
 
-            return handler->add_points(vv, count);
+            return status_t(handler->add_points(vv, count));
         }
 
         status_t Decompressor::parse_object(IObjHandler *handler)

@@ -83,7 +83,6 @@ namespace lsp
                  * Parse compressed OBJ file
                  * @param handler Wavefront Object file handler
                  * @param path UTF-8 path to the file
-                 * @param charset character set encoding of the file
                  * @return status of operation
                  */
                 status_t            parse_file(IObjHandler *handler, const char *path);
@@ -92,7 +91,6 @@ namespace lsp
                  * Parse compressed OBJ file
                  * @param handler Wavefront Object file handler
                  * @param path path to the file
-                 * @param charset character set encoding of the file
                  * @return status of operation
                  */
                 status_t            parse_file(IObjHandler *handler, const LSPString *path);
@@ -101,7 +99,6 @@ namespace lsp
                  * Parse compressed OBJ file
                  * @param handler Wavefront Object file handler
                  * @param path path to the file
-                 * @param charset character set encoding of the file
                  * @return status of operation
                  */
                 status_t            parse_file(IObjHandler *handler, const io::Path *path);
@@ -111,7 +108,6 @@ namespace lsp
                  * @param handler Wavefront Object file handler
                  * @param is input stream
                  * @param flags wrap flags
-                 * @param charset character set
                  * @return status of operation
                  */
                 status_t            parse_data(IObjHandler *handler, io::IInStream *is, size_t flags = WRAP_NONE);

@@ -57,7 +57,7 @@ namespace lsp
             root            = advance_ptr_bytes<uint32_t>(ptr, rbuf);
             head            = 0;
             length          = 0;
-            cap             = capacity;
+            cap             = uint32_t(capacity);
 
             for (size_t i=0; i < 0x100; ++i)
                 root[i]     = -1;
@@ -218,7 +218,7 @@ namespace lsp
             data            = ptr;
             length          = 0;
             head            = 0;
-            cap             = capacity;
+            cap             = uint32_t(capacity);
 
             return STATUS_OK;
         }
@@ -257,7 +257,7 @@ namespace lsp
             else
                 memcpy(&data[ohead], v, count * sizeof(uint8_t));
 
-            length              = lsp_min(length + count, cap);
+            length              = uint32_t(lsp_min(length + count, cap));
         }
 
         status_t dbuffer_t::extract(void *dst, size_t offset, size_t count)

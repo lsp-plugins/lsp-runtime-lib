@@ -93,7 +93,7 @@ namespace lsp
             public:
                 /**
                  * Set buffer size
-                 * @param float_bits
+                 * @param float_bits number of bits to encode floating-point number (and logarithm of the buffer size)
                  * @return status of operation
                  */
                 status_t            set_buffer_size(size_t float_bits);
@@ -117,4 +117,4 @@ namespace lsp
 
 
 
-#endif /* LSP_PL;UG_IN_FMT_OBJ_COMPRESSOR_H_ */
+#endif /* LSP_PLUG_IN_FMT_OBJ_COMPRESSOR_H_ */
