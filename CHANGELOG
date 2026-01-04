@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.32 ===
-
+* Added condition variables support.
 
 === 1.0.31 ===
 * Task execution mechanism moved task state field from volatile to atomic.
