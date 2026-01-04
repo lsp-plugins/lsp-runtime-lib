@@ -38,56 +38,117 @@ namespace lsp
 
         namespace detail
         {
-            struct CRITICAL_SECTION: public ::CRITICAL_SECTION
+            struct condition_t
             {
+                ::CRITICAL_SECTION      sMutex;
+                ::CONDITION_VARIABLE    sCondition;
             };
         } /* namespace detail */
 
-        Mutex::Mutex()
+        Condition::Condition()
         {
-            hMutex      = new detail::CRITICAL_SECTION;
-            if (hMutex != NULL)
-                InitializeCriticalSectionAndSpinCount(hMutex, 0x10);
-        }
-
-        Mutex::~Mutex()
-        {
-            if (hMutex != NULL)
+            pState  = new detail::condition_t;
+            if (pState != NULL)
             {
-                DeleteCriticalSection(hMutex);
-                delete hMutex;
+                InitializeCriticalSectionAndSpinCount(&pState->sMutex, 0x10);
+                InitializeConditionVariable(&pState->sCondition);
             }
         }
 
-        bool Mutex::lock() const
+        Condition::~Condition()
         {
-            EnterCriticalSection(hMutex);
+            if (pState != NULL)
+            {
+                DeleteCriticalSection(&pState->sMutex);
+                delete pState;
+            }
+        }
+
+        bool Condition::lock() const
+        {
+            if (pState == NULL)
+                return false;
+            EnterCriticalSection(&pState->sMutex);
             return true;
         }
 
-        bool Mutex::try_lock() const
+        bool Condition::try_lock() const
         {
-            return TryEnterCriticalSection(hMutex);
+            return (pState != NULL) ? TryEnterCriticalSection(&pState->sMutex) : false;
         }
 
-        bool Mutex::unlock() const
+        bool Condition::unlock() const
         {
+            if (pState == NULL)
+                return false;
+
             HANDLE thread = reinterpret_cast<HANDLE>(GetCurrentThreadId());
-            if (hMutex->OwningThread != thread)
+            if (pState->sMutex.OwningThread != thread)
                 return false;
-            if (hMutex->RecursionCount <= 0)
+            if (pState->sMutex.RecursionCount <= 0)
                 return false;
 
-            LeaveCriticalSection(hMutex);
+            LeaveCriticalSection(&pState->sMutex);
             return true;
         }
+
+        bool Condition::notify() const
+        {
+            if (pState == NULL)
+                return false;
+            WakeConditionVariable(&pState->sCondition);
+            return true;
+        }
+
+        bool Condition::notify_all() const
+        {
+            if (pState == NULL)
+                return false;
+            WakeAllConditionVariable(&pState->sCondition);
+            return true;
+        }
+
+        status_t Condition::wait()
+        {
+            if (pState == NULL)
+                return STATUS_BAD_STATE;
+
+            if (SleepConditionVariableCS(&pState->sCondition, &pState->sMutex, INFINITE))
+                return STATUS_OK;
+
+            const DWORD result = GetLastError();
+            return (result == ERROR_TIMEOUT) ? STATUS_TIMED_OUT: STATUS_UNKNOWN_ERR;
+        }
+
+
+        status_t Condition::wait(system::time_millis_t millis)
+        {
+            if (pState == NULL)
+                return STATUS_BAD_STATE;
+
+            do
+            {
+                const DWORD timeout = (millis >= INFINITE) ? INFINITE - 1 : DWORD(millis);
+                if (SleepConditionVariableCS(&pState->sCondition, &pState->sMutex, DWORD(millis)))
+                    return STATUS_OK;
+
+                const DWORD result = GetLastError();
+                if (result != ERROR_TIMEOUT)
+                    return STATUS_UNKNOWN_ERR;
+
+                millis             -= timeout;
+            } while (millis > 0);
+
+            return STATUS_TIMEOUT;
+        }
+
 
 #else
         Condition::Condition()
         {
             pthread_mutexattr_t attr;
             pthread_mutexattr_init(&attr);
-            pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_DEFAULT);
+            pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
             pthread_mutex_init(&sMutex, &attr);
             pthread_mutexattr_destroy(&attr);
 

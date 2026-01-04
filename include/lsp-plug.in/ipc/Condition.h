@@ -47,34 +47,62 @@ namespace lsp
         /**
          * Condition variable implementation for Windows platform
          */
-        class Mutex
+        class Condition
         {
             private:
-                mutable detail::condition_t    *hCondition;     // Condition variable object
+                mutable detail::condition_t    *pState;         // Condition variable state
 
             public:
-                explicit Mutex();
-                Mutex(const Mutex &) = delete;
-                Mutex(Mutex &&) = delete;
-                ~Mutex();
-                Mutex & operator = (const Mutex &) = delete;
-                Mutex & operator = (Mutex &&) = delete;
+                explicit Condition();
+                Condition(const Condition &) = delete;
+                Condition(Condition &&) = delete;
+                ~Condition();
+                Condition & operator = (const Condition &) = delete;
+                Condition & operator = (Condition &&) = delete;
 
-                /** Wait until mutex is unlocked and lock it
-                 *
+            public:
+                /**
+                 * Wait until condition mutex is unlocked and lock it
                  */
                 bool lock() const;
 
-                /** Try to lock mutex and return status of operation
+                /**
+                 * Try to lock condition mutex and return status of operation
                  *
-                 * @return non-zero value if mutex was locked
+                 * @return true if condition has been locked
                  */
                 bool try_lock() const;
 
-                /** Unlock mutex
-                 *
+                /**
+                 * Unlock condition mutex
+                 * @return true on success
                  */
                 bool unlock() const;
+
+                /**
+                 * Notify single thread about condition change
+                 * @return true on success
+                 */
+                bool notify() const;
+
+                /**
+                 * Notify all waiting threads about condition change
+                 * @return true on success
+                 */
+                bool notify_all() const;
+
+                /**
+                 * Wait for condition variable within specified time interval
+                 * @param millis time interval to perform the wait
+                 * @return status of operation
+                 */
+                status_t wait(system::time_millis_t millis);
+
+                /**
+                 * Perform infinite wait for condition variable
+                 * @return status of operation
+                 */
+                status_t wait();
         };
 #else
         /**
@@ -94,6 +122,7 @@ namespace lsp
                 Condition & operator = (const Condition &) = delete;
                 Condition & operator = (Condition &&) = delete;
 
+            public:
                 /**
                  * Wait until condition mutex is unlocked and lock it
                  */
