@@ -1680,7 +1680,7 @@ namespace lsp
             if (res != STATUS_OK)
                 return res;
 
-            // Prepare the loopp
+            // Prepare the loop
             LSPString tmp;
             ssize_t off = path.sPath.index_of(0, FILE_SEPARATOR_C);
             if (off < 0)

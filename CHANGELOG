@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.32 ===
+* Some updates and improvements on the configuration parser and serializer.
 * Added condition variables support.
 
 === 1.0.31 ===

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 1 мая 2020 г.
@@ -484,6 +484,24 @@ namespace lsp
             }
 
             return STATUS_BAD_TYPE;
+        }
+
+        status_t Serializer::write(const config::param_t * param)
+        {
+            if (param == NULL)
+                return STATUS_BAD_ARGUMENTS;
+            return write(*param);
+        }
+
+        status_t Serializer::write(const config::param_t & param)
+        {
+            if (param.flags & SF_COMMENT)
+            {
+                status_t res = write_comment(&param.comment);
+                if (res != STATUS_OK)
+                    return res;
+            }
+            return write(&param.name, &param.v, param.flags);
         }
 
         status_t Serializer::write_i32(const char *key, int32_t value, size_t flags)

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 29 апр. 2020 г.
@@ -107,7 +107,11 @@ namespace lsp
         {
             name.truncate();
             comment.truncate();
+            clear_value();
+        }
 
+        void param_t::drop_value()
+        {
             switch (flags & SF_TYPE_MASK)
             {
                 case SF_TYPE_STR:
@@ -125,8 +129,12 @@ namespace lsp
                     v.blob.data     = NULL;
                     break;
             }
+        }
 
-            flags = SF_TYPE_NONE;
+        void param_t::clear_value()
+        {
+            drop_value();
+            flags = (flags & (~SF_TYPE_MASK)) | SF_TYPE_NONE;
         }
 
         bool param_t::is_int() const
@@ -376,49 +384,49 @@ namespace lsp
 
         void param_t::set_i32(int32_t value)
         {
-            clear();
+            drop_value();
             flags       = SF_TYPE_I32;
             v.i32       = value;
         }
 
         void param_t::set_u32(uint32_t value)
         {
-            clear();
+            drop_value();
             flags       = SF_TYPE_U32;
             v.u32       = value;
         }
 
         void param_t::set_i64(int64_t value)
         {
-            clear();
+            drop_value();
             flags       = SF_TYPE_I64;
             v.i64       = value;
         }
 
         void param_t::set_u64(uint64_t value)
         {
-            clear();
+            drop_value();
             flags       = SF_TYPE_U64;
             v.u64       = value;
         }
 
         void param_t::set_f32(float value)
         {
-            clear();
+            drop_value();
             flags       = SF_TYPE_F32;
             v.f32       = value;
         }
 
         void param_t::set_f64(double value)
         {
-            clear();
+            drop_value();
             flags       = SF_TYPE_F64;
             v.f64       = value;
         }
 
         void param_t::set_bool(bool value)
         {
-            clear();
+            drop_value();
             flags       = SF_TYPE_BOOL;
             v.bval      = value;
         }
@@ -429,7 +437,31 @@ namespace lsp
             if (s == NULL)
                 return false;
 
-            clear();
+            drop_value();
+            flags       = SF_TYPE_STR | SF_QUOTED;
+            v.str       = s;
+            return true;
+        }
+
+        bool param_t::set_string(const LSPString * value)
+        {
+            char *s     = value->clone_utf8();
+            if (s == NULL)
+                return false;
+
+            drop_value();
+            flags       = SF_TYPE_STR | SF_QUOTED;
+            v.str       = s;
+            return true;
+        }
+
+        bool param_t::set_string(const LSPString & value)
+        {
+            char *s     = value.clone_utf8();
+            if (s == NULL)
+                return false;
+
+            drop_value();
             flags       = SF_TYPE_STR | SF_QUOTED;
             v.str       = s;
             return true;
@@ -452,7 +484,7 @@ namespace lsp
                 return false;
             }
 
-            clear();
+            drop_value();
             flags           = SF_TYPE_BLOB;
             v.blob.length   = length;
             v.blob.ctype    = st;
