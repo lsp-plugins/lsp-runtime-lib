@@ -189,6 +189,10 @@ namespace lsp
                 bool            set_string(const LSPString & value);
                 bool            set_blob(const blob_t *value);
                 bool            set_blob(size_t length, const char *ctype, const char *data);
+
+                bool            set_name(const char * name);
+                bool            set_name(const LSPString * name);
+                bool            set_name(const LSPString & name);
         } param_t;
 
     } /* namespace config */

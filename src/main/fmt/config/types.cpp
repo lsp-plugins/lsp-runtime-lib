@@ -467,6 +467,21 @@ namespace lsp
             return true;
         }
 
+        bool param_t::set_name(const char * name)
+        {
+            return (name != NULL) ? this->name.set_utf8(name) : false;
+        }
+
+        bool param_t::set_name(const LSPString * name)
+        {
+            return (name != NULL) ? this->name.set(name) : false;
+        }
+
+        bool param_t::set_name(const LSPString & name)
+        {
+            return this->name.set(&name);
+        }
+
         bool param_t::set_blob(const blob_t *value)
         {
             return set_blob(value->length, value->ctype, value->data);
