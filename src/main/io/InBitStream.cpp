@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 14 мар. 2021 г.
@@ -45,6 +45,9 @@ namespace lsp
 
         status_t InBitStream::wrap(FILE *fd, bool close)
         {
+            if (pIS != NULL)
+                return set_error(STATUS_BAD_STATE);
+
             status_t res;
 
             InFileStream *ofs = new InFileStream();
@@ -65,6 +68,9 @@ namespace lsp
 
         status_t InBitStream::wrap_native(fhandle_t fd, bool close)
         {
+            if (pIS != NULL)
+                return set_error(STATUS_BAD_STATE);
+
             status_t res;
 
             InFileStream *ofs = new InFileStream();
@@ -85,6 +91,9 @@ namespace lsp
 
         status_t InBitStream::wrap(File *fd, size_t flags)
         {
+            if (pIS != NULL)
+                return set_error(STATUS_BAD_STATE);
+
             status_t res;
 
             InFileStream *ofs = new InFileStream();
@@ -105,6 +114,9 @@ namespace lsp
 
         status_t InBitStream::open(const char *path)
         {
+            if (pIS != NULL)
+                return set_error(STATUS_BAD_STATE);
+
             status_t res;
 
             InFileStream *ofs = new InFileStream();
@@ -125,6 +137,9 @@ namespace lsp
 
         status_t InBitStream::open(const LSPString *path)
         {
+            if (pIS != NULL)
+                return set_error(STATUS_BAD_STATE);
+
             status_t res;
 
             InFileStream *ofs = new InFileStream();
@@ -146,6 +161,9 @@ namespace lsp
 
         status_t InBitStream::open(const Path *path)
         {
+            if (pIS != NULL)
+                return set_error(STATUS_BAD_STATE);
+
             status_t res;
 
             InFileStream *ofs = new InFileStream();
