@@ -75,10 +75,10 @@ namespace lsp
                 uint64_t rgb48() const noexcept;
 
                 inline bool set_id(const char *id)          { return sID.set(id);           }
-                inline bool set_id(CStringBuffer & buf, size_t offset)  { return sID.set(buf, offset);  }
+                inline bool set_id(const CStringBuffer & buf, size_t offset)  { return sID.set(buf, offset);  }
 
                 bool set_alias(const char *value);
-                bool set_alias(CStringBuffer & buf, size_t offset);
+                bool set_alias(const CStringBuffer & buf, size_t offset);
 
                 void set_rgb24(uint32_t value);
                 void set_rgb48(uint64_t value);

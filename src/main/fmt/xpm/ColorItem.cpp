@@ -128,7 +128,7 @@ namespace lsp
             return true;
         }
 
-        bool ColorItem::set_alias(CStringBuffer & buf, size_t offset)
+        bool ColorItem::set_alias(const CStringBuffer & buf, size_t offset)
         {
             if (!sAlias.set(buf, offset))
                 return false;
