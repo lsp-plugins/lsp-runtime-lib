@@ -22,157 +22,192 @@
 #include <lsp-plug.in/runtime/version.h>
 
 #include <lsp-plug.in/fmt/xpm/ColorItem.h>
+#include <lsp-plug.in/common/alloc.h>
+#include <lsp-plug.in/stdlib/string.h>
 
 namespace lsp
 {
     namespace xpm
     {
-        ColorItem::ColorItem():
-            enClass(CC_NONE)
+        ColorItem::ColorItem()
         {
-            nRGB48      = 0;
+            sName       = NULL;
+            nColor64    = 0;
+            bWide       = false;
         }
 
-        ColorItem::ColorItem(const ColorItem & src):
-            sID(src.sID),
-            sAlias(src.sAlias),
-            enClass(src.enClass),
-            nRGB48(src.nRGB48)
+        ColorItem::ColorItem(const ColorItem & src)
         {
+            sName       = (src.sName != NULL) ? strdup(src.sName) : NULL;
+            nColor64    = src.nColor64;
+            bWide       = src.bWide;
         }
 
-        ColorItem::ColorItem(ColorItem && src):
-            sID(lsp::move(src.sID)),
-            sAlias(lsp::move(src.sAlias)),
-            enClass(src.enClass),
-            nRGB48(src.nRGB48)
+        ColorItem::ColorItem(ColorItem && src)
         {
+            sName       = src.sName;
+            nColor64    = src.nColor64;
+            bWide       = src.bWide;
+
+            src.sName   = NULL;
+            src.nColor64= 0;
+            src.bWide   = false;
         }
 
-        ColorItem::ColorItem(const char *id):
-            sID(id),
-            enClass(CC_NONE)
+        ColorItem::ColorItem(const char *id)
         {
-            nRGB48      = 0;
+            sName       = strdup(id);
+            nColor64    = 0;
+            bWide       = false;
         }
 
-        ColorItem::ColorItem(const char *id, const char *value):
-            sID(id),
-            sAlias(value),
-            enClass(CC_ALIAS)
+        ColorItem::ColorItem(uint32_t value)
         {
-            nRGB48      = 0;
+            sName       = NULL;
+            nColor64    = value;
+            bWide       = false;
         }
 
-        ColorItem::ColorItem(const char *id, uint32_t value):
-            sID(id),
-            enClass(CC_RGB24)
+        ColorItem::ColorItem(uint64_t value)
         {
-            nRGB48      = 0;
-            nRGB24      = value;
+            sName       = NULL;
+            nColor64    = value;
+            bWide       = true;
         }
 
-        ColorItem::ColorItem(const char *id, uint64_t value):
-            sID(id),
-            enClass(CC_RGB48)
+        ColorItem::ColorItem(const char *id, uint32_t value)
         {
-            nRGB48      = value;
+            sName       = strdup(id);
+            nColor64    = value;
+            bWide       = false;
         }
 
-        uint32_t ColorItem::rgb24() const noexcept
+        ColorItem::ColorItem(const char *id, uint64_t value)
         {
-            switch (enClass)
+            sName       = strdup(id);
+            nColor64    = value;
+            bWide       = true;
+        }
+
+        ColorItem::~ColorItem()
+        {
+            if (sName != NULL)
             {
-                case CC_RGB24:
-                    return nRGB24;
-                case CC_RGB48:
-                {
-                    const uint32_t c = nRGB24;
-                    return
-                        (uint64_t(c & 0xff0000) << 24) |
-                        (uint64_t(c & 0x00ff00) << 16) |
-                        (uint64_t(c & 0x0000ff) << 8);
-                }
-                default:
-                    break;
+                sName       = NULL;
+                free(sName);
             }
-            return 0;
         }
 
-        uint64_t ColorItem::rgb48() const noexcept
+        void ColorItem::clear_name()
         {
-            switch (enClass)
+            if (sName != NULL)
             {
-                case CC_RGB48:
-                    return nRGB48;
-                case CC_RGB24:
-                {
-                    const uint64_t c = nRGB48;
-                    return
-                        (uint32_t(c >> 24) & 0xff0000) |
-                        (uint32_t(c >> 16) & 0x00ff00) |
-                        (uint32_t(c >> 8)  & 0x0000ff);
-                }
-                default:
-                    break;
+                sName       = NULL;
+                free(sName);
             }
-            return 0;
         }
 
-        bool ColorItem::set_alias(const char *value)
+        bool ColorItem::set_name(const char *name)
         {
-            if (!sAlias.set(value))
+            if (name == NULL)
+            {
+                clear_name();
+                return true;
+            }
+
+            char *str   = strdup(name);
+            if (str == NULL)
                 return false;
 
-            enClass = CC_ALIAS;
+            if (sName != NULL)
+                free(sName);
+            sName       = str;
+
             return true;
         }
 
-        bool ColorItem::set_alias(const CStringBuffer & buf, size_t offset)
+        bool ColorItem::set_name(const char *name, size_t len)
         {
-            if (!sAlias.set(buf, offset))
-                return false;
+            if (name == NULL)
+            {
+                clear_name();
+                return true;
+            }
 
-            enClass = CC_ALIAS;
+            char *str   = static_cast<char *>(malloc(len + 1));
+            if (str == NULL)
+                return false;
+            memcpy(str, name, len);
+            str[len] = '\0';
+
+            if (sName != NULL)
+                free(sName);
+            sName       = str;
+
             return true;
         }
 
-        void ColorItem::set_rgb24(uint32_t value)
+        bool ColorItem::is_none() const noexcept
         {
-            sAlias.reset();
-
-            nRGB24 = value;
-            enClass = CC_RGB24;
+            return (bWide) ? uint32_t(nColor64 >> 48) == 0xffff : (uint32_t(nColor64) >> 24) == 0xff;
         }
 
-        void ColorItem::set_rgb48(uint64_t value)
+        uint32_t ColorItem::rgba32() const noexcept
         {
-            sAlias.reset();
+            if (!bWide)
+                return uint32_t(nColor64);
 
-            nRGB48 = value;
-            enClass = CC_RGB24;
+            const uint64_t c = nColor64;
+            return
+                (uint32_t(c >> 32) & 0xff000000) |
+                (uint32_t(c >> 24) & 0x00ff0000) |
+                (uint32_t(c >> 16) & 0x0000ff00) |
+                (uint32_t(c >> 8)  & 0x000000ff);
+        }
+
+        uint64_t ColorItem::rgba64() const noexcept
+        {
+            if (bWide)
+                return nColor64;
+
+            const uint64_t c = nColor64;
+            return
+                ((c & 0xff000000) << 32) |
+                ((c & 0x00ff0000) << 24) |
+                ((c & 0x0000ff00) << 16) |
+                ((c & 0x000000ff) << 8);
+        }
+
+        void ColorItem::set_rgba32(uint32_t value)
+        {
+            nColor64    = value;
+            bWide       = false;
+        }
+
+        void ColorItem::set_rgba64(uint64_t value)
+        {
+            nColor64    = value;
+            bWide       = true;
         }
 
         void ColorItem::set_none()
         {
-            sAlias.reset();
-            enClass = CC_NONE;
+            nColor64    = 0;
+            bWide       = false;
         }
 
         void ColorItem::swap(ColorItem & src)
         {
-            sID.swap(src.sID);
-            sAlias.swap(src.sAlias);
-            lsp::swap(enClass, src.enClass);
-            lsp::swap(nRGB48, src.nRGB48);
+            lsp::swap(sName, src.sName);
+            lsp::swap(nColor64, src.nColor64);
+            lsp::swap(bWide, src.bWide);
         }
 
         void ColorItem::swap(ColorItem * src)
         {
-            sID.swap(src->sID);
-            sAlias.swap(src->sAlias);
-            lsp::swap(enClass, src->enClass);
-            lsp::swap(nRGB48, src->nRGB48);
+            lsp::swap(sName, src->sName);
+            lsp::swap(nColor64, src->nColor64);
+            lsp::swap(bWide, src->bWide);
         }
 
     } /* namespace xpm */

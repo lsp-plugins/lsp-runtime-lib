@@ -31,57 +31,40 @@ namespace lsp
 {
     namespace xpm
     {
-        enum color_class_t
-        {
-            CC_NONE,
-            CC_RGB24,
-            CC_RGB48,
-            CC_ALIAS
-        };
-
         /**
          * XPM color item
          */
         class ColorItem
         {
             private:
-                CString sID;            // ID of color
-                CString sAlias;         // Color name
-                color_class_t enClass;  // Value class
-                union
-                {
-                    uint32_t    nRGB24;     // RGB24 value
-                    uint64_t    nRGB48;     // RGB48 value
-                };
+                char       *sName;          // Name of color
+                uint64_t    nColor64;
+                bool        bWide;          // Wide color
 
             public:
                 ColorItem();
                 ColorItem(const ColorItem & src);
                 ColorItem(ColorItem && src);
-                explicit ColorItem(const char *id);
-                ColorItem(const char *id, const char *value);
-                ColorItem(const char *id, uint32_t value);
-                ColorItem(const char *id, uint64_t value);
+                explicit ColorItem(const char *name);
+                ColorItem(uint32_t value);
+                ColorItem(uint64_t value);
+                ColorItem(const char *name, uint32_t value);
+                ColorItem(const char *name, uint64_t value);
+                ~ColorItem();
 
             public:
-                inline bool is_none() const noexcept        { return enClass == CC_NONE;    }
-                inline bool is_rgb24() const noexcept       { return enClass == CC_RGB24;   }
-                inline bool is_rgb48() const noexcept       { return enClass == CC_RGB48;   }
-                inline bool is_alias() const noexcept       { return enClass == CC_ALIAS;   }
+                inline const char *name() const noexcept                    { return sName;                         }
+                bool set_name(const char *name);
+                bool set_name(const char *name, size_t len);
+                void clear_name();
 
-                inline const char *id() const noexcept      { return sID.get();             }
-                inline const char *alias() const noexcept   { return (enClass == CC_ALIAS) ? sAlias.get() : NULL;   }
-                uint32_t rgb24() const noexcept;
-                uint64_t rgb48() const noexcept;
+                inline bool is_wide() const noexcept            { return bWide;                         }
+                bool is_none() const noexcept;
+                uint32_t rgba32() const noexcept;
+                uint64_t rgba64() const noexcept;
 
-                inline bool set_id(const char *id)          { return sID.set(id);           }
-                inline bool set_id(const CStringBuffer & buf, size_t offset)  { return sID.set(buf, offset);  }
-
-                bool set_alias(const char *value);
-                bool set_alias(const CStringBuffer & buf, size_t offset);
-
-                void set_rgb24(uint32_t value);
-                void set_rgb48(uint64_t value);
+                void set_rgba32(uint32_t value);
+                void set_rgba64(uint64_t value);
                 void set_none();
 
                 void swap(ColorItem & src);

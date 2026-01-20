@@ -37,7 +37,7 @@ namespace lsp
         Color::Color(const Color & src):
             sCode(src.sCode),
             sMono(src.sMono),
-            sSymlink(src.sSymlink),
+            sSymbolic(src.sSymbolic),
             sGray4(src.sGray4),
             sGray(src.sGray),
             sColor(src.sColor)
@@ -47,7 +47,7 @@ namespace lsp
         Color::Color(Color && src):
             sCode(lsp::move(src.sCode)),
             sMono(lsp::move(src.sMono)),
-            sSymlink(lsp::move(src.sSymlink)),
+            sSymbolic(lsp::move(src.sSymbolic)),
             sGray4(lsp::move(src.sGray4)),
             sGray(lsp::move(src.sGray)),
             sColor(lsp::move(src.sColor))
@@ -58,7 +58,7 @@ namespace lsp
         {
             sCode.swap(src.sCode);
             sMono.swap(src.sMono);
-            sSymlink.swap(src.sSymlink);
+            sSymbolic.swap(src.sSymbolic);
             sGray4.swap(src.sGray4);
             sGray.swap(src.sGray);
             sColor.swap(src.sColor);
@@ -68,7 +68,7 @@ namespace lsp
         {
             sCode.swap(src->sCode);
             sMono.swap(src->sMono);
-            sSymlink.swap(src->sSymlink);
+            sSymbolic.swap(src->sSymbolic);
             sGray4.swap(src->sGray4);
             sGray.swap(src->sGray);
             sColor.swap(src->sColor);

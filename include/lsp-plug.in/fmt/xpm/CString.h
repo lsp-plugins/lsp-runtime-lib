@@ -32,7 +32,7 @@ namespace lsp
     {
         typedef lltl::shbuffer<char> CStringBuffer;
 
-        class CString
+        class LSP_RUNTIME_LIB_PUBLIC CString
         {
             private:
                 CStringBuffer   hBuffer;

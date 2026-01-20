@@ -34,12 +34,12 @@ namespace lsp
         /**
          * XPM2/XPM3 color
          */
-        class Color
+        class LSP_RUNTIME_LIB_PUBLIC Color
         {
             private:
                 CString     sCode;
                 ColorItem   sMono;          // XPM: mono visual ('m')
-                ColorItem   sSymlink;       // XPM: symbolic name ('s')
+                ColorItem   sSymbolic;      // XPM: symbolic name ('s')
                 ColorItem   sGray4;         // XPM: 4-level grayscale ('g4')
                 ColorItem   sGray;          // XPM: grayscale with more than 4 levels ('g')
                 ColorItem   sColor;         // XPM: color visual
@@ -58,8 +58,8 @@ namespace lsp
                 inline ColorItem & mono_visual()                { return sMono;             }
                 inline const ColorItem & mono_visual() const    { return sMono;             }
 
-                inline ColorItem & symlink_visual()             { return sSymlink;          }
-                inline const ColorItem & symlink_visual() const { return sSymlink;          }
+                inline ColorItem & symbolic_visual()            { return sSymbolic;         }
+                inline const ColorItem & symbolic_visual() const{ return sSymbolic;         }
 
                 inline ColorItem & gray4_visual()               { return sGray4;            }
                 inline const ColorItem & gray4_visual() const   { return sGray4;            }
