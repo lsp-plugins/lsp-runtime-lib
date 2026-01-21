@@ -67,8 +67,8 @@ namespace lsp
                 inline ColorItem & gray_visual()                { return sGray;             }
                 inline const ColorItem & gray_visual() const    { return sGray;             }
 
-                inline ColorItem & color_visual()               { return sGray;             }
-                inline const ColorItem & color_visual() const   { return sGray;             }
+                inline ColorItem & color_visual()               { return sColor;            }
+                inline const ColorItem & color_visual() const   { return sColor;            }
 
             public:
                 void swap(Color & src);

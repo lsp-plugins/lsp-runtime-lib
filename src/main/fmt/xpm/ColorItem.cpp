@@ -32,7 +32,7 @@ namespace lsp
         ColorItem::ColorItem()
         {
             sName       = NULL;
-            nColor64    = 0;
+            nColor64    = 0xff000000;
             bWide       = false;
         }
 
@@ -57,7 +57,7 @@ namespace lsp
         ColorItem::ColorItem(const char *id)
         {
             sName       = strdup(id);
-            nColor64    = 0;
+            nColor64    = 0xff000000;
             bWide       = false;
         }
 
@@ -192,7 +192,7 @@ namespace lsp
 
         void ColorItem::set_none()
         {
-            nColor64    = 0;
+            nColor64    = 0xff000000;
             bWide       = false;
         }
 

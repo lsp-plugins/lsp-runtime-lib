@@ -98,6 +98,8 @@ namespace lsp
                     // Validate key
                     if (strlen(key) != sHeader.chars_per_pixel)
                         return STATUS_CORRUPTED_FILE;
+                    if (!tmp.set_code(key))
+                        return STATUS_NO_MEM;
 
                     // Validate value
                     const size_t vlen   = strlen(value);
@@ -138,7 +140,7 @@ namespace lsp
                     // Get the row and validate
                     const char * const row = vPixels[nRows];
                     const size_t bytes = strlen(row);
-                    if (bytes != sHeader.chars_per_pixel * sHeader.height)
+                    if (bytes != sHeader.chars_per_pixel * sHeader.width)
                         return STATUS_CORRUPTED_FILE;
 
                     // Now we are ready to return the line

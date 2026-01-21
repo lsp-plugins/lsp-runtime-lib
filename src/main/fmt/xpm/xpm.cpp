@@ -21,7 +21,10 @@
 
 #include <lsp-plug.in/fmt/xpm/xpm.h>
 #include <lsp-plug.in/fmt/xpm/Parser.h>
+#include <lsp-plug.in/io/InFileStream.h>
+#include <lsp-plug.in/io/InMemoryStream.h>
 
+#include <private/fmt/xpm/Tokenizer.h>
 #include <private/fmt/xpm/XPM1BuiltinParser.h>
 #include <private/fmt/xpm/XPM1StreamParser.h>
 
@@ -30,13 +33,141 @@ namespace lsp
     namespace xpm
     {
 
-        status_t make_xpm1(Parser **dst,
-                size_t width,
-                size_t height,
-                size_t num_colors,
-                size_t chars_per_pixel,
-                const char * const * colors,
-                const char * const * pixels)
+        status_t    open(Parser **dst, const char *path)
+        {
+            io::InFileStream *is = new io::InFileStream();
+            if (is == NULL)
+                return STATUS_NO_MEM;
+
+            status_t res = is->open(path);
+            if (res != STATUS_OK)
+            {
+                is->close();
+                delete is;
+                return res;
+            }
+
+            return wrap(dst, is, WRAP_CLOSE | WRAP_DELETE);
+        }
+
+        status_t    open(Parser **dst, const LSPString *path)
+        {
+            io::InFileStream *is = new io::InFileStream();
+            if (is == NULL)
+                return STATUS_NO_MEM;
+
+            status_t res = is->open(path);
+            if (res != STATUS_OK)
+            {
+                is->close();
+                delete is;
+                return res;
+            }
+
+            return wrap(dst, is, WRAP_CLOSE | WRAP_DELETE);
+        }
+
+        status_t    open(Parser **dst, const io::Path *path)
+        {
+            io::InFileStream *is = new io::InFileStream();
+            if (is == NULL)
+                return STATUS_NO_MEM;
+
+            status_t res = is->open(path);
+            if (res != STATUS_OK)
+            {
+                is->close();
+                delete is;
+                return res;
+            }
+
+            return wrap(dst, is, WRAP_CLOSE | WRAP_DELETE);
+        }
+
+        status_t    wrap(Parser **dst, const char *str)
+        {
+            io::InMemoryStream *is = new io::InMemoryStream();
+            if (is == NULL)
+                return STATUS_NO_MEM;
+
+            is->wrap(str, strlen(str));
+            return wrap(dst, is, WRAP_CLOSE | WRAP_DELETE);
+        }
+
+        status_t wrap(Parser **dst, const void *buf, size_t len)
+        {
+            io::InMemoryStream *is = new io::InMemoryStream();
+            if (is == NULL)
+                return STATUS_NO_MEM;
+
+            is->wrap(buf, len);
+            return wrap(dst, is, WRAP_CLOSE | WRAP_DELETE);
+        }
+
+        status_t wrap(Parser **dst, void *buf, size_t len, lsp_memdrop_t drop)
+        {
+            io::InMemoryStream *is = new io::InMemoryStream();
+            if (is == NULL)
+                return STATUS_NO_MEM;
+
+            is->wrap(buf, len, drop);
+            return wrap(dst, is, WRAP_CLOSE | WRAP_DELETE);
+        }
+
+        status_t wrap(Parser **dst, io::IInStream *is, size_t flags)
+        {
+            if ((dst == NULL) || (is == NULL))
+                return STATUS_BAD_ARGUMENTS;
+
+            Tokenizer *tok = new Tokenizer(is, flags);
+            if (tok == NULL)
+            {
+                finalize(is, flags);
+                return STATUS_NO_MEM;
+            }
+
+            lsp_finally {
+                if (tok != NULL)
+                {
+                    tok->close();
+                    delete tok;
+                }
+            };
+
+            token_type_t ttype;
+            const char *tvalue;
+            status_t res = tok->read_token(ttype, tvalue);
+            if (res != STATUS_OK)
+                return res;
+            tok->unread_token();
+
+            if (ttype == TOK_DEFINE) // XPM 1
+            {
+                XPM1StreamParser * parser = new XPM1StreamParser(tok);
+                if (parser == NULL)
+                    return STATUS_NO_MEM;
+                tok     = NULL;
+
+                *dst    = parser;
+                return STATUS_OK;
+            }
+            else if (ttype == TOK_XPM2_SIG) // XPM 2
+            {
+                // TODO
+            }
+            else if (ttype == TOK_XPM3_SIG) // XPM 3
+            {
+                // TODO
+            }
+
+            return STATUS_UNSUPPORTED_FORMAT;
+        }
+
+        status_t make_xpm1(
+            Parser **dst,
+            size_t width, size_t height,
+            size_t num_colors, size_t chars_per_pixel,
+            const char * const * colors, const char * const * pixels)
         {
             if (dst == NULL)
                 return STATUS_BAD_ARGUMENTS;

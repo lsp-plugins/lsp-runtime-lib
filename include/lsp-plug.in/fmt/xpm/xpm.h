@@ -62,12 +62,21 @@ namespace lsp
         /**
          * Wrap memory chunk with parser
          * @param str string to wrap
-         * @param drop memory dropping flags
          * @param dst pointer to store pointer to the parser. The caller code is
          *            responsible for calling close() and delete the parser.
          * @return status of operation
          */
-        status_t    wrap(Parser **dst, const char *str, size_t flags = MEMDROP_NONE);
+        status_t    wrap(Parser **dst, const char *str);
+
+        /**
+         * Wrap buffer with parser
+         * @param buf buffer to wrap
+         * @param len length of buffer to wrap
+         * @param dst pointer to store pointer to the parser. The caller code is
+         *            responsible for calling close() and delete the parser.
+         * @return status of operation
+         */
+        status_t    wrap(Parser **dst, const void *buf, size_t len);
 
         /**
          * Wrap buffer with parser
@@ -78,7 +87,7 @@ namespace lsp
          *            responsible for calling close() and delete the parser.
          * @return status of operation
          */
-        status_t    wrap(Parser **dst, const void *buf, size_t len, size_t drop = MEMDROP_NONE);
+        status_t    wrap(Parser **dst, void *buf, size_t len, lsp_memdrop_t drop = MEMDROP_NONE);
 
         /**
          * Wrap input stream with parser

@@ -111,7 +111,7 @@ namespace lsp
                 }
 
             public:
-                XPM1StreamParser(Tokenizer * tokenizer)
+                explicit XPM1StreamParser(Tokenizer * tokenizer)
                 {
                     pTokenizer              = NULL;
                     sIconId                 = NULL;
@@ -282,11 +282,16 @@ namespace lsp
                     // Need to lookup for color block?
                     if (enState == ST_COLORS_LOOKUP)
                     {
-                        // static char *<prefix>_colors[] = {
+                        // static [const] char *<prefix>_colors[] = {
 
                         // Read 'char' identifier
                         if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
                             return res;
+                        if ((ttype == TOK_IDENTIFIER) && (strcmp(tvalue, "const") == 0))
+                        {
+                            if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                                return res;
+                        }
                         if ((ttype != TOK_IDENTIFIER) || (strcmp(tvalue, "char") != 0))
                             return STATUS_CORRUPTED_FILE;
 
@@ -434,7 +439,7 @@ namespace lsp
                     // Need to lookup for color block?
                     if (enState == ST_PIXELS_LOOKUP)
                     {
-                        // static char *<prefix>_pixels[] = {
+                        // static [const] char *<prefix>_pixels[] = {
                         // Read 'static' identifier
                         if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
                             return res;
@@ -444,6 +449,11 @@ namespace lsp
                         // Read 'char' identifier
                         if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
                             return res;
+                        if ((ttype == TOK_IDENTIFIER) && (strcmp(tvalue, "const") == 0))
+                        {
+                            if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                                return res;
+                        }
                         if ((ttype != TOK_IDENTIFIER) || (strcmp(tvalue, "char") != 0))
                             return STATUS_CORRUPTED_FILE;
 
