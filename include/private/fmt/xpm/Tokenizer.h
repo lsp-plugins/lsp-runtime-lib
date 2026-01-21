@@ -59,7 +59,7 @@ namespace lsp
         class LSP_HIDDEN_MODIFIER Tokenizer
         {
             private:
-                static constexpr size_t BUF_SIZE    = 0x400;
+                static constexpr size_t BUF_SIZE    = 0x40; // 400;
 
             private:
                 typedef struct token_t
@@ -87,7 +87,7 @@ namespace lsp
                 {
                     if (sToken.length >= sToken.capacity)
                     {
-                        const size_t new_cap = lsp_min(sToken.capacity + (sToken.capacity >> 1), size_t(0x20));
+                        const size_t new_cap = lsp_max(sToken.capacity + (sToken.capacity >> 1), size_t(0x20));
                         char *ptr            = static_cast<char *>(realloc(sToken.value, new_cap));
                         if (ptr == NULL)
                             return false;
@@ -102,12 +102,27 @@ namespace lsp
 
                 inline int      getch()
                 {
+                    // Is there a character in unget buffer?
                     const int ch    = nLastChar;
-                    if (ch < 0)
-                        return pIS->read_byte();
+                    if (ch >= 0)
+                    {
+                        nLastChar = -1;
+                        return ch;
+                    }
 
-                    nLastChar       = -1;
-                    return ch;
+                    // Is buffer not empty?
+                    if (nOffset >= nSize)
+                    {
+                        // Read data
+                        const ssize_t nread = pIS->read(pBuffer, BUF_SIZE);
+                        if (nread < 0)
+                            return int(nread);
+
+                        nOffset     = 0;
+                        nSize       = nread;
+                    }
+
+                    return (nOffset < nSize) ? pBuffer[nOffset++] : -STATUS_EOF;
                 }
 
                 inline void     ungetch(char ch)
@@ -144,6 +159,8 @@ namespace lsp
                         if (!is_alphadigit(ch))
                         {
                             ungetch(ch);
+                            if (nread <= 0)
+                                return STATUS_CORRUPTED_FILE;
                             return (nread > 0) ? STATUS_OK : STATUS_CORRUPTED_FILE;
                         }
 
@@ -377,9 +394,11 @@ namespace lsp
                             sToken.type         = TOK_ASSIGN;
                             break;
                         case '#':   // define
+                            if (!bNewLine)
+                                return STATUS_CORRUPTED_FILE;
                             if ((res = read_identifier()) != STATUS_OK)
                                 return res;
-                            if (strcmp(sToken.value, "#define") != 0)
+                            if (memcmp(sToken.value, "#define", sToken.length) != 0)
                                 return STATUS_CORRUPTED_FILE;
                             sToken.type         = TOK_DEFINE;
                             break;

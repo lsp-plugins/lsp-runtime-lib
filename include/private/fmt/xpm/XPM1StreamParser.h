@@ -86,7 +86,7 @@ namespace lsp
                     for (const char * const * postfix = postfixes; *postfix != NULL; ++postfix)
                     {
                         const ssize_t offset = len - strlen(*postfix);
-                        if (offset < 0) \
+                        if (offset < 0)
                             return STATUS_CORRUPTED_FILE;
                         if (strcmp(&name[offset], *postfix) == 0)
                         {
@@ -95,6 +95,7 @@ namespace lsp
                                 return STATUS_NO_MEM;
                             memcpy(sIconId, name, offset);
                             sIconId[offset] = '\0';
+                            return STATUS_OK;
                         }
                     }
 
@@ -113,7 +114,7 @@ namespace lsp
             public:
                 explicit XPM1StreamParser(Tokenizer * tokenizer)
                 {
-                    pTokenizer              = NULL;
+                    pTokenizer              = tokenizer;
                     sIconId                 = NULL;
 
                     sHeader.version         = VERSION_XPM1;
@@ -186,7 +187,7 @@ namespace lsp
                             return STATUS_CORRUPTED_FILE;
 
                         // Obtain icon name if not defined
-                        if (num_defines == 0)
+                        if ((num_defines++) == 0)
                         {
                             if ((res = obtain_icon_id(tvalue)) != STATUS_OK)
                                 return STATUS_CORRUPTED_FILE;
@@ -512,6 +513,7 @@ namespace lsp
                     if ((ttype != TOK_STRING) || (strlen(tvalue) != row_size))
                         return STATUS_CORRUPTED_FILE;
 
+                    ++nRows;
                     memcpy(dst, tvalue, row_size);
 
                     // Read separator

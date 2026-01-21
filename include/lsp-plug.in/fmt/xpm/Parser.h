@@ -66,7 +66,8 @@ namespace lsp
                 /**
                  * Read the image line to buffer
                  * @param dst destination buffer to store image line, should be of enough
-                 *            size to store character data.
+                 *            size to store character data. @note Parser does not store NULL-terminating
+                 *            character for the buffer!
                  * @return status of operation
                  */
                 virtual status_t    read_line(char *dst);

@@ -148,10 +148,27 @@ UTEST_BEGIN("runtime.fmt.xpm", xpm1)
                 XFACE_colors, XFACE_pixels) == STATUS_OK);
 
         validate_icon(parser);
+
+        // Close and delete parser
+        UTEST_ASSERT(parser->close() == STATUS_OK);
+        delete parser;
     }
 
     void test_read_file()
     {
+        io::Path path;
+        UTEST_ASSERT(path.fmt("%s/fmt/xpm/xpm1.xpm", resources()) > 0);
+
+        printf("Reading file %s\n", path.as_native());
+
+        lsp::xpm::Parser *parser = NULL;
+        UTEST_ASSERT(lsp::xpm::open(&parser, &path) == STATUS_OK);
+
+        validate_icon(parser);
+
+        // Close and delete parser
+        UTEST_ASSERT(parser->close() == STATUS_OK);
+        delete parser;
     }
 
     UTEST_MAIN
