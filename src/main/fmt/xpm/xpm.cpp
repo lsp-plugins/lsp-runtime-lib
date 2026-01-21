@@ -23,6 +23,7 @@
 #include <lsp-plug.in/fmt/xpm/Parser.h>
 
 #include <private/fmt/xpm/XPM1BuiltinParser.h>
+#include <private/fmt/xpm/XPM1StreamParser.h>
 
 namespace lsp
 {
@@ -42,7 +43,7 @@ namespace lsp
 
             header_t hdr;
 
-            hdr.version             = XPM1;
+            hdr.version             = VERSION_XPM1;
             hdr.width               = width;
             hdr.height              = height;
             hdr.num_colors          = num_colors;

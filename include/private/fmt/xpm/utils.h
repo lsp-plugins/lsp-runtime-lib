@@ -57,6 +57,23 @@ namespace lsp
             return false;
         }
 
+        static bool is_digit(char c)
+        {
+            return (c >= '0') && (c <= '9');
+        }
+
+        static bool is_alpha(char c)
+        {
+            return ((c >= 'a') && (c <= 'z')) ||
+                    ((c >= 'A') && (c <= 'Z')) ||
+                    (c == '_');
+        }
+
+        static bool is_alphadigit(char c)
+        {
+            return is_digit(c) || is_alpha(c);
+        }
+
         static const char *parse_color_item(ColorItem & v, const char *str, const char *end)
         {
             if (str >= end)
@@ -112,6 +129,31 @@ namespace lsp
 
             return (v.set_name(str, len)) ? str : NULL;
         }
+
+        static const char *parse_int(size_t *out, const char *value)
+        {
+            size_t res = 0;
+            size_t digits = 0;
+
+            for (; *value != '\0'; ++value)
+            {
+                if (!is_digit(*value))
+                {
+                    if (digits <= 0)
+                        return NULL;
+                    break;
+                }
+
+                // Update value and check for overflow
+                res = (res * 10) + (*value - '0');
+                if (++digits >= 9)
+                    return NULL;
+            }
+
+            *out    = res;
+            return value;
+        }
+
     } /* namespace xpm */
 } /* namespace lsp */
 

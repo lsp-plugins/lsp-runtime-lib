@@ -32,9 +32,9 @@ namespace lsp
     {
         enum version_t
         {
-            XPM1,
-            XPM2,
-            XPM3
+            VERSION_XPM1,
+            VERSION_XPM2,
+            VERSION_XPM3
         };
 
         typedef struct header_t
@@ -44,8 +44,8 @@ namespace lsp
             size_t      height;             // Image height
             size_t      num_colors;         // Number of colors
             size_t      chars_per_pixel;    // Number of characters per one pixel
-            ssize_t     x_hotspot;          // Image X hot-spot
-            ssize_t     y_hotspot;          // Image Y hot-spot
+            size_t      x_hotspot;          // Image X hot-spot
+            size_t      y_hotspot;          // Image Y hot-spot
             bool        has_extensions;     // Presense of extensions
         } header_t;
     } /* namespace xpm */

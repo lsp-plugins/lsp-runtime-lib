@@ -72,12 +72,15 @@ namespace lsp
 
                 virtual status_t read_color(Color *dst) override
                 {
+                    if (dst == NULL)
+                        return STATUS_BAD_ARGUMENTS;
+
                     if (vColors == NULL)
                         return STATUS_CLOSED;
 
                     // Check that there are still colors available
                     if (nColors >= sHeader.num_colors)
-                        return STATUS_BAD_STATE;
+                        return STATUS_NOT_FOUND;
 
                     Color tmp;
                     const size_t offset = nColors * 2;
@@ -118,6 +121,9 @@ namespace lsp
 
                 virtual status_t read_line(char *dst) override
                 {
+                    if (dst == NULL)
+                        return STATUS_BAD_ARGUMENTS;
+
                     if (vPixels == NULL)
                         return STATUS_CLOSED;
 
@@ -133,7 +139,7 @@ namespace lsp
                     const char * const row = vPixels[nRows];
                     const size_t bytes = strlen(row);
                     if (bytes != sHeader.chars_per_pixel * sHeader.height)
-                        return STATUS_CORRUPTED;
+                        return STATUS_CORRUPTED_FILE;
 
                     // Now we are ready to return the line
                     memcpy(dst, row, bytes);
@@ -144,6 +150,9 @@ namespace lsp
 
                 virtual status_t read_ext(char *dst, size_t *count) override
                 {
+                    if (dst == NULL)
+                        return STATUS_BAD_ARGUMENTS;
+
                     if ((vColors == NULL) || (vPixels == NULL))
                         return STATUS_CLOSED;
 
