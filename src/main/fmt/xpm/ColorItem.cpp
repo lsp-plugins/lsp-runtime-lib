@@ -50,6 +50,7 @@ namespace lsp
         ColorItem::ColorItem(ColorItem && src) noexcept
         {
             nColor64        = src.nColor64;
+            sName           = src.sName;
             enState         = src.enState;
 
             src.nColor64    = 0;
@@ -257,6 +258,9 @@ namespace lsp
 
         bool ColorItem::set(const ColorItem & src)
         {
+            if (&src == this)
+                return true;
+
             // Source color item does not contain name
             if (src.enState != STATE_NAME)
             {
@@ -301,16 +305,19 @@ namespace lsp
 
         ColorItem & ColorItem::operator = (ColorItem && src) noexcept
         {
+            if (&src == this)
+                return *this;
+
             if ((enState == STATE_NAME) && (sName != NULL))
                 free(sName);
 
-            nColor64    = src.nColor64;
-            sName       = src.sName;
-            enState     = src.enState;
+            nColor64        = src.nColor64;
+            sName           = src.sName;
+            enState         = src.enState;
 
-            src.nColor64= 0;
-            src.sName   = NULL;
-            src.enState = STATE_UNSET;
+            src.nColor64    = 0;
+            src.sName       = NULL;
+            src.enState     = STATE_UNSET;
 
             return *this;
         }

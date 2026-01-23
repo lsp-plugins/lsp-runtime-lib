@@ -25,7 +25,6 @@
 #include <lsp-plug.in/runtime/version.h>
 
 #include <lsp-plug.in/common/types.h>
-#include <lsp-plug.in/fmt/xpm/CString.h>
 
 namespace lsp
 {

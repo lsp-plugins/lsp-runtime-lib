@@ -30,10 +30,10 @@
 
 static const char * const XFACE_data[] = {
     "23 22 6 2 11 12 XPMEXT",
-    "   c red m white s light_color ",
+    "   c red m white s light color g4 grey ",
     "Y  c green m black s lines_in_mix",
-    "+  c yellow m white s lines_in_dark g grey ",
-    "x  m black s dark_color g4 grey ",
+    "+  c yellow m white s lines_in_dark g dark slate grey ",
+    "x  m black g4 dark slate grey s dark_color ",
     ".* c #beefcafebabe",
     "./ c #abcdef",
     "x   x   x x x   x   x x x x x x + x x x x x x ",
@@ -88,8 +88,8 @@ UTEST_BEGIN("runtime.fmt.xpm", xpm3)
         UTEST_ASSERT(parser->read_color(&c) == STATUS_OK);
         UTEST_ASSERT(c.has_code("  "));
         UTEST_ASSERT(c.mono_visual().has_name("white"));
-        UTEST_ASSERT(c.symbolic_visual().has_name("light_color"));
-        UTEST_ASSERT(!c.gray4_visual().is_set());
+        UTEST_ASSERT(c.symbolic_visual().has_name("light color"));
+        UTEST_ASSERT(c.gray4_visual().has_name("grey"));
         UTEST_ASSERT(!c.gray_visual().is_set());
         UTEST_ASSERT(c.color_visual().has_name("red"));
 
@@ -106,14 +106,14 @@ UTEST_BEGIN("runtime.fmt.xpm", xpm3)
         UTEST_ASSERT(c.mono_visual().has_name("white"));
         UTEST_ASSERT(c.symbolic_visual().has_name("lines_in_dark"));
         UTEST_ASSERT(!c.gray4_visual().is_set());
-        UTEST_ASSERT(c.gray_visual().has_name("grey"));
+        UTEST_ASSERT(c.gray_visual().has_name("dark slate grey"));
         UTEST_ASSERT(c.color_visual().has_name("yellow"));
 
         UTEST_ASSERT(parser->read_color(&c) == STATUS_OK);
         UTEST_ASSERT(c.has_code("x "));
         UTEST_ASSERT(c.mono_visual().has_name("black"));
         UTEST_ASSERT(c.symbolic_visual().has_name("dark_color"));
-        UTEST_ASSERT(c.gray4_visual().has_name("grey"));
+        UTEST_ASSERT(c.gray4_visual().has_name("dark slate grey"));
         UTEST_ASSERT(!c.gray_visual().is_set());
         UTEST_ASSERT(!c.color_visual().is_set());
 

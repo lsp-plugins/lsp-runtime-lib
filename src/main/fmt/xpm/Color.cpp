@@ -67,8 +67,7 @@ namespace lsp
             sGray(lsp::move(src.sGray)),
             sColor(lsp::move(src.sColor))
         {
-            sCode       = src.sCode;
-            src.sCode   = NULL;
+            sCode       = lsp::exchange(src.sCode, static_cast<char *>(NULL));
         }
 
         void Color::clear_code()
@@ -82,6 +81,9 @@ namespace lsp
 
         bool Color::set(const Color & src)
         {
+            if (&src == this)
+                return true;
+
             Color tmp;
             if (!tmp.set_code(src.sCode))
                 return false;
@@ -155,9 +157,19 @@ namespace lsp
 
         Color & Color::operator = (Color && src) noexcept
         {
-            Color tmp;
-            swap(tmp);
-            swap(src);
+            if (&src == this)
+                return *this;
+
+            if (sCode != NULL)
+                free(sCode);
+
+            sCode       = lsp::exchange(src.sCode, static_cast<char *>(NULL));
+            sMono       = lsp::move(src.sMono);
+            sSymbolic   = lsp::move(src.sSymbolic);
+            sGray4      = lsp::move(src.sGray4);
+            sGray       = lsp::move(src.sGray);
+            sColor      = lsp::move(src.sColor);
+
             return *this;
         }
 

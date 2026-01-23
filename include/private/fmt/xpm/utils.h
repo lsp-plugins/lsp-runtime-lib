@@ -169,6 +169,49 @@ namespace lsp
             return str;
         }
 
+        static const char *parse_color_name(const char *str)
+        {
+            while (true)
+            {
+                str = parse_identifier(str);
+                if (str == NULL)
+                    return NULL;
+
+                // Perform look-ahead of additional word in color name
+                if (str[0] != ' ')
+                    return str;
+
+                switch (str[1])
+                {
+                    case 'm':
+                    case 's':
+                    case 'c':
+                        if ((str[2] == '\0') || (is_blank(str[2])))
+                            return str;
+                        ++str;
+                        break;
+
+                    case 'g':
+                        if ((str[2] == '\0') || (is_blank(str[2])))
+                            return str;
+                        if (str[2] != '4')
+                        {
+                            ++str;
+                            break;
+                        }
+                        if ((str[3] == '\0') || (is_blank(str[3])))
+                            return str;
+                        ++str;
+                        break;
+
+                    default:
+                        if (!is_alpha(str[1]))
+                            return str;
+                        break;
+                }
+            }
+        }
+
         static const char *parse_color_item(ColorItem & v, const char *str)
         {
             const char * const begin = str;
@@ -205,7 +248,7 @@ namespace lsp
                 return NULL;
             }
 
-            str = parse_identifier(begin);
+            str = parse_color_name(begin);
             if (str == begin)
                 return NULL;
 

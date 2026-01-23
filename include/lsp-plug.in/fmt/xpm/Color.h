@@ -24,7 +24,6 @@
 
 #include <lsp-plug.in/runtime/version.h>
 
-#include <lsp-plug.in/fmt/xpm/CString.h>
 #include <lsp-plug.in/fmt/xpm/ColorItem.h>
 
 namespace lsp

@@ -84,8 +84,7 @@ namespace lsp
 
         Extension::Extension(Extension && src) noexcept
         {
-            sName       = src.sName;
-            src.sName   = NULL;
+            sName       = lsp::exchange(src.sName, static_cast<char *>(NULL));
 
             vData.swap(src.vData);
             destroy(src.vData);
@@ -182,6 +181,9 @@ namespace lsp
 
         bool Extension::set(const Extension & src)
         {
+            if (&src == this)
+                return true;
+
             Extension tmp;
             if (!tmp.set_name(src.sName))
                 return false;
@@ -210,9 +212,8 @@ namespace lsp
 
         Extension & Extension::operator = (Extension && src) noexcept
         {
-            Extension tmp;
+            Extension tmp(lsp::move(src));
             swap(tmp);
-            swap(src);
             return *this;
         }
 
