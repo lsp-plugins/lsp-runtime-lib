@@ -20,43 +20,150 @@
  */
 
 #include <lsp-plug.in/fmt/xpm/Color.h>
+#include <lsp-plug.in/stdlib/string.h>
 
 namespace lsp
 {
     namespace xpm
     {
-        Color::Color()
+        Color::~Color()
         {
+            if (sCode != NULL)
+            {
+                free(sCode);
+                sCode = NULL;
+            }
         }
 
-        Color::Color(const char * code):
-            sCode(code)
+        Color::Color() noexcept
         {
+            sCode       = NULL;
+        }
+
+        Color::Color(const char * code)
+        {
+            sCode       = (code != NULL) ? strdup(code) : NULL;
+        }
+
+        Color::Color(const char * code, size_t len)
+        {
+            sCode       = (code != NULL) ? strndup(code, len) : NULL;;
         }
 
         Color::Color(const Color & src):
-            sCode(src.sCode),
             sMono(src.sMono),
             sSymbolic(src.sSymbolic),
             sGray4(src.sGray4),
             sGray(src.sGray),
             sColor(src.sColor)
         {
+            sCode       = (src.sCode != NULL) ? strdup(src.sCode) : NULL;
         }
 
-        Color::Color(Color && src):
-            sCode(lsp::move(src.sCode)),
+        Color::Color(Color && src) noexcept:
             sMono(lsp::move(src.sMono)),
             sSymbolic(lsp::move(src.sSymbolic)),
             sGray4(lsp::move(src.sGray4)),
             sGray(lsp::move(src.sGray)),
             sColor(lsp::move(src.sColor))
         {
+            sCode       = src.sCode;
+            src.sCode   = NULL;
         }
 
-        void Color::swap(Color & src)
+        void Color::clear_code()
         {
-            sCode.swap(src.sCode);
+            if (sCode != NULL)
+            {
+                free(sCode);
+                sCode = NULL;
+            }
+        }
+
+        bool Color::set(const Color & src)
+        {
+            Color tmp;
+            if (!tmp.set_code(src.sCode))
+                return false;
+            if (!tmp.sMono.set(src.sMono))
+                return false;
+            if (!tmp.sSymbolic.set(src.sSymbolic))
+                return false;
+            if (!tmp.sGray4.set(src.sGray4))
+                return false;
+            if (!tmp.sGray.set(src.sGray))
+                return false;
+            if (!tmp.sColor.set(src.sColor))
+                return false;
+
+            swap(tmp);
+            return true;
+        }
+
+        bool Color::set_code(const char *code)
+        {
+            if (code == NULL)
+            {
+                clear_code();
+                return true;
+            }
+
+            char *c     = strdup(code);
+            if (c == NULL)
+                return false;
+
+            if (sCode != NULL)
+                free(sCode);
+            sCode       = c;
+            return true;
+        }
+
+        bool Color::set_code(const char *code, size_t len)
+        {
+            if (code == NULL)
+            {
+                clear_code();
+                return true;
+            }
+
+            char *c     = strmemdup(code, len);
+            if (c == NULL)
+                return false;
+
+            if (sCode != NULL)
+                free(sCode);
+            sCode       = c;
+
+            return true;
+        }
+
+        bool Color::has_code(const char *code) const noexcept
+        {
+            if (code == sCode) // Handle if NULL has been passed
+                return true;
+            if (sCode == NULL)
+                return false;
+
+            return strcmp(sCode, code) == 0;
+        }
+
+        Color & Color::operator = (const Color & src)
+        {
+            set(src);
+            return *this;
+        }
+
+        Color & Color::operator = (Color && src) noexcept
+        {
+            Color tmp;
+            swap(tmp);
+            swap(src);
+            return *this;
+        }
+
+        void Color::swap(Color & src) noexcept
+        {
+            lsp::swap(sCode, src.sCode);
             sMono.swap(src.sMono);
             sSymbolic.swap(src.sSymbolic);
             sGray4.swap(src.sGray4);
@@ -64,9 +171,9 @@ namespace lsp
             sColor.swap(src.sColor);
         }
 
-        void Color::swap(Color * src)
+        void Color::swap(Color * src) noexcept
         {
-            sCode.swap(src->sCode);
+            lsp::swap(sCode, src->sCode);
             sMono.swap(src->sMono);
             sSymbolic.swap(src->sSymbolic);
             sGray4.swap(src->sGray4);

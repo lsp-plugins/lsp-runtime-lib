@@ -48,7 +48,7 @@ namespace lsp
             return STATUS_NOT_IMPLEMENTED;
         }
 
-        status_t Parser::read_ext(char *dst, size_t *count)
+        status_t Parser::read_ext(Extension *dst)
         {
             return STATUS_NOT_IMPLEMENTED;
         }

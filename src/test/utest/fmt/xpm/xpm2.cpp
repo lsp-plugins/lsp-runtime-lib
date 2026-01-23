@@ -3,7 +3,7 @@
  *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
- * Created on: 21 янв. 2026 г.
+ * Created on: 23 янв. 2026 г.
  *
  * lsp-runtime-lib is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,22 +19,15 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
+
 #include <lsp-plug.in/test-fw/utest.h>
 #include <lsp-plug.in/fmt/xpm/xpm.h>
 #include <lsp-plug.in/stdlib/string.h>
 
-#define XFACE_format 1
 #define XFACE_width 23
 #define XFACE_height 22
-#define XFACE_ncolors 4
+#define XFACE_ncolors 6
 #define XFACE_chars_per_pixel 2
-
-static const char *XFACE_colors[] = {
-    "  ", "#ff0000",
-    "Y ", "#00ff00",
-    "+ ", "#ffff00",
-    "x ", "#ffffff"
-};
 
 static const char *XFACE_pixels[] = {
     "x   x   x x x   x   x x x x x x + x x x x x x ",
@@ -62,31 +55,7 @@ static const char *XFACE_pixels[] = {
 };
 
 
-UTEST_BEGIN("runtime.fmt.xpm", xpm1)
-
-    bool validate_color(const lsp::xpm::Color & c, const char *code, uint32_t rgba)
-    {
-        if (!c.has_code(code))
-            return false;
-
-        if (c.mono_visual().is_set())
-            return false;
-        if (c.symbolic_visual().is_set())
-            return false;
-        if (c.gray4_visual().is_set())
-            return false;
-        if (c.gray_visual().is_set())
-            return false;
-
-        if (!c.color_visual().is_rgb24())
-            return false;
-        if (c.color_visual().rgb24() != rgba)
-            return false;
-        if (c.color_visual().name() != NULL)
-            return false;
-
-        return true;
-    }
+UTEST_BEGIN("runtime.fmt.xpm", xpm2)
 
     void validate_icon(lsp::xpm::Parser *parser)
     {
@@ -95,24 +64,67 @@ UTEST_BEGIN("runtime.fmt.xpm", xpm1)
         xpm::header_t hdr;
         UTEST_ASSERT(parser->read_header(&hdr) == STATUS_OK);
 
-        UTEST_ASSERT(hdr.version == xpm::VERSION_XPM1);
+        UTEST_ASSERT(hdr.version == xpm::VERSION_XPM2);
         UTEST_ASSERT(hdr.width == XFACE_width);
         UTEST_ASSERT(hdr.height == XFACE_height);
         UTEST_ASSERT(hdr.num_colors == XFACE_ncolors);
-        UTEST_ASSERT(hdr.x_hotspot == 0);
-        UTEST_ASSERT(hdr.y_hotspot == 0);
-        UTEST_ASSERT(!hdr.has_extensions);
+        UTEST_ASSERT(hdr.x_hotspot == 11);
+        UTEST_ASSERT(hdr.y_hotspot == 12);
+        UTEST_ASSERT(hdr.has_extensions);
 
         // Read colors
         lsp::xpm::Color c;
+
         UTEST_ASSERT(parser->read_color(&c) == STATUS_OK);
-        UTEST_ASSERT(validate_color(c, "  ", 0xff0000));
+        UTEST_ASSERT(c.has_code("  "));
+        UTEST_ASSERT(c.mono_visual().has_name("white"));
+        UTEST_ASSERT(c.symbolic_visual().has_name("light_color"));
+        UTEST_ASSERT(!c.gray4_visual().is_set());
+        UTEST_ASSERT(!c.gray_visual().is_set());
+        UTEST_ASSERT(c.color_visual().has_name("red"));
+
         UTEST_ASSERT(parser->read_color(&c) == STATUS_OK);
-        UTEST_ASSERT(validate_color(c, "Y ", 0x00ff00));
+        UTEST_ASSERT(c.has_code("Y "));
+        UTEST_ASSERT(c.mono_visual().has_name("black"));
+        UTEST_ASSERT(c.symbolic_visual().has_name("lines_in_mix"));
+        UTEST_ASSERT(!c.gray4_visual().is_set());
+        UTEST_ASSERT(!c.gray_visual().is_set());
+        UTEST_ASSERT(c.color_visual().has_name("green"));
+
         UTEST_ASSERT(parser->read_color(&c) == STATUS_OK);
-        UTEST_ASSERT(validate_color(c, "+ ", 0xffff00));
+        UTEST_ASSERT(c.has_code("+ "));
+        UTEST_ASSERT(c.mono_visual().has_name("white"));
+        UTEST_ASSERT(c.symbolic_visual().has_name("lines_in_dark"));
+        UTEST_ASSERT(!c.gray4_visual().is_set());
+        UTEST_ASSERT(c.gray_visual().has_name("grey"));
+        UTEST_ASSERT(c.color_visual().has_name("yellow"));
+
         UTEST_ASSERT(parser->read_color(&c) == STATUS_OK);
-        UTEST_ASSERT(validate_color(c, "x ", 0xffffff));
+        UTEST_ASSERT(c.has_code("x "));
+        UTEST_ASSERT(c.mono_visual().has_name("black"));
+        UTEST_ASSERT(c.symbolic_visual().has_name("dark_color"));
+        UTEST_ASSERT(c.gray4_visual().has_name("grey"));
+        UTEST_ASSERT(!c.gray_visual().is_set());
+        UTEST_ASSERT(!c.color_visual().is_set());
+
+        UTEST_ASSERT(parser->read_color(&c) == STATUS_OK);
+        UTEST_ASSERT(c.has_code(".*"));
+        UTEST_ASSERT(!c.mono_visual().is_set());
+        UTEST_ASSERT(!c.symbolic_visual().is_set());
+        UTEST_ASSERT(!c.gray4_visual().is_set());
+        UTEST_ASSERT(!c.gray_visual().is_set());
+        UTEST_ASSERT(c.color_visual().rgb48() == 0xbeefcafebabeull);
+        UTEST_ASSERT(c.color_visual().rgb24() == 0x00becaba);
+
+        UTEST_ASSERT(parser->read_color(&c) == STATUS_OK);
+        UTEST_ASSERT(c.has_code("./"));
+        UTEST_ASSERT(!c.mono_visual().is_set());
+        UTEST_ASSERT(!c.symbolic_visual().is_set());
+        UTEST_ASSERT(!c.gray4_visual().is_set());
+        UTEST_ASSERT(!c.gray_visual().is_set());
+        UTEST_ASSERT(c.color_visual().rgb24() == 0x00abcdef);
+        UTEST_ASSERT(c.color_visual().rgb48() == 0xab00cd00ef00ull);
+
         UTEST_ASSERT(parser->read_color(&c) == STATUS_NOT_FOUND);
 
         // Read rows
@@ -130,30 +142,28 @@ UTEST_BEGIN("runtime.fmt.xpm", xpm1)
 
         // Read extensions
         xpm::Extension ext;
+
+        UTEST_ASSERT(parser->read_ext(&ext) == STATUS_OK);
+        UTEST_ASSERT(ext.has_name("ext1"));
+        UTEST_ASSERT(ext.rows() == 1);
+        UTEST_ASSERT(ext.row(0) != NULL);
+        UTEST_ASSERT(strcmp(ext.row(0), "data1") == 0);
+
+        UTEST_ASSERT(parser->read_ext(&ext) == STATUS_OK);
+        UTEST_ASSERT(ext.has_name("ext2"));
+        UTEST_ASSERT(ext.rows() == 2);
+        UTEST_ASSERT(ext.row(0) != NULL);
+        UTEST_ASSERT(strcmp(ext.row(0), "data2_1") == 0);
+        UTEST_ASSERT(ext.row(1) != NULL);
+        UTEST_ASSERT(strcmp(ext.row(1), "data2_2") == 0);
+
         UTEST_ASSERT(parser->read_ext(&ext) == STATUS_NOT_FOUND);
-    }
-
-    void test_read_builtin()
-    {
-        lsp::xpm::Parser *parser = NULL;
-        UTEST_ASSERT(
-            lsp::xpm::make_xpm1(
-                &parser,
-                XFACE_width, XFACE_height,
-                XFACE_ncolors, XFACE_chars_per_pixel,
-                XFACE_colors, XFACE_pixels) == STATUS_OK);
-
-        validate_icon(parser);
-
-        // Close and delete parser
-        UTEST_ASSERT(parser->close() == STATUS_OK);
-        delete parser;
     }
 
     void test_read_file()
     {
         io::Path path;
-        UTEST_ASSERT(path.fmt("%s/fmt/xpm/xpm1.xpm", resources()) > 0);
+        UTEST_ASSERT(path.fmt("%s/fmt/xpm/xpm2.xpm", resources()) > 0);
 
         printf("Reading file %s\n", path.as_native());
 
@@ -169,13 +179,10 @@ UTEST_BEGIN("runtime.fmt.xpm", xpm1)
 
     UTEST_MAIN
     {
-        printf("Testing read from built-in structure ...\n");
-        test_read_builtin();
         printf("Testing read from file...\n");
         test_read_file();
     }
 
 UTEST_END
-
 
 

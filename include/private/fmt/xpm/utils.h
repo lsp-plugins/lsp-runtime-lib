@@ -24,13 +24,14 @@
 
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/fmt/xpm/ColorItem.h>
+#include <lsp-plug.in/fmt/xpm/Header.h>
 
 namespace lsp
 {
     namespace xpm
     {
 
-        static uint32_t hex_char(char c)
+        static inline uint32_t hex_digit(char c)
         {
             if ((c >= '0') && (c <= '9'))
                 return c - '0';
@@ -38,10 +39,10 @@ namespace lsp
                 return c - 'a' + 10;
             if ((c >= 'A') && (c <= 'F'))
                 return c - 'A' + 10;
-            return 0xffffffff;
+            return 0x10;
         }
 
-        static bool is_space(char c)
+        static inline bool is_space(char c)
         {
             switch (c)
             {
@@ -57,77 +58,79 @@ namespace lsp
             return false;
         }
 
-        static bool is_digit(char c)
+        static inline bool is_blank(char c)
+        {
+            switch (c)
+            {
+                case ' ':
+                case '\t':
+                    return true;
+                default:
+                    break;
+            }
+            return false;
+        }
+
+        static inline bool is_digit(char c)
         {
             return (c >= '0') && (c <= '9');
         }
 
-        static bool is_alpha(char c)
+        static inline bool is_alpha(char c)
         {
             return ((c >= 'a') && (c <= 'z')) ||
                     ((c >= 'A') && (c <= 'Z')) ||
                     (c == '_');
         }
 
-        static bool is_alphadigit(char c)
+        static inline bool is_alphadigit(char c)
         {
             return is_digit(c) || is_alpha(c);
         }
 
-        static const char *parse_color_item(ColorItem & v, const char *str, const char *end)
+        static const char *skip_whitespace(const char *value)
         {
-            if (str >= end)
-                return NULL;
-
-            size_t len;
-            const char * const begin = str;
-
-            if (*str == '#')
+            while (true)
             {
-                // Parse hexadecimal value
-                ++str;
-                uint64_t color = 0;
-                while (str < end)
+                const char ch = *value;
+                switch (ch)
                 {
-                    if ((str - begin) >= 49)
-                        return NULL;
-
-                    const uint32_t hex = hex_char(*str);
-                    if (hex > 0xff)
+                    case ' ':
+                    case '\t':
+                    case '\r':
+                    case '\v':
+                        ++value;
                         break;
-
-                    ++str;
-                    color       = (color << 4) | hex;
+                    default:
+                        return value;
                 }
-
-                // Check that color is valid
-                len = str - begin;
-                if (len == 7)
-                {
-                    v.set_rgba32(uint32_t(color));
-                    return str;
-                }
-                else if (len == 13)
-                {
-                    v.set_rgba64(uint64_t(color));
-                    return str;
-                }
-
-                return NULL;
             }
+        }
 
-            while (str < end)
+        const char *match_prefix(const char *str, const char *expected)
+        {
+            while (true)
             {
-                if (is_space(*str))
-                    break;
+                const char ch = *expected;
+                if (ch == '\0')
+                    return str;
+                if (*str != ch)
+                    return NULL;
+
+                ++expected;
                 ++str;
             }
+        }
 
-            len = str - begin;
-            if (len <= 0)
-                return NULL;
+        const char *advance(const char *str, size_t count)
+        {
+            for (size_t i=0; i<count; ++i)
+            {
+                if (*(str++) == '\0')
+                    return NULL;
+            }
 
-            return (v.set_name(str, len)) ? str : NULL;
+            return str;
         }
 
         static const char *parse_int(size_t *out, const char *value)
@@ -152,6 +155,207 @@ namespace lsp
 
             *out    = res;
             return value;
+        }
+
+        static const char *parse_identifier(const char *str)
+        {
+            if (!is_alpha(*str))
+                return NULL;
+
+            ++str;
+            while (is_alphadigit(*str))
+                ++str;
+
+            return str;
+        }
+
+        static const char *parse_color_item(ColorItem & v, const char *str)
+        {
+            const char * const begin = str;
+
+            if (*str == '#')
+            {
+                // Parse hexadecimal value
+                ++str;
+                uint32_t code;
+                uint64_t color = 0;
+
+                while ((code = hex_digit(*str)) < 0x10)
+                {
+                    if ((str - begin) >= 13)
+                        return NULL;
+
+                    ++str;
+                    color       = (color << 4) | code;
+                }
+
+                // Check that color is valid
+                const size_t len = str - begin;
+                if (len == 7)
+                {
+                    v.set_rgb24(uint32_t(color));
+                    return str;
+                }
+                else if (len == 13)
+                {
+                    v.set_rgb48(uint64_t(color));
+                    return str;
+                }
+
+                return NULL;
+            }
+
+            str = parse_identifier(begin);
+            if (str == begin)
+                return NULL;
+
+            return (v.set_name(begin, str - begin)) ? str : NULL;
+        }
+
+        static const char *parse_color(Color & c, const char *str, size_t chars_per_color)
+        {
+            enum flags_t
+            {
+                F_MONO      = 1 << 0,
+                F_SYMBOLIC  = 1 << 1,
+                F_GRAY4     = 1 << 2,
+                F_GRAY      = 1 << 3,
+                F_COLOR     = 1 << 4
+            };
+
+            // Color code
+            const char *code = str;
+            if ((str = advance(str, chars_per_color)) == NULL)
+                return NULL;
+            if (!c.set_code(code, chars_per_color))
+                return NULL;
+
+            // Visuals
+            size_t flags = 0;
+            while (true)
+            {
+                str = skip_whitespace(str);
+                switch (*str)
+                {
+                    case '\0':
+                        return (flags == 0) ? NULL : str;
+
+                    case 'm': // Mono
+                        if (flags & F_MONO)
+                            return NULL;
+                        flags |= F_MONO;
+                        str = skip_whitespace(str + 1);
+                        if ((str = parse_color_item(c.mono_visual(), str)) == NULL)
+                            return NULL;
+                        break;
+
+                    case 's': // Symbolic
+                        if (flags & F_SYMBOLIC)
+                            return NULL;
+                        flags |= F_SYMBOLIC;
+                        str = skip_whitespace(str + 1);
+                        if ((str = parse_color_item(c.symbolic_visual(), str)) == NULL)
+                            return NULL;
+                        break;
+
+                    case 'c': // Color
+                        if (flags & F_COLOR)
+                            return NULL;
+                        flags |= F_COLOR;
+                        str = skip_whitespace(str + 1);
+                        if ((str = parse_color_item(c.color_visual(), str)) == NULL)
+                            return NULL;
+                        break;
+
+                    case 'g': // Gray, Gray4
+                        if (str[1] == '4') // Gray4
+                        {
+                            if (flags & F_GRAY4)
+                                return NULL;
+                            flags |= F_GRAY4;
+                            str = skip_whitespace(str + 2);
+                            if ((str = parse_color_item(c.gray4_visual(), str)) == NULL)
+                                return NULL;
+                        }
+                        else
+                        {
+                            if (flags & F_GRAY)
+                                return NULL;
+                            flags |= F_GRAY;
+                            str = skip_whitespace(str + 1);
+                            if ((str = parse_color_item(c.gray_visual(), str)) == NULL)
+                                return NULL;
+                        }
+                        break;
+
+                    default: // Invalid character
+                        return NULL;
+                }
+            }
+        }
+
+        static const char *parse_xpm_header(header_t & hdr, const char * str)
+        {
+            // Width
+            str = skip_whitespace(str);
+            if ((str = parse_int(&hdr.width, str)) == NULL)
+                return NULL;
+
+            // Height
+            str = skip_whitespace(str);
+            if ((str = parse_int(&hdr.height, str)) == NULL)
+                return NULL;
+
+            // Colors
+            str = skip_whitespace(str);
+            if ((str = parse_int(&hdr.num_colors, str)) == NULL)
+                return NULL;
+
+            // Chars per pixel
+            str = skip_whitespace(str);
+            if ((str = parse_int(&hdr.chars_per_pixel, str)) == NULL)
+                return NULL;
+
+            // Optional x_hotspot and y_hotspot
+            str = skip_whitespace(str);
+            const char *hspot = parse_int(&hdr.x_hotspot, str);
+            if (hspot != NULL)
+            {
+                hspot   = skip_whitespace(hspot);
+                if ((hspot = parse_int(&hdr.y_hotspot, hspot)) == NULL)
+                    return NULL;
+                str = hspot;
+            }
+            else
+            {
+                hdr.x_hotspot   = 0;
+                hdr.y_hotspot   = 0;
+            }
+
+            // Optional XPMEXT signature
+            str = skip_whitespace(str);
+            const char *xpmext = match_prefix(str, "XPMEXT");
+            if (xpmext != NULL)
+            {
+                hdr.has_extensions      = true;
+                str     = xpmext;
+            }
+            else
+                hdr.has_extensions      = false;
+
+            return skip_whitespace(str);
+        }
+
+        static inline bool verify_xpm_header(const header_t & hdr)
+        {
+            return
+                (hdr.width > 0) &&
+                (hdr.height > 0) &&
+                (hdr.num_colors > 0) &&
+                (hdr.chars_per_pixel > 0) &&
+                (hdr.chars_per_pixel <= 12) &&
+                (hdr.x_hotspot < hdr.width) &&
+                (hdr.y_hotspot < hdr.height);
         }
 
     } /* namespace xpm */

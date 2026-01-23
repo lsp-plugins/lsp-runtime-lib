@@ -27,6 +27,7 @@
 #include <private/fmt/xpm/Tokenizer.h>
 #include <private/fmt/xpm/XPM1BuiltinParser.h>
 #include <private/fmt/xpm/XPM1StreamParser.h>
+#include <private/fmt/xpm/XPM2StreamParser.h>
 
 namespace lsp
 {
@@ -143,11 +144,12 @@ namespace lsp
             res = tok->read_token(ttype, tvalue);
             if (res != STATUS_OK)
                 return res;
-            tok->unread_token();
 
             if (ttype == TOK_DEFINE) // XPM 1
             {
-                XPM1StreamParser * parser = new XPM1StreamParser(tok);
+                tok->unread_token();
+
+                XPM1StreamParser * const parser = new XPM1StreamParser(tok);
                 if (parser == NULL)
                     return STATUS_NO_MEM;
 
@@ -158,7 +160,14 @@ namespace lsp
             }
             else if (ttype == TOK_XPM2_SIG) // XPM 2
             {
-                // TODO
+                XPM2StreamParser * const parser = new XPM2StreamParser(tok);
+                if (parser == NULL)
+                    return STATUS_NO_MEM;
+
+                tok     = NULL;
+                *dst    = parser;
+
+                return STATUS_OK;
             }
             else if (ttype == TOK_XPM3_SIG) // XPM 3
             {

@@ -109,8 +109,8 @@ namespace lsp
                         return STATUS_CORRUPTED_FILE;
 
                     // Parse color value
-                    const char *evalue  = parse_color_item(tmp.color_visual(), value, &value[vlen]);
-                    if ((evalue == NULL) || (*evalue != '\0'))
+                    value = parse_color_item(tmp.color_visual(), value);
+                    if ((value == NULL) || (*value != '\0'))
                         return STATUS_CORRUPTED_FILE;
 
                     // All seems to be OK
@@ -144,13 +144,14 @@ namespace lsp
                         return STATUS_CORRUPTED_FILE;
 
                     // Now we are ready to return the line
-                    memcpy(dst, row, bytes);
+                    if (dst != NULL)
+                        memcpy(dst, row, bytes);
                     ++nRows;
 
                     return STATUS_OK;
                 }
 
-                virtual status_t read_ext(char *dst, size_t *count) override
+                virtual status_t read_ext(Extension *dst) override
                 {
                     if (dst == NULL)
                         return STATUS_BAD_ARGUMENTS;

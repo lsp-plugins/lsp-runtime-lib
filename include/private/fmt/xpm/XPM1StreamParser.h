@@ -102,15 +102,6 @@ namespace lsp
                     return STATUS_CORRUPTED_FILE;
                 }
 
-                const char *match_prefix(const char *name)
-                {
-                    const ssize_t len1      = strlen(name);
-                    const ssize_t len2      = strlen(sIconId);
-                    if (len1 <= len2)
-                        return NULL;
-                    return (memcmp(name, sIconId, len2) == 0) ? &name[len2] : NULL;
-                }
-
             public:
                 explicit XPM1StreamParser(Tokenizer * tokenizer)
                 {
@@ -194,7 +185,7 @@ namespace lsp
                         }
 
                         // Look at the header value
-                        if ((tvalue = match_prefix(tvalue)) == NULL)
+                        if ((tvalue = match_prefix(tvalue, sIconId)) == NULL)
                             return STATUS_CORRUPTED_FILE;
 
                         // Prepare to parse value
@@ -253,13 +244,7 @@ namespace lsp
                         sHeader.y_hotspot   = 0;
 
                     // Check that values are in valid ranges
-                    if ((sHeader.width <= 0) ||
-                        (sHeader.height <= 0) ||
-                        (sHeader.num_colors <= 0) ||
-                        (sHeader.chars_per_pixel <= 0) ||
-                        (sHeader.chars_per_pixel > 8) ||
-                        (sHeader.x_hotspot >= sHeader.width) ||
-                        (sHeader.y_hotspot >= sHeader.height))
+                    if (!verify_xpm_header(sHeader))
                         return STATUS_CORRUPTED_FILE;
 
                     // Return header and update state
@@ -307,7 +292,7 @@ namespace lsp
                             return res;
                         if (ttype != TOK_IDENTIFIER)
                             return STATUS_CORRUPTED_FILE;
-                        if ((tvalue = match_prefix(tvalue)) == NULL)
+                        if ((tvalue = match_prefix(tvalue, sIconId)) == NULL)
                             return STATUS_CORRUPTED_FILE;
                         if (strcmp(tvalue, "_colors") != 0)
                             return STATUS_CORRUPTED_FILE;
@@ -373,7 +358,7 @@ namespace lsp
                         return STATUS_CORRUPTED_FILE;
 
                     // Parse color
-                    tvalue = parse_color_item(tmp.color_visual(), tvalue, strend(tvalue));
+                    tvalue = parse_color_item(tmp.color_visual(), tvalue);
                     if ((tvalue == NULL) || (*tvalue != '\0'))
                         return STATUS_CORRUPTED_FILE;
 
@@ -469,7 +454,7 @@ namespace lsp
                             return res;
                         if (ttype != TOK_IDENTIFIER)
                             return STATUS_CORRUPTED_FILE;
-                        if ((tvalue = match_prefix(tvalue)) == NULL)
+                        if ((tvalue = match_prefix(tvalue, sIconId)) == NULL)
                             return STATUS_CORRUPTED_FILE;
                         if (strcmp(tvalue, "_pixels") != 0)
                             return STATUS_CORRUPTED_FILE;
@@ -514,7 +499,8 @@ namespace lsp
                         return STATUS_CORRUPTED_FILE;
 
                     ++nRows;
-                    memcpy(dst, tvalue, row_size);
+                    if (dst != NULL)
+                        memcpy(dst, tvalue, row_size);
 
                     // Read separator
                     if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
@@ -559,7 +545,7 @@ namespace lsp
                     return STATUS_OK;
                 }
 
-                virtual status_t read_ext(char *dst, size_t *count) override
+                virtual status_t read_ext(Extension *dst) override
                 {
                     // XPM1 has no extensions
                     return (pTokenizer == NULL) ? STATUS_CLOSED : STATUS_NOT_FOUND;

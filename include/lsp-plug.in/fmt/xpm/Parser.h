@@ -27,6 +27,7 @@
 #include <lsp-plug.in/io/IInStream.h>
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/fmt/xpm/Color.h>
+#include <lsp-plug.in/fmt/xpm/Extension.h>
 #include <lsp-plug.in/fmt/xpm/Header.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 
@@ -74,12 +75,10 @@ namespace lsp
 
                 /**
                  * Read the image line to buffer
-                 * @param dst destination buffer to store extension data
-                 * @param count pointer to receive the size of buffer, if not enough space,
-                 *        stores the actual size of the extension to the pointer.
+                 * @param dst pointer to store the extension data
                  * @return status of operation
                  */
-                virtual status_t    read_ext(char *dst, size_t *count);
+                virtual status_t    read_ext(Extension *dst);
 
                 /**
                  * Close parser

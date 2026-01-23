@@ -37,38 +37,69 @@ namespace lsp
         class ColorItem
         {
             private:
-                char       *sName;          // Name of color
-                uint64_t    nColor64;
-                bool        bWide;          // Wide color
+                enum state_t
+                {
+                    STATE_UNSET         = 1 << 0,
+                    STATE_NAME          = 1 << 1,
+                    STATE_COLOR32       = 1 << 2,
+                    STATE_COLOR64       = 1 << 3
+                };
+
+            private:
+                union
+                {
+                    char       *sName;          // Name of color
+                    uint32_t    nColor32;       // 32-bit color
+                    uint64_t    nColor64;       // 64-bit color
+                };
+                state_t     enState;            // State
 
             public:
-                ColorItem();
+                ColorItem() noexcept;
                 ColorItem(const ColorItem & src);
-                ColorItem(ColorItem && src);
+                ColorItem(ColorItem && src) noexcept;
                 explicit ColorItem(const char *name);
-                ColorItem(uint32_t value);
-                ColorItem(uint64_t value);
-                ColorItem(const char *name, uint32_t value);
-                ColorItem(const char *name, uint64_t value);
+                explicit ColorItem(uint32_t value) noexcept;
+                explicit ColorItem(uint64_t value) noexcept;
                 ~ColorItem();
 
+                ColorItem & operator = (const ColorItem & src);
+                ColorItem & operator = (ColorItem && src) noexcept;
+
             public:
-                inline const char *name() const noexcept                    { return sName;                         }
-                bool set_name(const char *name);
-                bool set_name(const char *name, size_t len);
+                inline bool is_set() const noexcept             { return enState != STATE_UNSET;                        }
+                inline bool is_wide() const noexcept            { return enState == STATE_COLOR64;                      }
+                inline bool is_rgb48() const noexcept           { return enState == STATE_COLOR64;                      }
+                inline bool is_regular() const noexcept         { return enState == STATE_COLOR32;                      }
+                inline bool is_rgb24() const noexcept           { return enState == STATE_COLOR32;                      }
+                inline bool is_name() const noexcept            { return enState == STATE_NAME;                         }
+                inline bool is_color() const noexcept           { return (enState == STATE_COLOR64) || (enState == STATE_COLOR32);  }
+                inline bool is_rgb() const noexcept             { return (enState == STATE_COLOR64) || (enState == STATE_COLOR32);  }
+                inline bool has_name() const noexcept           { return (enState == STATE_NAME) && (sName != NULL);    }
+                bool has_name(const char *name) const noexcept;
+                inline bool is_none() const noexcept            { return has_name("None");                              }
+
+                inline const char *name() const noexcept        { return (enState == STATE_NAME) ? sName : NULL;        }
+                bool set_name(const char *alias);
+                bool set_name(const char *alias, size_t len);
                 void clear_name();
 
-                inline bool is_wide() const noexcept            { return bWide;                         }
-                bool is_none() const noexcept;
-                uint32_t rgba32() const noexcept;
-                uint64_t rgba64() const noexcept;
+                uint32_t rgb24() const noexcept;
+                uint64_t rgb48() const noexcept;
+                inline uint32_t regular() const noexcept        { return rgb24();                                       }
+                inline uint32_t wide() const noexcept           { return rgb48();                                       }
 
-                void set_rgba32(uint32_t value);
-                void set_rgba64(uint64_t value);
-                void set_none();
+                void set_rgb24(uint32_t v) noexcept;
+                void set_rgb48(uint64_t v) noexcept;
+                inline void set_regular(uint32_t v) noexcept    { set_rgb24(v);                                         }
+                inline void set_wide(uint64_t v) noexcept       { set_rgb48(v);                                         }
+                inline bool set_none() noexcept                 { return set_name("None");                              }
 
-                void swap(ColorItem & src);
-                void swap(ColorItem * src);
+                bool set(const ColorItem & src);
+                void reset();
+
+                void swap(ColorItem & src) noexcept;
+                void swap(ColorItem * src) noexcept;
 
         };
 

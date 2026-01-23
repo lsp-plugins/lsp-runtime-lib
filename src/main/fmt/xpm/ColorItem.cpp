@@ -29,82 +29,73 @@ namespace lsp
 {
     namespace xpm
     {
-        ColorItem::ColorItem()
+        ColorItem::ColorItem() noexcept
         {
-            sName       = NULL;
-            nColor64    = 0xff000000;
-            bWide       = false;
+            nColor64        = 0;
+            enState         = STATE_UNSET;
         }
 
         ColorItem::ColorItem(const ColorItem & src)
         {
-            sName       = (src.sName != NULL) ? strdup(src.sName) : NULL;
-            nColor64    = src.nColor64;
-            bWide       = src.bWide;
+            if (src.enState == STATE_NAME)
+            {
+                nColor64        = 0;
+                sName           = (src.sName != NULL) ? strdup(src.sName) : NULL;
+            }
+            else
+                nColor64        = 0;
+            enState         = src.enState;
         }
 
-        ColorItem::ColorItem(ColorItem && src)
+        ColorItem::ColorItem(ColorItem && src) noexcept
         {
-            sName       = src.sName;
-            nColor64    = src.nColor64;
-            bWide       = src.bWide;
+            nColor64        = src.nColor64;
+            enState         = src.enState;
 
-            src.sName   = NULL;
-            src.nColor64= 0;
-            src.bWide   = false;
+            src.nColor64    = 0;
+            src.enState     = STATE_UNSET;
         }
 
         ColorItem::ColorItem(const char *id)
         {
-            sName       = strdup(id);
-            nColor64    = 0xff000000;
-            bWide       = false;
+            nColor64        = 0;
+            sName           = (id != NULL) ? strdup(id) : NULL;
+            enState         = STATE_NAME;
         }
 
-        ColorItem::ColorItem(uint32_t value)
+        ColorItem::ColorItem(uint32_t value) noexcept
         {
-            sName       = NULL;
-            nColor64    = value;
-            bWide       = false;
+            nColor64        = 0;
+            nColor32        = value;
+            enState         = STATE_COLOR32;
         }
 
-        ColorItem::ColorItem(uint64_t value)
+        ColorItem::ColorItem(uint64_t value) noexcept
         {
-            sName       = NULL;
-            nColor64    = value;
-            bWide       = true;
-        }
-
-        ColorItem::ColorItem(const char *id, uint32_t value)
-        {
-            sName       = strdup(id);
-            nColor64    = value;
-            bWide       = false;
-        }
-
-        ColorItem::ColorItem(const char *id, uint64_t value)
-        {
-            sName       = strdup(id);
-            nColor64    = value;
-            bWide       = true;
+            nColor64        = value;
+            enState         = STATE_COLOR64;
         }
 
         ColorItem::~ColorItem()
         {
-            if (sName != NULL)
+            if ((enState == STATE_NAME) && (sName != NULL))
             {
-                sName       = NULL;
                 free(sName);
+                sName           = NULL;
             }
+            nColor64        = 0;
+            enState         = STATE_UNSET;
         }
 
         void ColorItem::clear_name()
         {
-            if (sName != NULL)
+            if ((enState == STATE_NAME) && (sName != NULL))
             {
-                sName       = NULL;
                 free(sName);
+                sName           = NULL;
             }
+            nColor64        = 0;
+            enState         = STATE_NAME;
         }
 
         bool ColorItem::set_name(const char *name)
@@ -119,9 +110,18 @@ namespace lsp
             if (str == NULL)
                 return false;
 
-            if (sName != NULL)
-                free(sName);
-            sName       = str;
+            if (enState == STATE_NAME)
+            {
+                if (sName != NULL)
+                    free(sName);
+                sName       = str;
+            }
+            else
+            {
+                nColor64        = 0;
+                sName           = str;
+                enState         = STATE_NAME;
+            }
 
             return true;
         }
@@ -134,80 +134,196 @@ namespace lsp
                 return true;
             }
 
-            char *str   = static_cast<char *>(malloc(len + 1));
+            char *str   = strmemdup(name, len);
             if (str == NULL)
                 return false;
-            memcpy(str, name, len);
-            str[len] = '\0';
 
-            if (sName != NULL)
-                free(sName);
-            sName       = str;
+            if (enState == STATE_NAME)
+            {
+                if (sName != NULL)
+                    free(sName);
+                sName       = str;
+            }
+            else
+            {
+                nColor64        = 0;
+                sName           = str;
+                enState         = STATE_NAME;
+            }
 
             return true;
         }
 
-        bool ColorItem::is_none() const noexcept
+        bool ColorItem::has_name(const char *name) const noexcept
         {
-            return (bWide) ? uint32_t(nColor64 >> 48) == 0xffff : (uint32_t(nColor64) >> 24) == 0xff;
+            if (enState != STATE_NAME)
+                return false;
+            if (sName == name) // for NULL argument
+                return true;
+            if (sName == NULL)
+                return false;
+            return strcmp(sName, name) == 0;
         }
 
-        uint32_t ColorItem::rgba32() const noexcept
+        uint32_t ColorItem::rgb24() const noexcept
         {
-            if (!bWide)
-                return uint32_t(nColor64);
+            switch (enState)
+            {
+                case STATE_COLOR32:
+                    return uint32_t(nColor32);
 
-            const uint64_t c = nColor64;
-            return
-                (uint32_t(c >> 32) & 0xff000000) |
-                (uint32_t(c >> 24) & 0x00ff0000) |
-                (uint32_t(c >> 16) & 0x0000ff00) |
-                (uint32_t(c >> 8)  & 0x000000ff);
+                case STATE_COLOR64:
+                {
+                    const uint64_t c = nColor64;
+                    return
+                        (uint32_t(c >> 24) & 0x00ff0000) |
+                        (uint32_t(c >> 16) & 0x0000ff00) |
+                        (uint32_t(c >> 8)  & 0x000000ff);
+                }
+
+                default:
+                    break;
+            }
+            return 0;
         }
 
-        uint64_t ColorItem::rgba64() const noexcept
+        uint64_t ColorItem::rgb48() const noexcept
         {
-            if (bWide)
-                return nColor64;
+            switch (enState)
+            {
+                case STATE_COLOR64:
+                    return nColor64;
 
-            const uint64_t c = nColor64;
-            return
-                ((c & 0xff000000) << 32) |
-                ((c & 0x00ff0000) << 24) |
-                ((c & 0x0000ff00) << 16) |
-                ((c & 0x000000ff) << 8);
+                case STATE_COLOR32:
+                {
+                    const uint64_t c = nColor32;
+                    return
+                        ((c & 0x00ff0000) << 24) |
+                        ((c & 0x0000ff00) << 16) |
+                        ((c & 0x000000ff) << 8);
+                }
+
+                default:
+                    break;
+            }
+            return 0;
         }
 
-        void ColorItem::set_rgba32(uint32_t value)
+        void ColorItem::set_rgb24(uint32_t value) noexcept
         {
+            if ((enState == STATE_NAME) && (sName != NULL))
+            {
+                free(sName);
+                sName           = NULL;
+            }
+            nColor32    = value;
+            enState     = STATE_COLOR32;
+        }
+
+        void ColorItem::set_rgb48(uint64_t value) noexcept
+        {
+            if ((enState == STATE_NAME) && (sName != NULL))
+            {
+                free(sName);
+                sName           = NULL;
+            }
             nColor64    = value;
-            bWide       = false;
+            enState     = STATE_COLOR64;
         }
 
-        void ColorItem::set_rgba64(uint64_t value)
+        void ColorItem::swap(ColorItem & src) noexcept
         {
-            nColor64    = value;
-            bWide       = true;
+            char * const tmp_n  = sName;
+            uint64_t tmp_c      = nColor64;
+            nColor64            = src.nColor64;
+            sName               = src.sName;
+            src.nColor64        = tmp_c;
+            src.sName           = tmp_n;
+
+            lsp::swap(enState, src.enState);
         }
 
-        void ColorItem::set_none()
+        void ColorItem::swap(ColorItem * src) noexcept
         {
-            nColor64    = 0xff000000;
-            bWide       = false;
+            char * const tmp_n  = sName;
+            uint64_t tmp_c      = nColor64;
+            nColor64            = src->nColor64;
+            sName               = src->sName;
+            src->nColor64       = tmp_c;
+            src->sName          = tmp_n;
+
+            lsp::swap(enState, src->enState);
         }
 
-        void ColorItem::swap(ColorItem & src)
+        bool ColorItem::set(const ColorItem & src)
         {
-            lsp::swap(sName, src.sName);
-            lsp::swap(nColor64, src.nColor64);
-            lsp::swap(bWide, src.bWide);
+            // Source color item does not contain name
+            if (src.enState != STATE_NAME)
+            {
+                if (enState == STATE_NAME)
+                    free(sName);
+
+                sName       = NULL;
+                nColor64    = src.nColor64;
+                enState     = src.enState;
+                return true;
+            }
+
+            // Source color item contains name
+            char *s     = NULL;
+            if (src.sName != NULL)
+            {
+                if ((s = strdup(src.sName)) == NULL)
+                    return false;
+            }
+
+            if (enState == STATE_NAME)
+            {
+                if (sName != NULL)
+                    free(sName);
+                sName       = s;
+            }
+            else
+            {
+                nColor64    = 0;
+                sName       = s;
+                enState     = src.enState;
+            }
+
+            return true;
         }
 
-        void ColorItem::swap(ColorItem * src)
+        ColorItem & ColorItem::operator = (const ColorItem & src)
         {
-            lsp::swap(sName, src->sName);
-            lsp::swap(nColor64, src->nColor64);
-            lsp::swap(bWide, src->bWide);
+            set(src);
+            return *this;
+        }
+
+        ColorItem & ColorItem::operator = (ColorItem && src) noexcept
+        {
+            if ((enState == STATE_NAME) && (sName != NULL))
+                free(sName);
+
+            nColor64    = src.nColor64;
+            sName       = src.sName;
+            enState     = src.enState;
+
+            src.nColor64= 0;
+            src.sName   = NULL;
+            src.enState = STATE_UNSET;
+
+            return *this;
+        }
+
+        void ColorItem::reset()
+        {
+            if ((enState == STATE_NAME) && (sName != NULL))
+            {
+                free(sName);
+                sName           = NULL;
+            }
+            nColor64        = 0;
+            enState         = STATE_UNSET;
         }
 
     } /* namespace xpm */
