@@ -123,10 +123,11 @@ namespace lsp
          * Make an XPM3 parser for built-in image
          * @param dst pointer to store pointer to the parser. The caller code is
          *            responsible for calling close() and delete the parser.
-         * @param lines XPM the XPM2/XPM3 data lines
+         * @param lines the XPM3 data lines
+         * @param count number of data lines
          * @return status of operation
          */
-        status_t    make_xpm3(Parser **dst, const char * const * lines);
+        status_t    make_xpm3(Parser **dst, const char * const * lines, size_t count);
 
     } /* namespace xpm */
 } /* namespace lsp */

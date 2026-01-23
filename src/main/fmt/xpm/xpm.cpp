@@ -28,6 +28,8 @@
 #include <private/fmt/xpm/XPM1BuiltinParser.h>
 #include <private/fmt/xpm/XPM1StreamParser.h>
 #include <private/fmt/xpm/XPM2StreamParser.h>
+#include <private/fmt/xpm/XPM3BuiltinParser.h>
+#include <private/fmt/xpm/XPM3StreamParser.h>
 
 namespace lsp
 {
@@ -171,7 +173,14 @@ namespace lsp
             }
             else if (ttype == TOK_XPM3_SIG) // XPM 3
             {
-                // TODO
+                XPM3StreamParser * const parser = new XPM3StreamParser(tok);
+                if (parser == NULL)
+                    return STATUS_NO_MEM;
+
+                tok     = NULL;
+                *dst    = parser;
+
+                return STATUS_OK;
             }
 
             return STATUS_UNSUPPORTED_FORMAT;
@@ -205,6 +214,21 @@ namespace lsp
 
             return STATUS_OK;
         }
+
+        status_t make_xpm3(Parser **dst, const char * const * lines, size_t count)
+        {
+            if (dst == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            XPM3BuiltinParser * parser = new XPM3BuiltinParser(lines, count);
+            if (parser == NULL)
+                return STATUS_NO_MEM;
+
+            *dst                    = parser;
+
+            return STATUS_OK;
+        }
+
 
     } /* namespace xpm */
 } /* namespace lsp */

@@ -3,7 +3,7 @@
  *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
- * Created on: 22 янв. 2026 г.
+ * Created on: 23 янв. 2026 г.
  *
  * lsp-runtime-lib is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,14 +19,14 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef PRIVATE_FMT_XPM_XPM2STREAMPARSER_H_
-#define PRIVATE_FMT_XPM_XPM2STREAMPARSER_H_
+#ifndef PRIVATE_FMT_XPM_XPM3BUILTINPARSER_H_
+#define PRIVATE_FMT_XPM_XPM3BUILTINPARSER_H_
+
 
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/fmt/xpm/Parser.h>
 #include <lsp-plug.in/stdlib/string.h>
 
-#include <private/fmt/xpm/Tokenizer.h>
 #include <private/fmt/xpm/utils.h>
 
 namespace lsp
@@ -34,9 +34,9 @@ namespace lsp
     namespace xpm
     {
         /**
-         * Parser for XPM2 streaming format
+         * Parser for XPM3 built-in format
          */
-        class LSP_HIDDEN_MODIFIER XPM2StreamParser: public Parser
+        class LSP_HIDDEN_MODIFIER XPM3BuiltinParser: public Parser
         {
             private:
                 enum state_t
@@ -48,34 +48,27 @@ namespace lsp
                     ST_EOF
                 };
 
-                static const char * const postfixes[];
-
             private:
-                Tokenizer              *pTokenizer;
                 header_t                sHeader;
+                const char * const     *vLines;
                 state_t                 enState;
                 size_t                  nColors;
                 size_t                  nRows;
+                size_t                  nLines;
 
             private:
-                status_t do_close()
+                inline const char *get_line()
                 {
-                    if (pTokenizer == NULL)
-                        return STATUS_OK;
-
-                    status_t res = pTokenizer->close();
-                    delete pTokenizer;
-                    pTokenizer = NULL;
-
-                    return res;
+                    if (nLines <= 0)
+                        return NULL;
+                    --nLines;
+                    return *(vLines++);
                 }
 
             public:
-                explicit XPM2StreamParser(Tokenizer * tokenizer)
+                XPM3BuiltinParser(const char * const * lines, size_t count)
                 {
-                    pTokenizer              = tokenizer;
-
-                    sHeader.version         = VERSION_XPM2;
+                    sHeader.version         = VERSION_XPM3;
                     sHeader.width           = 0;
                     sHeader.height          = 0;
                     sHeader.num_colors      = 0;
@@ -84,25 +77,22 @@ namespace lsp
                     sHeader.y_hotspot       = 0;
                     sHeader.has_extensions  = false;
 
+                    vLines                  = lines;
                     enState                 = ST_HEADER;
                     nColors                 = 0;
                     nRows                   = 0;
+                    nLines                  = count;
                 }
 
-                virtual ~XPM2StreamParser() override
+                virtual ~XPM3BuiltinParser()
                 {
-                    do_close();
+                    vLines      = NULL;
                 }
 
             public:
-                virtual status_t close() override
-                {
-                    return do_close();
-                }
-
                 virtual status_t read_header(header_t *dst) override
                 {
-                    if (pTokenizer == NULL)
+                    if (vLines == NULL)
                         return STATUS_CLOSED;
                     if (dst == NULL)
                         return STATUS_BAD_ARGUMENTS;
@@ -115,10 +105,9 @@ namespace lsp
                     }
 
                     // Read header contents
-                    status_t res;
-                    const char *tvalue  = NULL;
-                    if ((res = pTokenizer->read_line(tvalue)) != STATUS_OK)
-                        return res;
+                    const char *tvalue  = get_line();
+                    if (tvalue == NULL)
+                        return STATUS_CORRUPTED_FILE;
 
                     if ((tvalue = parse_xpm_header(sHeader, tvalue)) == NULL)
                         return STATUS_CORRUPTED_FILE;
@@ -138,7 +127,7 @@ namespace lsp
 
                 virtual status_t read_color(Color *dst) override
                 {
-                    if (pTokenizer == NULL)
+                    if (vLines == NULL)
                         return STATUS_CLOSED;
                     if (dst == NULL)
                         return STATUS_BAD_ARGUMENTS;
@@ -155,10 +144,9 @@ namespace lsp
                     Color tmp;
 
                     // Read color line
-                    status_t res;
-                    const char *tvalue  = NULL;
-                    if ((res = pTokenizer->read_line(tvalue)) != STATUS_OK)
-                        return res;
+                    const char *tvalue  = get_line();
+                    if (tvalue == NULL)
+                        return STATUS_CORRUPTED_FILE;
 
                     // Parse color
                     tvalue = parse_color(tmp, tvalue, sHeader.chars_per_pixel);
@@ -177,7 +165,7 @@ namespace lsp
 
                 virtual status_t read_line(char *dst) override
                 {
-                    if (pTokenizer == NULL)
+                    if (vLines == NULL)
                         return STATUS_CLOSED;
                     if (dst == NULL)
                         return STATUS_BAD_ARGUMENTS;
@@ -192,10 +180,9 @@ namespace lsp
                     }
 
                     // Read pixel line
-                    status_t res;
-                    const char *tvalue  = NULL;
-                    if ((res = pTokenizer->read_line(tvalue)) != STATUS_OK)
-                        return res;
+                    const char *tvalue  = get_line();
+                    if (tvalue == NULL)
+                        return STATUS_CORRUPTED_FILE;
 
                     const size_t row_size = sHeader.width * sHeader.chars_per_pixel;
                     if (strlen(tvalue) != row_size)
@@ -213,7 +200,7 @@ namespace lsp
 
                 virtual status_t read_ext(Extension *dst) override
                 {
-                    if (pTokenizer == NULL)
+                    if (vLines == NULL)
                         return STATUS_CLOSED;
                     if (dst == NULL)
                         return STATUS_BAD_ARGUMENTS;
@@ -226,16 +213,11 @@ namespace lsp
 
                     // Read extension
                     Extension tmp;
-                    status_t res;
-                    const char *tvalue  = NULL;
-                    if ((res = pTokenizer->read_line(tvalue)) != STATUS_OK)
+                    const char *tvalue  = get_line();
+                    if (tvalue == NULL)
                     {
-                        if (res == STATUS_EOF)
-                        {
-                            enState     = ST_EOF;
-                            return STATUS_NOT_FOUND;
-                        }
-                        return res;
+                        enState     = ST_EOF;
+                        return STATUS_NOT_FOUND;
                     }
 
                     // XPMEXT token
@@ -260,8 +242,8 @@ namespace lsp
                         while (true)
                         {
                             // Read extension line
-                            if ((res = pTokenizer->read_line(tvalue)) != STATUS_OK)
-                                return res;
+                            if ((tvalue = get_line()) == NULL)
+                                return STATUS_CORRUPTED_FILE;
 
                             // End of extension lines?
                             if (strcmp(tvalue, "XPMENDEXT") == 0)
@@ -293,10 +275,16 @@ namespace lsp
                     return STATUS_OK;
                 }
 
+                virtual status_t close() override
+                {
+                    vLines          = NULL;
+
+                    return STATUS_OK;
+                }
         };
 
     } /* namespace xpm */
 } /* namespace lsp */
 
 
-#endif /* PRIVATE_FMT_XPM_XPM2STREAMPARSER_H_ */
+#endif /* PRIVATE_FMT_XPM_XPM3BUILTINPARSER_H_ */

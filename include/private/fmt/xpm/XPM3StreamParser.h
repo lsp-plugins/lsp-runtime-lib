@@ -3,7 +3,7 @@
  *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
- * Created on: 22 янв. 2026 г.
+ * Created on: 23 янв. 2026 г.
  *
  * lsp-runtime-lib is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,9 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef PRIVATE_FMT_XPM_XPM2STREAMPARSER_H_
-#define PRIVATE_FMT_XPM_XPM2STREAMPARSER_H_
+#ifndef PRIVATE_FMT_XPM_XPM3STREAMPARSER_H_
+#define PRIVATE_FMT_XPM_XPM3STREAMPARSER_H_
+
 
 #include <lsp-plug.in/runtime/version.h>
 #include <lsp-plug.in/fmt/xpm/Parser.h>
@@ -34,9 +35,9 @@ namespace lsp
     namespace xpm
     {
         /**
-         * Parser for XPM2 streaming format
+         * Parser for XPM3 streaming format
          */
-        class LSP_HIDDEN_MODIFIER XPM2StreamParser: public Parser
+        class LSP_HIDDEN_MODIFIER XPM3StreamParser: public Parser
         {
             private:
                 enum state_t
@@ -47,8 +48,6 @@ namespace lsp
                     ST_EXTENSIONS,
                     ST_EOF
                 };
-
-                static const char * const postfixes[];
 
             private:
                 Tokenizer              *pTokenizer;
@@ -71,11 +70,11 @@ namespace lsp
                 }
 
             public:
-                explicit XPM2StreamParser(Tokenizer * tokenizer)
+                XPM3StreamParser(Tokenizer * tokenizer)
                 {
                     pTokenizer              = tokenizer;
 
-                    sHeader.version         = VERSION_XPM2;
+                    sHeader.version         = VERSION_XPM3;
                     sHeader.width           = 0;
                     sHeader.height          = 0;
                     sHeader.num_colors      = 0;
@@ -89,7 +88,7 @@ namespace lsp
                     nRows                   = 0;
                 }
 
-                virtual ~XPM2StreamParser() override
+                virtual ~XPM3StreamParser()
                 {
                     do_close();
                 }
@@ -114,12 +113,74 @@ namespace lsp
                         return STATUS_OK;
                     }
 
-                    // Read header contents
+                    // Read the 'static [const] char * [const] <name>[] = {' signature
                     status_t res;
-                    const char *tvalue  = NULL;
-                    if ((res = pTokenizer->read_line(tvalue)) != STATUS_OK)
-                        return res;
+                    token_type_t ttype = TOK_INVALID;
+                    const char *tvalue = NULL;
 
+                    // Keyword 'static'
+                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                        return STATUS_CORRUPTED_FILE;
+                    if ((ttype != TOK_IDENTIFIER) || (strcmp(tvalue, "static") != 0))
+                        return STATUS_CORRUPTED_FILE;
+
+                    // Read 'char' type
+                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                        return STATUS_CORRUPTED_FILE;
+                    if ((ttype == TOK_IDENTIFIER) && (strcmp(tvalue, "const") == 0))
+                    {
+                        if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                            return res;
+                    }
+                    if ((ttype != TOK_IDENTIFIER) || (strcmp(tvalue, "char") != 0))
+                        return STATUS_CORRUPTED_FILE;
+
+                    // Read '*'
+                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                        return res;
+                    if (ttype != TOK_ASTERISK)
+                        return STATUS_CORRUPTED_FILE;
+
+                    // Read variable name
+                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                        return res;
+                    if ((ttype == TOK_IDENTIFIER) && (strcmp(tvalue, "const") == 0))
+                    {
+                        if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                            return res;
+                    }
+                    if (ttype != TOK_IDENTIFIER)
+                        return STATUS_CORRUPTED_FILE;
+
+                    // Read '[]' braces
+                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                        return res;
+                    if (ttype != TOK_LQBRACKET)
+                        return STATUS_CORRUPTED_FILE;
+                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                        return res;
+                    if (ttype != TOK_RQBRACKET)
+                        return STATUS_CORRUPTED_FILE;
+
+                    // Read assign ('=')
+                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                        return res;
+                    if (ttype != TOK_ASSIGN)
+                        return STATUS_CORRUPTED_FILE;
+
+                    // Read start of array ('{')
+                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                        return res;
+                    if (ttype != TOK_LBRACE)
+                        return STATUS_CORRUPTED_FILE;
+
+                    // Finally, read the first line in the array
+                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                        return res;
+                    if (ttype != TOK_STRING)
+                        return STATUS_CORRUPTED_FILE;
+
+                    // Parse XPM header
                     if ((tvalue = parse_xpm_header(sHeader, tvalue)) == NULL)
                         return STATUS_CORRUPTED_FILE;
                     if ((*tvalue) != '\0')
@@ -152,13 +213,22 @@ namespace lsp
                         return STATUS_NOT_FOUND;
                     }
 
+                    status_t res;
+                    token_type_t ttype = TOK_INVALID;
+                    const char *tvalue = NULL;
                     Color tmp;
 
-                    // Read color line
-                    status_t res;
-                    const char *tvalue  = NULL;
-                    if ((res = pTokenizer->read_line(tvalue)) != STATUS_OK)
+                    // Require comma separator
+                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
                         return res;
+                    if (ttype != TOK_COMMA)
+                        return STATUS_CORRUPTED_FILE;
+
+                    // Read color line
+                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                        return res;
+                    if (ttype != TOK_STRING)
+                        return STATUS_CORRUPTED_FILE;
 
                     // Parse color
                     tvalue = parse_color(tmp, tvalue, sHeader.chars_per_pixel);
@@ -191,11 +261,22 @@ namespace lsp
                         return STATUS_NOT_FOUND;
                     }
 
-                    // Read pixel line
                     status_t res;
-                    const char *tvalue  = NULL;
-                    if ((res = pTokenizer->read_line(tvalue)) != STATUS_OK)
+                    token_type_t ttype = TOK_INVALID;
+                    const char *tvalue = NULL;
+                    Color tmp;
+
+                    // Require comma separator
+                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
                         return res;
+                    if (ttype != TOK_COMMA)
+                        return STATUS_CORRUPTED_FILE;
+
+                    // Read pixel line
+                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                        return res;
+                    if (ttype != TOK_STRING)
+                        return STATUS_CORRUPTED_FILE;
 
                     const size_t row_size = sHeader.width * sHeader.chars_per_pixel;
                     if (strlen(tvalue) != row_size)
@@ -225,18 +306,33 @@ namespace lsp
                         return STATUS_NOT_FOUND;
 
                     // Read extension
-                    Extension tmp;
                     status_t res;
-                    const char *tvalue  = NULL;
-                    if ((res = pTokenizer->read_line(tvalue)) != STATUS_OK)
-                    {
-                        if (res == STATUS_EOF)
-                        {
-                            enState     = ST_EOF;
-                            return STATUS_NOT_FOUND;
-                        }
+                    token_type_t ttype = TOK_INVALID;
+                    const char *tvalue = NULL;
+                    Extension tmp;
+
+                    // Require comma separator or closing right brace
+                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
                         return res;
+                    if (ttype == TOK_RBRACE)
+                    {
+                        // Require semicolon
+                        if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                            return res;
+                        if (ttype != TOK_SEMICOLON)
+                            return STATUS_CORRUPTED_FILE;
+
+                        enState     = ST_EOF;
+                        return STATUS_NOT_FOUND;
                     }
+                    else if (ttype != TOK_COMMA)
+                        return STATUS_CORRUPTED_FILE;
+
+                    // Read extension line
+                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                        return res;
+                    if (ttype != TOK_STRING)
+                        return STATUS_CORRUPTED_FILE;
 
                     // XPMEXT token
                     if ((tvalue = match_prefix(tvalue, "XPMEXT")) == NULL)
@@ -259,9 +355,17 @@ namespace lsp
                         size_t lines = 0;
                         while (true)
                         {
-                            // Read extension line
-                            if ((res = pTokenizer->read_line(tvalue)) != STATUS_OK)
+                            // Require comma
+                            if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
                                 return res;
+                            if (ttype != TOK_COMMA)
+                                return STATUS_CORRUPTED_FILE;
+
+                            // Read extension line
+                            if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                                return res;
+                            if (ttype != TOK_STRING)
+                                return STATUS_CORRUPTED_FILE;
 
                             // End of extension lines?
                             if (strcmp(tvalue, "XPMENDEXT") == 0)
@@ -292,11 +396,11 @@ namespace lsp
 
                     return STATUS_OK;
                 }
-
         };
 
     } /* namespace xpm */
 } /* namespace lsp */
 
 
-#endif /* PRIVATE_FMT_XPM_XPM2STREAMPARSER_H_ */
+
+#endif /* PRIVATE_FMT_XPM_XPM3STREAMPARSER_H_ */

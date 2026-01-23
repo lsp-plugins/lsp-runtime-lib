@@ -268,7 +268,7 @@ namespace lsp
                     // Need to lookup for color block?
                     if (enState == ST_COLORS_LOOKUP)
                     {
-                        // static [const] char *<prefix>_colors[] = {
+                        // static [const] char * [const] <prefix>_colors[] = {
 
                         // Read 'char' identifier
                         if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
@@ -290,6 +290,11 @@ namespace lsp
                         // Read variable name
                         if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
                             return res;
+                        if ((ttype == TOK_IDENTIFIER) && (strcmp(tvalue, "const") == 0))
+                        {
+                            if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                                return res;
+                        }
                         if (ttype != TOK_IDENTIFIER)
                             return STATUS_CORRUPTED_FILE;
                         if ((tvalue = match_prefix(tvalue, sIconId)) == NULL)
@@ -425,7 +430,7 @@ namespace lsp
                     // Need to lookup for color block?
                     if (enState == ST_PIXELS_LOOKUP)
                     {
-                        // static [const] char *<prefix>_pixels[] = {
+                        // static [const] char * [const] <prefix>_pixels[] = {
                         // Read 'static' identifier
                         if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
                             return res;
@@ -452,6 +457,11 @@ namespace lsp
                         // Read variable name
                         if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
                             return res;
+                        if ((ttype == TOK_IDENTIFIER) && (strcmp(tvalue, "const") == 0))
+                        {
+                            if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                                return res;
+                        }
                         if (ttype != TOK_IDENTIFIER)
                             return STATUS_CORRUPTED_FILE;
                         if ((tvalue = match_prefix(tvalue, sIconId)) == NULL)
