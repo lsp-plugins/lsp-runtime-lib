@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 05 нояб. 2015 г.
@@ -33,8 +33,11 @@ namespace lsp
     static const float HSL_RGB_1_3          = 1.0f / 3.0f;
     static const float HSL_RGB_1_6          = 1.0f / 6.0f;
     static const float HSL_RGB_2_3          = 2.0f / 3.0f;
+    static constexpr float FLOAT_COL_COEFF  = 255.0f;
+    static constexpr float FLOAT_COL_BIAS   = 0.25f;
+    static constexpr float FLOAT_RCOL_COEFF = 1.0f / FLOAT_COL_COEFF;
 
-    static const char *skip_whitespace(const char *src, const char *end)
+    static const char *skip_whitespace(const char *src, const char *end) noexcept
     {
         for ( ; src < end; ++src)
         {
@@ -55,7 +58,7 @@ namespace lsp
         return src;
     }
 
-    static const char *match_prefix(const char *src, const char *end, const char *prefix)
+    static const char *match_prefix(const char *src, const char *end, const char *prefix) noexcept
     {
         for ( ; src < end; ++src)
         {
@@ -67,14 +70,14 @@ namespace lsp
         return src;
     }
 
-    static const char *match_char(const char *src, const char *end, char ch)
+    static const char *match_char(const char *src, const char *end, char ch) noexcept
     {
         if (src < end)
             return (src[0] == ch) ? &src[1] : end;
         return end;
     }
 
-    static const char *match_chars(const char *src, const char *end, const char *allowed)
+    static const char *match_chars(const char *src, const char *end, const char *allowed) noexcept
     {
         for ( ; src < end; ++src)
         {
@@ -93,7 +96,7 @@ namespace lsp
     }
 
 
-    static size_t hex_char(char c)
+    static size_t hex_char(char c) noexcept
     {
         if ((c >= '0') && (c <= '9'))
             return c - '0';
@@ -104,7 +107,7 @@ namespace lsp
         return 0xff;
     }
 
-    static const char *skip_hex(const char *ptr, const char *end)
+    static const char *skip_hex(const char *ptr, const char *end) noexcept
     {
         for ( ; ptr < end; ++ptr)
         {
@@ -114,12 +117,12 @@ namespace lsp
         return end;
     }
 
-    inline float Color::clamp(float x)
+    inline float Color::clamp(float x) noexcept
     {
         return lsp_limit(x, 0.0f, 1.0f);
     }
 
-    Color::Color()
+    Color::Color() noexcept
     {
         rgb.R   = 0.0f;
         rgb.G   = 0.0f;
@@ -144,7 +147,7 @@ namespace lsp
         A       = 0.0f;
     }
 
-    Color::Color(float r, float g, float b)
+    Color::Color(float r, float g, float b) noexcept
     {
         set_rgb(r, g, b);
         hsl.H   = 0.0f;
@@ -166,7 +169,7 @@ namespace lsp
         A       = 0.0f;
     }
 
-    Color::Color(float r, float g, float b, float a)
+    Color::Color(float r, float g, float b, float a) noexcept
     {
         set_rgba(r, g, b, a);
         hsl.H   = 0.0f;
@@ -187,7 +190,7 @@ namespace lsp
         cmyk.K  = 0.0f;
     }
 
-    Color::Color(const Color &src)
+    Color::Color(const Color &src) noexcept
     {
         rgb     = src.rgb;
         hsl     = src.hsl;
@@ -199,7 +202,7 @@ namespace lsp
         A       = src.A;
     }
 
-    Color::Color(Color &&src)
+    Color::Color(Color &&src) noexcept
     {
         rgb     = src.rgb;
         hsl     = src.hsl;
@@ -211,21 +214,7 @@ namespace lsp
         A       = src.A;
     }
 
-    Color &Color::operator = (const Color & src)
-    {
-        rgb     = src.rgb;
-        hsl     = src.hsl;
-        xyz     = src.xyz;
-        lab     = src.lab;
-        lch     = src.lch;
-        cmyk    = src.cmyk;
-        mask    = src.mask;
-        A       = src.A;
-
-        return *this;
-    }
-
-    Color &Color::operator = (Color && src)
+    Color &Color::operator = (const Color & src) noexcept
     {
         rgb     = src.rgb;
         hsl     = src.hsl;
@@ -239,7 +228,21 @@ namespace lsp
         return *this;
     }
 
-    Color::Color(const Color &src, float a)
+    Color &Color::operator = (Color && src) noexcept
+    {
+        rgb     = src.rgb;
+        hsl     = src.hsl;
+        xyz     = src.xyz;
+        lab     = src.lab;
+        lch     = src.lch;
+        cmyk    = src.cmyk;
+        mask    = src.mask;
+        A       = src.A;
+
+        return *this;
+    }
+
+    Color::Color(const Color &src, float a) noexcept
     {
         rgb     = src.rgb;
         hsl     = src.hsl;
@@ -251,7 +254,7 @@ namespace lsp
         A       = clamp(a);
     }
 
-    Color::Color(const Color *src)
+    Color::Color(const Color *src) noexcept
     {
         rgb     = src->rgb;
         hsl     = src->hsl;
@@ -263,7 +266,7 @@ namespace lsp
         A       = src->A;
     }
 
-    Color::Color(const Color *src, float a)
+    Color::Color(const Color *src, float a) noexcept
     {
         rgb     = src->rgb;
         hsl     = src->hsl;
@@ -275,7 +278,7 @@ namespace lsp
         A       = clamp(a);
     }
 
-    Color::Color(uint32_t rgb)
+    Color::Color(uint32_t rgb) noexcept
     {
         set_rgb24(rgb);
         hsl.H   = 0.0f;
@@ -296,7 +299,7 @@ namespace lsp
         cmyk.K  = 0.0f;
     }
 
-    Color::Color(uint32_t rgb, float a)
+    Color::Color(uint32_t rgb, float a) noexcept
     {
         set_rgb24(rgb);
         hsl.H   = 0.0f;
@@ -318,7 +321,7 @@ namespace lsp
         A       = a;
     }
 
-    Color &Color::copy(const Color &c)
+    Color &Color::copy(const Color &c) noexcept
     {
         rgb     = c.rgb;
         hsl     = c.hsl;
@@ -331,7 +334,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::copy(const Color *c)
+    Color &Color::copy(const Color *c) noexcept
     {
         rgb     = c->rgb;
         hsl     = c->hsl;
@@ -345,7 +348,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::copy(const Color &c, float a)
+    Color &Color::copy(const Color &c, float a) noexcept
     {
         rgb     = c.rgb;
         hsl     = c.hsl;
@@ -359,7 +362,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::copy(const Color *c, float a)
+    Color &Color::copy(const Color *c, float a) noexcept
     {
         rgb     = c->rgb;
         hsl     = c->hsl;
@@ -373,7 +376,7 @@ namespace lsp
         return *this;
     }
 
-    void Color::swap(Color *c)
+    void Color::swap(Color *c) noexcept
     {
         lsp::swap(rgb, c->rgb);
         lsp::swap(hsl, c->hsl);
@@ -385,126 +388,162 @@ namespace lsp
         lsp::swap(mask, c->mask);
     }
 
-    Color &Color::red(float r)
+    Color &Color::red(float r) noexcept
     {
         calc_rgb().R    = clamp(r);
         mask            = M_RGB;
         return *this;
     }
 
-    Color &Color::green(float g)
+    Color &Color::green(float g) noexcept
     {
         calc_rgb().G    = clamp(g);
         mask            = M_RGB;
         return *this;
     }
 
-    Color &Color::blue(float b)
+    Color &Color::blue(float b) noexcept
     {
         calc_rgb().B    = clamp(b);
         mask            = M_RGB;
         return *this;
     }
 
-    Color &Color::hue(float h)
+    Color &Color::hue(float h) noexcept
     {
         calc_hsl().H    = clamp(h);
         mask            = M_HSL;
         return *this;
     }
 
-    Color &Color::saturation(float s)
+    Color &Color::saturation(float s) noexcept
     {
         calc_hsl().S    = clamp(s);
         mask            = M_HSL;
         return *this;
     }
 
-    Color &Color::lightness(float l)
+    Color &Color::lightness(float l) noexcept
     {
         calc_hsl().L    = clamp(l);
         mask            = M_HSL;
         return *this;
     }
 
-    Color &Color::hsl_hue(float h)
+    Color &Color::hsl_hue(float h) noexcept
     {
         calc_hsl().H    = clamp(h);
         mask            = M_HSL;
         return *this;
     }
 
-    Color &Color::hsl_saturation(float s)
+    Color &Color::hsl_saturation(float s) noexcept
     {
         calc_hsl().S    = clamp(s);
         mask            = M_HSL;
         return *this;
     }
 
-    Color &Color::hsl_lightness(float l)
+    Color &Color::hsl_lightness(float l) noexcept
     {
         calc_hsl().L    = clamp(l);
         mask            = M_HSL;
         return *this;
     }
 
-    Color &Color::alpha(float a)
+    Color &Color::alpha(float a) noexcept
     {
         A       = a;
         return *this;
     }
 
-    Color &Color::opacity(float o)
+    Color &Color::opacity(float o) noexcept
     {
         A       = 1.0f - o;
         return *this;
     }
 
-    Color &Color::set_rgb24(uint32_t v)
+    Color &Color::set_rgb24(uint32_t v) noexcept
     {
-        rgb.R   = ((v >> 16) & 0xff) / 255.0f;
-        rgb.G   = ((v >> 8) & 0xff) / 255.0f;
-        rgb.B   = (v & 0xff) / 255.0f;
+        rgb.R   = ((v >> 16) & 0xff) * FLOAT_RCOL_COEFF;
+        rgb.G   = ((v >> 8) & 0xff) * FLOAT_RCOL_COEFF;
+        rgb.B   = (v & 0xff) * FLOAT_RCOL_COEFF;
         A       = 0.0f;
         mask    = M_RGB;
 
         return *this;
     }
 
-    Color &Color::set_rgba32(uint32_t v)
+    Color &Color::set_rgba32(uint32_t v) noexcept
     {
-        rgb.R   = ((v >> 16) & 0xff) / 255.0f;
-        rgb.G   = ((v >> 8) & 0xff) / 255.0f;
-        rgb.B   = (v & 0xff) / 255.0f;
-        A       = ((v >> 24) & 0xff) / 255.0f;
+        rgb.R   = ((v >> 16) & 0xff) * FLOAT_RCOL_COEFF;
+        rgb.G   = ((v >> 8) & 0xff) * FLOAT_RCOL_COEFF;
+        rgb.B   = (v & 0xff) * FLOAT_RCOL_COEFF;
+        A       = ((v >> 24) & 0xff) * FLOAT_RCOL_COEFF;
         mask    = M_RGB;
 
         return *this;
     }
 
-    Color &Color::set_hsl24(uint32_t v)
+    Color &Color::set_dev_rgba32(uint32_t v) noexcept
     {
-        hsl.H   = ((v >> 16) & 0xff) / 255.0f;
-        hsl.S   = ((v >> 8) & 0xff) / 255.0f;
-        hsl.L   = (v & 0xff) / 255.0f;
+        rgb.R   = ((v >> 16) & 0xff) * FLOAT_RCOL_COEFF;
+        rgb.G   = ((v >> 8) & 0xff) * FLOAT_RCOL_COEFF;
+        rgb.B   = (v & 0xff) * FLOAT_RCOL_COEFF;
+        A       = 1.0f - ((v >> 24) & 0xff) * FLOAT_RCOL_COEFF;
+        mask    = M_RGB;
+
+        return *this;
+    }
+
+    Color &Color::set_prgba32(uint32_t v) noexcept
+    {
+        const uint32_t int_a = ((v >> 24) & 0xff);
+        if (int_a > 0)
+        {
+            const float a = int_a * FLOAT_RCOL_COEFF;
+            const float ra = FLOAT_RCOL_COEFF / a;
+
+            rgb.R   = ((v >> 16) & 0xff) * ra;
+            rgb.G   = ((v >> 8) & 0xff) * ra;
+            rgb.B   = (v & 0xff) * ra;
+            A       = 1.0f - a;
+        }
+        else
+        {
+            rgb.R   = 0.0f;
+            rgb.G   = 0.0f;
+            rgb.B   = 0.0f;
+            A       = 1.0f;
+        }
+        mask    = M_RGB;
+
+        return *this;
+    }
+
+    Color &Color::set_hsl24(uint32_t v) noexcept
+    {
+        hsl.H   = ((v >> 16) & 0xff) * FLOAT_RCOL_COEFF;
+        hsl.S   = ((v >> 8) & 0xff) * FLOAT_RCOL_COEFF;
+        hsl.L   = (v & 0xff) * FLOAT_RCOL_COEFF;
         A       = 0.0f;
         mask    = M_HSL;
 
         return *this;
     }
 
-    Color &Color::set_hsla32(uint32_t v)
+    Color &Color::set_hsla32(uint32_t v) noexcept
     {
-        hsl.H   = ((v >> 16) & 0xff) / 255.0f;
-        hsl.S   = ((v >> 8) & 0xff) / 255.0f;
-        hsl.L   = (v & 0xff) / 255.0f;
-        A       = ((v >> 24) & 0xff) / 255.0f;
+        hsl.H   = ((v >> 16) & 0xff) * FLOAT_RCOL_COEFF;
+        hsl.S   = ((v >> 8) & 0xff) * FLOAT_RCOL_COEFF;
+        hsl.L   = (v & 0xff) * FLOAT_RCOL_COEFF;
+        A       = ((v >> 24) & 0xff) * FLOAT_RCOL_COEFF;
         mask    = M_HSL;
 
         return *this;
     }
 
-    bool Color::hsl_to_rgb() const
+    bool Color::hsl_to_rgb() const noexcept
     {
         if (!(mask & M_HSL))
             return false;
@@ -552,7 +591,7 @@ namespace lsp
         return true;
     }
 
-    bool Color::xyz_to_rgb() const
+    bool Color::xyz_to_rgb() const noexcept
     {
         if (!(mask & M_XYZ))
             return false;
@@ -575,7 +614,7 @@ namespace lsp
         return true;
     }
 
-    bool Color::lab_to_xyz() const
+    bool Color::lab_to_xyz() const noexcept
     {
         if (!(mask & M_LAB))
             return false;
@@ -601,7 +640,7 @@ namespace lsp
         return true;
     }
 
-    bool Color::lch_to_lab() const
+    bool Color::lch_to_lab() const noexcept
     {
         if (!(mask & M_LCH))
             return false;
@@ -615,7 +654,7 @@ namespace lsp
         return true;
     }
 
-    bool Color::cmyk_to_rgb() const
+    bool Color::cmyk_to_rgb() const noexcept
     {
         if (!(mask & M_CMYK))
             return false;
@@ -630,7 +669,7 @@ namespace lsp
         return true;
     }
 
-    Color::rgb_t &Color::calc_rgb() const
+    Color::rgb_t &Color::calc_rgb() const noexcept
     {
         // Check if RGB is present
         if (mask & M_RGB)
@@ -671,7 +710,7 @@ namespace lsp
         return rgb;
     }
 
-    Color::hsl_t &Color::calc_hsl() const
+    Color::hsl_t &Color::calc_hsl() const noexcept
     {
         if (mask & M_HSL)
             return hsl;
@@ -714,7 +753,7 @@ namespace lsp
         return hsl;
     }
 
-    Color::xyz_t &Color::calc_xyz() const
+    Color::xyz_t &Color::calc_xyz() const noexcept
     {
         if (mask & M_XYZ)
             return xyz;
@@ -735,7 +774,7 @@ namespace lsp
         return xyz;
     }
 
-    Color::lab_t &Color::calc_lab() const
+    Color::lab_t &Color::calc_lab() const noexcept
     {
         if (mask & M_LAB)
             return lab;
@@ -760,7 +799,7 @@ namespace lsp
         return lab;
     }
 
-    Color::lch_t &Color::calc_lch() const
+    Color::lch_t &Color::calc_lch() const noexcept
     {
         if (mask & M_LCH)
             return lch;
@@ -781,7 +820,7 @@ namespace lsp
         return lch;
     }
 
-    Color::cmyk_t &Color::calc_cmyk() const
+    Color::cmyk_t &Color::calc_cmyk() const noexcept
     {
         if (mask & M_CMYK)
             return cmyk;
@@ -811,7 +850,7 @@ namespace lsp
         return cmyk;
     }
 
-    Color &Color::set_rgb(float r, float g, float b)
+    Color &Color::set_rgb(float r, float g, float b) noexcept
     {
         mask    = M_RGB;
         rgb.R   = clamp(r);
@@ -821,7 +860,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::set_rgba(float r, float g, float b, float a)
+    Color &Color::set_rgba(float r, float g, float b, float a) noexcept
     {
         mask    = M_RGB;
         rgb.R   = clamp(r);
@@ -832,7 +871,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::set_hsl(float h, float s, float l)
+    Color &Color::set_hsl(float h, float s, float l) noexcept
     {
         mask    = M_HSL;
         hsl.H   = clamp(h);
@@ -842,7 +881,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::set_hsla(float h, float s, float l, float a)
+    Color &Color::set_hsla(float h, float s, float l, float a) noexcept
     {
         mask    = M_HSL;
         hsl.H   = clamp(h);
@@ -853,7 +892,7 @@ namespace lsp
         return *this;
     }
 
-    const Color &Color::get_rgb(float &r, float &g, float &b) const
+    const Color &Color::get_rgb(float &r, float &g, float &b) const noexcept
     {
         calc_rgb();
         r       = rgb.R;
@@ -863,7 +902,7 @@ namespace lsp
         return *this;
     }
 
-    const Color &Color::get_rgba(float &r, float &g, float &b, float &a) const
+    const Color &Color::get_rgba(float &r, float &g, float &b, float &a) const noexcept
     {
         calc_rgb();
         r       = rgb.R;
@@ -874,7 +913,7 @@ namespace lsp
         return *this;
     }
 
-    const Color &Color::get_rgbo(float &r, float &g, float &b, float &o) const
+    const Color &Color::get_rgbo(float &r, float &g, float &b, float &o) const noexcept
     {
         calc_rgb();
         r       = rgb.R;
@@ -885,7 +924,7 @@ namespace lsp
         return *this;
     }
 
-    const Color &Color::get_hsl(float &h, float &s, float &l) const
+    const Color &Color::get_hsl(float &h, float &s, float &l) const noexcept
     {
         calc_hsl();
         h       = hsl.H;
@@ -895,7 +934,7 @@ namespace lsp
         return *this;
     }
 
-    const Color &Color::get_hsla(float &h, float &s, float &l, float &a) const
+    const Color &Color::get_hsla(float &h, float &s, float &l, float &a) const noexcept
     {
         calc_hsl();
         h       = hsl.H;
@@ -906,7 +945,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::get_rgb(float &r, float &g, float &b)
+    Color &Color::get_rgb(float &r, float &g, float &b) noexcept
     {
         calc_rgb();
         r       = rgb.R;
@@ -916,7 +955,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::get_rgba(float &r, float &g, float &b, float &a)
+    Color &Color::get_rgba(float &r, float &g, float &b, float &a) noexcept
     {
         calc_rgb();
         r       = rgb.R;
@@ -927,7 +966,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::get_hsl(float &h, float &s, float &l)
+    Color &Color::get_hsl(float &h, float &s, float &l) noexcept
     {
         calc_hsl();
         h       = hsl.H;
@@ -937,7 +976,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::get_hsla(float &h, float &s, float &l, float &a)
+    Color &Color::get_hsla(float &h, float &s, float &l, float &a) noexcept
     {
         calc_hsl();
         h       = hsl.H;
@@ -949,7 +988,7 @@ namespace lsp
     }
 
 
-    Color &Color::blend(const Color &c, float alpha)
+    Color &Color::blend(const Color &c, float alpha) noexcept
     {
         float r1, g1, b1, r2, g2, b2;
         get_rgb(r1, g1, b1);
@@ -959,7 +998,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::blend(float r, float g, float b, float alpha)
+    Color &Color::blend(float r, float g, float b, float alpha) noexcept
     {
         float r1, g1, b1;
         get_rgb(r1, g1, b1);
@@ -968,7 +1007,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::blend(const Color &c1, const Color &c2, float alpha)
+    Color &Color::blend(const Color &c1, const Color &c2, float alpha) noexcept
     {
         float r1, g1, b1, r2, g2, b2;
         c1.get_rgb(r1, g1, b1);
@@ -978,7 +1017,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::darken(float amount)
+    Color &Color::darken(float amount) noexcept
     {
         float r, g, b;
         get_rgb(r, g, b);
@@ -989,7 +1028,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::lighten(float amount)
+    Color &Color::lighten(float amount) noexcept
     {
         float r, g, b;
         get_rgb(r, g, b);
@@ -1000,21 +1039,21 @@ namespace lsp
         return *this;
     }
 
-    void Color::scale_hsl_lightness(float amount)
+    void Color::scale_hsl_lightness(float amount) noexcept
     {
         calc_hsl();
         hsl.L   = clamp(amount * hsl.L);
         mask    = M_HSL;
     }
 
-    void Color::scale_lch_luminance(float amount)
+    void Color::scale_lch_luminance(float amount) noexcept
     {
         calc_lch();
         lch.L   = lsp_limit(amount * lch.L, 0.0f, 100.0f);
         mask    = M_LCH;
     }
 
-    ssize_t Color::format(char *dst, size_t len, size_t tolerance, const float *v, char prefix, bool alpha)
+    ssize_t Color::format(char *dst, size_t len, size_t tolerance, const float *v, char prefix, bool alpha) noexcept
     {
         if ((dst == NULL) || (tolerance <= 0) || (tolerance > 4))
             return -STATUS_BAD_ARGUMENTS;
@@ -1087,35 +1126,35 @@ namespace lsp
         }
     }
 
-    ssize_t Color::format_rgb(char *dst, size_t len, size_t tolerance) const
+    ssize_t Color::format_rgb(char *dst, size_t len, size_t tolerance) const noexcept
     {
         float v[3];
         get_rgb(v[0], v[1], v[2]);
         return format(dst, len, tolerance, v, '#', false);
     }
 
-    ssize_t Color::format_hsl(char *dst, size_t len, size_t tolerance) const
+    ssize_t Color::format_hsl(char *dst, size_t len, size_t tolerance) const noexcept
     {
         float v[3];
         get_hsl(v[0], v[1], v[2]);
         return format(dst, len, tolerance, v, '@', false);
     }
 
-    ssize_t Color::format_rgba(char *dst, size_t len, size_t tolerance) const
+    ssize_t Color::format_rgba(char *dst, size_t len, size_t tolerance) const noexcept
     {
         float v[4];
         get_rgba(v[0], v[1], v[2], v[3]);
         return format(dst, len, tolerance, v, '#', true);
     }
 
-    ssize_t Color::format_hsla(char *dst, size_t len, size_t tolerance) const
+    ssize_t Color::format_hsla(char *dst, size_t len, size_t tolerance) const noexcept
     {
         float v[4];
         get_hsla(v[0], v[1], v[2], v[3]);
         return format(dst, len, tolerance, v, '@', true);
     }
 
-    ssize_t Color::format_rgb(LSPString *dst, size_t tolerance) const
+    ssize_t Color::format_rgb(LSPString *dst, size_t tolerance) const noexcept
     {
         char tmp[32];
         ssize_t res = format_rgb(tmp, sizeof(tmp), tolerance);
@@ -1124,7 +1163,7 @@ namespace lsp
         return (dst->set_ascii(tmp)) ? res : -STATUS_NO_MEM;
     }
 
-    ssize_t Color::format_rgba(LSPString *dst, size_t tolerance) const
+    ssize_t Color::format_rgba(LSPString *dst, size_t tolerance) const noexcept
     {
         char tmp[32];
         ssize_t res = format_rgba(tmp, sizeof(tmp), tolerance);
@@ -1133,7 +1172,7 @@ namespace lsp
         return (dst->set_ascii(tmp)) ? res : -STATUS_NO_MEM;
     }
 
-    ssize_t Color::format_hsl(LSPString *dst, size_t tolerance) const
+    ssize_t Color::format_hsl(LSPString *dst, size_t tolerance) const noexcept
     {
         char tmp[32];
         ssize_t res = format_hsl(tmp, sizeof(tmp), tolerance);
@@ -1142,7 +1181,7 @@ namespace lsp
         return (dst->set_ascii(tmp)) ? res : -STATUS_NO_MEM;
     }
 
-    ssize_t Color::format_hsla(LSPString *dst, size_t tolerance) const
+    ssize_t Color::format_hsla(LSPString *dst, size_t tolerance) const noexcept
     {
         char tmp[32];
         ssize_t res = format_hsla(tmp, sizeof(tmp), tolerance);
@@ -1151,7 +1190,7 @@ namespace lsp
         return (dst->set_ascii(tmp)) ? res : -STATUS_NO_MEM;
     }
 
-    status_t Color::parse_hex(float *dst, size_t n, char prefix, const char *src, size_t len)
+    status_t Color::parse_hex(float *dst, size_t n, char prefix, const char *src, size_t len) noexcept
     {
         if (src == NULL)
             return STATUS_BAD_ARGUMENTS;
@@ -1193,7 +1232,7 @@ namespace lsp
         return STATUS_OK;
     }
 
-    status_t Color::parse_numeric(float *dst, size_t nmin, size_t nmax, const char *prefix, const char *src, size_t len)
+    status_t Color::parse_numeric(float *dst, size_t nmin, size_t nmax, const char *prefix, const char *src, size_t len) noexcept
     {
         // Save and update locale
         SET_LOCALE_SCOPED(LC_NUMERIC, "C");
@@ -1203,7 +1242,7 @@ namespace lsp
         return res;
     }
 
-    status_t Color::parse_cnumeric(float *dst, size_t nmin, size_t nmax, const char *prefix, const char *src, size_t len)
+    status_t Color::parse_cnumeric(float *dst, size_t nmin, size_t nmax, const char *prefix, const char *src, size_t len) noexcept
     {
         const char *end = &src[len];
 
@@ -1263,7 +1302,7 @@ namespace lsp
         return STATUS_OK;
     }
 
-    status_t Color::parse4(const char *src, size_t len)
+    status_t Color::parse4(const char *src, size_t len) noexcept
     {
         if (src == NULL)
             return STATUS_BAD_ARGUMENTS;
@@ -1276,7 +1315,7 @@ namespace lsp
         return (*src == '@') ? parse_hsla(src, end - src) : parse_rgba(src, end - src);
     }
 
-    status_t Color::parse3(const char *src, size_t len)
+    status_t Color::parse3(const char *src, size_t len) noexcept
     {
         if (src == NULL)
             return STATUS_BAD_ARGUMENTS;
@@ -1289,7 +1328,7 @@ namespace lsp
         return (*src == '@') ? parse_hsl(src, end - src) : parse_rgb(src, end - src);
     }
 
-    status_t Color::parse_rgba(const char *src, size_t len)
+    status_t Color::parse_rgba(const char *src, size_t len) noexcept
     {
         float v[4];
         status_t res = parse_hex(v, 4, '#', src, len);
@@ -1298,7 +1337,7 @@ namespace lsp
         return res;
     }
 
-    status_t Color::parse_hsla(const char *src, size_t len)
+    status_t Color::parse_hsla(const char *src, size_t len) noexcept
     {
         float v[4];
         status_t res = parse_hex(v, 4, '@', src, len);
@@ -1307,7 +1346,7 @@ namespace lsp
         return res;
     }
 
-    status_t Color::parse_rgb(const char *src, size_t len)
+    status_t Color::parse_rgb(const char *src, size_t len) noexcept
     {
         float v[3];
         status_t res = parse_hex(v, 3, '#', src, len);
@@ -1316,7 +1355,7 @@ namespace lsp
         return res;
     }
 
-    status_t Color::parse_hsl(const char *src, size_t len)
+    status_t Color::parse_hsl(const char *src, size_t len) noexcept
     {
         float v[3];
         status_t res = parse_hex(v, 3, '@', src, len);
@@ -1325,7 +1364,7 @@ namespace lsp
         return res;
     }
 
-    status_t Color::parse(const char *src, size_t len)
+    status_t Color::parse(const char *src, size_t len) noexcept
     {
         status_t res;
         float v[5];
@@ -1370,7 +1409,7 @@ namespace lsp
         return res;
     }
 
-    ssize_t Color::format3(char *dst, size_t len) const
+    ssize_t Color::format3(char *dst, size_t len) const noexcept
     {
         // Save and update locale
         SET_LOCALE_SCOPED(LC_NUMERIC, "C");
@@ -1394,7 +1433,7 @@ namespace lsp
         return res;
     }
 
-    ssize_t Color::format4(char *dst, size_t len) const
+    ssize_t Color::format4(char *dst, size_t len) const noexcept
     {
         // Save and update locale
         SET_LOCALE_SCOPED(LC_NUMERIC, "C");
@@ -1418,7 +1457,7 @@ namespace lsp
         return res;
     }
 
-    ssize_t Color::format3(LSPString *dst) const
+    ssize_t Color::format3(LSPString *dst) const noexcept
     {
         if (dst == NULL)
             return -STATUS_BAD_ARGUMENTS;
@@ -1431,7 +1470,7 @@ namespace lsp
         return (dst->set_ascii(buf, res)) ? res : -STATUS_NO_MEM;
     }
 
-    ssize_t Color::format4(LSPString *dst) const
+    ssize_t Color::format4(LSPString *dst) const noexcept
     {
         if (dst == NULL)
             return -STATUS_BAD_ARGUMENTS;
@@ -1444,80 +1483,101 @@ namespace lsp
         return (dst->set_ascii(buf, res)) ? res : -STATUS_NO_MEM;
     }
 
-    status_t Color::parse_rgba(const char *src)
+    status_t Color::parse_rgba(const char *src) noexcept
     {
         return (src != NULL) ? parse_rgba(src, ::strlen(src)) : STATUS_BAD_ARGUMENTS;
     }
 
-    status_t Color::parse_hsla(const char *src)
+    status_t Color::parse_hsla(const char *src) noexcept
     {
         return (src != NULL) ? parse_hsla(src, ::strlen(src)) : STATUS_BAD_ARGUMENTS;
     }
 
-    status_t Color::parse_rgb(const char *src)
+    status_t Color::parse_rgb(const char *src) noexcept
     {
         return (src != NULL) ? parse_rgb(src, ::strlen(src)) : STATUS_BAD_ARGUMENTS;
     }
 
-    status_t Color::parse_hsl(const char *src)
+    status_t Color::parse_hsl(const char *src) noexcept
     {
         return (src != NULL) ? parse_hsl(src, ::strlen(src)) : STATUS_BAD_ARGUMENTS;
     }
 
-    status_t Color::parse4(const char *src)
+    status_t Color::parse4(const char *src) noexcept
     {
         return (src != NULL) ? parse4(src, ::strlen(src)) : STATUS_BAD_ARGUMENTS;
     }
 
-    status_t Color::parse3(const char *src)
+    status_t Color::parse3(const char *src) noexcept
     {
         return (src != NULL) ? parse3(src, ::strlen(src)) : STATUS_BAD_ARGUMENTS;
     }
 
-    status_t Color::parse(const char *src)
+    status_t Color::parse(const char *src) noexcept
     {
         return (src != NULL) ? parse(src, ::strlen(src)) : STATUS_BAD_ARGUMENTS;
     }
 
-    uint32_t Color::rgb24() const
+    uint32_t Color::rgb24() const noexcept
     {
         calc_rgb();
         return
-            (uint32_t(rgb.R * 0xff + 0.25f) << 16) |
-            (uint32_t(rgb.G * 0xff + 0.25f) << 8) |
-            (uint32_t(rgb.B * 0xff + 0.25f) << 0);
+            (uint32_t(rgb.R * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 16) |
+            (uint32_t(rgb.G * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 8) |
+            (uint32_t(rgb.B * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 0);
     }
 
-    uint32_t Color::rgba32() const
+    uint32_t Color::rgba32() const noexcept
     {
         calc_rgb();
         return
-            (uint32_t(A * 0xff + 0.25f) << 24) |
-            (uint32_t(rgb.R * 0xff + 0.25f) << 16) |
-            (uint32_t(rgb.G * 0xff + 0.25f) << 8) |
-            (uint32_t(rgb.B * 0xff + 0.25f) << 0);
+            (uint32_t(A * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 24) |
+            (uint32_t(rgb.R * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 16) |
+            (uint32_t(rgb.G * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 8) |
+            (uint32_t(rgb.B * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 0);
     }
 
-    uint32_t Color::hsl24() const
+    uint32_t Color::dev_rgba32() const noexcept
+    {
+        calc_rgb();
+        return
+            (uint32_t((1.0f - A) * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 24) |
+            (uint32_t(rgb.R * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 16) |
+            (uint32_t(rgb.G * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 8) |
+            (uint32_t(rgb.B * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 0);
+    }
+
+    uint32_t Color::prgba32() const noexcept
+    {
+        calc_rgb();
+        const float a   = 1.0f - A;
+        return
+            (uint32_t(a * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 24) |
+            (uint32_t(rgb.R * a * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 16) |
+            (uint32_t(rgb.G * a * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 8) |
+            (uint32_t(rgb.B * a * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 0);
+    }
+
+    uint32_t Color::hsl24() const noexcept
     {
         calc_hsl();
         return
-            (uint32_t(hsl.H * 0xff + 0.25f) << 16) |
-            (uint32_t(hsl.S * 0xff + 0.25f) << 8) |
-            (uint32_t(hsl.L * 0xff + 0.25f) << 0);
+            (uint32_t(hsl.H * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 16) |
+            (uint32_t(hsl.S * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 8) |
+            (uint32_t(hsl.L * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 0);
     }
 
-    uint32_t Color::hsla32() const
+    uint32_t Color::hsla32() const noexcept
     {
         calc_hsl();
         return
-            (uint32_t(A * 0xff + 0.25f) << 24) |
-            (uint32_t(hsl.H * 0xff + 0.25f) << 16) |
-            (uint32_t(hsl.S * 0xff + 0.25f) << 8) |
-            (uint32_t(hsl.L * 0xff + 0.25f) << 0);
+            (uint32_t(A * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 24) |
+            (uint32_t(hsl.H * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 16) |
+            (uint32_t(hsl.S * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 8) |
+            (uint32_t(hsl.L * FLOAT_COL_COEFF + FLOAT_COL_BIAS) << 0);
     }
 
-    const Color &Color::get_xyz(float &x, float &y, float &z) const
+    const Color &Color::get_xyz(float &x, float &y, float &z) const noexcept
     {
         calc_xyz();
         x   = xyz.X;
@@ -1527,7 +1587,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::get_xyz(float &x, float &y, float &z)
+    Color &Color::get_xyz(float &x, float &y, float &z) noexcept
     {
         calc_xyz();
         x   = xyz.X;
@@ -1537,7 +1597,7 @@ namespace lsp
         return *this;
     }
 
-    const Color &Color::get_xyza(float &x, float &y, float &z, float &a) const
+    const Color &Color::get_xyza(float &x, float &y, float &z, float &a) const noexcept
     {
         calc_xyz();
         x   = xyz.X;
@@ -1548,7 +1608,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::get_xyza(float &x, float &y, float &z, float &a)
+    Color &Color::get_xyza(float &x, float &y, float &z, float &a) noexcept
     {
         calc_xyz();
         x   = xyz.X;
@@ -1559,28 +1619,28 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::xyz_x(float x)
+    Color &Color::xyz_x(float x) noexcept
     {
         calc_xyz().X    = x;
         mask    = M_XYZ;
         return *this;
     }
 
-    Color &Color::xyz_y(float y)
+    Color &Color::xyz_y(float y) noexcept
     {
         calc_xyz().Y    = y;
         mask    = M_XYZ;
         return *this;
     }
 
-    Color &Color::xyz_z(float z)
+    Color &Color::xyz_z(float z) noexcept
     {
         calc_xyz().Z    = z;
         mask    = M_XYZ;
         return *this;
     }
 
-    Color &Color::set_xyz(float x, float y, float z)
+    Color &Color::set_xyz(float x, float y, float z) noexcept
     {
         xyz.X   = lsp_limit(x, 0.0f, 100.0f);
         xyz.Y   = lsp_limit(y, 0.0f, 100.0f);
@@ -1589,7 +1649,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::set_xyza(float x, float y, float z, float a)
+    Color &Color::set_xyza(float x, float y, float z, float a) noexcept
     {
         xyz.X   = lsp_limit(x, 0.0f, 100.0f);
         xyz.Y   = lsp_limit(y, 0.0f, 100.0f);
@@ -1599,7 +1659,7 @@ namespace lsp
         return *this;
     }
 
-    const Color &Color::get_lab(float &l, float &a, float &b) const
+    const Color &Color::get_lab(float &l, float &a, float &b) const noexcept
     {
         calc_lab();
         l       = lab.L;
@@ -1608,7 +1668,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::get_lab(float &l, float &a, float &b)
+    Color &Color::get_lab(float &l, float &a, float &b) noexcept
     {
         calc_lab();
         l       = lab.L;
@@ -1617,17 +1677,7 @@ namespace lsp
         return *this;
     }
 
-    const Color &Color::get_laba(float &l, float &a, float &b, float &alpha) const
-    {
-        calc_lab();
-        l       = lab.L;
-        a       = lab.A;
-        b       = lab.B;
-        alpha   = clamp(A);
-        return *this;
-    }
-
-    Color &Color::get_laba(float &l, float &a, float &b, float &alpha)
+    const Color &Color::get_laba(float &l, float &a, float &b, float &alpha) const noexcept
     {
         calc_lab();
         l       = lab.L;
@@ -1637,28 +1687,38 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::lab_l(float l)
+    Color &Color::get_laba(float &l, float &a, float &b, float &alpha) noexcept
+    {
+        calc_lab();
+        l       = lab.L;
+        a       = lab.A;
+        b       = lab.B;
+        alpha   = clamp(A);
+        return *this;
+    }
+
+    Color &Color::lab_l(float l) noexcept
     {
         calc_lab().L    = l;
         mask            = M_LAB;
         return *this;
     }
 
-    Color &Color::lab_a(float a)
+    Color &Color::lab_a(float a) noexcept
     {
         calc_lab().A    = a;
         mask            = M_LAB;
         return *this;
     }
 
-    Color &Color::lab_b(float b)
+    Color &Color::lab_b(float b) noexcept
     {
         calc_lab().B    = b;
         mask            = M_LAB;
         return *this;
     }
 
-    Color &Color::set_lab(float l, float a, float b)
+    Color &Color::set_lab(float l, float a, float b) noexcept
     {
         lab.L   = l;
         lab.A   = a;
@@ -1667,7 +1727,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::set_laba(float l, float a, float b, float alpha)
+    Color &Color::set_laba(float l, float a, float b, float alpha) noexcept
     {
         lab.L   = l;
         lab.A   = a;
@@ -1678,7 +1738,7 @@ namespace lsp
     }
 
     // Check that LCH data is currently present without need of implicit conversion
-    const Color &Color::get_lch(float &l, float &c, float &h) const
+    const Color &Color::get_lch(float &l, float &c, float &h) const noexcept
     {
         calc_lch();
         l       = lch.L;
@@ -1687,7 +1747,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::get_lch(float &l, float &c, float &h)
+    Color &Color::get_lch(float &l, float &c, float &h) noexcept
     {
         calc_lch();
         l       = lch.L;
@@ -1696,17 +1756,7 @@ namespace lsp
         return *this;
     }
 
-    const Color &Color::get_lcha(float &l, float &c, float &h, float &alpha) const
-    {
-        calc_lch();
-        l       = lch.L;
-        c       = lch.C;
-        h       = lch.H;
-        alpha   = A;
-        return *this;
-    }
-
-    Color &Color::get_lcha(float &l, float &c, float &h, float &alpha)
+    const Color &Color::get_lcha(float &l, float &c, float &h, float &alpha) const noexcept
     {
         calc_lch();
         l       = lch.L;
@@ -1716,28 +1766,38 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::lch_l(float l)
+    Color &Color::get_lcha(float &l, float &c, float &h, float &alpha) noexcept
+    {
+        calc_lch();
+        l       = lch.L;
+        c       = lch.C;
+        h       = lch.H;
+        alpha   = A;
+        return *this;
+    }
+
+    Color &Color::lch_l(float l) noexcept
     {
         calc_lch().L    = l;
         mask            = M_LCH;
         return *this;
     }
 
-    Color &Color::lch_c(float c)
+    Color &Color::lch_c(float c) noexcept
     {
         calc_lch().C    = c;
         mask            = M_LCH;
         return *this;
     }
 
-    Color &Color::lch_h(float h)
+    Color &Color::lch_h(float h) noexcept
     {
         calc_lch().H    = h;
         mask            = M_LCH;
         return *this;
     }
 
-    Color &Color::set_lch(float l, float c, float h)
+    Color &Color::set_lch(float l, float c, float h) noexcept
     {
         lch.L   = l;
         lch.C   = c;
@@ -1746,7 +1806,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::set_lcha(float l, float c, float h, float alpha)
+    Color &Color::set_lcha(float l, float c, float h, float alpha) noexcept
     {
         lch.L   = l;
         lch.C   = c;
@@ -1756,7 +1816,7 @@ namespace lsp
         return *this;
     }
 
-    const Color &Color::get_hcl(float &h, float &c, float &l) const
+    const Color &Color::get_hcl(float &h, float &c, float &l) const noexcept
     {
         calc_lch();
         l       = lch.L;
@@ -1765,7 +1825,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::get_hcl(float &h, float &c, float &l)
+    Color &Color::get_hcl(float &h, float &c, float &l) noexcept
     {
         calc_lch();
         l       = lch.L;
@@ -1774,17 +1834,7 @@ namespace lsp
         return *this;
     }
 
-    const Color &Color::get_hcla(float &h, float &c, float &l, float &alpha) const
-    {
-        calc_lch();
-        l       = lch.L;
-        c       = lch.C;
-        h       = lch.H;
-        alpha   = clamp(A);
-        return *this;
-    }
-
-    Color &Color::get_hcla(float &h, float &c, float &l, float &alpha)
+    const Color &Color::get_hcla(float &h, float &c, float &l, float &alpha) const noexcept
     {
         calc_lch();
         l       = lch.L;
@@ -1794,28 +1844,38 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::hcl_l(float l)
+    Color &Color::get_hcla(float &h, float &c, float &l, float &alpha) noexcept
+    {
+        calc_lch();
+        l       = lch.L;
+        c       = lch.C;
+        h       = lch.H;
+        alpha   = clamp(A);
+        return *this;
+    }
+
+    Color &Color::hcl_l(float l) noexcept
     {
         calc_lch().L    = l;
         mask            = M_LCH;
         return *this;
     }
 
-    Color &Color::hcl_c(float c)
+    Color &Color::hcl_c(float c) noexcept
     {
         calc_lch().C    = c;
         mask            = M_LCH;
         return *this;
     }
 
-    Color &Color::hcl_h(float h)
+    Color &Color::hcl_h(float h) noexcept
     {
         calc_lch().H    = h;
         mask            = M_LCH;
         return *this;
     }
 
-    Color &Color::set_hcl(float h, float c, float l)
+    Color &Color::set_hcl(float h, float c, float l) noexcept
     {
         lch.L   = l;
         lch.C   = c;
@@ -1824,7 +1884,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::set_hcla(float h, float c, float l, float alpha)
+    Color &Color::set_hcla(float h, float c, float l, float alpha) noexcept
     {
         lch.L   = l;
         lch.C   = c;
@@ -1834,7 +1894,7 @@ namespace lsp
         return *this;
     }
 
-    const Color &Color::get_cmyk(float &c, float &m, float &y, float &k) const
+    const Color &Color::get_cmyk(float &c, float &m, float &y, float &k) const noexcept
     {
         calc_cmyk();
         c       = cmyk.C;
@@ -1844,7 +1904,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::get_cmyk(float &c, float &m, float &y, float &k)
+    Color &Color::get_cmyk(float &c, float &m, float &y, float &k) noexcept
     {
         calc_cmyk();
         c       = cmyk.C;
@@ -1854,18 +1914,7 @@ namespace lsp
         return *this;
     }
 
-    const Color &Color::get_cmyka(float &c, float &m, float &y, float &k, float &alpha) const
-    {
-        calc_cmyk();
-        c       = cmyk.C;
-        m       = cmyk.M;
-        y       = cmyk.Y;
-        k       = cmyk.K;
-        alpha   = clamp(A);
-        return *this;
-    }
-
-    Color &Color::get_cmyka(float &c, float &m, float &y, float &k, float &alpha)
+    const Color &Color::get_cmyka(float &c, float &m, float &y, float &k, float &alpha) const noexcept
     {
         calc_cmyk();
         c       = cmyk.C;
@@ -1876,35 +1925,46 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::cyan(float c)
+    Color &Color::get_cmyka(float &c, float &m, float &y, float &k, float &alpha) noexcept
+    {
+        calc_cmyk();
+        c       = cmyk.C;
+        m       = cmyk.M;
+        y       = cmyk.Y;
+        k       = cmyk.K;
+        alpha   = clamp(A);
+        return *this;
+    }
+
+    Color &Color::cyan(float c) noexcept
     {
         calc_cmyk().C   = clamp(c);
         mask            = M_CMYK;
         return *this;
     }
 
-    Color &Color::magenta(float m)
+    Color &Color::magenta(float m) noexcept
     {
         calc_cmyk().M   = clamp(m);
         mask            = M_CMYK;
         return *this;
     }
 
-    Color &Color::yellow(float y)
+    Color &Color::yellow(float y) noexcept
     {
         calc_cmyk().Y   = clamp(y);
         mask            = M_CMYK;
         return *this;
     }
 
-    Color &Color::black(float k)
+    Color &Color::black(float k) noexcept
     {
         calc_cmyk().K   = clamp(k);
         mask            = M_CMYK;
         return *this;
     }
 
-    Color &Color::set_cmyk(float c, float m, float y, float k)
+    Color &Color::set_cmyk(float c, float m, float y, float k) noexcept
     {
         cmyk.C          = clamp(c);
         cmyk.M          = clamp(m);
@@ -1914,7 +1974,7 @@ namespace lsp
         return *this;
     }
 
-    Color &Color::set_cmyka(float c, float m, float y, float k, float alpha)
+    Color &Color::set_cmyka(float c, float m, float y, float k, float alpha) noexcept
     {
         cmyk.C          = clamp(c);
         cmyk.M          = clamp(m);
