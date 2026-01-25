@@ -360,10 +360,10 @@ namespace lsp
 
         static const uint8_t b2tob4_table[] =
         {
-            0x00, 0x03, 0x0c, 0x0f,
-            0x30, 0x33, 0x3c, 0x3f,
-            0xc0, 0xc3, 0xcc, 0xcf,
-            0xf0, 0xf3, 0xfc, 0xff
+            0x00, 0x05, 0x0a, 0x0f,
+            0x50, 0x55, 0x5a, 0x5f,
+            0xa0, 0xa5, 0xaa, 0xaf,
+            0xf0, 0xf5, 0xfa, 0xff,
         };
 
         static void convert_b2_to_b4(uint8_t *dst, const uint8_t *src, size_t count)
@@ -442,98 +442,78 @@ namespace lsp
             }
         }
 
-        static void convert_g2_to_r8b8g8a8(uint8_t *dst, const uint8_t *src, size_t count)
+        static const uint32_t g2tor8b8g8a8_table[] =
         {
-            uint8_t v, c;
-            for (; count >= 4; count -= 4)
-            {
-                v           = *(src++);
-                for (size_t j=0; j<4; ++j, v >>= 2)
-                {
-                    c           = b2tob8_table[v & 0x03];
-                    dst[0]      = c;
-                    dst[1]      = c;
-                    dst[2]      = c;
-                    dst[3]      = 0;
-                    dst        += 4;
-                }
-            }
+            __IF_LE(0x00000000, 0x00555555, 0x00aaaaaa, 0x00ffffff,)
+            __IF_BE(0x00000000, 0x55555500, 0xaaaaaa00, 0xffffff00,)
+        };
 
-            if (count <= 0)
-                return;
-
-            v           = *(src++);
-            for ( ; count > 0 ; --count, v >>= 2)
-            {
-                c           = b2tob8_table[v & 0x03];
-                dst[0]      = c;
-                dst[1]      = c;
-                dst[2]      = c;
-                dst[3]      = 0;
-                dst        += 4;
-            }
-        }
-
-        static void convert_a2_to_r8b8g8a8(uint8_t *dst, const uint8_t *src, size_t count)
+        static void convert_g2_to_r8b8g8a8(uint8_t *dptr, const uint8_t *src, size_t count)
         {
             uint8_t v;
+            uint32_t *dst   = reinterpret_cast<uint32_t *>(dptr);
             for (; count >= 4; count -= 4)
             {
                 v           = *(src++);
                 for (size_t j=0; j<4; ++j, v >>= 2)
-                {
-                    dst[0]      = 0xff;
-                    dst[1]      = 0xff;
-                    dst[2]      = 0xff;
-                    dst[3]      = b2tob8_table[v & 0x03];
-                    dst        += 4;
-                }
+                    *(dst++)    = g2tor8b8g8a8_table[v & 0x03];
             }
 
             if (count <= 0)
                 return;
 
-            v           = *(src++);
+            v           = *src;
             for ( ; count > 0 ; --count, v >>= 2)
-            {
-                dst[0]      = 0xff;
-                dst[1]      = 0xff;
-                dst[2]      = 0xff;
-                dst[3]      = b2tob8_table[v & 0x03];
-                dst        += 4;
-            }
+                *(dst++)    = g2tor8b8g8a8_table[v & 0x03];
         }
 
-        static void convert_b2_to_pr8b8g8a8(uint8_t *dst, const uint8_t *src, size_t count)
+        static const uint32_t a2tor8b8g8a8_table[] =
         {
-            uint8_t v, c;
+            __IF_LE(0x00ffffff, 0x55ffffff, 0xaaffffff, 0xffffffff,)
+            __IF_BE(0xffffff00, 0xffffff55, 0xffffffaa, 0xffffffff,)
+        };
+
+        static void convert_a2_to_r8b8g8a8(uint8_t *dptr, const uint8_t *src, size_t count)
+        {
+            uint8_t v;
+            uint32_t *dst   = reinterpret_cast<uint32_t *>(dptr);
             for (; count >= 4; count -= 4)
             {
                 v           = *(src++);
                 for (size_t j=0; j<4; ++j, v >>= 2)
-                {
-                    c           = b2tob8_table[v & 0x03];
-                    dst[0]      = c;
-                    dst[1]      = c;
-                    dst[2]      = c;
-                    dst[3]      = c;
-                    dst        += 4;
-                }
+                    *(dst++)    = a2tor8b8g8a8_table[v & 0x03];
             }
 
             if (count <= 0)
                 return;
 
-            v           = *(src++);
+            v           = *src;
             for ( ; count > 0 ; --count, v >>= 2)
+                *(dst++)    = a2tor8b8g8a8_table[v & 0x03];
+        }
+
+        static const uint32_t b2topr8b8g8a8_table[] =
+        {
+            0x00000000, 0x55555555, 0xaaaaaaaa, 0xffffffff,
+        };
+
+        static void convert_b2_to_pr8b8g8a8(uint8_t *dptr, const uint8_t *src, size_t count)
+        {
+            uint8_t v;
+            uint32_t *dst   = reinterpret_cast<uint32_t *>(dptr);
+            for (; count >= 4; count -= 4)
             {
-                c           = b2tob8_table[v & 0x03];
-                dst[0]      = c;
-                dst[1]      = c;
-                dst[2]      = c;
-                dst[3]      = c;
-                dst        += 4;
+                v           = *(src++);
+                for (size_t j=0; j<4; ++j, v >>= 2)
+                    *(dst++)    = b2topr8b8g8a8_table[v & 0x03];
             }
+
+            if (count <= 0)
+                return;
+
+            v           = *src;
+            for ( ; count > 0 ; --count, v >>= 2)
+                *(dst++)    = b2topr8b8g8a8_table[v & 0x03];
         }
 
         static pixel_conversion_t pixel_convert_function_for_g2(pixel_format_t dst_fmt) noexcept
