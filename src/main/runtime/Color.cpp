@@ -30,12 +30,24 @@
 
 namespace lsp
 {
-    static const float HSL_RGB_1_3          = 1.0f / 3.0f;
-    static const float HSL_RGB_1_6          = 1.0f / 6.0f;
-    static const float HSL_RGB_2_3          = 2.0f / 3.0f;
+    static constexpr float HSL_RGB_1_3      = 1.0f / 3.0f;
+    static constexpr float HSL_RGB_1_6      = 1.0f / 6.0f;
+    static constexpr float HSL_RGB_2_3      = 2.0f / 3.0f;
     static constexpr float FLOAT_COL_COEFF  = 255.0f;
     static constexpr float FLOAT_COL_BIAS   = 0.25f;
     static constexpr float FLOAT_RCOL_COEFF = 1.0f / FLOAT_COL_COEFF;
+    static constexpr float DEG_TO_RAD       = M_PI / 180.0f;
+    static constexpr float RAD_TO_DEG       = 180.0f / M_PI;
+    static constexpr float ONE_DIV_360      = 1.0f / 360.0f;
+    static constexpr float ONE_DIV_116      = 1.0f / 116.0f;
+    static constexpr float ONE_DIV_3        = 1.0f / 3.0f;
+    static constexpr float ONE_DIV_2p4      = 1.0f / 2.4f;
+    static constexpr float ONE_DIV_1p055    = 1.0f / 1.055f;
+    static constexpr float ONE_DIV_12p92    = 1.0f / 12.92f;
+    static constexpr float DIV_16_BY_116    = 16.0f / 116.0f;
+    static constexpr float DIV_ONE_BY_7p787 = 1.0f / 7.787f;
+    static constexpr float ONE_DIV_95p047   = 1.0f / 95.047f;
+    static constexpr float ONE_DIV_108p883  = 1.0f / 108.883f;
 
     static const char *skip_whitespace(const char *src, const char *end) noexcept
     {
@@ -601,9 +613,9 @@ namespace lsp
         float g     = 0.01f * (xyz.X * -0.9689f + xyz.Y *  1.8758f + xyz.Z *  0.0415f);
         float b     = 0.01f * (xyz.X *  0.0557f + xyz.Y * -0.2040f + xyz.Z *  1.0570f);
 
-        r           = (r > 0.0031308f) ? 1.055f * (powf(r, 1.0f / 2.4f)) - 0.055f : 12.92f * r;
-        g           = (g > 0.0031308f) ? 1.055f * (powf(g, 1.0f / 2.4f)) - 0.055f : 12.92f * g;
-        b           = (b > 0.0031308f) ? 1.055f * (powf(b, 1.0f / 2.4f)) - 0.055f : 12.92f * b;
+        r           = (r > 0.0031308f) ? 1.055f * (powf(r, ONE_DIV_2p4)) - 0.055f : ONE_DIV_12p92 * r;
+        g           = (g > 0.0031308f) ? 1.055f * (powf(g, ONE_DIV_2p4)) - 0.055f : ONE_DIV_12p92 * g;
+        b           = (b > 0.0031308f) ? 1.055f * (powf(b, ONE_DIV_2p4)) - 0.055f : ONE_DIV_12p92 * b;
 
         rgb.R       = clamp(r);
         rgb.G       = clamp(g);
@@ -619,17 +631,17 @@ namespace lsp
         if (!(mask & M_LAB))
             return false;
 
-        float y     = (lab.L / 116.0f ) + 16.0f / 116.0f;
-        float x     = (lab.A / 500.0f ) + y;
-        float z     = (lab.B / -200.0f) + y;
+        float y     = (lab.L * ONE_DIV_116) + DIV_16_BY_116;
+        float x     = (lab.A * 0.002f) + y;
+        float z     = (lab.B * -0.005f) + y;
 
         float y3    = y*y*y;
         float x3    = x*x*x;
         float z3    = z*z*z;
 
-        y           = (y3 > 0.008856f) ? y3 : (y - 16.0f / 116.0f) / 7.787f;
-        x           = (x3 > 0.008856f) ? x3 : (x - 16.0f / 116.0f) / 7.787f;
-        z           = (z3 > 0.008856f) ? z3 : (z - 16.0f / 116.0f) / 7.787f;
+        y           = (y3 > 0.008856f) ? y3 : (y - DIV_16_BY_116) * DIV_ONE_BY_7p787;
+        x           = (x3 > 0.008856f) ? x3 : (x - DIV_16_BY_116) * DIV_ONE_BY_7p787;
+        z           = (z3 > 0.008856f) ? z3 : (z - DIV_16_BY_116) * DIV_ONE_BY_7p787;
 
         xyz.X       = x * 95.047f;
         xyz.Y       = y * 100.0f;
@@ -646,8 +658,8 @@ namespace lsp
             return false;
 
         lab.L       = lch.L;
-        lab.A       = cosf(lch.H * (M_PI / 180.0f)) * lch.C;
-        lab.B       = sinf(lch.H * (M_PI / 180.0f)) * lch.C;
+        lab.A       = cosf(lch.H * DEG_TO_RAD) * lch.C;
+        lab.B       = sinf(lch.H * DEG_TO_RAD) * lch.C;
 
         mask       |= M_LAB;
 
@@ -740,13 +752,12 @@ namespace lsp
 
         // Calculate saturation
         if (hsl.L <= 0.5f)
-            hsl.S = (hsl.L <= 0.0f) ? 0.0f : d / hsl.L;
+            hsl.S = (hsl.L <= 0.0f) ? 0.0f : 0.5f * d / hsl.L;
         else if (hsl.L > 0.5f)
-            hsl.S = (hsl.L < 1.0f) ? d / (1.0f - hsl.L) : 0.0f;
+            hsl.S = (hsl.L < 1.0f) ? 0.5f * d / (1.0f - hsl.L) : 0.0f;
 
         // Normalize hue
-        hsl.H      /= 6.0f;
-        hsl.S      *= 0.5f;
+        hsl.H      *= HSL_RGB_1_6;
 
         mask       |= M_HSL;
 
@@ -761,9 +772,9 @@ namespace lsp
         // At this moment we can convert color to XYZ only from RGB
         calc_rgb();
 
-        float r     = (rgb.R > 0.04045f) ? powf((rgb.R + 0.055f) / 1.055f, 2.4f) : rgb.R / 12.92f;
-        float g     = (rgb.G > 0.04045f) ? powf((rgb.G + 0.055f) / 1.055f, 2.4f) : rgb.G / 12.92f;
-        float b     = (rgb.B > 0.04045f) ? powf((rgb.B + 0.055f) / 1.055f, 2.4f) : rgb.B / 12.92f;
+        float r     = (rgb.R > 0.04045f) ? powf((rgb.R + 0.055f) * ONE_DIV_1p055, 2.4f) : rgb.R * ONE_DIV_12p92;
+        float g     = (rgb.G > 0.04045f) ? powf((rgb.G + 0.055f) * ONE_DIV_1p055, 2.4f) : rgb.G * ONE_DIV_12p92;
+        float b     = (rgb.B > 0.04045f) ? powf((rgb.B + 0.055f) * ONE_DIV_1p055, 2.4f) : rgb.B * ONE_DIV_12p92;
 
         xyz.X       = 100.0f * (r * 0.4124f + g * 0.3576f + b * 0.1805f);
         xyz.Y       = 100.0f * (r * 0.2126f + g * 0.7152f + b * 0.0722f);
@@ -782,13 +793,13 @@ namespace lsp
         // At this moment we can convert color to LAB only from XYZ
         calc_xyz();
 
-        float x     = xyz.X / 95.047f;
-        float y     = xyz.Y / 100.0f;
-        float z     = xyz.Z / 108.883f;
+        float x     = xyz.X * ONE_DIV_95p047;
+        float y     = xyz.Y * 0.01f;;
+        float z     = xyz.Z * ONE_DIV_108p883;
 
-        x           = (x > 0.008856f) ? powf(x, 1.0f / 3.0f) : (7.787f * x) + (16.0f / 116.0f);
-        y           = (y > 0.008856f) ? powf(y, 1.0f / 3.0f) : (7.787f * y) + (16.0f / 116.0f);
-        z           = (z > 0.008856f) ? powf(z, 1.0f / 3.0f) : (7.787f * z) + (16.0f / 116.0f);
+        x           = (x > 0.008856f) ? powf(x, ONE_DIV_3) : (7.787f * x) + DIV_16_BY_116;
+        y           = (y > 0.008856f) ? powf(y, ONE_DIV_3) : (7.787f * y) + DIV_16_BY_116;
+        z           = (z > 0.008856f) ? powf(z, ONE_DIV_3) : (7.787f * z) + DIV_16_BY_116;
 
         lab.L       = (116.0f * y) - 16.0f;
         lab.A       = 500.0f * (x - y);
@@ -807,7 +818,7 @@ namespace lsp
         // At this moment we can convert color to LCH only from LAB
         calc_lab();
 
-        float h     = atan2f(lab.B, lab.A) * (180.0f / M_PI);
+        float h     = atan2f(lab.B, lab.A) * RAD_TO_DEG;
         if (h < 0)
             h          += 360.0f;
 
@@ -1382,9 +1393,9 @@ namespace lsp
         else if ((res = parse_cnumeric(v, 4, 4, "rgba", src, len)) == STATUS_OK)
             set_rgba(v[0], v[1], v[2], v[3]);
         else if ((res = parse_cnumeric(v, 3, 3, "hsl", src, len)) == STATUS_OK)
-            set_hsla(v[0] / 360.0f, v[1] * 0.01f, v[2] * 0.005f, 0.0f);
+            set_hsla(v[0] * ONE_DIV_360, v[1] * 0.01f, v[2] * 0.005f, 0.0f);
         else if ((res = parse_cnumeric(v, 4, 4, "hsla", src, len)) == STATUS_OK)
-            set_hsla(v[0] / 360.0f, v[1] * 0.01f, v[2] * 0.005f, v[3]);
+            set_hsla(v[0] * ONE_DIV_360, v[1] * 0.01f, v[2] * 0.005f, v[3]);
         else if ((res = parse_cnumeric(v, 3, 3, "xyz", src, len)) == STATUS_OK)
             set_xyza(v[0], v[1], v[2], 0.0f);
         else if ((res = parse_cnumeric(v, 4, 4, "xyza", src, len)) == STATUS_OK)
