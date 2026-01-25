@@ -29,6 +29,9 @@ namespace lsp
 {
     namespace xpm
     {
+        static constexpr uint32_t COLOR32_TO_COLOR64    = 0xfffff / 255;
+        static constexpr uint32_t COLOR64_TO_COLOR32    = 0xffffff / 65535;
+
         ColorItem::ColorItem() noexcept
         {
             nColor64        = 0;
@@ -175,11 +178,10 @@ namespace lsp
 
                 case STATE_COLOR64:
                 {
-                    const uint64_t c = nColor64;
-                    return
-                        (uint32_t(c >> 24) & 0x00ff0000) |
-                        (uint32_t(c >> 16) & 0x0000ff00) |
-                        (uint32_t(c >> 8)  & 0x000000ff);
+                    const uint32_t r = ((uint32_t(nColor64 >> 32)) * COLOR64_TO_COLOR32) >> 8;
+                    const uint32_t g = ((uint32_t(nColor64) >> 16) * COLOR64_TO_COLOR32) >> 8;
+                    const uint32_t b = ((uint32_t(nColor64) & 0xffff) * COLOR64_TO_COLOR32) >> 8;
+                    return (r << 16) | (g << 8) | b;
                 }
 
                 default:
@@ -197,11 +199,10 @@ namespace lsp
 
                 case STATE_COLOR32:
                 {
-                    const uint64_t c = nColor32;
-                    return
-                        ((c & 0x00ff0000) << 24) |
-                        ((c & 0x0000ff00) << 16) |
-                        ((c & 0x000000ff) << 8);
+                    const uint32_t r = (((nColor32 >> 16) & 0x0000ff) * COLOR32_TO_COLOR64) >> 4;
+                    const uint32_t g = (((nColor32 >> 8) & 0x0000ff) * COLOR32_TO_COLOR64) >> 4;
+                    const uint32_t b = ((nColor32 & 0x0000ff) * COLOR32_TO_COLOR64) >> 4;
+                    return (uint64_t(r) << 32) | ((g << 16) | b);
                 }
 
                 default:

@@ -568,8 +568,256 @@ namespace lsp
             return NULL;
         }
 
+        static void convert_b4_to_b1(uint8_t *dst, const uint8_t *src, size_t count)
+        {
+            uint8_t v, c;
+            for ( ; count >= 8; count -= 8)
+            {
+                v           = 0;
+                for (size_t i=0; i<4; ++i)
+                {
+                    c           = *(src++);
+                    v          |= (((c & 0x08) >> 3) | ((c & 0x80) >> 6)) << (i * 2);
+                }
+                *(dst++)    = v;
+            }
+            if (count <= 0)
+                return;
 
+            v           = 0;
+            for (size_t i=0; i<count; i += 2)
+            {
+                c           = *(src++);
+                v          |= (((c & 0x08) >> 3) | ((c & 0x80) >> 6)) << (i * 2);
+            }
+            *(dst++)    = v;
+        }
 
+        static void convert_b4_to_b2(uint8_t *dst, const uint8_t *src, size_t count)
+        {
+            uint8_t v, c;
+            for ( ; count >= 4; count -= 4)
+            {
+                v           = 0;
+                for (size_t i=0; i<2; i += 2)
+                {
+                    c           = *(src++);
+                    v          |= (((c & 0x0c) >> 2) | ((c & 0xc0) >> 4)) << (i*2);
+                }
+                *(dst++)    = v;
+            }
+            if (count <= 0)
+                return;
+
+            v           = 0;
+            for (size_t i=0; i<count; i += 2)
+            {
+                c           = *(src++);
+                v          |= (((c & 0x0c) >> 2) | ((c & 0xc0) >> 4)) << (i*2);
+            }
+            *(dst++)    = v;
+        }
+
+        static const uint8_t b4tob8_table[] =
+        {
+            0x00, 0x11, 0x22, 0x33,
+            0x44, 0x55, 0x66, 0x77,
+            0x88, 0x99, 0xaa, 0xbb,
+            0xcc, 0xdd, 0xee, 0xff
+        };
+
+        static void convert_b4_to_b8(uint8_t *dst, const uint8_t *src, size_t count)
+        {
+            uint8_t v;
+            for ( ; count >= 2; count -= 2)
+            {
+                v           = *(src++);
+                dst[0]      = b4tob8_table[v & 0x0f];
+                dst[1]      = b4tob8_table[v >> 4];
+                dst        += 2;
+            }
+            if (count <= 0)
+                return;
+
+            v           = *src;
+            *dst        = b4tob8_table[v & 0x0f];
+        }
+
+        static void convert_b4_to_r8b8g8(uint8_t *dst, const uint8_t *src, size_t count)
+        {
+            uint8_t v, c1, c2;
+            for (; count >= 2; count -= 2)
+            {
+                v           = *(src++);
+                c1          = b4tob8_table[v & 0x0f];
+                c2          = b4tob8_table[v >> 4];
+                dst[0]      = c1;
+                dst[1]      = c1;
+                dst[2]      = c1;
+                dst[3]      = c2;
+                dst[4]      = c2;
+                dst[5]      = c2;
+                dst        += 6;
+            }
+
+            if (count <= 0)
+                return;
+
+            v           = *src++;
+            c1          = b4tob8_table[v & 0x0f];
+            dst[0]      = c1;
+            dst[1]      = c1;
+            dst[2]      = c1;
+        }
+
+        static const uint32_t g4tor8b8g8a8_table[] =
+        {
+            __IF_LE(
+                0x00000000, 0x00111111, 0x00222222, 0x00333333,
+                0x00444444, 0x00555555, 0x00666666, 0x00777777,
+                0x00888888, 0x00999999, 0x00aaaaaa, 0x00bbbbbb,
+                0x00cccccc, 0x00dddddd, 0x00eeeeee, 0x00ffffff,
+            )
+            __IF_BE(
+                0x00000000, 0x11111100, 0x22222200, 0x33333300,
+                0x44444400, 0x55555500, 0x66666600, 0x77777700,
+                0x88888800, 0x99999900, 0xaaaaaa00, 0xbbbbbb00,
+                0xcccccc00, 0xdddddd00, 0xeeeeee00, 0xffffff00,
+            )
+        };
+
+        static void convert_g4_to_r8b8g8a8(uint8_t *dptr, const uint8_t *src, size_t count)
+        {
+            uint8_t v;
+            uint32_t *dst   = reinterpret_cast<uint32_t *>(dptr);
+            for (; count >= 2; count -= 2)
+            {
+                v           = *(src++);
+                dst[0]      = g4tor8b8g8a8_table[v & 0x0f];
+                dst[1]      = g4tor8b8g8a8_table[v >> 4];
+                dst        += 2;
+            }
+
+            if (count <= 0)
+                return;
+
+            v           = *src++;
+            dst[0]      = g4tor8b8g8a8_table[v & 0x0f];
+        }
+
+        static const uint32_t a4tor8b8g8a8_table[] =
+        {
+            __IF_LE(
+                0x00ffffff, 0x11ffffff, 0x22ffffff, 0x33ffffff,
+                0x44ffffff, 0x55ffffff, 0x66ffffff, 0x77ffffff,
+                0x88ffffff, 0x99ffffff, 0xaaffffff, 0xbbffffff,
+                0xccffffff, 0xddffffff, 0xeeffffff, 0xffffffff,
+            )
+            __IF_BE(
+                0xffffff00, 0xffffff11, 0xffffff22, 0xffffff33,
+                0xffffff44, 0xffffff55, 0xffffff66, 0xffffff77,
+                0xffffff88, 0xffffff99, 0xffffffaa, 0xffffffbb,
+                0xffffffcc, 0xffffffdd, 0xffffffee, 0xffffffff,
+            )
+        };
+
+        static void convert_a4_to_r8b8g8a8(uint8_t *dptr, const uint8_t *src, size_t count)
+        {
+            uint8_t v;
+            uint32_t *dst   = reinterpret_cast<uint32_t *>(dptr);
+            for (; count >= 2; count -= 2)
+            {
+                v           = *(src++);
+                dst[0]      = a4tor8b8g8a8_table[v & 0x0f];
+                dst[1]      = a4tor8b8g8a8_table[v >> 4];
+                dst        += 2;
+            }
+
+            if (count <= 0)
+                return;
+
+            v           = *src++;
+            dst[0]      = a4tor8b8g8a8_table[v & 0x0f];
+        }
+
+        static const uint32_t b4topr8b8g8a8_table[] =
+        {
+            0x00000000, 0x11111111, 0x22222222, 0x33333333,
+            0x44444444, 0x55555555, 0x66666666, 0x77777777,
+            0x88888888, 0x99999999, 0xaaaaaaaa, 0xbbbbbbbb,
+            0xcccccccc, 0xdddddddd, 0xeeeeeeee, 0xffffffff,
+        };
+
+        static void convert_b4_to_pr8b8g8a8(uint8_t *dptr, const uint8_t *src, size_t count)
+        {
+            uint8_t v;
+            uint32_t *dst   = reinterpret_cast<uint32_t *>(dptr);
+            for (; count >= 2; count -= 2)
+            {
+                v           = *(src++);
+                dst[0]      = b4topr8b8g8a8_table[v & 0x0f];
+                dst[1]      = b4topr8b8g8a8_table[v >> 4];
+                dst        += 2;
+            }
+
+            if (count <= 0)
+                return;
+
+            v           = *src++;
+            dst[0]      = b4topr8b8g8a8_table[v & 0x0f];
+        }
+
+        static pixel_conversion_t pixel_convert_function_for_g4(pixel_format_t dst_fmt) noexcept
+        {
+            switch (dst_fmt)
+            {
+                case PIXFMT_G1:
+                case PIXFMT_A1:
+                    return convert_b4_to_b1;
+                case PIXFMT_G2:
+                case PIXFMT_A2:
+                    return convert_b4_to_b2;
+                case PIXFMT_G8:
+                case PIXFMT_A8:
+                    return convert_b4_to_b8;
+                case PIXFMT_R8G8B8:
+                    return convert_b4_to_r8b8g8;
+                case PIXFMT_R8G8B8A8:
+                    return convert_g4_to_r8b8g8a8;
+                case PIXFMT_PR8G8B8A8:
+                    return convert_b4_to_pr8b8g8a8;
+
+                default:
+                    break;
+            }
+            return NULL;
+        }
+
+        static pixel_conversion_t pixel_convert_function_for_a4(pixel_format_t dst_fmt) noexcept
+        {
+            switch (dst_fmt)
+            {
+                case PIXFMT_G1:
+                case PIXFMT_A1:
+                    return convert_b4_to_b1;
+                case PIXFMT_G2:
+                case PIXFMT_A2:
+                    return convert_b4_to_b2;
+                case PIXFMT_G8:
+                case PIXFMT_A8:
+                    return convert_b4_to_b8;
+                case PIXFMT_R8G8B8:
+                    return convert_b4_to_r8b8g8;
+                case PIXFMT_R8G8B8A8:
+                    return convert_a4_to_r8b8g8a8;
+                case PIXFMT_PR8G8B8A8:
+                    return convert_b4_to_pr8b8g8a8;
+
+                default:
+                    break;
+            }
+            return NULL;
+        }
 
         pixel_conversion_t pixel_convert_function(pixel_format_t dst_fmt, pixel_format_t src_fmt) noexcept
         {
@@ -583,6 +831,10 @@ namespace lsp
                     return pixel_convert_function_for_g2(dst_fmt);
                 case PIXFMT_A2:
                     return pixel_convert_function_for_a2(dst_fmt);
+                case PIXFMT_G4:
+                    return pixel_convert_function_for_g4(dst_fmt);
+                case PIXFMT_A4:
+                    return pixel_convert_function_for_a4(dst_fmt);
                 default:
                     break;
             }
