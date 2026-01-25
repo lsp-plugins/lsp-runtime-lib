@@ -59,7 +59,7 @@ namespace lsp
         class LSP_HIDDEN_MODIFIER Tokenizer
         {
             private:
-                static constexpr size_t BUF_SIZE    = 0x40; // 400;
+                static constexpr size_t BUF_SIZE    = 0x400;
 
             private:
                 typedef struct token_t

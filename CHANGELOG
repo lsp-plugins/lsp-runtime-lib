@@ -7,7 +7,8 @@
 * Added condition variables support.
 * Added support of XPM1/XPM2/XPM3 icon format.
 * Improved interface of lsp::Color class.
-* Added lsp::IColorMap interface.
+* Added lsp::mm::IColorMap interface.
+* Added lsp::mm::Bitmap class.
 
 === 1.0.31 ===
 * Task execution mechanism moved task state field from volatile to atomic.

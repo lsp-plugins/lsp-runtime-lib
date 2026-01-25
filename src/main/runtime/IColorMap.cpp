@@ -19,43 +19,45 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <lsp-plug.in/runtime/IColorMap.h>
+#include <lsp-plug.in/mm/IColorMap.h>
 
 namespace lsp
 {
-    IColorMap::IColorMap()
+    namespace mm
     {
-    }
+        IColorMap::IColorMap()
+        {
+        }
 
-    IColorMap::~IColorMap()
-    {
-        vNested.flush();
-    }
+        IColorMap::~IColorMap()
+        {
+            vNested.flush();
+        }
 
-    bool IColorMap::resolve(Color & c, const char *name) const noexcept
-    {
-        if (name == NULL)
+        bool IColorMap::resolve(Color & c, const char *name) const noexcept
+        {
+            if (name == NULL)
+                return false;
+
+            for (lltl::iterator<const IColorMap> it = vNested.values(); it; ++it)
+            {
+                const IColorMap *map = it.get();
+                if ((map != NULL) && (map->resolve(c, name)))
+                    return true;
+            }
             return false;
-
-        for (lltl::iterator<const IColorMap> it = vNested.values(); it; ++it)
-        {
-            const IColorMap *map = it.get();
-            if ((map != NULL) && (map->resolve(c, name)))
-                return true;
         }
-        return false;
-    }
 
-    bool IColorMap::resolve(Color & c, const LSPString & name) const noexcept
-    {
-        for (lltl::iterator<const IColorMap> it = vNested.values(); it; ++it)
+        bool IColorMap::resolve(Color & c, const LSPString & name) const noexcept
         {
-            const IColorMap *map = it.get();
-            if ((map != NULL) && (map->resolve(c, name)))
-                return true;
+            for (lltl::iterator<const IColorMap> it = vNested.values(); it; ++it)
+            {
+                const IColorMap *map = it.get();
+                if ((map != NULL) && (map->resolve(c, name)))
+                    return true;
+            }
+            return false;
         }
-        return false;
-    }
 
-
+    } /* namespace mm */
 } /* namespace lsp */
