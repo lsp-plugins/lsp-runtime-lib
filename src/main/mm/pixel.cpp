@@ -66,6 +66,27 @@ namespace lsp
             return 0;
         }
 
+        const char *pixel_format_name(pixel_format_t format) noexcept
+        {
+            switch (format)
+            {
+                case PIXFMT_DEFAULT:    return "default";
+                case PIXFMT_G1:         return "G1";
+                case PIXFMT_G2:         return "G2";
+                case PIXFMT_G4:         return "G4";
+                case PIXFMT_G8:         return "G8";
+                case PIXFMT_A1:         return "A1";
+                case PIXFMT_A2:         return "A2";
+                case PIXFMT_A4:         return "A4";
+                case PIXFMT_A8:         return "A8";
+                case PIXFMT_R8G8B8:     return "R8G8B8";
+                case PIXFMT_R8G8B8A8:   return "R8G8B8A8";
+                case PIXFMT_PR8G8B8A8:  return "PR8G8B8A8";
+                default: break;
+            }
+            return "unknown";
+        }
+
         bool is_exact_copy_of_pixel(pixel_format_t dst, pixel_format_t src) noexcept
         {
             if (dst == src)
@@ -97,8 +118,7 @@ namespace lsp
         static void convert_b1_to_b2(uint8_t *dst, const uint8_t *src, size_t count)
         {
             uint8_t v;
-            count   = (count + 3) >> 2; // Number of 4-bit blocks
-            for ( ; count >= 2; count -= 2)
+            for ( ; count >= 8; count -= 8)
             {
                 v           = *(src++);
                 dst[0]      = b1tob2_table[v & 0x0f];
@@ -109,7 +129,14 @@ namespace lsp
                 return;
 
             v           = *src;
-            *dst        = b1tob2_table[v & 0x0f];
+            if (count >= 4)
+            {
+                *dst++      = b1tob2_table[v & 0x0f];
+                v         >>= 4;
+                count      -= 4;
+            }
+            if (count > 0)
+                *dst        = b1tob2_table[v & 0x0f] & uint8_t((1 << (count*2)) - 1);
         }
 
         static const uint8_t b1tob4_table[] =
@@ -120,7 +147,7 @@ namespace lsp
         static void convert_b1_to_b4(uint8_t *dst, const uint8_t *src, size_t count)
         {
             uint8_t v;
-            for ( ; count >= 4; count -= 4)
+            for ( ; count >= 8; count -= 8)
             {
                 v           = *(src++);
                 dst[0]      = b1tob4_table[v & 0x03];
@@ -132,12 +159,24 @@ namespace lsp
             if (count <= 0)
                 return;
 
-            v           = *(src++);
-            for ( ; count > 0; --count)
+            v           = *src;
+            if (count >= 4)
+            {
+                dst[0]      = b1tob4_table[v & 0x03];
+                dst[1]      = b1tob4_table[(v >> 2) & 0x03];
+                v         >>= 4;
+                dst        += 2;
+                count      -= 4;
+            }
+            if (count >= 2)
             {
                 dst[0]      = b1tob4_table[v & 0x03];
                 v         >>= 2;
+                ++dst;
+                count      -= 2;
             }
+            if (count > 0)
+                dst[0]      = b1tob4_table[v & 0x03] & 0x0f;
         }
 
         static void convert_b1_to_b8(uint8_t *dst, const uint8_t *src, size_t count)

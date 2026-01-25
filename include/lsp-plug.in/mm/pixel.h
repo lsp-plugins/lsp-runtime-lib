@@ -69,6 +69,13 @@ namespace lsp
         size_t  device_bits_per_pixel(pixel_format_t format) noexcept;
 
         /**
+         * Get pixel format name
+         * @param format pixel format
+         * @return pixel format name
+         */
+        const char *pixel_format_name(pixel_format_t format) noexcept;
+
+        /**
          * Check that pixels of format dst have the same representation in memory
          * and do not need conversion from format src
          * @param dst destination pixel format
