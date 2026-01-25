@@ -730,8 +730,8 @@ namespace lsp
         // At this moment we can convert color to HSL only from RGB
         calc_rgb();
 
-        float cmax = (rgb.R < rgb.G) ? ((rgb.B < rgb.G) ? rgb.G : rgb.B) : ((rgb.B < rgb.R) ? rgb.R : rgb.B);
-        float cmin = (rgb.R < rgb.G) ? ((rgb.B < rgb.R) ? rgb.B : rgb.R) : ((rgb.B < rgb.G) ? rgb.B : rgb.G);
+        float cmax = lsp_max(rgb.R, rgb.G, rgb.B);
+        float cmin = lsp_min(rgb.R, rgb.G, rgb.B);
         float d = cmax - cmin;
 
         hsl.H   = 0.0f;
