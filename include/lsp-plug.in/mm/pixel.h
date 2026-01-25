@@ -41,9 +41,6 @@ namespace lsp
             PIXFMT_A2,              /* 2 bits per pixel, alpha  */
             PIXFMT_A4,              /* 4 bits per pixel, alpha  */
             PIXFMT_A8,              /* 8 bits per pixel, alpha  */
-            PIXFMT_R5G5B5,          /* 5 bits per each R, G, and B component */
-            PIXFMT_R5G5B5A1,        /* 5 bits per each R, G, and B component, 1 bit for alpha channel */
-            PIXFMT_R5G6B5,          /* 5 bits per each R and B components, 6 bits for G */
             PIXFMT_R8G8B8,          /* 8 bits per each R, G and B component */
             PIXFMT_R8G8B8A8,        /* 8 bits per each R, G and B component, 8 bits for alpha channel */
             PIXFMT_PR8G8B8A8,       /* 8 bits per each R, G and B component, 8 bits for alpha channel, pre-multiplied alpha */
