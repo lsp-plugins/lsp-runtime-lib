@@ -565,22 +565,22 @@ namespace lsp
             }
         }
 
-        static const uint32_t b2topr8b8g8a8_table[] =
+        static const uint32_t a2topr8b8g8a8_table[] =
         {
             0x00000000, 0x55555555, 0xaaaaaaaa, 0xffffffff,
         };
 
-        static void convert_b2_to_pr8b8g8a8(uint8_t *dptr, const uint8_t *src, size_t count)
+        static void convert_a2_to_pr8b8g8a8(uint8_t *dptr, const uint8_t *src, size_t count)
         {
             uint8_t v;
             uint32_t *dst   = reinterpret_cast<uint32_t *>(dptr);
             for (; count >= 4; count -= 4)
             {
                 v           = *(src++);
-                dst[0]      = b2topr8b8g8a8_table[v & 0x03];
-                dst[1]      = b2topr8b8g8a8_table[(v >> 2) & 0x03];
-                dst[2]      = b2topr8b8g8a8_table[(v >> 4) & 0x03];
-                dst[3]      = b2topr8b8g8a8_table[v >> 6];
+                dst[0]      = a2topr8b8g8a8_table[v & 0x03];
+                dst[1]      = a2topr8b8g8a8_table[(v >> 2) & 0x03];
+                dst[2]      = a2topr8b8g8a8_table[(v >> 4) & 0x03];
+                dst[3]      = a2topr8b8g8a8_table[v >> 6];
                 dst        += 4;
             }
 
@@ -590,7 +590,7 @@ namespace lsp
             v           = *src;
             for ( ; count > 0 ; --count)
             {
-                *(dst++)    = b2topr8b8g8a8_table[v & 0x03];
+                *(dst++)    = a2topr8b8g8a8_table[v & 0x03];
                 v         >>= 2;
             }
         }
@@ -611,9 +611,8 @@ namespace lsp
                 case PIXFMT_R8G8B8:
                     return convert_b2_to_r8b8g8;
                 case PIXFMT_R8G8B8A8:
-                    return convert_g2_to_r8b8g8a8;
                 case PIXFMT_PR8G8B8A8:
-                    return convert_b2_to_pr8b8g8a8;
+                    return convert_g2_to_r8b8g8a8;
 
                 default:
                     break;
@@ -639,7 +638,7 @@ namespace lsp
                 case PIXFMT_R8G8B8A8:
                     return convert_a2_to_r8b8g8a8;
                 case PIXFMT_PR8G8B8A8:
-                    return convert_b2_to_pr8b8g8a8;
+                    return convert_a2_to_pr8b8g8a8;
 
                 default:
                     break;
@@ -854,33 +853,6 @@ namespace lsp
             dst[0]      = a4tor8b8g8a8_table[v & 0x0f];
         }
 
-        static const uint32_t g4topr8b8g8a8_table[] =
-        {
-            0xff000000, 0xff111111, 0xff222222, 0xff333333,
-            0xff444444, 0xff555555, 0xff666666, 0xff777777,
-            0xff888888, 0xff999999, 0xffaaaaaa, 0xffbbbbbb,
-            0xffcccccc, 0xffdddddd, 0xffeeeeee, 0xffffffff,
-        };
-
-        static void convert_g4_to_pr8g8b8a8(uint8_t *dptr, const uint8_t *src, size_t count)
-        {
-            uint8_t v;
-            uint32_t *dst   = reinterpret_cast<uint32_t *>(dptr);
-            for (; count >= 2; count -= 2)
-            {
-                v           = *(src++);
-                dst[0]      = g4topr8b8g8a8_table[v & 0x0f];
-                dst[1]      = g4topr8b8g8a8_table[v >> 4];
-                dst        += 2;
-            }
-
-            if (count <= 0)
-                return;
-
-            v           = *src++;
-            dst[0]      = g4topr8b8g8a8_table[v & 0x0f];
-        }
-
         static const uint32_t a4topr8b8g8a8_table[] =
         {
             0x00000000, 0x11111111, 0x22222222, 0x33333333,
@@ -926,7 +898,7 @@ namespace lsp
                 case PIXFMT_R8G8B8A8:
                     return convert_g4_to_r8g8b8a8;
                 case PIXFMT_PR8G8B8A8:
-                    return convert_g4_to_pr8g8b8a8;
+                    return convert_g4_to_r8g8b8a8;
 
                 default:
                     break;
@@ -974,18 +946,38 @@ namespace lsp
                     ((src[5] & 0x80) >> 2) |
                     ((src[6] & 0x80) >> 1) |
                     (src[7] & 0x80);
-                src        += 4;
+                src        += 8;
             }
             if (count <= 0)
                 return;
 
             v           = 0;
-            for (size_t i=0; i<count; ++i)
+            c           = 0;
+            if (count >= 4)
             {
-                c           = *(src++);
-                v          |= (c >> 7) << i;
+                v          |=
+                    (src[0] >> 7) |
+                    ((src[1] & 0x80) >> 6) |
+                    ((src[2] & 0x80) >> 5) |
+                    ((src[3] & 0x80) >> 4);
+                src        += 4;
+                c          += 4;
+                count      -= 4;
             }
-            *(dst++)    = v;
+            if (count >= 2)
+            {
+                v          |=
+                    ((src[0] >> 7) |
+                    ((src[1] & 0x80) >> 6)) << c;
+                src        += 2;
+                c          += 2;
+                count      -= 2;
+            }
+            if (count >= 1)
+            {
+                v          |= (src[0] >> 7) << c;
+            }
+            *dst        = v;
         }
 
         static void convert_b8_to_b2(uint8_t *dst, const uint8_t *src, size_t count)
@@ -1004,12 +996,19 @@ namespace lsp
                 return;
 
             v           = 0;
-            for (size_t i=0; i<count;)
+            c           = 0;
+            if (count >= 2)
             {
-                c           = *(src++);
-                v          |= (c >> 6) << (i*2);
+                v          |=
+                    (src[0] >> 6) |
+                    ((src[1] & 0xc0) >> 4);
+                src        += 2;
+                count      -= 2;
+                c          += 4;
             }
-            *(dst++)    = v;
+            if (count >= 1)
+                v          |= (src[0] >> 6) << c;
+            *dst        = v;
         }
 
         static void convert_b8_to_b4(uint8_t *dst, const uint8_t *src, size_t count)
@@ -1051,7 +1050,7 @@ namespace lsp
                 dst[0]      = v;
                 dst[1]      = v;
                 dst[2]      = v;
-                dst[3]      = 0;
+                dst[3]      = 0xff;
                 dst        += 4;
             }
         }
@@ -1070,7 +1069,7 @@ namespace lsp
             }
         }
 
-        static void convert_b8_to_pr8g8b8a8(uint8_t *dst, const uint8_t *src, size_t count)
+        static void convert_a8_to_pr8g8b8a8(uint8_t *dst, const uint8_t *src, size_t count)
         {
             uint8_t v;
             for (; count > 0; --count)
@@ -1100,9 +1099,8 @@ namespace lsp
                 case PIXFMT_R8G8B8:
                     return convert_b8_to_r8g8b8;
                 case PIXFMT_R8G8B8A8:
-                    return convert_g8_to_r8g8b8a8;
                 case PIXFMT_PR8G8B8A8:
-                    return convert_b8_to_pr8g8b8a8;
+                    return convert_g8_to_r8g8b8a8;
 
                 default:
                     break;
@@ -1128,7 +1126,7 @@ namespace lsp
                 case PIXFMT_R8G8B8A8:
                     return convert_a8_to_r8g8b8a8;
                 case PIXFMT_PR8G8B8A8:
-                    return convert_b8_to_pr8g8b8a8;
+                    return convert_a8_to_pr8g8b8a8;
 
                 default:
                     break;
