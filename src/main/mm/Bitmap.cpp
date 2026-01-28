@@ -87,7 +87,7 @@ namespace lsp
         inline size_t Bitmap::calc_stride(pixel_format_t format, size_t cols) noexcept
         {
             const size_t bpp        = device_bits_per_pixel(format);
-            return (bpp <= 8) ? (bpp * cols + 7) >> 3 : (bpp * cols + 31) >> 5;
+            return (bpp <= 8) ? (bpp * cols + 7) >> 3 : ((bpp * cols + 31) & (~size_t(0x1f))) >> 3;
         }
 
         Bitmap & Bitmap::operator = (Bitmap && src) noexcept
@@ -152,6 +152,7 @@ namespace lsp
             bzero(data, to_alloc);
 
             // Commit data
+            pData       = data;
             nRows       = rows;
             nCols       = cols;
             nStride     = stride;

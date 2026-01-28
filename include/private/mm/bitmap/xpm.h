@@ -64,7 +64,7 @@ namespace lsp
                     continue;
                 if (item->is_none())
                 {
-                    dst.set_rgba(0.0f, 0.0f, 0.0f, 1.0f);
+                    dst.set_rgba(0.0f, 0.0f, 0.0f, 0.0f);
                     return;
                 }
                 else if ((item->is_name()) && (map != NULL))
@@ -77,7 +77,7 @@ namespace lsp
             }
 
             // Fully transparent color by default
-            dst.set_rgba(0.0f, 0.0f, 0.0f, 1.0f);
+            dst.set_rgba(0.0f, 0.0f, 0.0f, 0.0f);
         }
 
         status_t Bitmap::load_xpm(io::IInStream *is, pixel_format_t format, IColorMap *map)
@@ -294,17 +294,17 @@ namespace lsp
                                 *(dst++)    = uint8_t(c);
                                 break;
                             case mm::PIXFMT_R8G8B8:
-                                dst[0]      = uint8_t(c);
+                                dst[0]      = uint8_t(c >> 16);
                                 dst[1]      = uint8_t(c >> 8);
-                                dst[2]      = uint8_t(c >> 16);
+                                dst[2]      = uint8_t(c);
                                 dst        += 3;
                                 break;
                             case mm::PIXFMT_R8G8B8A8:
                             case mm::PIXFMT_PR8G8B8A8:
                             default:
-                                dst[0]      = uint8_t(c);
+                                dst[0]      = uint8_t(c >> 16);
                                 dst[1]      = uint8_t(c >> 8);
-                                dst[2]      = uint8_t(c >> 16);
+                                dst[2]      = uint8_t(c);
                                 dst[3]      = uint8_t(c >> 24);
                                 dst        += 4;
                                 break;
