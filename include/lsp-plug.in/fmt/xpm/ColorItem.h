@@ -25,6 +25,7 @@
 #include <lsp-plug.in/runtime/version.h>
 
 #include <lsp-plug.in/common/types.h>
+#include <lsp-plug.in/runtime/Color.h>
 
 namespace lsp
 {
@@ -87,6 +88,8 @@ namespace lsp
                 uint64_t rgb48() const noexcept;
                 inline uint32_t regular() const noexcept        { return rgb24();                                       }
                 inline uint32_t wide() const noexcept           { return rgb48();                                       }
+                bool get(lsp::Color & color) const noexcept;
+                bool get(lsp::Color * color) const noexcept;
 
                 void set_rgb24(uint32_t v) noexcept;
                 void set_rgb48(uint64_t v) noexcept;

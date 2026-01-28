@@ -31,6 +31,8 @@ namespace lsp
     {
         static constexpr uint32_t COLOR32_TO_COLOR64    = 0xfffff / 255;
         static constexpr uint32_t COLOR64_TO_COLOR32    = 0xffffff / 65535;
+        static constexpr float COLOR32_TO_FLOAT         = 1.0f / 255.0f;
+        static constexpr float COLOR64_TO_FLOAT         = 1.0f / 65535.0f;
 
         ColorItem::ColorItem() noexcept
         {
@@ -209,6 +211,39 @@ namespace lsp
                     break;
             }
             return 0;
+        }
+
+        bool ColorItem::get(lsp::Color & color) const noexcept
+        {
+            switch (enState)
+            {
+                case STATE_COLOR64:
+                {
+                    const float r = ((nColor64 >> 32) & 0x00ffff) * COLOR64_TO_FLOAT;
+                    const float g = ((nColor64 >> 16) & 0x00ffff) * COLOR64_TO_FLOAT;
+                    const float b = (nColor64 & 0x00ffff) * COLOR64_TO_FLOAT;
+                    color.set_rgba(r, g, b, 0.0f);
+                    return true;
+                }
+
+                case STATE_COLOR32:
+                {
+                    const float r = ((nColor32 >> 16) & 0x0000ff) * COLOR32_TO_FLOAT;
+                    const float g = ((nColor32 >> 8) & 0x0000ff) * COLOR32_TO_FLOAT;
+                    const float b = (nColor32 & 0x0000ff) * COLOR32_TO_FLOAT;
+                    color.set_rgba(r, g, b, 0.0f);
+                    return true;
+                }
+
+                default:
+                    break;
+            }
+            return false;
+        }
+
+        bool ColorItem::get(lsp::Color * color) const noexcept
+        {
+            return (color != NULL) ? get(*color) : false;
         }
 
         void ColorItem::set_rgb24(uint32_t value) noexcept

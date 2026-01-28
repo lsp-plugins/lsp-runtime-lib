@@ -25,6 +25,8 @@
 #include <lsp-plug.in/io/InBufStream.h>
 #include <lsp-plug.in/mm/Bitmap.h>
 
+#include <private/mm/bitmap/xpm.h>
+
 namespace lsp
 {
     namespace mm
@@ -126,6 +128,7 @@ namespace lsp
             }
             nRows       = 0;
             nCols       = 0;
+            nStride     = 0;
         }
 
         status_t Bitmap::init(pixel_format_t format, size_t rows, size_t cols)
@@ -135,24 +138,20 @@ namespace lsp
             if ((rows <= 0) || (cols <= 0))
             {
                 reset();
+                enFormat    = format;
                 return STATUS_OK;
             }
 
             const size_t stride     = calc_stride(format, cols);
             const size_t to_alloc   = stride * rows;
-            uint8_t * data          = static_cast<uint8_t *>(malloc(to_alloc));
+            uint8_t * data          = static_cast<uint8_t *>(realloc(pData, to_alloc));
             if (data == NULL)
                 return STATUS_NO_MEM;
-            lsp_finally {
-                if (data != NULL)
-                    free(data);
-            };
 
             // Cleanup data
             bzero(data, to_alloc);
 
             // Commit data
-            lsp::swap(pData, data);
             nRows       = rows;
             nCols       = cols;
             nStride     = stride;
@@ -349,14 +348,6 @@ namespace lsp
         }
 
 
-        status_t Bitmap::load_xpm(io::IInStream *is, pixel_format_t format, IColorMap *map)
-        {
-            // TODO
-
-            return STATUS_NOT_IMPLEMENTED;
-        }
-
     } /* namespace mm */
 } /* namespace lsp */
-
 
