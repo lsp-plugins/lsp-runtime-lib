@@ -1224,19 +1224,6 @@ namespace lsp
                 dst[0]      = src[0];
                 dst[1]      = src[1];
                 dst[2]      = src[2];
-                dst[3]      = 0;
-                src        += 3;
-                dst        += 4;
-            }
-        }
-
-        static void convert_r8g8b8_to_pr8g8b8a8(uint8_t *dst, const uint8_t *src, size_t count)
-        {
-            for ( ; count > 0; --count)
-            {
-                dst[0]      = src[0];
-                dst[1]      = src[1];
-                dst[2]      = src[2];
                 dst[3]      = 0xff;
                 src        += 3;
                 dst        += 4;
@@ -1260,9 +1247,8 @@ namespace lsp
                 case PIXFMT_A8:
                     return convert_r8g8b8_to_b8;
                 case PIXFMT_R8G8B8A8:
-                    return convert_r8g8b8_to_r8g8b8a8;
                 case PIXFMT_PR8G8B8A8:
-                    return convert_r8g8b8_to_pr8g8b8a8;
+                    return convert_r8g8b8_to_r8g8b8a8;
 
                 default:
                     break;
