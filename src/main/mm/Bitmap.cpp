@@ -57,7 +57,7 @@ namespace lsp
             nRows       = 0;
             nCols       = 0;
             nStride     = 0;
-            enFormat    = PIXFMT_R8G8B8A8;
+            enFormat    = PIXFMT_RGBA8888;
         }
 
         Bitmap::Bitmap(Bitmap && src) noexcept
@@ -66,7 +66,7 @@ namespace lsp
             nRows       = lsp::exchange(src.nRows, 0);
             nCols       = lsp::exchange(src.nCols, 0);
             nStride     = lsp::exchange(src.nStride, 0);
-            enFormat    = lsp::exchange(src.enFormat, PIXFMT_R8G8B8A8);
+            enFormat    = lsp::exchange(src.enFormat, PIXFMT_RGBA8888);
         }
 
         Bitmap::~Bitmap()
@@ -96,7 +96,7 @@ namespace lsp
             nRows       = lsp::exchange(src.nRows, 0);
             nCols       = lsp::exchange(src.nCols, 0);
             nStride     = lsp::exchange(src.nStride, 0);
-            enFormat    = lsp::exchange(src.enFormat, PIXFMT_R8G8B8A8);
+            enFormat    = lsp::exchange(src.enFormat, PIXFMT_RGBA8888);
 
             return *this;
         }

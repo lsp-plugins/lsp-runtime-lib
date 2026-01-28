@@ -51,7 +51,7 @@ UTEST_BEGIN("runtime.mm", bitmap)
         printf("Reading %s bitmap from file %s\n", (prgba) ? "PRGBA" : "RGBA", path.as_native());
 
         mm::Bitmap bmp;
-        UTEST_ASSERT(bmp.load(&path, (prgba) ? mm::PIXFMT_PR8G8B8A8 : mm::PIXFMT_R8G8B8A8) == STATUS_OK);
+        UTEST_ASSERT(bmp.load(&path, (prgba) ? mm::PIXFMT_PRGBA8888 : mm::PIXFMT_RGBA8888) == STATUS_OK);
         UTEST_ASSERT(bmp.width() == 8);
         UTEST_ASSERT(bmp.height() == 8);
 
