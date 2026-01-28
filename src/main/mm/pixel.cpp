@@ -39,6 +39,7 @@ namespace lsp
                 case PIXFMT_A4:         return 4;
                 case PIXFMT_A8:         return 8;
                 case PIXFMT_RGB888:     return 24;
+                case PIXFMT_BGR888:     return 24;
                 case PIXFMT_RGBA8888:   return 32;
                 case PIXFMT_PRGBA8888:  return 32;
                 default: break;
@@ -59,6 +60,7 @@ namespace lsp
                 case PIXFMT_A4:         return 4;
                 case PIXFMT_A8:         return 8;
                 case PIXFMT_RGB888:     return 24;
+                case PIXFMT_BGR888:     return 24;
                 case PIXFMT_RGBA8888:   return 32;
                 case PIXFMT_PRGBA8888:  return 32;
                 default: break;
@@ -80,6 +82,7 @@ namespace lsp
                 case PIXFMT_A4:         return "A4";
                 case PIXFMT_A8:         return "A8";
                 case PIXFMT_RGB888:     return "rgb888";
+                case PIXFMT_BGR888:     return "rgb888";
                 case PIXFMT_RGBA8888:   return "rgba8888";
                 case PIXFMT_PRGBA8888:  return "Prgba8888";
                 default: break;
@@ -334,6 +337,7 @@ namespace lsp
                 case PIXFMT_A8:
                     return convert_b1_to_b8;
                 case PIXFMT_RGB888:
+                case PIXFMT_BGR888:
                     return convert_b1_to_rgb888;
                 case PIXFMT_RGBA8888:
                     return convert_g1_to_rgba8888;
@@ -360,6 +364,7 @@ namespace lsp
                 case PIXFMT_A8:
                     return convert_b1_to_b8;
                 case PIXFMT_RGB888:
+                case PIXFMT_BGR888:
                     return convert_b1_to_rgb888;
                 case PIXFMT_RGBA8888:
                     return convert_a1_to_rgba8888;
@@ -609,6 +614,7 @@ namespace lsp
                 case PIXFMT_A8:
                     return convert_b2_to_b8;
                 case PIXFMT_RGB888:
+                case PIXFMT_BGR888:
                     return convert_b2_to_r8b8g8;
                 case PIXFMT_RGBA8888:
                 case PIXFMT_PRGBA8888:
@@ -634,6 +640,7 @@ namespace lsp
                 case PIXFMT_A8:
                     return convert_b2_to_b8;
                 case PIXFMT_RGB888:
+                case PIXFMT_BGR888:
                     return convert_b2_to_r8b8g8;
                 case PIXFMT_RGBA8888:
                     return convert_a2_to_r8b8g8a8;
@@ -894,6 +901,7 @@ namespace lsp
                 case PIXFMT_A8:
                     return convert_b4_to_b8;
                 case PIXFMT_RGB888:
+                case PIXFMT_BGR888:
                     return convert_b4_to_rgb888;
                 case PIXFMT_RGBA8888:
                     return convert_g4_to_rgba8888;
@@ -920,6 +928,7 @@ namespace lsp
                 case PIXFMT_A8:
                     return convert_b4_to_b8;
                 case PIXFMT_RGB888:
+                case PIXFMT_BGR888:
                     return convert_b4_to_rgb888;
                 case PIXFMT_RGBA8888:
                     return convert_a4_to_rgba8888;
@@ -1097,6 +1106,7 @@ namespace lsp
                 case PIXFMT_A4:
                     return convert_b8_to_b4;
                 case PIXFMT_RGB888:
+                case PIXFMT_BGR888:
                     return convert_b8_to_rgb888;
                 case PIXFMT_RGBA8888:
                 case PIXFMT_PRGBA8888:
@@ -1122,6 +1132,7 @@ namespace lsp
                 case PIXFMT_A4:
                     return convert_b8_to_b4;
                 case PIXFMT_RGB888:
+                case PIXFMT_BGR888:
                     return convert_b8_to_rgb888;
                 case PIXFMT_RGBA8888:
                     return convert_a8_to_rgba8888;
@@ -1217,6 +1228,18 @@ namespace lsp
             }
         }
 
+        static void convert_rgb888_to_bgr888(uint8_t *dst, const uint8_t *src, size_t count)
+        {
+            for ( ; count > 0; --count)
+            {
+                dst[0]      = src[2];
+                dst[1]      = src[1];
+                dst[2]      = src[0];
+                src        += 3;
+                dst        += 3;
+            }
+        }
+
         static void convert_rgb888_to_rgba8888(uint8_t *dst, const uint8_t *src, size_t count)
         {
             for ( ; count > 0; --count)
@@ -1224,6 +1247,19 @@ namespace lsp
                 dst[0]      = src[0];
                 dst[1]      = src[1];
                 dst[2]      = src[2];
+                dst[3]      = 0xff;
+                src        += 3;
+                dst        += 4;
+            }
+        }
+
+        static void convert_bgr888_to_rgba8888(uint8_t *dst, const uint8_t *src, size_t count)
+        {
+            for ( ; count > 0; --count)
+            {
+                dst[0]      = src[2];
+                dst[1]      = src[1];
+                dst[2]      = src[0];
                 dst[3]      = 0xff;
                 src        += 3;
                 dst        += 4;
@@ -1246,9 +1282,39 @@ namespace lsp
                 case PIXFMT_G8:
                 case PIXFMT_A8:
                     return convert_rgb888_to_b8;
+                case PIXFMT_BGR888:
+                    return convert_rgb888_to_bgr888;
                 case PIXFMT_RGBA8888:
                 case PIXFMT_PRGBA8888:
                     return convert_rgb888_to_rgba8888;
+
+                default:
+                    break;
+            }
+            return NULL;
+        }
+
+        static pixel_conversion_t pixel_convert_function_for_bgr888(pixel_format_t dst_fmt) noexcept
+        {
+            switch (dst_fmt)
+            {
+                case PIXFMT_G1:
+                case PIXFMT_A1:
+                    return convert_rgb888_to_b1;
+                case PIXFMT_G2:
+                case PIXFMT_A2:
+                    return convert_rgb888_to_b2;
+                case PIXFMT_G4:
+                case PIXFMT_A4:
+                    return convert_rgb888_to_b4;
+                case PIXFMT_G8:
+                case PIXFMT_A8:
+                    return convert_rgb888_to_b8;
+                case PIXFMT_BGR888:
+                    return convert_rgb888_to_bgr888;
+                case PIXFMT_RGBA8888:
+                case PIXFMT_PRGBA8888:
+                    return convert_bgr888_to_rgba8888;
 
                 default:
                     break;
@@ -1420,6 +1486,18 @@ namespace lsp
             }
         }
 
+        static void convert_rgba8888_to_bgr888(uint8_t *dst, const uint8_t *src, size_t count)
+        {
+            for ( ; count > 0; --count)
+            {
+                dst[0]      = src[2];
+                dst[1]      = src[1];
+                dst[2]      = src[0];
+                src        += 4;
+                dst        += 3;
+            }
+        }
+
         constexpr uint32_t k_alpha = 0x100fe / 0xff;
 
         static void convert_rgba8888_to_prgba8888(uint8_t *dst, const uint8_t *src, size_t count)
@@ -1459,6 +1537,8 @@ namespace lsp
                     return convert_rgba8888_to_a8;
                 case PIXFMT_RGB888:
                     return convert_rgba8888_to_rgb888;
+                case PIXFMT_BGR888:
+                    return convert_rgba8888_to_bgr888;
                 case PIXFMT_PRGBA8888:
                     return convert_rgba8888_to_prgba8888;
 
@@ -1583,6 +1663,31 @@ namespace lsp
             }
         }
 
+        static void convert_prgba8888_to_bgr888(uint8_t *dst, const uint8_t *src, size_t count)
+        {
+            uint8_t a;
+            uint32_t k;
+            for ( ; count > 0; --count)
+            {
+                a           = src[3];
+                if (a != 0)
+                {
+                    k           = 0xfffff / a;
+                    dst[0]      = (src[2] * k) >> 12;
+                    dst[1]      = (src[1] * k) >> 12;
+                    dst[2]      = (src[0] * k) >> 12;
+                }
+                else
+                {
+                    dst[0]      = 0;
+                    dst[1]      = 0;
+                    dst[2]      = 0;
+                }
+                src        += 4;
+                dst        += 3;
+            }
+        }
+
         static void convert_prgba8888_to_rgba8888(uint8_t *dst, const uint8_t *src, size_t count)
         {
             uint8_t a;
@@ -1631,6 +1736,8 @@ namespace lsp
                     return convert_rgba8888_to_a8;
                 case PIXFMT_RGB888:
                     return convert_prgba8888_to_rgb888;
+                case PIXFMT_BGR888:
+                    return convert_prgba8888_to_bgr888;
                 case PIXFMT_RGBA8888:
                     return convert_prgba8888_to_rgba8888;
 
@@ -1653,6 +1760,7 @@ namespace lsp
                 case PIXFMT_G8:         return pixel_convert_function_for_g8(dst_fmt);
                 case PIXFMT_A8:         return pixel_convert_function_for_a8(dst_fmt);
                 case PIXFMT_RGB888:     return pixel_convert_function_for_rgb888(dst_fmt);
+                case PIXFMT_BGR888:     return pixel_convert_function_for_bgr888(dst_fmt);
                 case PIXFMT_RGBA8888:   return pixel_convert_function_for_rgba8888(dst_fmt);
                 case PIXFMT_PRGBA8888:  return pixel_convert_function_for_prgba8888(dst_fmt);
                 default:

@@ -42,6 +42,7 @@ namespace lsp
             PIXFMT_A4,              /* 4 bits per pixel, alpha  */
             PIXFMT_A8,              /* 8 bits per pixel, alpha  */
             PIXFMT_RGB888,          /* RGB: 8 bits per each component */
+            PIXFMT_BGR888,          /* BGR: 8 bits per each component */
             PIXFMT_RGBA8888,        /* RGBA: 8 bits per each component */
             PIXFMT_PRGBA8888,       /* PRGBA: 8 bits per each component */
         };
