@@ -1319,8 +1319,8 @@ namespace lsp
             {
                 *(dst++)    =
                     (lightness(src[0], src[1], src[2]) >> 6) |
-                    ((lightness(src[4], src[5], src[6]) & 0x80) >> 4) |
-                    ((lightness(src[8], src[9], src[10]) & 0x80) >> 2) |
+                    ((lightness(src[4], src[5], src[6]) & 0xc0) >> 4) |
+                    ((lightness(src[8], src[9], src[10]) & 0xc0) >> 2) |
                     (lightness(src[12], src[13], src[14]) & 0xc0);
                 src        += 16;
             }
@@ -1415,20 +1415,23 @@ namespace lsp
                 dst[0]      = src[0];
                 dst[1]      = src[1];
                 dst[2]      = src[2];
-                dst[3]      = 0;
-                src        += 3;
-                dst        += 4;
+                src        += 4;
+                dst        += 3;
             }
         }
 
+        constexpr uint32_t k_alpha = 0x100fe / 0xff;
+
         static void convert_r8g8b8a8_to_pr8g8b8a8(uint8_t *dst, const uint8_t *src, size_t count)
         {
+            uint32_t v;
             for ( ; count > 0; --count)
             {
-                dst[0]      = src[0];
-                dst[1]      = src[1];
-                dst[2]      = src[2];
-                dst[3]      = 0xff;
+                v           = src[3] * k_alpha;
+                dst[0]      = uint8_t((v * src[0]) >> 16);
+                dst[1]      = uint8_t((v * src[1]) >> 16);
+                dst[2]      = uint8_t((v * src[2]) >> 16);
+                dst[3]      = src[3];
                 src        += 3;
                 dst        += 4;
             }
