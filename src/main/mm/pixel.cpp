@@ -1473,10 +1473,10 @@ namespace lsp
             if (a <= 0)
                 return 0;
 
-            const uint32_t k    = 0xff00 / a;
-            const uint32_t xr   = (r * k) >> 8;
-            const uint32_t xg   = (g * k) >> 8;
-            const uint32_t xb   = (b * k) >> 8;
+            const uint32_t k    = 0xfffff / a;
+            const uint32_t xr   = (r * k) >> 12;
+            const uint32_t xg   = (g * k) >> 12;
+            const uint32_t xb   = (b * k) >> 12;
             const uint32_t cmax = lsp_max(xr, xg, xb);
             const uint32_t cmin = lsp_min(xr, xg, xb);
             return uint8_t((cmax + cmin) >> 1);
@@ -1528,7 +1528,7 @@ namespace lsp
             v           = 0;
             for (size_t i=0; i<count; ++i)
             {
-                v          |= (prgba_lightness(src[0], src[1], src[2], src[3]) >> 7) << (i*2);
+                v          |= (prgba_lightness(src[0], src[1], src[2], src[3]) >> 6) << (i*2);
                 src        += 4;
             }
             *dst        = v;
@@ -1536,12 +1536,12 @@ namespace lsp
 
         static void convert_pr8g8b8a8_to_g4(uint8_t *dst, const uint8_t *src, size_t count)
         {
-            for ( ; count >= 4; count -= 4)
+            for ( ; count >= 2; count -= 2)
             {
                 *(dst++)    =
                     (prgba_lightness(src[0], src[1], src[2], src[3]) >> 4) |
-                    (prgba_lightness(src[12], src[13], src[14], src[15]) & 0xf0);
-                src        += 16;
+                    (prgba_lightness(src[4], src[5], src[6], src[7]) & 0xf0);
+                src        += 8;
             }
             if (count <= 0)
                 return;
@@ -1567,10 +1567,10 @@ namespace lsp
                 a           = src[3];
                 if (a != 0)
                 {
-                    k           = 0xff00 / a;
-                    dst[0]      = (src[0] * k) >> 8;
-                    dst[1]      = (src[1] * k) >> 8;
-                    dst[2]      = (src[2] * k) >> 8;
+                    k           = 0xfffff / a;
+                    dst[0]      = (src[0] * k) >> 12;
+                    dst[1]      = (src[1] * k) >> 12;
+                    dst[2]      = (src[2] * k) >> 12;
                 }
                 else
                 {
@@ -1592,10 +1592,10 @@ namespace lsp
                 a           = src[3];
                 if (a != 0)
                 {
-                    k           = 0xff00 / a;
-                    dst[0]      = (src[0] * k) >> 8;
-                    dst[1]      = (src[1] * k) >> 8;
-                    dst[2]      = (src[2] * k) >> 8;
+                    k           = 0xfffff / a;
+                    dst[0]      = (src[0] * k) >> 12;
+                    dst[1]      = (src[1] * k) >> 12;
+                    dst[2]      = (src[2] * k) >> 12;
                 }
                 else
                 {
