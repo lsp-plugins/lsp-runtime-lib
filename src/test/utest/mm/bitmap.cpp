@@ -33,7 +33,7 @@ static const char *bitmap =
     "00000300"
     "00222300";
 
-static const uint32_t colors[] =
+static const uint32_t rgba_colors[] =
 {
     0xff000000,
     0xff0000ff,
@@ -41,19 +41,31 @@ static const uint32_t colors[] =
     0xffff0000
 };
 
+static const uint32_t bgra_colors[] =
+{
+    0xff000000,
+    0xffff0000,
+    0xff00ff00,
+    0xff0000ff
+};
+
 UTEST_BEGIN("runtime.mm", bitmap)
 
-    void test_load_bitmap(const char *file, bool prgba)
+    void test_load_bitmap(const char *file, mm::pixel_format_t format)
     {
         io::Path path;
 
         UTEST_ASSERT(path.fmt("%s/mm/bitmap/%s", resources(), file));
-        printf("Reading %s bitmap from file %s\n", (prgba) ? "PRGBA" : "RGBA", path.as_native());
+        printf("Reading %s bitmap from file %s\n", mm::pixel_format_name(format), path.as_native());
 
         mm::Bitmap bmp;
-        UTEST_ASSERT(bmp.load(&path, (prgba) ? mm::PIXFMT_PRGBA8888 : mm::PIXFMT_RGBA8888) == STATUS_OK);
+        UTEST_ASSERT(bmp.load(&path, format) == STATUS_OK);
         UTEST_ASSERT(bmp.width() == 8);
         UTEST_ASSERT(bmp.height() == 8);
+
+        const uint32_t *colors =
+            ((format == mm::PIXFMT_RGBA8888) || (format == mm::PIXFMT_PRGBA8888)) ?
+                rgba_colors : bgra_colors;
 
         for (size_t y=0; y<8; ++y)
         {
@@ -71,8 +83,10 @@ UTEST_BEGIN("runtime.mm", bitmap)
 
     UTEST_MAIN
     {
-        test_load_bitmap("test.xpm", false);
-        test_load_bitmap("test.xpm", true);
+        test_load_bitmap("test.xpm", mm::PIXFMT_RGBA8888);
+        test_load_bitmap("test.xpm", mm::PIXFMT_PRGBA8888);
+        test_load_bitmap("test.xpm", mm::PIXFMT_BGRA8888);
+        test_load_bitmap("test.xpm", mm::PIXFMT_PBGRA8888);
     }
 UTEST_END;
 

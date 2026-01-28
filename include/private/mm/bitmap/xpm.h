@@ -138,13 +138,16 @@ namespace lsp
                     schema      = XPM_GRAY;
                     break;
                 case mm::PIXFMT_RGB888:
+                case mm::PIXFMT_BGR888:
                 case mm::PIXFMT_RGBA8888:
+                case mm::PIXFMT_BGRA8888:
                 case mm::PIXFMT_PRGBA8888:
+                case mm::PIXFMT_PBGRA8888:
                     schema      = XPM_RGB;
                     break;
                 default:
                     schema      = XPM_RGB;
-                    img_pixfmt  = PIXFMT_RGB888;
+                    img_pixfmt  = PIXFMT_BGRA8888;
                     break;
             }
 
@@ -227,12 +230,15 @@ namespace lsp
                         p_color->value = uint8_t(tmp_color.hsl_lightness() * 255.0f);
                         break;
                     case mm::PIXFMT_RGB888:
+                    case mm::PIXFMT_BGR888:
                         p_color->value = tmp_color.rgb24();
                         break;
                     case mm::PIXFMT_RGBA8888:
+                    case mm::PIXFMT_BGRA8888:
                         p_color->value = tmp_color.dev_rgba32();
                         break;
                     case mm::PIXFMT_PRGBA8888:
+                    case mm::PIXFMT_PBGRA8888:
                         p_color->value = tmp_color.prgba32();
                         break;
                     default:
@@ -299,12 +305,26 @@ namespace lsp
                                 dst[2]      = uint8_t(c);
                                 dst        += 3;
                                 break;
+                            case mm::PIXFMT_BGR888:
+                                dst[0]      = uint8_t(c);
+                                dst[1]      = uint8_t(c >> 8);
+                                dst[2]      = uint8_t(c >> 16);
+                                dst        += 3;
+                                break;
                             case mm::PIXFMT_RGBA8888:
                             case mm::PIXFMT_PRGBA8888:
-                            default:
                                 dst[0]      = uint8_t(c >> 16);
                                 dst[1]      = uint8_t(c >> 8);
                                 dst[2]      = uint8_t(c);
+                                dst[3]      = uint8_t(c >> 24);
+                                dst        += 4;
+                                break;
+                            case mm::PIXFMT_BGRA8888:
+                            case mm::PIXFMT_PBGRA8888:
+                            default:
+                                dst[0]      = uint8_t(c);
+                                dst[1]      = uint8_t(c >> 8);
+                                dst[2]      = uint8_t(c >> 16);
                                 dst[3]      = uint8_t(c >> 24);
                                 dst        += 4;
                                 break;
