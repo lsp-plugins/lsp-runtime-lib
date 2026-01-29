@@ -132,6 +132,14 @@ namespace lsp
                 virtual status_t    close();
         };
     
+        /**
+         * Finalize input stream according to wrapping flags
+         * @param is input stream to finalize
+         * @param wrap_flags wrap fiags
+         * @return status of operation
+         */
+        status_t finalize(io::IInStream *is, size_t wrap_flags);
+
     } /* namespace io */
 } /* namespace lsp */
 

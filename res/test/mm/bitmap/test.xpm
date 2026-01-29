@@ -1,0 +1,17 @@
+/* XPM3 */
+static char * plaid[] = {
+"8 8 4 2",
+"   c None",
+"RR c #ff0000",
+"GG c #00ff00",
+"BB m #0000ff",
+"RR              ",
+"RR    GGGGGG    ",
+"RR  GG    BBBB  ",
+"RR  GG    BB  BB",
+"RRRRRRGGGGBB  BB",
+"          BBBB  ",
+"          BB    ",
+"    GGGGGGBB    ",
+
+};

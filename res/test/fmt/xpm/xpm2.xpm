@@ -1,0 +1,35 @@
+! XPM2
+23 22 6 2 11 12 XPMEXT
+   c red m white s light_color 
+Y  c green m black s lines_in_mix
++  c yellow m white s lines_in_dark g grey 
+x  m black s dark_color g4 grey 
+.* c #beefcafebabe
+./ c #abcdef
+x   x   x x x   x   x x x x x x + x x x x x x 
+  x   x   x   x   x   x x x x x x x x x x x Y 
+x   x   x x x   x   x x x x x x + x x x x x x 
+  x   x   x   x   x   x x x x x x x x x x x Y 
+x   x   x x x   x   x x x x x x + x x x x x x 
+Y Y Y Y Y x Y Y Y Y Y + x + x + x + x + x + Y 
+x   x   x x x   x   x x x x x x + x x x x x x 
+  x   x   x   x   x   x x x x x x x x x x x Y 
+x   x   x x x   x   x x x x x x + x x x x x x 
+  x   x   x   x   x   x x x x x x x x x x x Y 
+x   x   x x x   x   x x x x x x + x x x x x x 
+          x           x   x   x Y x   x   x Y 
+          x             x   x   Y   x   x   x 
+          x           x   x   x Y x   x   x Y 
+          x             x   x   Y   x   x   x 
+          x           x   x   x Y x   x   x Y 
+x x x x x x x x x x x x x x x x x x x x x x x 
+          x           x   x   x Y x   x   x Y 
+          x             x   x   Y   x   x   x 
+          x           x   x   x Y x   x   x Y 
+          x             x   x   Y   x   x   x 
+          x           x   x   x Y x   x   x Y 
+XPMEXT ext1 data1
+XPMEXT ext2
+data2_1
+data2_2
+XPMENDEXT
