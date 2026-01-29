@@ -123,6 +123,18 @@ namespace lsp
                  */
                 inline const uint8_t *row(size_t index) const noexcept  { return ((pData != NULL) && (index < nRows)) ? &pData[nStride * index] : NULL; }
 
+                /**
+                 * Get the full bitmap data
+                 * @return full bitmap data
+                 */
+                inline uint8_t *data() noexcept                         { return pData; }
+
+                /**
+                 * Get the full bitmap data
+                 * @return full bitmap data
+                 */
+                inline const uint8_t *data() const noexcept             { return pData; }
+
             public:
                 /**
                  * Initialize bitmap

@@ -35,7 +35,7 @@ static const char *bitmap =
 
 static const uint32_t rgba_colors[] =
 {
-    0xff000000,
+    0x00000000,
     0xff0000ff,
     0xff00ff00,
     0xffff0000
@@ -43,7 +43,7 @@ static const uint32_t rgba_colors[] =
 
 static const uint32_t bgra_colors[] =
 {
-    0xff000000,
+    0x00000000,
     0xffff0000,
     0xff00ff00,
     0xff0000ff

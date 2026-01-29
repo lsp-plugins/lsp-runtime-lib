@@ -64,7 +64,7 @@ namespace lsp
                     continue;
                 if (item->is_none())
                 {
-                    dst.set_rgba(0.0f, 0.0f, 0.0f, 0.0f);
+                    dst.set_rgba(0.0f, 0.0f, 0.0f, 1.0f);
                     return;
                 }
                 else if ((item->is_name()) && (map != NULL))
@@ -77,7 +77,7 @@ namespace lsp
             }
 
             // Fully transparent color by default
-            dst.set_rgba(0.0f, 0.0f, 0.0f, 0.0f);
+            dst.set_rgba(0.0f, 0.0f, 0.0f, 1.0f);
         }
 
         status_t Bitmap::load_xpm(io::IInStream *is, pixel_format_t format, IColorMap *map)

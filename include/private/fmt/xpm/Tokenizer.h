@@ -205,7 +205,7 @@ namespace lsp
                     return (nread > 0) ? STATUS_OK : status_t(-ch);
                 }
 
-                status_t        expect_signature(const char *text)
+                status_t        expect_characters(const char *text)
                 {
                     // Match characters
                     int ch;
@@ -218,6 +218,13 @@ namespace lsp
                         if (!append(ch))
                             return STATUS_NO_MEM;
                     }
+
+                    return STATUS_OK;
+                }
+
+                status_t        expect_end_of_line()
+                {
+                    int ch;
 
                     // Complete read until the end-of-line
                     while ((ch = getch()) >= 0)
@@ -246,6 +253,14 @@ namespace lsp
                         }
                     }
                     return ch;
+                }
+
+                status_t        expect_signature(const char *text)
+                {
+                    status_t res = expect_characters(text);
+                    if (res == STATUS_OK)
+                        res = expect_end_of_line();
+                    return res;
                 }
 
                 status_t read_c_string()
@@ -359,7 +374,7 @@ namespace lsp
                     sToken.type     = TOK_INVALID;
                     sToken.length   = 0;
 
-                    const int ch    = getch();
+                    int ch          = getch();
                     if (ch < 0)
                         return status_t(-ch);
 
@@ -412,8 +427,26 @@ namespace lsp
                         case '/':   // XPM3 signature
                             if (nLineNum != 0)
                                 return STATUS_CORRUPTED_FILE;
-                            if ((res = expect_signature("* XPM3 */")) != STATUS_OK)
+                            if ((res = expect_characters("* XPM")) != STATUS_OK)
                                 return res;
+                            ch    = getch();
+                            if (ch < 0)
+                                return status_t(-ch);
+                            if (ch == '3')
+                            {
+                                if (!append(ch))
+                                    return STATUS_NO_MEM;
+                                if ((res = expect_signature(" */")) != STATUS_OK)
+                                    return res;
+                            }
+                            else if (ch == ' ')
+                            {
+                                if ((res = expect_signature("*/")) != STATUS_OK)
+                                    return res;
+                            }
+                            else
+                                return STATUS_CORRUPTED_FILE;
+
                             sToken.type         = TOK_XPM3_SIG;
                             break;
                         case '\"':  // C String

@@ -311,8 +311,8 @@ namespace lsp
             else
             {
                 // Need to re-allocate memory
-                const size_t bpr        = calc_bytes_per_row(enFormat, nCols);
-                const size_t stride     = calc_stride(enFormat, nCols);
+                const size_t bpr        = calc_bytes_per_row(format, nCols);
+                const size_t stride     = calc_stride(format, nCols);
                 const size_t to_alloc   = stride * nRows;
                 uint8_t * data          = static_cast<uint8_t *>(malloc(to_alloc));
                 if (data == NULL)
@@ -331,11 +331,12 @@ namespace lsp
 
                 // Commit new data
                 lsp::swap(pData, data);
+                nStride     = stride;
             }
 
             enFormat    = format;
 
-            return STATUS_NOT_IMPLEMENTED;
+            return STATUS_OK;
         }
 
         status_t Bitmap::convert(Bitmap *dst, pixel_format_t format)
