@@ -133,7 +133,7 @@ UTEST_BEGIN("runtime.fmt.xpm", xpm3)
         UTEST_ASSERT(!c.gray4_visual().is_set());
         UTEST_ASSERT(!c.gray_visual().is_set());
         UTEST_ASSERT(c.color_visual().rgb24() == 0x00abcdef);
-        UTEST_ASSERT(c.color_visual().rgb48() == 0xab00cd00ef00ull);
+        UTEST_ASSERT(c.color_visual().rgb48() == 0xababcdcdefefull);
 
         UTEST_ASSERT(parser->read_color(&c) == STATUS_NOT_FOUND);
 
