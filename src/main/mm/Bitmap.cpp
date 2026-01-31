@@ -60,6 +60,28 @@ namespace lsp
             enFormat    = PIXFMT_RGBA8888;
         }
 
+        Bitmap::Bitmap(const Bitmap & src)
+        {
+            pData       = NULL;
+            nRows       = 0;
+            nCols       = 0;
+            nStride     = 0;
+            enFormat    = PIXFMT_RGBA8888;
+
+            set(src);
+        }
+
+        Bitmap::Bitmap(const Bitmap * src)
+        {
+            pData       = NULL;
+            nRows       = 0;
+            nCols       = 0;
+            nStride     = 0;
+            enFormat    = PIXFMT_RGBA8888;
+
+            set(src);
+        }
+
         Bitmap::Bitmap(Bitmap && src) noexcept
         {
             pData       = lsp::exchange(src.pData, static_cast<uint8_t *>(NULL));
@@ -98,6 +120,18 @@ namespace lsp
             nStride     = lsp::exchange(src.nStride, 0);
             enFormat    = lsp::exchange(src.enFormat, PIXFMT_RGBA8888);
 
+            return *this;
+        }
+
+        Bitmap & Bitmap::operator = (const Bitmap & src)
+        {
+            set(src);
+            return *this;
+        }
+
+        Bitmap & Bitmap::operator = (const Bitmap * src)
+        {
+            set(src);
             return *this;
         }
 
@@ -159,6 +193,43 @@ namespace lsp
             enFormat    = format;
 
             return STATUS_OK;
+        }
+
+        status_t Bitmap::set(const Bitmap & src)
+        {
+            if (src.pData == NULL)
+            {
+                reset();
+                enFormat    = src.enFormat;
+                return STATUS_OK;
+            }
+
+            // Compute parameters of the new bitmap
+            uint8_t * data          = static_cast<uint8_t *>(realloc(pData, src.nRows * src.nStride));
+            if (data == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally {
+                if (data != NULL)
+                    free(data);
+            };
+
+            // Copy data
+            memcpy(data, src.pData, src.nRows * src.nStride);
+
+            pData                   = data;
+            nRows                   = src.nRows;
+            nCols                   = src.nCols;
+            nStride                 = src.nStride;
+            enFormat                = src.enFormat;
+
+            return STATUS_OK;
+        }
+
+        status_t Bitmap::set(const Bitmap * src)
+        {
+            if (src == NULL)
+                return STATUS_BAD_ARGUMENTS;
+            return set(*src);
         }
 
         status_t Bitmap::load(const char *path, pixel_format_t format, IColorMap *map)
@@ -280,7 +351,64 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t Bitmap::convert(Bitmap & dst, pixel_format_t format)
+        status_t Bitmap::convert(Bitmap & dst, pixel_format_t format) const
+        {
+            if (enFormat == format)
+                return STATUS_OK;
+            else if (format == PIXFMT_DEFAULT)
+                return STATUS_INVALID_VALUE;
+
+            // Get pixel conversion function
+            const pixel_conversion_t conversion = pixel_convert_function(format, enFormat);
+            if (conversion == NULL)
+                return STATUS_UNSUPPORTED_FORMAT;
+
+            // Check if we need to perform reallocation
+            const size_t stride     = calc_stride(format, nCols);
+            if (stride * dst.nRows == nStride * nRows)
+            {
+                // Perform conversion without reallocation
+                for (size_t r = 0; r < nRows; ++r)
+                    conversion(&dst.pData[r*nStride], &pData[r*nStride], nCols);
+            }
+            else
+            {
+                // Need to re-allocate memory
+                const size_t bpr        = calc_bytes_per_row(format, nCols);
+                const size_t to_alloc   = stride * nRows;
+                uint8_t * data          = static_cast<uint8_t *>(malloc(to_alloc));
+                if (data == NULL)
+                    return STATUS_NO_MEM;
+                lsp_finally {
+                    if (data != NULL)
+                        free(data);
+                };
+
+                // Perform conversion
+                for (size_t r = 0; r < nRows; ++r)
+                {
+                    conversion(&data[r*stride], &pData[r*nStride], nCols);
+                    bzero(&data[r*stride + bpr], stride - bpr);
+                }
+
+                // Commit new data
+                lsp::swap(dst.pData, data);
+            }
+
+            dst.nStride     = stride;
+            dst.nRows       = nRows;
+            dst.nCols       = nCols;
+            dst.enFormat    = format;
+
+            return STATUS_OK;
+        }
+
+        status_t Bitmap::convert(Bitmap *dst, pixel_format_t format) const
+        {
+            return (dst != NULL) ? convert(*dst, format) : STATUS_BAD_ARGUMENTS;
+        }
+
+        status_t Bitmap::convert(pixel_format_t format)
         {
             if (enFormat == format)
                 return STATUS_OK;
@@ -290,7 +418,7 @@ namespace lsp
             // Check that no changes are required to be made
             if ((nRows <= 0) || (nCols <= 0) || (is_exact_copy(enFormat, format)))
             {
-                enFormat    = format;
+                enFormat        = format;
                 return STATUS_OK;
             }
 
@@ -300,11 +428,10 @@ namespace lsp
                 return STATUS_UNSUPPORTED_FORMAT;
 
             // Check if we need to perform reallocation
-            const size_t old_bpp = device_bits_per_pixel(enFormat);
-            const size_t new_bpp = device_bits_per_pixel(format);
-            if (old_bpp == new_bpp)
+            const size_t stride     = calc_stride(format, nCols);
+            if (stride == nStride)
             {
-                // Perform conversion
+                // Perform conversion without reallocation
                 for (size_t r = 0; r < nRows; ++r)
                     conversion(&pData[r*nStride], &pData[r*nStride], nCols);
             }
@@ -312,7 +439,6 @@ namespace lsp
             {
                 // Need to re-allocate memory
                 const size_t bpr        = calc_bytes_per_row(format, nCols);
-                const size_t stride     = calc_stride(format, nCols);
                 const size_t to_alloc   = stride * nRows;
                 uint8_t * data          = static_cast<uint8_t *>(malloc(to_alloc));
                 if (data == NULL)
@@ -331,22 +457,12 @@ namespace lsp
 
                 // Commit new data
                 lsp::swap(pData, data);
-                nStride     = stride;
             }
 
-            enFormat    = format;
+            nStride         = stride;
+            enFormat        = format;
 
             return STATUS_OK;
-        }
-
-        status_t Bitmap::convert(Bitmap *dst, pixel_format_t format)
-        {
-            return (dst != NULL) ? convert(*dst, format) : STATUS_BAD_ARGUMENTS;
-        }
-
-        status_t Bitmap::convert(pixel_format_t format)
-        {
-            return convert(*this, format);
         }
 
 

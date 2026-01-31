@@ -56,11 +56,13 @@ namespace lsp
 
             public:
                 Bitmap() noexcept;
-                Bitmap(const Bitmap &) = delete;
+                Bitmap(const Bitmap &);
+                Bitmap(const Bitmap *);
                 Bitmap(Bitmap && src) noexcept;
                 ~Bitmap();
 
-                Bitmap & operator = (const Bitmap &) = delete;
+                Bitmap & operator = (const Bitmap & src);
+                Bitmap & operator = (const Bitmap * src);
                 Bitmap & operator = (Bitmap && src) noexcept;
 
                 void swap(Bitmap & src) noexcept;
@@ -146,6 +148,20 @@ namespace lsp
                 status_t init(pixel_format_t format, size_t rows, size_t cols);
 
                 /**
+                 * Set bitmap data
+                 * @param src source bitmap
+                 * @return status of operation
+                 */
+                status_t set(const Bitmap & src);
+
+                /**
+                 * Set bitmap data
+                 * @param src source bitmap
+                 * @return status of operation
+                 */
+                status_t set(const Bitmap * src);
+
+                /**
                  * Reset bitmap content
                  */
                 void reset();
@@ -172,7 +188,7 @@ namespace lsp
                  * @param dst destination bitmap to store result
                  * @return status of operation
                  */
-                status_t convert(Bitmap & dst, pixel_format_t format);
+                status_t convert(Bitmap & dst, pixel_format_t format) const;
 
                 /**
                  * Convert bitmap to desired pixel format
@@ -180,7 +196,7 @@ namespace lsp
                  * @param dst destination bitmap to store result
                  * @return status of operation
                  */
-                status_t convert(Bitmap *dst, pixel_format_t format);
+                status_t convert(Bitmap *dst, pixel_format_t format) const;
 
                 /**
                  * Load bitmap from file
