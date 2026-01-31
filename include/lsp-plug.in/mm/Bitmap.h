@@ -183,20 +183,36 @@ namespace lsp
                 status_t convert(pixel_format_t format);
 
                 /**
-                 * Convert bitmap to desired pixel format
-                 * @param format desired pixel format
+                 * Convert bitmap to desired pixel format and store to new bitmap
                  * @param dst destination bitmap to store result
+                 * @param format desired pixel format
                  * @return status of operation
                  */
-                status_t convert(Bitmap & dst, pixel_format_t format) const;
+                status_t convert_to(Bitmap & dst, pixel_format_t format) const;
 
                 /**
-                 * Convert bitmap to desired pixel format
-                 * @param format desired pixel format
+                 * Convert bitmap to desired pixel format and store to new bitmap
                  * @param dst destination bitmap to store result
+                 * @param format desired pixel format
                  * @return status of operation
                  */
-                status_t convert(Bitmap *dst, pixel_format_t format) const;
+                status_t convert_to(Bitmap *dst, pixel_format_t format) const;
+
+                /**
+                 * Convert source bitmap to desired pixel format and store to this bitmap
+                 * @param src source bitmap
+                 * @param format desired pixel format
+                 * @return status of operation
+                 */
+                status_t convert_from(const Bitmap & src, pixel_format_t format);
+
+                /**
+                 * Convert source bitmap to desired pixel format and store to this bitmap
+                 * @param src source bitmap
+                 * @param format desired pixel format
+                 * @return status of operation
+                 */
+                status_t convert_from(const Bitmap * src, pixel_format_t format);
 
                 /**
                  * Load bitmap from file

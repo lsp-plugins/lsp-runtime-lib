@@ -351,7 +351,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t Bitmap::convert(Bitmap & dst, pixel_format_t format) const
+        status_t Bitmap::convert_to(Bitmap & dst, pixel_format_t format) const
         {
             if (enFormat == format)
                 return STATUS_OK;
@@ -403,9 +403,9 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t Bitmap::convert(Bitmap *dst, pixel_format_t format) const
+        status_t Bitmap::convert_to(Bitmap *dst, pixel_format_t format) const
         {
-            return (dst != NULL) ? convert(*dst, format) : STATUS_BAD_ARGUMENTS;
+            return (dst != NULL) ? convert_to(*dst, format) : STATUS_BAD_ARGUMENTS;
         }
 
         status_t Bitmap::convert(pixel_format_t format)
@@ -465,6 +465,15 @@ namespace lsp
             return STATUS_OK;
         }
 
+        status_t Bitmap::convert_from(const Bitmap & src, pixel_format_t format)
+        {
+            return src.convert_to(*this, format);
+        }
+
+        status_t Bitmap::convert_from(const Bitmap * src, pixel_format_t format)
+        {
+            return (src != NULL) ? src->convert_to(*this, format) : STATUS_BAD_ARGUMENTS;
+        }
 
     } /* namespace mm */
 } /* namespace lsp */
