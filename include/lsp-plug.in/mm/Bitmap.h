@@ -137,6 +137,12 @@ namespace lsp
                  */
                 inline const uint8_t *data() const noexcept             { return pData; }
 
+                /**
+                 * Check that bitmap is empty
+                 * @return true if bitmap is empty
+                 */
+                inline bool is_empty() const noexcept                   { return pData == NULL; }
+
             public:
                 /**
                  * Initialize bitmap
