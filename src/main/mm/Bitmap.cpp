@@ -54,8 +54,8 @@ namespace lsp
         Bitmap::Bitmap() noexcept
         {
             pData       = NULL;
-            nRows       = 0;
-            nCols       = 0;
+            nWidth      = 0;
+            nHeight     = 0;
             nStride     = 0;
             enFormat    = PIXFMT_RGBA8888;
         }
@@ -63,8 +63,8 @@ namespace lsp
         Bitmap::Bitmap(const Bitmap & src)
         {
             pData       = NULL;
-            nRows       = 0;
-            nCols       = 0;
+            nWidth      = 0;
+            nHeight     = 0;
             nStride     = 0;
             enFormat    = PIXFMT_RGBA8888;
 
@@ -74,8 +74,8 @@ namespace lsp
         Bitmap::Bitmap(const Bitmap * src)
         {
             pData       = NULL;
-            nRows       = 0;
-            nCols       = 0;
+            nWidth      = 0;
+            nHeight     = 0;
             nStride     = 0;
             enFormat    = PIXFMT_RGBA8888;
 
@@ -85,8 +85,8 @@ namespace lsp
         Bitmap::Bitmap(Bitmap && src) noexcept
         {
             pData       = lsp::exchange(src.pData, static_cast<uint8_t *>(NULL));
-            nRows       = lsp::exchange(src.nRows, 0);
-            nCols       = lsp::exchange(src.nCols, 0);
+            nWidth      = lsp::exchange(src.nWidth, 0);
+            nHeight     = lsp::exchange(src.nHeight, 0);
             nStride     = lsp::exchange(src.nStride, 0);
             enFormat    = lsp::exchange(src.enFormat, PIXFMT_RGBA8888);
         }
@@ -115,8 +115,8 @@ namespace lsp
         Bitmap & Bitmap::operator = (Bitmap && src) noexcept
         {
             pData       = lsp::exchange(src.pData, static_cast<uint8_t *>(NULL));
-            nRows       = lsp::exchange(src.nRows, 0);
-            nCols       = lsp::exchange(src.nCols, 0);
+            nWidth      = lsp::exchange(src.nWidth, 0);
+            nHeight     = lsp::exchange(src.nHeight, 0);
             nStride     = lsp::exchange(src.nStride, 0);
             enFormat    = lsp::exchange(src.enFormat, PIXFMT_RGBA8888);
 
@@ -138,8 +138,8 @@ namespace lsp
         void Bitmap::swap(Bitmap & src) noexcept
         {
             lsp::swap(pData, src.pData);
-            lsp::swap(nRows, src.nRows);
-            lsp::swap(nCols, src.nCols);
+            lsp::swap(nWidth, src.nWidth);
+            lsp::swap(nHeight, src.nHeight);
             lsp::swap(nStride, src.nStride);
             lsp::swap(enFormat, src.enFormat);
         }
@@ -147,8 +147,8 @@ namespace lsp
         void Bitmap::swap(Bitmap * src) noexcept
         {
             lsp::swap(pData, src->pData);
-            lsp::swap(nRows, src->nRows);
-            lsp::swap(nCols, src->nCols);
+            lsp::swap(nWidth, src->nWidth);
+            lsp::swap(nHeight, src->nHeight);
             lsp::swap(nStride, src->nStride);
             lsp::swap(enFormat, src->enFormat);
         }
@@ -160,24 +160,24 @@ namespace lsp
                 free(pData);
                 pData       = NULL;
             }
-            nRows       = 0;
-            nCols       = 0;
+            nWidth      = 0;
+            nHeight     = 0;
             nStride     = 0;
         }
 
-        status_t Bitmap::init(pixel_format_t format, size_t rows, size_t cols)
+        status_t Bitmap::init(pixel_format_t format, size_t width, size_t height)
         {
             if (format == PIXFMT_DEFAULT)
                 return STATUS_INVALID_VALUE;
-            if ((rows <= 0) || (cols <= 0))
+            if ((height <= 0) || (width <= 0))
             {
                 reset();
                 enFormat    = format;
                 return STATUS_OK;
             }
 
-            const size_t stride     = calc_stride(format, cols);
-            const size_t to_alloc   = stride * rows;
+            const size_t stride     = calc_stride(format, width);
+            const size_t to_alloc   = stride * height;
             uint8_t * data          = static_cast<uint8_t *>(realloc(pData, to_alloc));
             if (data == NULL)
                 return STATUS_NO_MEM;
@@ -187,8 +187,8 @@ namespace lsp
 
             // Commit data
             pData       = data;
-            nRows       = rows;
-            nCols       = cols;
+            nWidth      = width;
+            nHeight     = height;
             nStride     = stride;
             enFormat    = format;
 
@@ -205,7 +205,7 @@ namespace lsp
             }
 
             // Compute parameters of the new bitmap
-            uint8_t * data          = static_cast<uint8_t *>(realloc(pData, src.nRows * src.nStride));
+            uint8_t * data          = static_cast<uint8_t *>(realloc(pData, src.nHeight * src.nStride));
             if (data == NULL)
                 return STATUS_NO_MEM;
             lsp_finally {
@@ -214,11 +214,11 @@ namespace lsp
             };
 
             // Copy data
-            memcpy(data, src.pData, src.nRows * src.nStride);
+            memcpy(data, src.pData, src.nHeight * src.nStride);
 
             pData                   = data;
-            nRows                   = src.nRows;
-            nCols                   = src.nCols;
+            nWidth                  = src.nWidth;
+            nHeight                 = src.nHeight;
             nStride                 = src.nStride;
             enFormat                = src.enFormat;
 
@@ -311,14 +311,14 @@ namespace lsp
             return STATUS_UNSUPPORTED_FORMAT;
         }
 
-        status_t Bitmap::resize(size_t rows, size_t cols)
+        status_t Bitmap::resize(size_t width, size_t height)
         {
-            if ((nRows == rows) && (nCols == cols))
+            if ((nWidth == width) && (nHeight == height))
                 return STATUS_OK;
 
             // Compute parameters of the new bitmap
-            const size_t stride     = calc_stride(enFormat, cols);
-            const size_t to_alloc   = stride * rows;
+            const size_t stride     = calc_stride(enFormat, width);
+            const size_t to_alloc   = stride * height;
             uint8_t * data          = static_cast<uint8_t *>(malloc(to_alloc));
             if (data == NULL)
                 return STATUS_NO_MEM;
@@ -328,24 +328,24 @@ namespace lsp
             };
 
             // Preserve previous picture if possible
-            if ((pData != NULL) && (nRows > 0) && (nCols > 0))
+            if ((pData != NULL) && (nWidth > 0) && (nHeight > 0))
             {
                 const size_t to_copy    = lsp_min(stride, nStride);
-                const size_t to_rows    = lsp_min(rows, nRows);
+                const size_t to_rows    = lsp_min(height, nHeight);
 
                 for (size_t i=0; i<to_rows; ++i)
                 {
                     memcpy(&data[i*stride], &pData[i*nStride], to_copy);
                     bzero(&data[i*stride + to_copy], to_copy - nStride);
                 }
-                bzero(&data[to_rows * stride], (rows - nRows) * stride);
+                bzero(&data[to_rows * stride], (height - nHeight) * stride);
             }
             else
                 bzero(data, to_alloc);
 
             lsp::swap(pData, data);
-            nRows       = rows;
-            nCols       = cols;
+            nWidth      = width;
+            nHeight     = height;
             nStride     = stride;
 
             return STATUS_OK;
@@ -364,18 +364,18 @@ namespace lsp
                 return STATUS_UNSUPPORTED_FORMAT;
 
             // Check if we need to perform reallocation
-            const size_t stride     = calc_stride(format, nCols);
-            if (stride * dst.nRows == nStride * nRows)
+            const size_t stride     = calc_stride(format, nWidth);
+            if (stride * dst.nHeight == nStride * nHeight)
             {
                 // Perform conversion without reallocation
-                for (size_t r = 0; r < nRows; ++r)
-                    conversion(&dst.pData[r*nStride], &pData[r*nStride], nCols);
+                for (size_t r = 0; r < nHeight; ++r)
+                    conversion(&dst.pData[r*nStride], &pData[r*nStride], nWidth);
             }
             else
             {
                 // Need to re-allocate memory
-                const size_t bpr        = calc_bytes_per_row(format, nCols);
-                const size_t to_alloc   = stride * nRows;
+                const size_t bpr        = calc_bytes_per_row(format, nWidth);
+                const size_t to_alloc   = stride * nHeight;
                 uint8_t * data          = static_cast<uint8_t *>(malloc(to_alloc));
                 if (data == NULL)
                     return STATUS_NO_MEM;
@@ -385,9 +385,9 @@ namespace lsp
                 };
 
                 // Perform conversion
-                for (size_t r = 0; r < nRows; ++r)
+                for (size_t r = 0; r < nHeight; ++r)
                 {
-                    conversion(&data[r*stride], &pData[r*nStride], nCols);
+                    conversion(&data[r*stride], &pData[r*nStride], nWidth);
                     bzero(&data[r*stride + bpr], stride - bpr);
                 }
 
@@ -396,8 +396,8 @@ namespace lsp
             }
 
             dst.nStride     = stride;
-            dst.nRows       = nRows;
-            dst.nCols       = nCols;
+            dst.nWidth      = nWidth;
+            dst.nHeight     = nHeight;
             dst.enFormat    = format;
 
             return STATUS_OK;
@@ -416,7 +416,7 @@ namespace lsp
                 return STATUS_INVALID_VALUE;
 
             // Check that no changes are required to be made
-            if ((nRows <= 0) || (nCols <= 0) || (is_exact_copy(enFormat, format)))
+            if ((nWidth <= 0) || (nHeight <= 0) || (is_exact_copy(enFormat, format)))
             {
                 enFormat        = format;
                 return STATUS_OK;
@@ -428,18 +428,18 @@ namespace lsp
                 return STATUS_UNSUPPORTED_FORMAT;
 
             // Check if we need to perform reallocation
-            const size_t stride     = calc_stride(format, nCols);
+            const size_t stride     = calc_stride(format, nWidth);
             if (stride == nStride)
             {
                 // Perform conversion without reallocation
-                for (size_t r = 0; r < nRows; ++r)
-                    conversion(&pData[r*nStride], &pData[r*nStride], nCols);
+                for (size_t r = 0; r < nHeight; ++r)
+                    conversion(&pData[r*nStride], &pData[r*nStride], nWidth);
             }
             else
             {
                 // Need to re-allocate memory
-                const size_t bpr        = calc_bytes_per_row(format, nCols);
-                const size_t to_alloc   = stride * nRows;
+                const size_t bpr        = calc_bytes_per_row(format, nWidth);
+                const size_t to_alloc   = stride * nHeight;
                 uint8_t * data          = static_cast<uint8_t *>(malloc(to_alloc));
                 if (data == NULL)
                     return STATUS_NO_MEM;
@@ -449,9 +449,9 @@ namespace lsp
                 };
 
                 // Perform conversion
-                for (size_t r = 0; r < nRows; ++r)
+                for (size_t r = 0; r < nHeight; ++r)
                 {
-                    conversion(&data[r*stride], &pData[r*nStride], nCols);
+                    conversion(&data[r*stride], &pData[r*nStride], nWidth);
                     bzero(&data[r*stride + bpr], stride - bpr);
                 }
 

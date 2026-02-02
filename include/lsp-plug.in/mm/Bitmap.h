@@ -43,8 +43,8 @@ namespace lsp
         {
             private:
                 uint8_t        *pData;
-                size_t          nRows;
-                size_t          nCols;
+                size_t          nWidth;
+                size_t          nHeight;
                 size_t          nStride;
                 pixel_format_t  enFormat;
 
@@ -79,25 +79,25 @@ namespace lsp
                  * Get number of rows
                  * @return number of rows
                  */
-                inline size_t rows() const noexcept                     { return nRows;     }
+                inline size_t rows() const noexcept                     { return nHeight;   }
 
                 /**
                  * Get bitmap width
                  * @return bitmap width in pixels
                  */
-                inline size_t width() const noexcept                    { return nRows;     }
+                inline size_t width() const noexcept                    { return nWidth;     }
 
                 /**
                  * Get number of columns
                  * @return number of columns
                  */
-                inline size_t columns() const noexcept                  { return nCols;     }
+                inline size_t columns() const noexcept                  { return nWidth;     }
 
                 /**
                  * Get bitmap height
                  * @return bitmap height in pixels
                  */
-                inline size_t height() const noexcept                   { return nCols;     }
+                inline size_t height() const noexcept                   { return nHeight;     }
 
                 /**
                  * Get number of bytes per each row
@@ -116,14 +116,14 @@ namespace lsp
                  * @param index number of row
                  * @return pointer to row or NULL
                  */
-                inline uint8_t *row(size_t index) noexcept              { return ((pData != NULL) && (index < nRows)) ? &pData[nStride * index] : NULL; }
+                inline uint8_t *row(size_t index) noexcept              { return ((pData != NULL) && (index < nHeight)) ? &pData[nStride * index] : NULL; }
 
                 /**
                  * Get row of the bitmap
                  * @param index number of row
                  * @return pointer to row or NULL
                  */
-                inline const uint8_t *row(size_t index) const noexcept  { return ((pData != NULL) && (index < nRows)) ? &pData[nStride * index] : NULL; }
+                inline const uint8_t *row(size_t index) const noexcept  { return ((pData != NULL) && (index < nHeight)) ? &pData[nStride * index] : NULL; }
 
                 /**
                  * Get the full bitmap data
@@ -147,11 +147,11 @@ namespace lsp
                 /**
                  * Initialize bitmap
                  * @param format pixel format of bitmap
-                 * @param rows number of rows
-                 * @param cols number of columns
+                 * @param width image width
+                 * @param height image height
                  * @return status of operation
                  */
-                status_t init(pixel_format_t format, size_t rows, size_t cols);
+                status_t init(pixel_format_t format, size_t width, size_t height);
 
                 /**
                  * Set bitmap data
@@ -175,11 +175,11 @@ namespace lsp
                 /**
                  * Resize bitmap. The stored image does not scale, it becomes cropped if new size is smaller.
                  *
-                 * @param rows number of rows
-                 * @param cols number of columns
+                 * @param width image width
+                 * @param height image height
                  * @return status of operation
                  */
-                status_t resize(size_t rows, size_t cols);
+                status_t resize(size_t width, size_t height);
 
                 /**
                  * Convert bitmap to desired pixel format
