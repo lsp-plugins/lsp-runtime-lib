@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 24 июн. 2022 г.
@@ -90,38 +90,26 @@ UTEST_BEGIN("runtime.runtime", system)
         printf("User login is: %s\n", login.get_native());
     }
 
-    void test_exec_detached()
-    {
-        system::exec_detached("calc", NULL);
-    }
-
     UTEST_MAIN
     {
-        test_exec_detached();
-        printf("All seems to be OK");
-//        // Test user login
-//        test_get_user_login();
-//
-//        // Test reading of volume info
-//        test_volume_info();
-//
-//        // Test time measurement
-//        test_time_measure();
-//
-//        // Test the system::sleep_msec function.
-//        test_sleep_msec(10);
-//        test_sleep_msec(15);
-//        test_sleep_msec(100);
-//        test_sleep_msec(105);
-//        test_sleep_msec(150);
-//        test_sleep_msec(1000);
-//        test_sleep_msec(1005);
+        // Test user login
+        test_get_user_login();
+
+        // Test reading of volume info
+        test_volume_info();
+
+        // Test time measurement
+        test_time_measure();
+
+        // Test the system::sleep_msec function.
+        test_sleep_msec(10);
+        test_sleep_msec(15);
+        test_sleep_msec(100);
+        test_sleep_msec(105);
+        test_sleep_msec(150);
+        test_sleep_msec(1000);
+        test_sleep_msec(1005);
     }
 UTEST_END;
-
-
-
-
-
 
 
