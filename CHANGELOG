@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.32 ===
+* Added system::exec_detached functions for launching detached processes.
 * Some updates and improvements on the configuration parser and serializer.
 * Added condition variables support.
 * Added support of XPM1/XPM2/XPM3 icon format.
