@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 6 сент. 2019 г.
@@ -85,6 +85,7 @@ namespace lsp
             cfg->nVerMin        = minor;
             cfg->sEqType        = xeq;
             cfg->sNotes         = xnotes;
+            cfg->fPreamp        = 0.0;
             cfg->nFilters       = filters;
 
             return cfg;
@@ -102,7 +103,9 @@ namespace lsp
             DECODE("LPQ", LPQ);
             DECODE("HPQ", HPQ);
             DECODE("LS", LS);
+            DECODE("LSC", LSC);
             DECODE("HS", HS);
+            DECODE("HSC", HSC);
             DECODE("LS6", LS6);
             DECODE("HS6", HS6);
             DECODE("LS12", LS12);
@@ -461,6 +464,11 @@ namespace lsp
                 f->filterType   = LS;
                 *offset        += 3;
             }
+            else if (s->starts_with_ascii_nocase("lsc ", *offset))
+            {
+                f->filterType   = LSC;
+                *offset        += 4;
+            }
             else if (s->starts_with_ascii_nocase("hs 6dB ", *offset))
             {
                 f->filterType   = HS6;
@@ -475,6 +483,11 @@ namespace lsp
             {
                 f->filterType   = HS;
                 *offset        += 3;
+            }
+            else if (s->starts_with_ascii_nocase("hsc ", *offset))
+            {
+                f->filterType   = HSC;
+                *offset        += 4;
             }
             else if (s->starts_with_ascii_nocase("no ", *offset))
             {
@@ -562,16 +575,17 @@ namespace lsp
             status_t res;
 
             // Read header
-            if ((res = is->read_line(&s, true)) != STATUS_OK)
-                return res;
-            if (!s.equals_ascii("Filter Settings file"))
-                return STATUS_UNSUPPORTED_FORMAT;
+//            if ((res = is->read_line(&s, true)) != STATUS_OK)
+//                return res;
+//            if (!s.equals_ascii("Filter Settings file"))
+//                return STATUS_UNSUPPORTED_FORMAT;
 
             // Read lines
             LSPString notes, eq;
             ssize_t major=0, minor=0;
             size_t offset = 0;
             lltl::darray<filter_t> vfilters;
+            double preamp = 0.0;
 
             while ((res = is->read_line(&s, true)) == STATUS_OK)
             {
@@ -607,6 +621,22 @@ namespace lsp
                         return res;
                     if (!eq.set(&s, offset))
                         return STATUS_NO_MEM;
+                }
+                else if (s.starts_with_ascii("Preamp:"))
+                {
+                    offset = 7;
+                    if ((res = skip_whitespace(&s, &offset)) != STATUS_OK)
+                        return res;
+                    if ((res = parse_double(&preamp, &s, &offset)) != STATUS_OK)
+                        return res;
+                    if ((res = skip_whitespace(&s, &offset)) != STATUS_OK)
+                        return res;
+                    if (s.starts_with_ascii("dB", offset))
+                        offset += 2;
+                    else
+                        preamp = exp((M_LN10 * 0.05) * preamp);
+                    if ((res = skip_whitespace(&s, &offset)) != STATUS_OK)
+                        return res;
                 }
                 else if (s.starts_with_ascii("Filter "))
                 {
@@ -649,6 +679,7 @@ namespace lsp
                 return STATUS_NO_MEM;
 
             // Copy filter data
+            cfg->fPreamp = preamp;
             ::memcpy(cfg->vFilters, vfilters.array(), sizeof(filter_t) * vfilters.size());
 
             // Store the result
