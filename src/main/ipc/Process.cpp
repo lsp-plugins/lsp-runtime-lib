@@ -1180,7 +1180,7 @@ namespace lsp
             return res;
         }
 
-        void Process::execve_process(const char *cmd, char * const *argv, char * const *envp, bool soft_exit)
+        void Process::execvpe_process(const char *cmd, char * const *argv, char * const *envp, bool soft_exit)
         {
             // Override STDIN, STDOUT, STDERR
             if (hStdIn >= 0)
@@ -1205,9 +1205,19 @@ namespace lsp
             }
 
             // Launch the process
-            ::execve(cmd, argv, envp);
+            if (strchr(cmd, FILE_SEPARATOR_C) != NULL)
+                ::execve(cmd, argv, envp);
+            else
+            {
+            #ifdef PLATFORM_MACOSX
+                // TODO: solve PATH lookup for MacOS
+                ::execve(cmd, argv, envp);
+            #else
+                ::execvpe(cmd, argv, envp);
+            #endif
+            }
 
-            lsp_trace("execve failed for pid=%d\n", int(getpid()));
+            lsp_trace("execvpe failed for pid=%d\n", int(getpid()));
 
             // Return error only if ::execvpe failed
             if (soft_exit)
@@ -1257,7 +1267,7 @@ namespace lsp
 
             // The child process stuff
             if (pid == 0)
-                execve_process(cmd, argv, envp, true);
+                execvpe_process(cmd, argv, envp, true);
 
             // The parent process stuff
             nPID        = pid;
@@ -1286,7 +1296,7 @@ namespace lsp
 
             // The child process stuff
             if (pid == 0)
-                execve_process(cmd, argv, envp, false);
+                execvpe_process(cmd, argv, envp, false);
 
             // The parent process stuff
             nPID        = pid;
@@ -1322,6 +1332,8 @@ namespace lsp
             res = build_envp(&envp);
             if (res == STATUS_OK)
             {
+                res = STATUS_UNKNOWN_ERR;
+
                 // Different behaviour, depending on POSIX_SPAWN_USEVFORK presence
                 #if defined(__USE_GNU) || defined(POSIX_SPAWN_USEVFORK)
                     res    = spawn_process(cmd, argv.array(), envp.array());
