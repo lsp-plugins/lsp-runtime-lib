@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 7 сент. 2019 г.
@@ -165,30 +165,19 @@ UTEST_BEGIN("runtime.fmt", roomeqwizard)
         check_filter(&vf[idx++], true, room_ew::PK, 11200.0, -7.0, 3.001);
         check_filter(&vf[idx++], true, room_ew::PK, 14886.0, 4.2, 2.100);
 
-//        Filter 1: ON PK Fc 91 Hz Gain -1.7 dB Q 1.525
-//        Filter 2: ON LSC Fc 112 Hz Gain 2.1 dB Q 1.387
-//        Filter 3: ON PK Fc 539 Hz Gain 5.4 dB Q 0.585
-//        Filter 4: ON PK Fc 1918 Hz Gain -4.1 dB Q 2.221
-//        Filter 5: ON PK Fc 3103 Hz Gain 7.8 dB Q 1.502
-//        Filter 6: ON PK Fc 4493 Hz Gain -6.6 dB Q 3.300
-//        Filter 7: ON PK Fc 6100 Hz Gain 4.4 dB Q 1.900
-//        Filter 8: ON HSC Fc 8600 Hz Gain 2.0 dB Q 2.537
-//        Filter 9: ON PK Fc 11200 Hz Gain -7.0 dB Q 3.001
-//        Filter 10: ON PK Fc 14886 Hz Gain 4.2 dB Q 2.100
-
         ::free(cfg);
     }
 
     UTEST_MAIN
     {
-//        printf("Testing binary file...\n");
-//        read_file("fmt/rew/Test11.req");
-//
-//        printf("Testing text file...\n");
-//        read_file("fmt/rew/Test11.txt");
-//
-//        printf("Testing another file...\n");
-//        read_file2("fmt/apo/demo.txt");
+        printf("Testing binary file...\n");
+        read_file("fmt/rew/Test11.req");
+
+        printf("Testing text file...\n");
+        read_file("fmt/rew/Test11.txt");
+
+        printf("Testing another file...\n");
+        read_file2("fmt/apo/demo.txt");
 
         printf("Testing another file...\n");
         read_file3("fmt/apo/effects.apo.txt");

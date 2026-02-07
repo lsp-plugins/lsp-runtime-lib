@@ -574,12 +574,6 @@ namespace lsp
             LSPString s;
             status_t res;
 
-            // Read header
-//            if ((res = is->read_line(&s, true)) != STATUS_OK)
-//                return res;
-//            if (!s.equals_ascii("Filter Settings file"))
-//                return STATUS_UNSUPPORTED_FORMAT;
-
             // Read lines
             LSPString notes, eq;
             ssize_t major=0, minor=0;
@@ -637,6 +631,10 @@ namespace lsp
                         preamp = exp((M_LN10 * 0.05) * preamp);
                     if ((res = skip_whitespace(&s, &offset)) != STATUS_OK)
                         return res;
+                }
+                else if (s.starts_with_ascii("Filter Settings file"))
+                {
+                    // Nothing
                 }
                 else if (s.starts_with_ascii("Filter "))
                 {
