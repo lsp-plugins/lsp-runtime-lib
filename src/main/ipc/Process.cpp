@@ -814,7 +814,7 @@ namespace lsp
                 NULL,                   // Process handle not inheritable
                 NULL,                   // Thread handle not inheritable
                 FALSE,                  // Set handle inheritance to FALSE
-                CREATE_UNICODE_ENVIRONMENT, // Use unicode environment
+                CREATE_NEW_CONSOLE | CREATE_UNICODE_ENVIRONMENT, // Use unicode environment
                 wenvp,                  // Set-up environment block
                 NULL,                   // Use parent's starting directory
                 &si,                    // Pointer to STARTUPINFO structure
@@ -832,6 +832,7 @@ namespace lsp
                 switch (error)
                 {
                     case ERROR_FILE_NOT_FOUND:
+                    case ERROR_PATH_NOT_FOUND:
                         nExitCode = STATUS_NOT_FOUND;
                         break;
                     default:

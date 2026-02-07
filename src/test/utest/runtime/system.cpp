@@ -92,7 +92,7 @@ UTEST_BEGIN("runtime.runtime", system)
 
     void test_exec_detached()
     {
-        system::exec_detached("kcalc", NULL);
+        system::exec_detached("calc", NULL);
     }
 
     UTEST_MAIN

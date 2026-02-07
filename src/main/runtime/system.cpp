@@ -22,6 +22,7 @@
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/io/Dir.h>
+#include <lsp-plug.in/io/File.h>
 #include <lsp-plug.in/ipc/Process.h>
 #include <lsp-plug.in/lltl/darray.h>
 #include <lsp-plug.in/lltl/parray.h>
@@ -34,6 +35,7 @@
     #include <synchapi.h>
     #include <sysinfoapi.h>
     #include <winnetwk.h>
+    #include <processthreadsapi.h>
 #endif /* PLATFORM_WINDOWS */
 
 #ifdef PLATFORM_POSIX
@@ -707,7 +709,7 @@ namespace lsp
         status_t follow_url(const LSPString *url)
         {
         #if defined(PLATFORM_WINDOWS)
-            ::ShellExecuteW(
+            const HINSTANCE hInst = ::ShellExecuteW(
                 NULL,               // Not associated with window
                 L"open",            // Open hyperlink
                 url->get_utf16(),   // The file to execute
@@ -715,6 +717,9 @@ namespace lsp
                 NULL,               // Directory
                 SW_SHOWNORMAL       // Show command
             );
+
+            if ((INT_PTR)hInst <= 32)
+                return STATUS_UNKNOWN_ERR;
         #elif defined(PLATFORM_HAIKU)
             status_t res;
             ipc::Process p;
@@ -1433,6 +1438,178 @@ namespace lsp
         }
 
 #ifdef PLATFORM_WINDOWS
+    static status_t append_arg_escaped(LSPString *dst, const LSPString *value)
+    {
+        if (value->is_empty())
+            return (dst->append_ascii("\"\"")) ? STATUS_OK : STATUS_NO_MEM;
+
+        for (size_t i=0, n=value->length(); i<n; ++i)
+        {
+            lsp_wchar_t ch = value->char_at(i);
+            switch (ch)
+            {
+                case ' ':
+                    if (!dst->append_ascii("\" \"", 3))
+                        return STATUS_NO_MEM;
+                    break;
+                case '"':
+                    if (!dst->append_ascii("\\\"", 2))
+                        return STATUS_NO_MEM;
+                    break;
+                default:
+                    if (!dst->append(ch))
+                        return STATUS_NO_MEM;
+                    break;
+            }
+        }
+
+        return STATUS_OK;
+    }
+
+    static status_t run_program(const LSPString *path, const LSPString *args)
+    {
+        // Launch child process
+        STARTUPINFOW si;
+        PROCESS_INFORMATION pi;
+
+        ZeroMemory( &si, sizeof(STARTUPINFOW) );
+        ZeroMemory( &pi, sizeof(PROCESS_INFORMATION) );
+        si.cb               = sizeof(si);
+
+        // Start the child process.
+        LPWSTR str_args = args->clone_utf16();
+        if (str_args == NULL)
+            return STATUS_NO_MEM;
+        lsp_finally { free(str_args); };
+
+        // Create process
+        if(!::CreateProcessW(
+            path->get_utf16(),      // Module name (use command line)
+            str_args,               // Command line
+            NULL,                   // Process handle not inheritable
+            NULL,                   // Thread handle not inheritable
+            FALSE,                  // Set handle inheritance to FALSE
+            DETACHED_PROCESS | CREATE_UNICODE_ENVIRONMENT, // Flags
+            NULL,                   // Set-up environment block
+            NULL,                   // Use parent's starting directory
+            &si,                    // Pointer to STARTUPINFO structure
+            &pi                     // Pointer to PROCESS_INFORMATION structure
+        ))
+        {
+            const DWORD error = ::GetLastError();
+            lsp_warn("Failed to create child process (%d)\n", int(error));
+
+            switch (error)
+            {
+                case ERROR_FILE_NOT_FOUND:
+                case ERROR_PATH_NOT_FOUND:
+                    return STATUS_NOT_FOUND;
+                default:
+                    return STATUS_UNKNOWN_ERR;
+            }
+        }
+
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+
+        return STATUS_OK;
+    }
+
+    static status_t shell_execute(const LSPString *cmd, const LSPString *args)
+    {
+        // If path contains separator, do not lookup PATH
+        if (cmd->index_of(FILE_SEPARATOR_C) >= 0)
+            return run_program(cmd, args);
+
+        // Lookup PATH
+        LSPString path, program;
+        status_t res = get_env_var("PATH", &path);
+        if (res != STATUS_OK)
+            return res;
+
+        ssize_t start = 0, count = path.length(), found = 0;
+        do
+        {
+            // Lookup for separator
+            found               = path.index_of(start, ';');
+            const ssize_t next  = (found >= 0) ? found : count;
+
+            if (start < next)
+            {
+                if (!program.set(&path, start, found))
+                    return STATUS_NO_MEM;
+                if (!program.ends_with(FILE_SEPARATOR_C))
+                {
+                    if (!program.append(FILE_SEPARATOR_C))
+                        return STATUS_NO_MEM;
+                }
+                if (!program.append(cmd))
+                    return STATUS_NO_MEM;
+                lsp_trace("%s", program.get_utf8());
+                if ((res = run_program(&program, args)) == STATUS_OK)
+                    return res;
+                if (!program.ends_with_ascii_nocase(".exe"))
+                {
+                    if (!program.append_ascii(".exe", 4))
+                        return STATUS_NO_MEM;
+                    lsp_trace("%s", program.get_utf8());
+                    if ((res = run_program(&program, args)) == STATUS_OK)
+                        return res;
+                }
+            }
+
+            start   = found + 1;
+        } while (found >= 0);
+
+        return STATUS_NOT_FOUND;
+    }
+
+    status_t exec_detached(const char *program, const char * const *argv)
+    {
+        status_t res;
+        LSPString args, arg;
+
+        for (; (argv != NULL) && (*argv != NULL); ++argv)
+        {
+            // Add separator
+            if (!args.is_empty())
+            {
+                if (!args.append(' '))
+                    return STATUS_NO_MEM;
+            }
+            if (!arg.set_native(*argv))
+                return STATUS_NO_MEM;
+
+            if ((res = append_arg_escaped(&args, &arg)) != STATUS_OK)
+                return res;
+        }
+
+        if (!arg.set_native(program))
+            return STATUS_NO_MEM;
+
+        return shell_execute(&arg, &args);
+    }
+
+    status_t exec_detached(const LSPString *program, const LSPString * const *argv)
+    {
+        status_t res;
+        LSPString args;
+
+        for (; (argv != NULL) && (*argv != NULL); ++argv)
+        {
+            // Add separator
+            if (!args.is_empty())
+            {
+                if (!args.append(' '))
+                    return STATUS_NO_MEM;
+            }
+            if ((res = append_arg_escaped(&args, *argv)) != STATUS_OK)
+                return res;
+        }
+
+        return shell_execute(program, &args);
+    }
+
 #else
 
 #if defined(__USE_GNU) || (defined(POSIX_SPAWN_SETSID))
