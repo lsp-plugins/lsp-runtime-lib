@@ -69,6 +69,16 @@ namespace lsp
                     return res;
                 }
 
+                status_t read_token(token_type_t & type, const char * & value)
+                {
+                    status_t res;
+                    do {
+                        if ((res = pTokenizer->read_token(type, value)) != STATUS_OK)
+                            return res;
+                    } while (type == TOK_COMMENT);
+                    return res;
+                }
+
             public:
                 XPM3StreamParser(Tokenizer * tokenizer)
                 {
@@ -119,63 +129,63 @@ namespace lsp
                     const char *tvalue = NULL;
 
                     // Keyword 'static'
-                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                    if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                         return STATUS_CORRUPTED_FILE;
                     if ((ttype != TOK_IDENTIFIER) || (strcmp(tvalue, "static") != 0))
                         return STATUS_CORRUPTED_FILE;
 
                     // Read 'char' type
-                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                    if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                         return STATUS_CORRUPTED_FILE;
                     if ((ttype == TOK_IDENTIFIER) && (strcmp(tvalue, "const") == 0))
                     {
-                        if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                        if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                             return res;
                     }
                     if ((ttype != TOK_IDENTIFIER) || (strcmp(tvalue, "char") != 0))
                         return STATUS_CORRUPTED_FILE;
 
                     // Read '*'
-                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                    if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                         return res;
                     if (ttype != TOK_ASTERISK)
                         return STATUS_CORRUPTED_FILE;
 
                     // Read variable name
-                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                    if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                         return res;
                     if ((ttype == TOK_IDENTIFIER) && (strcmp(tvalue, "const") == 0))
                     {
-                        if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                        if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                             return res;
                     }
                     if (ttype != TOK_IDENTIFIER)
                         return STATUS_CORRUPTED_FILE;
 
                     // Read '[]' braces
-                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                    if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                         return res;
                     if (ttype != TOK_LQBRACKET)
                         return STATUS_CORRUPTED_FILE;
-                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                    if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                         return res;
                     if (ttype != TOK_RQBRACKET)
                         return STATUS_CORRUPTED_FILE;
 
                     // Read assign ('=')
-                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                    if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                         return res;
                     if (ttype != TOK_ASSIGN)
                         return STATUS_CORRUPTED_FILE;
 
                     // Read start of array ('{')
-                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                    if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                         return res;
                     if (ttype != TOK_LBRACE)
                         return STATUS_CORRUPTED_FILE;
 
                     // Finally, read the first line in the array
-                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                    if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                         return res;
                     if (ttype != TOK_STRING)
                         return STATUS_CORRUPTED_FILE;
@@ -219,13 +229,13 @@ namespace lsp
                     Color tmp;
 
                     // Require comma separator
-                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                    if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                         return res;
                     if (ttype != TOK_COMMA)
                         return STATUS_CORRUPTED_FILE;
 
                     // Read color line
-                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                    if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                         return res;
                     if (ttype != TOK_STRING)
                         return STATUS_CORRUPTED_FILE;
@@ -267,13 +277,13 @@ namespace lsp
                     Color tmp;
 
                     // Require comma separator
-                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                    if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                         return res;
                     if (ttype != TOK_COMMA)
                         return STATUS_CORRUPTED_FILE;
 
                     // Read pixel line
-                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                    if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                         return res;
                     if (ttype != TOK_STRING)
                         return STATUS_CORRUPTED_FILE;
@@ -312,12 +322,12 @@ namespace lsp
                     Extension tmp;
 
                     // Require comma separator or closing right brace
-                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                    if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                         return res;
                     if (ttype == TOK_RBRACE)
                     {
                         // Require semicolon
-                        if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                        if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                             return res;
                         if (ttype != TOK_SEMICOLON)
                             return STATUS_CORRUPTED_FILE;
@@ -329,7 +339,7 @@ namespace lsp
                         return STATUS_CORRUPTED_FILE;
 
                     // Read extension line
-                    if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                    if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                         return res;
                     if (ttype != TOK_STRING)
                         return STATUS_CORRUPTED_FILE;
@@ -356,13 +366,13 @@ namespace lsp
                         while (true)
                         {
                             // Require comma
-                            if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                            if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                                 return res;
                             if (ttype != TOK_COMMA)
                                 return STATUS_CORRUPTED_FILE;
 
                             // Read extension line
-                            if ((res = pTokenizer->read_token(ttype, tvalue)) != STATUS_OK)
+                            if ((res = read_token(ttype, tvalue)) != STATUS_OK)
                                 return res;
                             if (ttype != TOK_STRING)
                                 return STATUS_CORRUPTED_FILE;

@@ -51,6 +51,7 @@ namespace lsp
             TOK_ASSIGN,
             TOK_IDENTIFIER,
             TOK_INTEGER,
+            TOK_COMMENT,
         };
 
         /**
@@ -263,6 +264,31 @@ namespace lsp
                     return res;
                 }
 
+                status_t        read_comment()
+                {
+                    int ch;
+                    while ((ch = getch()) >= 0)
+                    {
+                        if (!append(ch))
+                            return STATUS_NO_MEM;
+
+                        if (ch == '*') // Possible end of comment?
+                        {
+                            if ((ch = getch()) < 0)
+                                return status_t(-ch);
+
+                            if (!append(ch))
+                                return STATUS_NO_MEM;
+
+                            if (ch == '/')
+                                return STATUS_OK;
+                        }
+
+                    }
+
+                    return status_t(-ch);
+                }
+
                 status_t read_c_string()
                 {
                     int ch;
@@ -424,30 +450,38 @@ namespace lsp
                                 return res;
                             sToken.type         = TOK_XPM2_SIG;
                             break;
-                        case '/':   // XPM3 signature
-                            if (nLineNum != 0)
-                                return STATUS_CORRUPTED_FILE;
-                            if ((res = expect_characters("* XPM")) != STATUS_OK)
-                                return res;
-                            ch    = getch();
-                            if (ch < 0)
-                                return status_t(-ch);
-                            if (ch == '3')
+                        case '/':   // XPM3 signature?
+                            if ((res = expect_characters("* XPM")) == STATUS_OK)
                             {
-                                if (!append(ch))
-                                    return STATUS_NO_MEM;
-                                if ((res = expect_signature(" */")) != STATUS_OK)
-                                    return res;
-                            }
-                            else if (ch == ' ')
-                            {
-                                if ((res = expect_signature("*/")) != STATUS_OK)
-                                    return res;
+                                if (nLineNum != 0)
+                                    return STATUS_CORRUPTED_FILE;
+
+                                ch    = getch();
+                                if (ch < 0)
+                                    return status_t(-ch);
+                                if (ch == '3')
+                                {
+                                    if (!append(ch))
+                                        return STATUS_NO_MEM;
+                                    if ((res = expect_signature(" */")) != STATUS_OK)
+                                        return res;
+                                }
+                                else if (ch == ' ')
+                                {
+                                    if ((res = expect_signature("*/")) != STATUS_OK)
+                                        return res;
+                                }
+                                sToken.type         = TOK_XPM3_SIG;
                             }
                             else
-                                return STATUS_CORRUPTED_FILE;
+                            {
+                                if ((res = read_comment()) != STATUS_OK)
+                                    return res;
+                                if ((res = expect_end_of_line()) != STATUS_OK)
+                                    return res;
+                                sToken.type         = TOK_COMMENT;
+                            }
 
-                            sToken.type         = TOK_XPM3_SIG;
                             break;
                         case '\"':  // C String
                             --sToken.length;    // Remove '"' character
