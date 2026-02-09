@@ -63,7 +63,7 @@ namespace lsp
                 explicit cbuffer_t();
                 ~cbuffer_t();
 
-                status_t        init(size_t capacity);
+                status_t        init(size_t log_capacity);
                 void            destroy();
 
             public:
@@ -118,13 +118,13 @@ namespace lsp
                 uint8_t    *data;       // Buffer data (2 x capacity)
                 uint32_t    length;     // Actual size of buffer
                 uint32_t    head;       // Head of the buffer
-                uint32_t    cap;        // Buffer capacity
+                uint32_t    cap;        // Buffer capacity, power of two
 
             public:
                 explicit dbuffer_t();
                 ~dbuffer_t();
 
-                status_t        init(size_t capacity);
+                status_t        init(size_t log_capacity);
                 void            destroy();
 
             public:

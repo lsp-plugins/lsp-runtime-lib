@@ -42,11 +42,12 @@ namespace lsp
             destroy();
         }
 
-        status_t cbuffer_t::init(size_t capacity)
+        status_t cbuffer_t::init(size_t log_capacity)
         {
-            const size_t dbuf   = capacity * sizeof(uint8_t);
-            const size_t ibuf   = capacity * sizeof(uint32_t);
-            const size_t rbuf   = 0x100 * sizeof(uint32_t);
+            const size_t capacity   = 1 << log_capacity;
+            const size_t dbuf       = capacity * sizeof(uint8_t);
+            const size_t ibuf       = capacity * sizeof(uint32_t);
+            const size_t rbuf       = 0x100 * sizeof(uint32_t);
 
             uint8_t *ptr    = static_cast<uint8_t *>(realloc(data, dbuf + ibuf + rbuf));
             if (ptr == NULL)
@@ -94,8 +95,9 @@ namespace lsp
             }
 
             // Fill the buffer
+            const size_t mask   = cap - 1;
             const size_t ohead  = head;
-            head                = (head + count) % cap;
+            head                = (head + count) & mask;
             if (head < ohead)
             {
                 const size_t split  = cap - ohead;
@@ -109,7 +111,7 @@ namespace lsp
             uint32_t new_length = length;
             for (size_t i=0; i<count; ++i)
             {
-                const size_t off    = (ohead + i) % cap;        // Compute offset
+                const size_t off    = (ohead + i) & mask;       // Compute offset
                 const uint8_t b     = v[i];                     // Fetch byte
                 index[off]          = root[b];                  // Store offset of previous element
                 root[b]             = new_length++;             // Update absolute root offset
@@ -125,7 +127,7 @@ namespace lsp
             data[head]      = b;                        // Data byte
             index[head]     = root[b];                  // Store offset of previous element
             root[b]         = length++;                 // Update length
-            head            = (head + 1) % cap;         // Update head
+            head            = (head + 1) & (cap - 1);   // Update head
         }
 
         size_t cbuffer_t::lookup(size_t *out, const void *src, size_t avail)
@@ -141,11 +143,12 @@ namespace lsp
 
             // Lookup among all matches
             uint32_t delta      = length - root[*v];
+            const size_t mask   = cap - 1;
             while (delta <= dmax)
             {
                 // Byte matched, do some heuristics
-                const size_t soff       = (head + cap - delta) % cap;
-                if ((len > 1) && (data[(soff + len - 1) % cap] != v[len-1]))
+                const size_t soff       = (head + cap - delta) & mask;
+                if ((len > 1) && (data[(soff + len - 1) & mask] != v[len-1]))
                 {
                     delta                   = length - index[soff];
                     continue;
@@ -156,7 +159,7 @@ namespace lsp
                 size_t slen             = 1;
                 for (size_t i=1; i<lookup; ++i)
                 {
-                    if (v[i] != data[(soff + i) % cap])
+                    if (v[i] != data[(soff + i) & mask])
                         break;
                     ++slen;
                 }
@@ -180,7 +183,7 @@ namespace lsp
 
         uint8_t cbuffer_t::byte_at(size_t offset)
         {
-            return (offset < cap) ? data[(head + cap - offset - 1) % cap] : 0;
+            return (offset < cap) ? data[(head + cap - offset - 1) & (cap - 1)] : 0;
         }
 
         void cbuffer_t::clear()
@@ -208,9 +211,9 @@ namespace lsp
             destroy();
         }
 
-        status_t dbuffer_t::init(size_t capacity)
+        status_t dbuffer_t::init(size_t log_capacity)
         {
-            size_t dbuf     = capacity * sizeof(uint8_t);
+            size_t dbuf     = sizeof(uint8_t) << log_capacity;
             uint8_t *ptr    = static_cast<uint8_t *>(realloc(data, dbuf));
             if (ptr == NULL)
                 return STATUS_NO_MEM;
@@ -218,7 +221,7 @@ namespace lsp
             data            = ptr;
             length          = 0;
             head            = 0;
-            cap             = uint32_t(capacity);
+            cap             = uint32_t(1 << log_capacity);
 
             return STATUS_OK;
         }
@@ -247,7 +250,7 @@ namespace lsp
 
             // Copy data to the buffer
             size_t ohead        = head;
-            head                = (head + count) % cap;
+            head                = (head + count) & (cap-1);
             if (head < ohead)
             {
                 const size_t split  = cap - ohead;
@@ -270,7 +273,7 @@ namespace lsp
                 return STATUS_UNDERFLOW;
 
             uint8_t *dptr       = static_cast<uint8_t *>(dst);
-            uint32_t soff       = (head + cap - shift) % cap;
+            uint32_t soff       = (head + cap - shift) & (cap-1);
 
             if ((soff + count) > cap)
             {
@@ -287,7 +290,7 @@ namespace lsp
         void dbuffer_t::append(uint8_t v)
         {
             data[head]      = v;
-            head            = (head + 1) % cap;
+            head            = (head + 1) & (cap - 1);
             length          = lsp_min(length + 1, cap);
         }
 

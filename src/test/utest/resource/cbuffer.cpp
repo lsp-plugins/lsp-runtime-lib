@@ -24,6 +24,8 @@
 
 using namespace lsp;
 
+static constexpr size_t LOG_BUF_SIZE        = 5;
+
 UTEST_BEGIN("runtime.resource", cbuffer)
 
     UTEST_MAIN
@@ -33,7 +35,7 @@ UTEST_BEGIN("runtime.resource", cbuffer)
 
         printf("Testing compression buffer");
 
-        UTEST_ASSERT(buf.init(0x20) == STATUS_OK);
+        UTEST_ASSERT(buf.init(LOG_BUF_SIZE) == STATUS_OK);
 
         // Check that we can not find value in empty buffer
         // buffer state: ???? ???? ???? ???? ???? ???? ???? ????

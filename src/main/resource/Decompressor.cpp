@@ -69,10 +69,10 @@ namespace lsp
             return sIn.close();
         }
 
-        status_t Decompressor::init(const void *data, size_t data_size, size_t decompressed_size, size_t buf_sz)
+        status_t Decompressor::init(const void *data, size_t data_size, size_t decompressed_size, size_t log_buf_sz)
         {
             // Create buffer
-            status_t res = sBuffer.init(buf_sz);
+            status_t res = sBuffer.init(log_buf_sz);
             if (res != STATUS_OK)
                 return res;
 

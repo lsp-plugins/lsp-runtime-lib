@@ -31,8 +31,8 @@
 
 using namespace lsp;
 
-#define BUFFER_SIZE     0x1000
-#define FLUSH_LIMIT     0x10000
+static constexpr size_t LOG_BUFFER_SIZE = 12;
+static constexpr size_t FLUSH_LIMIT     = 1 << 16;
 
 UTEST_BEGIN("runtime.resource", compressor)
 
@@ -157,7 +157,7 @@ UTEST_BEGIN("runtime.resource", compressor)
         io::OutFileStream ofs;
 
         // Scan and compress directory
-        UTEST_ASSERT(c->init(BUFFER_SIZE, os) == STATUS_OK);
+        UTEST_ASSERT(c->init(LOG_BUFFER_SIZE, os) == STATUS_OK);
         printf("Scanning source directory...\n");
         scan_directory(&data_size, path, path, c);
         c->flush(); // Flush compressor if ther is some data
@@ -185,7 +185,7 @@ UTEST_BEGIN("runtime.resource", compressor)
         io::Path tmp;
 
         UTEST_ASSERT(tmp.fmt("%s/utest-%s", tempdir(), full_name()) > 0);
-        UTEST_ASSERT(load.init(os->data(), os->size(), c->entries(), c->num_entires(), BUFFER_SIZE) == STATUS_OK);
+        UTEST_ASSERT(load.init(os->data(), os->size(), c->entries(), c->num_entires(), LOG_BUFFER_SIZE) == STATUS_OK);
         printf("Scanning resource registry...\n");
         scan_resources(&load, path, &tmp, &rel);
     }

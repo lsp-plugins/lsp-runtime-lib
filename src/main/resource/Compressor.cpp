@@ -81,14 +81,14 @@ namespace lsp
             return res;
         }
 
-        status_t Compressor::init(size_t buf_size, io::IOutStream *os, size_t flags)
+        status_t Compressor::init(size_t log_buf_size, io::IOutStream *os, size_t flags)
         {
             status_t res;
 
             if (sBuffer.data != NULL)
                 return STATUS_BAD_STATE;
 
-            if ((res = sBuffer.init(buf_size)) != STATUS_OK)
+            if ((res = sBuffer.init(log_buf_size)) != STATUS_OK)
                 return res;
 
             if ((res = sOS.wrap(os, flags)) != STATUS_OK)

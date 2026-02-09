@@ -75,10 +75,10 @@ namespace lsp
                  * @param data binary data
                  * @param data_size the size of the binary data
                  * @param decompressed_size the size of the decompressed data
-                 * @param buf_sz I/O buffer size
+                 * @param buf_sz I/O buffer size (the exponent for power-of-two value)
                  * @return status of operation
                  */
-                status_t            init(const void *data, size_t data_size, size_t decompressed_size, size_t buf_sz);
+                status_t            init(const void *data, size_t data_size, size_t decompressed_size, size_t log_buf_sz);
 
             public: // io::IInStream
                 virtual ssize_t     read_byte() override;
