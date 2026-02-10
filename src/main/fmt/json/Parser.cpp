@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 16 окт. 2019 г.
@@ -681,6 +681,25 @@ namespace lsp
             }
             if (dst != NULL)
                 *dst = ev.iValue;
+            return STATUS_OK;
+        }
+
+        status_t Parser::read_int(size_t *dst)
+        {
+            event_t ev;
+            status_t res = read_next(&ev);
+            if (res != STATUS_OK)
+                return res;
+            switch (ev.type)
+            {
+                case JE_INTEGER: break;
+                case JE_NULL: return STATUS_NULL;
+                default: return STATUS_BAD_TYPE;
+            }
+            if (ev.iValue < 0)
+                return STATUS_UNDERFLOW;
+            if (dst != NULL)
+                *dst = size_t(ev.iValue);
             return STATUS_OK;
         }
 
