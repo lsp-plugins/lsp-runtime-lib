@@ -1612,10 +1612,6 @@ namespace lsp
 
 #else
 
-#if defined(__USE_GNU) || (defined(POSIX_SPAWN_SETSID))
-    #define LSP_RUNTIME_USE_SPAWN
-#endif
-
         static void execvp_process(const char *cmd, char * const *argv, bool soft_exit)
         {
             fprintf(stderr, "Executing process...\n");
@@ -1638,7 +1634,7 @@ namespace lsp
                 ::exit(STATUS_UNKNOWN_ERR);
         }
 
-    #ifdef LSP_RUNTIME_USE_SPAWN
+    #ifdef POSIX_SPAWN_SETSID
         static status_t spawn_process(const char *cmd, char * const *argv, char * const *envp)
         {
             lsp_trace("Creating child process using posix_spawn...");
@@ -1647,7 +1643,6 @@ namespace lsp
             posix_spawnattr_t attr;
             if (::posix_spawnattr_init(&attr))
                 return STATUS_UNKNOWN_ERR;
-
 
             int flags   = POSIX_SPAWN_SETSID;
         #if defined(__USE_GNU) || (defined(POSIX_SPAWN_USEVFORK))
@@ -1688,7 +1683,7 @@ namespace lsp
 
             return res;
         }
-    #endif /* LSP_RUNTIME_USE_SPAWN */
+    #endif /* POSIX_SPAWN_SETSID */
 
         static status_t vfork_process(const char *cmd, char * const *argv)
         {
@@ -1762,10 +1757,10 @@ namespace lsp
             status_t res = STATUS_UNKNOWN_ERR;
 
             // Different behaviour, depending on POSIX_SPAWN_USEVFORK presence
-            #ifdef LSP_RUNTIME_USE_SPAWN
+            #ifdef POSIX_SPAWN_SETSID
                 if (res != STATUS_OK)
                     res    = spawn_process(program, argv, environ);
-            #endif /* LSP_RUNTIME_USE_SPAWN */
+            #endif /* POSIX_SPAWN_SETSID */
 
             if (res != STATUS_OK)
                 res    = vfork_process(program, argv);
