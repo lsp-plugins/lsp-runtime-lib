@@ -107,9 +107,14 @@ namespace lsp
         inline status_t InBufStream::do_wrap(IInStream *is, size_t flags)
         {
             // Obtain the position of the input stream
-            const wssize_t pos = is->position();
+            wssize_t pos = is->position();
             if (pos < 0)
-                return -set_error(status_t(-pos));
+            {
+                if (pos != -STATUS_NOT_IMPLEMENTED)
+                    return set_error(status_t(-pos));
+                else
+                    pos = 0;
+            }
 
             // Check buffer capacity
             if (nBufCap <= 0)

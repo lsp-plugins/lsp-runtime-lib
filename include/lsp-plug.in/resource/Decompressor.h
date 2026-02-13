@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 16 мар. 2021 г.
@@ -81,6 +81,7 @@ namespace lsp
                 status_t            init(const void *data, size_t data_size, size_t decompressed_size, size_t log_buf_sz);
 
             public: // io::IInStream
+                virtual wssize_t    position() override;
                 virtual ssize_t     read_byte() override;
                 virtual ssize_t     read(void *dst, size_t count) override;
                 virtual status_t    close() override;
