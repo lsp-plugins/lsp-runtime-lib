@@ -51,7 +51,8 @@ namespace lsp
             LS12,   // 12dB/octave Low Shelf filter
             HS12,   // 12dB/octave High Shelf filter
             NO,     // notch filter
-            AP      // allpass filter
+            AP,     // allpass filter
+            BP,     // bandpass filter
         };
 
         typedef struct filter_t

@@ -112,6 +112,7 @@ namespace lsp
             DECODE("HS12", HS12);
             DECODE("NO", NO);
             DECODE("AP", AP);
+            DECODE("BP", BP);
 
             #undef DECODE
 
@@ -499,6 +500,11 @@ namespace lsp
                 f->filterType   = AP;
                 *offset        += 3;
             }
+            else if (s->starts_with_ascii_nocase("bp ", *offset))
+            {
+                f->filterType   = BP;
+                *offset        += 3;
+            }
             else
                 return STATUS_BAD_FORMAT;
 
@@ -636,17 +642,24 @@ namespace lsp
                 {
                     // Nothing
                 }
-                else if (s.starts_with_ascii("Filter "))
+                else if (s.starts_with_ascii("Filter"))
                 {
-                    offset = 7;
+                    offset = 6;
                     if (!s.append(' ')) // For easier parsing, we add a whitespace at the end
                         return STATUS_NO_MEM;
 
-                    // Find filter definition
-                    size_t len = s.length();
-                    while (offset < len)
-                        if (s.char_at(offset++) == ':')
-                            break;
+                    // Check syntax
+                    lsp_wchar_t ch = s.char_at(offset++);
+                    if (ch == ' ')
+                    {
+                        // Find filter definition
+                        size_t len = s.length();
+                        while (offset < len)
+                            if (s.char_at(offset++) == ':')
+                                break;
+                    }
+                    else if (ch != ':')
+                        continue;
 
                     // Allocate filter
                     filter_t *f = vfilters.add();
