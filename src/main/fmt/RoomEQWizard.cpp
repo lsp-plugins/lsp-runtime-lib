@@ -513,7 +513,7 @@ namespace lsp
             f->fc       = 100.0;
             f->gain     = 0.0;
 
-            if ((f->filterType == LP) || (f->filterType == HP))
+            if ((f->filterType == LP) || (f->filterType == HP) || (f->filterType == BP))
                 f->Q        = M_SQRT1_2;
 
             if ((res = skip_whitespace(s, offset)) != STATUS_OK)
