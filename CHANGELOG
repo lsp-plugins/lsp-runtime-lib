@@ -11,6 +11,7 @@
 * Added lsp::mm::IColorMap interface.
 * Added lsp::mm::Bitmap class.
 * Better parsing APO equalizer text files.
+* Better decoding audio file loading errors.
 
 === 1.0.31 ===
 * Task execution mechanism moved task state field from volatile to atomic.

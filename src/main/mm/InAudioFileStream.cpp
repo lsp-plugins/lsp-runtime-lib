@@ -22,6 +22,7 @@
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/common/endian.h>
+#include <lsp-plug.in/io/File.h>
 #include <lsp-plug.in/mm/InAudioFileStream.h>
 #include <lsp-plug.in/stdlib/stdio.h>
 #include <lsp-plug.in/stdlib/string.h>
@@ -233,13 +234,13 @@ namespace lsp
                 case SF_ERR_NO_ERROR:
                     return STATUS_OK;
                 case SF_ERR_UNRECOGNISED_FORMAT:
-                    return STATUS_BAD_FORMAT;
+                    return STATUS_UNSUPPORTED_FORMAT;
                 case SF_ERR_MALFORMED_FILE:
                     return STATUS_CORRUPTED_FILE;
                 case SF_ERR_UNSUPPORTED_ENCODING:
-                    return STATUS_BAD_FORMAT;
-                default:
                     return STATUS_UNSUPPORTED_FORMAT;
+                default:
+                    return STATUS_UNKNOWN_ERR;
             }
         }
     #endif
@@ -488,7 +489,31 @@ namespace lsp
             // and format fields to valid values. All other fields of the structure are filled in by the library.
             info.format         = 0;
             if ((sf = sf_open(path->get_native(), SFM_READ, &info)) == NULL)
-                return set_error(decode_sf_error(sf));
+            {
+                status_t res = decode_sf_error(sf);
+                if (res == STATUS_UNKNOWN_ERR)
+                {
+                    // Need more information about the file
+                    io::fattr_t fattr;
+                    status_t ires = res;
+                    if ((ires = io::File::stat(path, &fattr)) == STATUS_OK)
+                    {
+                        if (fattr.type == io::fattr_t::FT_SYMLINK)
+                            res     = STATUS_BAD_SYMLINK;
+                        else if (fattr.type != io::fattr_t::FT_REGULAR)
+                            res     = STATUS_NOT_FILE;
+                    }
+                    else if ((ires = io::File::sym_stat(path, &fattr)) == STATUS_OK)
+                    {
+                        if (fattr.type != io::fattr_t::FT_SYMLINK)
+                            res     = STATUS_BAD_SYMLINK;
+                    }
+                    else
+                        res     = ires;
+                }
+
+                return set_error(res);
+            }
 
             // Decode metadata
             sFormat.srate       = info.samplerate;
