@@ -32,6 +32,7 @@
 #ifdef PLATFORM_WINDOWS
     #include <windows.h>
     #include <shellapi.h>
+    #include <shlwapi.h>
     #include <synchapi.h>
     #include <sysinfoapi.h>
     #include <winnetwk.h>
@@ -1468,6 +1469,33 @@ namespace lsp
 
     static status_t run_program(const LSPString *path, const LSPString *args)
     {
+        // Check that executable file exists
+        LSPString xpath;
+        LPCWSTR ppath = path->get_utf16();
+        if (!PathFileExistsW(ppath))
+        {
+            // Try .EXE and .COM extensions
+            if (path->ends_with_ascii_nocase(".exe"))
+                return STATUS_NOT_FOUND;
+            if (path->ends_with_ascii_nocase(".com"))
+                return STATUS_NOT_FOUND;
+            // Try ".EXE"
+            if (!xpath.set(path))
+                return STATUS_NO_MEM;
+            if (!xpath.append_ascii(".exe"))
+                return STATUS_NO_MEM;
+            ppath = xpath.get_utf16();
+            if (!PathFileExistsW(ppath))
+            {
+                xpath.set_length(xpath.length() - 4);
+                if (!xpath.append_ascii(".com"))
+                    return STATUS_NO_MEM;
+                ppath = xpath.get_utf16();
+                if (!PathFileExistsW(ppath))
+                    return STATUS_NOT_FOUND;
+            }
+        }
+
         // Launch child process
         STARTUPINFOW si;
         PROCESS_INFORMATION pi;
@@ -1484,7 +1512,7 @@ namespace lsp
 
         // Create process
         if(!::CreateProcessW(
-            path->get_utf16(),      // Module name (use command line)
+            ppath,                  // Module name (use command line)
             str_args,               // Command line
             NULL,                   // Process handle not inheritable
             NULL,                   // Thread handle not inheritable
@@ -1548,14 +1576,6 @@ namespace lsp
                 lsp_trace("%s", program.get_utf8());
                 if ((res = run_program(&program, args)) == STATUS_OK)
                     return res;
-                if (!program.ends_with_ascii_nocase(".exe"))
-                {
-                    if (!program.append_ascii(".exe", 4))
-                        return STATUS_NO_MEM;
-                    lsp_trace("%s", program.get_utf8());
-                    if ((res = run_program(&program, args)) == STATUS_OK)
-                        return res;
-                }
             }
 
             start   = found + 1;
