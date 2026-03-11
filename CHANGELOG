@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.33 ===
+
+
 === 1.0.32 ===
 * Added program lookup using in PATH environment variable when launching process.
 * Added system::exec_detached functions for launching detached processes.
