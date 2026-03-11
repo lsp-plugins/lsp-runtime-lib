@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 24 июл. 2019 г.
@@ -1210,11 +1210,13 @@ namespace lsp
                 ::execve(cmd, argv, envp);
             else
             {
-            #ifdef PLATFORM_MACOSX
+            #if defined(PLATFORM_MACOSX)
                 // TODO: solve PATH lookup for MacOS
                 ::execve(cmd, argv, envp);
+            #elif defined(_GNU_SOURCE)
+                ::execvpe(cmd, argv, envp); // execvpe is supported
             #else
-                ::execvpe(cmd, argv, envp);
+                ::execve(cmd, argv, envp);
             #endif
             }
 

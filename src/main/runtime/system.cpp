@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 17 мар. 2019 г.
@@ -1627,7 +1627,7 @@ namespace lsp
 
             lsp_trace("execve failed for pid=%d, code=%d\n", int(getpid()));
 
-            // Return error only if ::execvpe failed
+            // Return error only if ::execvp failed
             if (soft_exit)
                 ::_exit(STATUS_UNKNOWN_ERR);
             else
