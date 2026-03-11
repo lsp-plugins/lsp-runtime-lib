@@ -21,21 +21,25 @@
 
 #include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/ipc/Process.h>
+#include <lsp-plug.in/io/OutFileStream.h>
+#include <lsp-plug.in/io/InFileStream.h>
+#include <lsp-plug.in/runtime/system.h>
+
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-#include <lsp-plug.in/io/OutFileStream.h>
-#include <lsp-plug.in/io/InFileStream.h>
 
 #if defined(PLATFORM_WINDOWS)
     #include <windows.h>
     #include <processthreadsapi.h>
     #include <namedpipeapi.h>
+    #include <shlwapi.h>
     #include <synchapi.h>
     #include <processenv.h>
 #else
     #include <spawn.h>
+    #include <sys/stat.h>
     #include <sys/wait.h>
     
     #ifndef _GNU_SOURCE
@@ -43,11 +47,85 @@
     #endif /* _GNU_SOURCE */
 #endif /* PLATFORM_WINDOWS */
 
+#if defined(PLATFORM_POSIX) && defined(_GNU_SOURCE)
+    #define PLATFORM_HAS_EXECVPE
+#endif
+
+
 namespace lsp
 {
     namespace ipc
     {
         
+#ifndef PLATFORM_HAS_EXECVPE
+    static status_t find_executable(LSPString & program, const LSPString & command)
+    {
+        if (command.index_of(FILE_SEPARATOR_C) >= 0)
+            return STATUS_NOT_FOUND;
+
+        // Lookup PATH
+        LSPString path;
+        status_t res = system::get_env_var("PATH", &path);
+        if (res != STATUS_OK)
+            return res;
+
+        ssize_t start = 0, count = path.length(), found = 0;
+        do
+        {
+            // Lookup for separator
+            found               = path.index_of(start, ';');
+            const ssize_t next  = (found >= 0) ? found : count;
+
+            if (start < next)
+            {
+                if (!program.set(&path, start, found))
+                    return STATUS_NO_MEM;
+                if (!program.ends_with(FILE_SEPARATOR_C))
+                {
+                    if (!program.append(FILE_SEPARATOR_C))
+                        return STATUS_NO_MEM;
+                }
+                if (!program.append(&command))
+                    return STATUS_NO_MEM;
+
+            #ifdef PLATFORM_WINDOWS
+                if (PathFileExistsW(program.get_utf16()))
+                    return STATUS_OK;
+
+                // Try .EXE and .COM extensions
+                if ((!program.ends_with_ascii_nocase(".exe")) &&
+                    (!program.ends_with_ascii_nocase(".com")))
+                {
+                    // Try ".EXE"
+                    if (!program.append_ascii(".exe"))
+                        return STATUS_NO_MEM;
+                    if (PathFileExistsW(program.get_utf16()))
+                        return STATUS_OK;
+
+                    // Try ".COM"
+                    program.set_length(program.length() - 4);
+                    if (!program.append_ascii(".com"))
+                        return STATUS_NO_MEM;
+                    if (PathFileExistsW(ppath))
+                        return STATUS_OK;
+                }
+            #else
+                struct stat st;
+                if (stat(program.get_native(), &st) == 0)
+                {
+                    if (S_ISREG(st.st_mode) && (st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)))
+                        return STATUS_OK;
+                }
+            #endif /* PLATFORM_WINDOWS */
+            }
+
+            start   = found + 1;
+        } while (found >= 0);
+
+        return STATUS_NOT_FOUND;
+    }
+#endif /* PLATFORM_HAS_EXECPE */
+
         Process::Process()
         {
             nStatus             = PSTATUS_CREATED;
@@ -1206,21 +1284,16 @@ namespace lsp
             }
 
             // Launch the process
+#ifndef PLATFORM_HAS_EXECVPE
+            ::execve(cmd, argv, envp);
+#else
             if (strchr(cmd, FILE_SEPARATOR_C) != NULL)
                 ::execve(cmd, argv, envp);
             else
-            {
-            #if defined(PLATFORM_MACOSX)
-                // TODO: solve PATH lookup for MacOS
-                ::execve(cmd, argv, envp);
-            #elif defined(_GNU_SOURCE)
-                ::execvpe(cmd, argv, envp); // execvpe is supported
-            #else
-                ::execve(cmd, argv, envp);
-            #endif
-            }
+                ::execvpe(cmd, argv, envp);
+#endif /* PLATFORM_HAS_EXECVPE */
 
-            lsp_trace("execvpe failed for pid=%d\n", int(getpid()));
+            lsp_trace("exec failed for pid=%d\n", int(getpid()));
 
             // Return error only if ::execvpe failed
             if (soft_exit)
@@ -1315,23 +1388,34 @@ namespace lsp
             if (sCommand.is_empty())
                 return STATUS_BAD_STATE;
 
-            // Copy command
+            status_t res;
+            lltl::parray<char> argv;
+            lltl::parray<char> envp;
+            lsp_finally {
+                drop_data(&argv);
+                drop_data(&envp);
+            };
+
+            // Make execution command
+        #ifndef PLATFORM_HAS_EXECVPE
+            LSPString xcmd;
+            res = find_executable(xcmd, sCommand);
+            if ((res != STATUS_OK) && (res != STATUS_NOT_FOUND))
+                return res;
+
+            char *cmd = (res == STATUS_OK) ? xcmd.clone_native() : sCommand.clone_native();
+        #else
             char *cmd = sCommand.clone_native();
+        #endif /* PLATFORM_HAS_EXECVPE */
             if (cmd == NULL)
                 return STATUS_NO_MEM;
+            lsp_finally { free(cmd); };
 
             // Form argv
-            lltl::parray<char> argv;
-            status_t res = build_argv(&argv);
-            if (res != STATUS_OK)
-            {
-                ::free(cmd);
-                drop_data(&argv);
+            if ((res = build_argv(&argv)) != STATUS_OK)
                 return res;
-            }
 
             // Form envp
-            lltl::parray<char> envp;
             res = build_envp(&envp);
             if (res == STATUS_OK)
             {
@@ -1356,10 +1440,6 @@ namespace lsp
             if (res == STATUS_OK)
                 close_handles();
 
-            // Free temporary data and return result
-            ::free(cmd);
-            drop_data(&argv);
-            drop_data(&envp);
             return res;
         }
 

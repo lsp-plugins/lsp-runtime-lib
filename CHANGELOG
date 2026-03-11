@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.32 ===
+* Added program lookup using in PATH environment variable when launching process.
 * Added system::exec_detached functions for launching detached processes.
 * Some updates and improvements on the configuration parser and serializer.
 * Added condition variables support.
