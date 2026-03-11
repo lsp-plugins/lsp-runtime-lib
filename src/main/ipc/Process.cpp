@@ -57,7 +57,7 @@ namespace lsp
     namespace ipc
     {
         
-#ifndef PLATFORM_HAS_EXECVPE
+#if defined(PLATFORM_WINDOWS) || (!defined(PLATFORM_HAS_EXECVPE))
     static status_t find_executable(LSPString & program, const LSPString & command)
     {
         if (command.index_of(FILE_SEPARATOR_C) >= 0)
@@ -106,7 +106,7 @@ namespace lsp
                     program.set_length(program.length() - 4);
                     if (!program.append_ascii(".com"))
                         return STATUS_NO_MEM;
-                    if (PathFileExistsW(ppath))
+                    if (PathFileExistsW(program.get_utf16()))
                         return STATUS_OK;
                 }
             #else
@@ -836,16 +836,19 @@ namespace lsp
             if (sCommand.is_empty())
                 return STATUS_BAD_STATE;
 
-            // Form argv
-            LSPString argv;
-            status_t res = build_argv(&argv);
-            if (res != STATUS_OK)
+            // Obtain the command string
+            status_t res;
+            LSPString xcmd;
+            res = find_executable(xcmd, sCommand);
+            if ((res != STATUS_OK) && (res != STATUS_NOT_FOUND))
                 return res;
+            LSPString & program = (res == STATUS_OK) ? xcmd : sCommand;
 
-            // Form envp
-            LSPString envp;
-            res = build_envp(&envp);
-            if (res != STATUS_OK)
+            // Form argv and envp
+            LSPString argv, envp;
+            if ((res = build_argv(&argv)) != STATUS_OK)
+                return res;
+            if ((res = build_envp(&envp)) != STATUS_OK)
                 return res;
 
             // Launch child process
@@ -887,7 +890,7 @@ namespace lsp
 
             // Start the child process.
             if( !::CreateProcessW(
-                sCommand.get_utf16(),   // Module name (use command line)
+                program.get_utf16(),    // Module name (use command line)
                 wargv,                  // Command line
                 NULL,                   // Process handle not inheritable
                 NULL,                   // Thread handle not inheritable
