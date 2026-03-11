@@ -2,6 +2,19 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.32 ===
+* Added program lookup using in PATH environment variable when launching process.
+* Added system::exec_detached functions for launching detached processes.
+* Some updates and improvements on the configuration parser and serializer.
+* Added condition variables support.
+* Added support of XPM1/XPM2/XPM3 icon format.
+* Improved interface of lsp::Color class.
+* Added lsp::mm::IColorMap interface.
+* Added lsp::mm::Bitmap class.
+* Better parsing APO equalizer text files.
+* Better decoding audio file loading errors.
+* Updated module versions in dependencies.
+
 === 1.0.31 ===
 * Task execution mechanism moved task state field from volatile to atomic.
 * Updated LLTL hashing specifications.

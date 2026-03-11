@@ -76,6 +76,16 @@ namespace lsp
         {
             return set_error(STATUS_OK);
         }
+
+        status_t finalize(io::IOutStream *os, size_t wrap_flags)
+        {
+            if (os == NULL)
+                return STATUS_OK;
+            status_t res = (wrap_flags & WRAP_CLOSE) ? os->close() : STATUS_OK;
+            if (wrap_flags & WRAP_DELETE)
+                delete os;
+            return res;
+        }
     
     } /* namespace ws */
 } /* namespace lsp */

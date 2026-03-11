@@ -175,5 +175,15 @@ namespace lsp
             return set_error(nErrorCode);
         }
 
+        status_t finalize(io::IInStream *is, size_t wrap_flags)
+        {
+            if (is == NULL)
+                return STATUS_OK;
+            status_t res = (wrap_flags & WRAP_CLOSE) ? is->close() : STATUS_OK;
+            if (wrap_flags & WRAP_DELETE)
+                delete is;
+            return res;
+        }
+
     } /* namespace io */
 } /* namespace lsp */

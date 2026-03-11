@@ -50,7 +50,6 @@ namespace lsp
                 size_t                          nSegment;       // Start of data segment
                 size_t                          nOffset;        // Current offset in segment
                 cbuffer_t                       sBuffer;        // Buffer for caching
-//                FILE                           *hFD;
 
             protected:
                 status_t            alloc_entry(raw_resource_t **r, io::Path *path, resource_type_t type);
@@ -77,12 +76,12 @@ namespace lsp
 
                 /**
                  * Initialize compressor
-                 * @param buf_size buffer size
+                 * @param log_buf_size logarithmic buffer size
                  * @param os output stream
                  * @param flags flags
                  * @return status of operation
                  */
-                status_t                init(size_t buf_size, io::IOutStream *os, size_t flags = WRAP_NONE);
+                status_t                init(size_t log_buf_size, io::IOutStream *os, size_t flags = WRAP_NONE);
 
             public:
                 /**

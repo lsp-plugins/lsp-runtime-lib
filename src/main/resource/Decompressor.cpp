@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 16 мар. 2021 г.
@@ -69,10 +69,10 @@ namespace lsp
             return sIn.close();
         }
 
-        status_t Decompressor::init(const void *data, size_t data_size, size_t decompressed_size, size_t buf_sz)
+        status_t Decompressor::init(const void *data, size_t data_size, size_t decompressed_size, size_t log_buf_sz)
         {
             // Create buffer
-            status_t res = sBuffer.init(buf_sz);
+            status_t res = sBuffer.init(log_buf_sz);
             if (res != STATUS_OK)
                 return res;
 
@@ -338,5 +338,11 @@ namespace lsp
             set_error(status_t(res));
             return res;
         }
+
+        wssize_t Decompressor::position()
+        {
+            return nOffset;
+        }
+
     } /* namespace resource */
 } /* namespace lsp */

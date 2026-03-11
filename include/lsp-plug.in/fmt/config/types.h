@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 29 апр. 2020 г.
@@ -93,6 +93,9 @@ namespace lsp
                 size_t      flags;          // Serialization flags
                 value_t     v;              // Value
 
+            protected:
+                void        drop_value();
+
             public:
                 explicit param_t();
                 param_t(const param_t &) = delete;
@@ -110,6 +113,7 @@ namespace lsp
                 inline void     swap(param_t &dst)          { swap(&dst); };
 
                 void            clear();
+                void            clear_value();
 
             public:
                 // Type checking methods
@@ -131,6 +135,19 @@ namespace lsp
                 bool            is_float() const;
                 bool            is_numeric() const;
                 bool            is_simple() const;
+
+                // Direct type-checked reading
+                inline int32_t          get_i32() const     { return (is_i32()) ? v.i32 : 0;                    }
+                inline uint32_t         get_u32() const     { return (is_u32()) ? v.u32 : 0;                    }
+                inline int64_t          get_i64() const     { return (is_i64()) ? v.i64 : 0;                    }
+                inline uint64_t         get_u64() const     { return (is_u64()) ? v.u64 : 0;                    }
+                inline float            get_f32() const     { return (is_f32()) ? v.f32 : 0.0f;                 }
+                inline double           get_f64() const     { return (is_f64()) ? v.f64 : 0.0;                  }
+                inline float            get_float() const   { return get_f32();                                 }
+                inline double           get_double() const  { return get_f64();                                 }
+                inline bool             get_bool() const    { return (is_bool()) ? v.bval : false;              }
+                inline const char      *get_string() const  { return (is_str()) ? v.str : NULL;                 }
+                inline const blob_t    *get_blob() const    { return (is_blob()) ? &v.blob : NULL;              }
 
                 // Precision check
                 inline bool     is_prec_normal() const      { return (flags & SF_PREC_MASK) == SF_PREC_NORMAL;  }
@@ -168,8 +185,14 @@ namespace lsp
                 inline void     set_doublet(double value)   { set_f64(value); }
                 void            set_bool(bool value);
                 bool            set_string(const char *value);
+                bool            set_string(const LSPString * value);
+                bool            set_string(const LSPString & value);
                 bool            set_blob(const blob_t *value);
                 bool            set_blob(size_t length, const char *ctype, const char *data);
+
+                bool            set_name(const char * name);
+                bool            set_name(const LSPString * name);
+                bool            set_name(const LSPString & name);
         } param_t;
 
     } /* namespace config */

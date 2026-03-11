@@ -24,6 +24,8 @@
 
 using namespace lsp;
 
+static constexpr size_t LOG_BUF_SIZE        = 5;
+
 UTEST_BEGIN("runtime.resource", dbuffer)
 
     UTEST_MAIN
@@ -33,7 +35,7 @@ UTEST_BEGIN("runtime.resource", dbuffer)
 
         printf("Testing decompression buffer");
 
-        UTEST_ASSERT(buf.init(0x20) == STATUS_OK);
+        UTEST_ASSERT(buf.init(LOG_BUF_SIZE) == STATUS_OK);
 
         // Check that we can not extract data from empty buffer
         // buffer state: ???? ???? ???? ???? ???? ???? ???? ????

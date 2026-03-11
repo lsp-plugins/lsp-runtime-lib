@@ -344,7 +344,7 @@ namespace lsp
                 vFloatBuf               = ptr;
             }
 
-            nFloatCap               = float_cap;
+            nFloatCap               = uint32_t(float_cap);
             nFloatBits              = uint32_t(float_bits);
 
             return STATUS_OK;
@@ -422,7 +422,7 @@ namespace lsp
                 const uint32_t idx  = (base - i) % nFloatCap;
                 if (vFloatBuf[idx] == value)
                 {
-                    index               = i;
+                    index               = int32_t(i);
                     break;
                 }
             }
@@ -457,7 +457,7 @@ namespace lsp
                 const uint32_t dval = zigzag_encode(diff);
                 if (dval < delta)
                 {
-                    index               = i;
+                    index               = int32_t(i);
                     delta               = dval;
                     break;
                 }
@@ -491,14 +491,15 @@ namespace lsp
 
         status_t Compressor::write_indices(const index_t *value, size_t count)
         {
-            int32_t delta   = value[0];
+            int32_t delta   = int32_t(value[0]);
             status_t res    = write_varint_icount(zigzag_encode(delta));
             if (res != STATUS_OK)
                 return res;
 
             for (size_t i=1; i<count; ++i)
             {
-                status_t res            = write_varint_icount(zigzag_encode(value[i] - value[0]));
+                const int32_t diff      = int32_t(value[i] - value[0]);
+                res                     = write_varint_icount(zigzag_encode(diff));
                 if (res != STATUS_OK)
                     return res;
             }

@@ -249,6 +249,22 @@ namespace lsp
         status_t follow_url(const LSPString *url);
 
         /**
+         * Launch detached process
+         * @param program the name of the process to launch
+         * @param args NULL-terminated list of arguments
+         * @return status of operation
+         */
+        status_t exec_detached(const char *program, const char * const *args = NULL);
+
+        /**
+         * Launch detached process
+         * @param program the name of the process to launch
+         * @param args NULL-terminated list of arguments
+         * @return status of operation
+         */
+        status_t exec_detached(const LSPString *program, const LSPString * const *args = NULL);
+
+        /**
          * Obtain information about available system volumes
          * @param volumes pointer to array to store volume information
          * @return status of operation

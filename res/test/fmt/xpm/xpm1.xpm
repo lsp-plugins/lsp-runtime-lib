@@ -1,0 +1,37 @@
+#define XFACE_format 1
+#define XFACE_width 23
+#define XFACE_height 22
+#define XFACE_ncolors 4
+#define XFACE_chars_per_pixel 2
+
+static char *XFACE_colors[] = {
+    "  ", "#ff0000",
+    "Y ", "#00ff00",
+    "+ ", "#ffff00",
+    "x ", "#ffffff"
+};
+
+static char *XFACE_pixels[] = {
+    "x   x   x x x   x   x x x x x x + x x x x x x ",
+    "  x   x   x   x   x   x x x x x x x x x x x Y ",
+    "x   x   x x x   x   x x x x x x + x x x x x x ",
+    "  x   x   x   x   x   x x x x x x x x x x x Y ",
+    "x   x   x x x   x   x x x x x x + x x x x x x ",
+    "Y Y Y Y Y x Y Y Y Y Y + x + x + x + x + x + Y ",
+    "x   x   x x x   x   x x x x x x + x x x x x x ",
+    "  x   x   x   x   x   x x x x x x x x x x x Y ",
+    "x   x   x x x   x   x x x x x x + x x x x x x ",
+    "  x   x   x   x   x   x x x x x x x x x x x Y ",
+    "x   x   x x x   x   x x x x x x + x x x x x x ",
+    "          x           x   x   x Y x   x   x Y ",
+    "          x             x   x   Y   x   x   x ",
+    "          x           x   x   x Y x   x   x Y ",
+    "          x             x   x   Y   x   x   x ",
+    "          x           x   x   x Y x   x   x Y ",
+    "x x x x x x x x x x x x x x x x x x x x x x x ",
+    "          x           x   x   x Y x   x   x Y ",
+    "          x             x   x   Y   x   x   x ",
+    "          x           x   x   x Y x   x   x Y ",
+    "          x             x   x   Y   x   x   x ",
+    "          x           x   x   x Y x   x   x Y "
+};

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 6 сент. 2019 г.
@@ -43,13 +43,16 @@ namespace lsp
             LPQ,    // 12dB/octave Low Pass filter with adjustable Q
             HPQ,    // 12dB/octave High Pass filter with adjustable Q
             LS,     // Low Shelf filter
+            LSC,    // Low Shelf filter (variation)
             HS,     // High Shelf filter
+            HSC,    // High Shelf filter (variation)
             LS6,    // 6dB/octave Low Shelf filter
             HS6,    // 6dB/octave High Shelf filter
             LS12,   // 12dB/octave Low Shelf filter
             HS12,   // 12dB/octave High Shelf filter
             NO,     // notch filter
-            AP      // allpass filter
+            AP,     // allpass filter
+            BP,     // bandpass filter
         };
 
         typedef struct filter_t
@@ -86,12 +89,13 @@ namespace lsp
 
         typedef struct config_t
         {
-            int32_t         nVerMaj;       // Major version
-            int32_t         nVerMin;       // Minor version
-            const char     *sEqType;    // Equalizer type
-            const char     *sNotes;     // Notes
-            size_t          nFilters;   // Number of filters
-            filter_t       *vFilters;   // List of filters
+            int32_t         nVerMaj;        // Major version
+            int32_t         nVerMin;        // Minor version
+            const char     *sEqType;        // Equalizer type
+            const char     *sNotes;         // Notes
+            double          fPreamp;        // Pre-amplification gain in dB
+            size_t          nFilters;       // Number of filters
+            filter_t       *vFilters;       // List of filters
         } config_t;
 
         /**

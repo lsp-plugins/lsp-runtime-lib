@@ -26,7 +26,6 @@
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/runtime/LSPString.h>
-#include <iconv.h>
 
 namespace lsp
 {

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 1 мая 2020 г.
@@ -242,6 +242,14 @@ namespace lsp
                  */
                 virtual status_t    write_blob(const LSPString *key, const blob_t *v, size_t flags);
                 virtual status_t    write_blob(const char *key, const blob_t *v, size_t flags);
+
+                /**
+                 * Write configuration parameter
+                 * @param param configuration parameter
+                 * @return status of operation
+                 */
+                status_t            write(const config::param_t * param);
+                status_t            write(const config::param_t & param);
         };
     
     } /* namespace config */

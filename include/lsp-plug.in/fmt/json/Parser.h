@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 16 окт. 2019 г.
@@ -192,11 +192,18 @@ namespace lsp
                 status_t    read_double(double *dst);
 
                 /**
-                 * Read integer value
+                 * Read signed integer value
                  * @param dst pointer to store the value
                  * @return status of operation, STATUS_NULL if value is null
                  */
                 status_t    read_int(ssize_t *dst);
+
+                /**
+                 * Read unsigned integer value
+                 * @param dst pointer to store the value
+                 * @return status of operation, STATUS_NULL if value is null
+                 */
+                status_t    read_int(size_t *dst);
 
                 /**
                  * Read boolean value

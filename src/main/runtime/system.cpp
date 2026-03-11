@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 17 мар. 2019 г.
@@ -22,6 +22,7 @@
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/io/Dir.h>
+#include <lsp-plug.in/io/File.h>
 #include <lsp-plug.in/ipc/Process.h>
 #include <lsp-plug.in/lltl/darray.h>
 #include <lsp-plug.in/lltl/parray.h>
@@ -31,17 +32,21 @@
 #ifdef PLATFORM_WINDOWS
     #include <windows.h>
     #include <shellapi.h>
+    #include <shlwapi.h>
     #include <synchapi.h>
     #include <sysinfoapi.h>
     #include <winnetwk.h>
+    #include <processthreadsapi.h>
 #endif /* PLATFORM_WINDOWS */
 
 #ifdef PLATFORM_POSIX
     #include <errno.h>
     #include <pwd.h>
+    #include <spawn.h>
     #include <sys/stat.h>
     #include <sys/time.h>
     #include <sys/types.h>
+    #include <sys/wait.h>
     #include <time.h>
     #include <unistd.h>
 #endif /* PLATFORM_POSIX */
@@ -61,6 +66,12 @@
     #include <sys/mount.h>
     #include <sys/param.h>
 #endif /* PLATFORM_HAIKU */
+
+#ifdef PLATFORM_POSIX
+    #ifndef _GNU_SOURCE
+        extern char **environ;    // Define environment variables
+    #endif /* _GNU_SOURCE */
+#endif /* PLATFORM_POSIX */
 
 namespace lsp
 {
@@ -699,7 +710,7 @@ namespace lsp
         status_t follow_url(const LSPString *url)
         {
         #if defined(PLATFORM_WINDOWS)
-            ::ShellExecuteW(
+            const HINSTANCE hInst = ::ShellExecuteW(
                 NULL,               // Not associated with window
                 L"open",            // Open hyperlink
                 url->get_utf16(),   // The file to execute
@@ -707,6 +718,9 @@ namespace lsp
                 NULL,               // Directory
                 SW_SHOWNORMAL       // Show command
             );
+
+            if ((INT_PTR)hInst <= 32)
+                return STATUS_UNKNOWN_ERR;
         #elif defined(PLATFORM_HAIKU)
             status_t res;
             ipc::Process p;
@@ -1423,6 +1437,443 @@ namespace lsp
             return sysconf(_SC_NPROCESSORS_ONLN);
         #endif /* PLATFORM_WINDOWS */
         }
+
+#ifdef PLATFORM_WINDOWS
+    static status_t append_arg_escaped(LSPString *dst, const LSPString *value)
+    {
+        if (value->is_empty())
+            return (dst->append_ascii("\"\"")) ? STATUS_OK : STATUS_NO_MEM;
+
+        for (size_t i=0, n=value->length(); i<n; ++i)
+        {
+            lsp_wchar_t ch = value->char_at(i);
+            switch (ch)
+            {
+                case ' ':
+                    if (!dst->append_ascii("\" \"", 3))
+                        return STATUS_NO_MEM;
+                    break;
+                case '"':
+                    if (!dst->append_ascii("\\\"", 2))
+                        return STATUS_NO_MEM;
+                    break;
+                default:
+                    if (!dst->append(ch))
+                        return STATUS_NO_MEM;
+                    break;
+            }
+        }
+
+        return STATUS_OK;
+    }
+
+    static status_t run_program(const LSPString *path, const LSPString *args)
+    {
+        // Check that executable file exists
+        LSPString xpath;
+        LPCWSTR ppath = path->get_utf16();
+        if (!PathFileExistsW(ppath))
+        {
+            // Try .EXE and .COM extensions
+            if (path->ends_with_ascii_nocase(".exe"))
+                return STATUS_NOT_FOUND;
+            if (path->ends_with_ascii_nocase(".com"))
+                return STATUS_NOT_FOUND;
+            // Try ".EXE"
+            if (!xpath.set(path))
+                return STATUS_NO_MEM;
+            if (!xpath.append_ascii(".exe"))
+                return STATUS_NO_MEM;
+            ppath = xpath.get_utf16();
+            if (!PathFileExistsW(ppath))
+            {
+                xpath.set_length(xpath.length() - 4);
+                if (!xpath.append_ascii(".com"))
+                    return STATUS_NO_MEM;
+                ppath = xpath.get_utf16();
+                if (!PathFileExistsW(ppath))
+                    return STATUS_NOT_FOUND;
+            }
+        }
+
+        // Launch child process
+        STARTUPINFOW si;
+        PROCESS_INFORMATION pi;
+
+        ZeroMemory( &si, sizeof(STARTUPINFOW) );
+        ZeroMemory( &pi, sizeof(PROCESS_INFORMATION) );
+        si.cb               = sizeof(si);
+
+        // Start the child process.
+        LPWSTR str_args = args->clone_utf16();
+        if (str_args == NULL)
+            return STATUS_NO_MEM;
+        lsp_finally { free(str_args); };
+
+        // Create process
+        if(!::CreateProcessW(
+            ppath,                  // Module name (use command line)
+            str_args,               // Command line
+            NULL,                   // Process handle not inheritable
+            NULL,                   // Thread handle not inheritable
+            FALSE,                  // Set handle inheritance to FALSE
+            DETACHED_PROCESS | CREATE_UNICODE_ENVIRONMENT, // Flags
+            NULL,                   // Set-up environment block
+            NULL,                   // Use parent's starting directory
+            &si,                    // Pointer to STARTUPINFO structure
+            &pi                     // Pointer to PROCESS_INFORMATION structure
+        ))
+        {
+            const DWORD error = ::GetLastError();
+            lsp_warn("Failed to create child process (%d)\n", int(error));
+
+            switch (error)
+            {
+                case ERROR_FILE_NOT_FOUND:
+                case ERROR_PATH_NOT_FOUND:
+                    return STATUS_NOT_FOUND;
+                default:
+                    return STATUS_UNKNOWN_ERR;
+            }
+        }
+
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+
+        return STATUS_OK;
+    }
+
+    static status_t shell_execute(const LSPString *cmd, const LSPString *args)
+    {
+        // If path contains separator, do not lookup PATH
+        if (cmd->index_of(FILE_SEPARATOR_C) >= 0)
+            return run_program(cmd, args);
+
+        // Lookup PATH
+        LSPString path, program;
+        status_t res = get_env_var("PATH", &path);
+        if (res != STATUS_OK)
+            return res;
+
+        ssize_t start = 0, count = path.length(), found = 0;
+        do
+        {
+            // Lookup for separator
+            found               = path.index_of(start, ';');
+            const ssize_t next  = (found >= 0) ? found : count;
+
+            if (start < next)
+            {
+                if (!program.set(&path, start, found))
+                    return STATUS_NO_MEM;
+                if (!program.ends_with(FILE_SEPARATOR_C))
+                {
+                    if (!program.append(FILE_SEPARATOR_C))
+                        return STATUS_NO_MEM;
+                }
+                if (!program.append(cmd))
+                    return STATUS_NO_MEM;
+                lsp_trace("%s", program.get_utf8());
+                if ((res = run_program(&program, args)) == STATUS_OK)
+                    return res;
+            }
+
+            start   = found + 1;
+        } while (found >= 0);
+
+        return STATUS_NOT_FOUND;
+    }
+
+    status_t exec_detached(const char *program, const char * const *argv)
+    {
+        status_t res;
+        LSPString args, arg;
+
+        for (; (argv != NULL) && (*argv != NULL); ++argv)
+        {
+            // Add separator
+            if (!args.is_empty())
+            {
+                if (!args.append(' '))
+                    return STATUS_NO_MEM;
+            }
+            if (!arg.set_native(*argv))
+                return STATUS_NO_MEM;
+
+            if ((res = append_arg_escaped(&args, &arg)) != STATUS_OK)
+                return res;
+        }
+
+        if (!arg.set_native(program))
+            return STATUS_NO_MEM;
+
+        return shell_execute(&arg, &args);
+    }
+
+    status_t exec_detached(const LSPString *program, const LSPString * const *argv)
+    {
+        status_t res;
+        LSPString args;
+
+        for (; (argv != NULL) && (*argv != NULL); ++argv)
+        {
+            // Add separator
+            if (!args.is_empty())
+            {
+                if (!args.append(' '))
+                    return STATUS_NO_MEM;
+            }
+            if ((res = append_arg_escaped(&args, *argv)) != STATUS_OK)
+                return res;
+        }
+
+        return shell_execute(program, &args);
+    }
+
+#else
+
+        static void execvp_process(const char *cmd, char * const *argv, bool soft_exit)
+        {
+            fprintf(stderr, "Executing process...\n");
+
+            // Detach the process
+            setsid();
+
+            // Launch the process
+            if (strchr(cmd, FILE_SEPARATOR_C) != NULL)
+                ::execv(cmd, argv);
+            else
+                ::execvp(cmd, argv);
+
+            lsp_trace("execve failed for pid=%d, code=%d\n", int(getpid()));
+
+            // Return error only if ::execvp failed
+            if (soft_exit)
+                ::_exit(STATUS_UNKNOWN_ERR);
+            else
+                ::exit(STATUS_UNKNOWN_ERR);
+        }
+
+    #ifdef POSIX_SPAWN_SETSID
+        static status_t spawn_process(const char *cmd, char * const *argv, char * const *envp)
+        {
+            lsp_trace("Creating child process using posix_spawn...");
+
+            // Initialize spawn routines
+            posix_spawnattr_t attr;
+            if (::posix_spawnattr_init(&attr))
+                return STATUS_UNKNOWN_ERR;
+
+            int flags   = POSIX_SPAWN_SETSID;
+        #if defined(__USE_GNU) || (defined(POSIX_SPAWN_USEVFORK))
+            flags      |= POSIX_SPAWN_USEVFORK;     // Prefer vfork over fork
+        #endif
+            // Prever vfork() over fork()
+            if (::posix_spawnattr_setflags(&attr, flags))
+            {
+                ::posix_spawnattr_destroy(&attr);
+                return STATUS_UNKNOWN_ERR;
+            }
+
+            posix_spawn_file_actions_t actions;
+            if (::posix_spawn_file_actions_init(&actions))
+            {
+                ::posix_spawnattr_destroy(&attr);
+                return STATUS_UNKNOWN_ERR;
+            }
+
+            // Perform posix_spawn()
+            pid_t pid;
+            status_t res = STATUS_OK;
+            while (true)
+            {
+                int x = ::posix_spawnp(&pid, cmd, &actions, &attr, argv, envp);
+                switch (x)
+                {
+                    case 0: break;
+                    case EAGAIN: continue;
+                    case ENOMEM: res = STATUS_NO_MEM; break;
+                    default: res = STATUS_UNKNOWN_ERR; break;
+                }
+                break;
+            }
+
+            ::posix_spawn_file_actions_destroy(&actions);
+            ::posix_spawnattr_destroy(&attr);
+
+            return res;
+        }
+    #endif /* POSIX_SPAWN_SETSID */
+
+        static status_t vfork_process(const char *cmd, char * const *argv)
+        {
+            fprintf(stderr, "Creating child process using vfork()...\n");
+            errno           = 0;
+
+        #ifdef PLATFORM_MACOSX
+            #if defined(COMPILER_CLANG)
+                #pragma clang diagnostic push
+                #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+            #elif defined(COMPILER_GCC)
+                #pragma GCC diagnostic push
+                #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+            #endif
+        #endif /* PLATFORM_MACOSX */
+
+            // vfork() is deprecated in MacOS, we'll hide deprectation warning for that as
+            // vfork() is a fallback case for posix_spawn.
+            pid_t pid       = ::vfork();
+
+        #ifdef PLATFORM_MACOSX
+            #if defined(COMPILER_CLANG)
+                #pragma clang diagnostic pop
+            #elif defined(COMPILER_GCC)
+                #pragma GCC diagnostic pop
+            #endif
+        #endif /* PLATFORM_MACOSX */
+
+            if (pid < 0)
+            {
+                // Failed to vfork()?
+                int code        = errno;
+                switch (code)
+                {
+                    case ENOMEM: return STATUS_NO_MEM;
+                    case EAGAIN: return STATUS_NO_MEM;
+                    default: return STATUS_UNKNOWN_ERR;
+                }
+            }
+            else if (pid == 0) // The child process stuff
+                execvp_process(cmd, argv, true);
+
+            return STATUS_OK;
+        }
+
+        static status_t fork_process(const char *cmd, char * const *argv)
+        {
+            lsp_trace("Creating child process using fork()...");
+            errno           = 0;
+            pid_t pid       = ::fork();
+
+            if (pid < 0)
+            {
+                // Failed to fork()?
+                int code        = errno;
+                switch (code)
+                {
+                    case ENOMEM: return STATUS_NO_MEM;
+                    case EAGAIN: return STATUS_NO_MEM;
+                    default: return STATUS_UNKNOWN_ERR;
+                }
+            }
+            else if (pid == 0) // The child process stuff
+                execvp_process(cmd, argv, false);
+
+            return STATUS_OK;
+        }
+
+        static inline status_t do_exec_detached(const char *program, char **argv)
+        {
+            status_t res = STATUS_UNKNOWN_ERR;
+
+            // Different behaviour, depending on POSIX_SPAWN_USEVFORK presence
+            #ifdef POSIX_SPAWN_SETSID
+                if (res != STATUS_OK)
+                    res    = spawn_process(program, argv, environ);
+            #endif /* POSIX_SPAWN_SETSID */
+
+            if (res != STATUS_OK)
+                res    = vfork_process(program, argv);
+            if (res != STATUS_OK)
+                res    = fork_process(program, argv);
+
+            return res;
+        }
+
+        status_t exec_detached(const char *program, const char * const *args)
+        {
+            if (program == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            // Fill list of arguments
+            lltl::parray<char> vargs;
+            lsp_finally {
+                for (lltl::iterator<char> it = vargs.values(); it; ++it)
+                    free(it.get());
+            };
+
+            // Put first name of program to the list
+            char *arg = strdup(program);
+            if (arg == NULL)
+                return STATUS_NO_MEM;
+            if (!vargs.add(arg))
+            {
+                free(arg);
+                return STATUS_NO_MEM;
+            }
+
+            // Put program arguments to the list
+            for (; (args != NULL) && (*args != NULL); ++args)
+            {
+                arg = strdup(*args);
+                if (arg == NULL)
+                    return STATUS_NO_MEM;
+                if (!vargs.add(arg))
+                {
+                    free(arg);
+                    return STATUS_NO_MEM;
+                }
+            }
+
+            // Put terminating NULL pointer
+            if (!vargs.add(static_cast<char *>(NULL)))
+                return STATUS_NO_MEM;
+
+            return do_exec_detached(program, vargs.array());
+        }
+
+        status_t exec_detached(const LSPString *program, const LSPString * const *args)
+        {
+            if (program == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            // Fill list of arguments
+            lltl::parray<char> vargs;
+            lsp_finally {
+                for (lltl::iterator<char> it = vargs.values(); it; ++it)
+                    free(it.get());
+            };
+
+            // Put first name of program to the list
+            char *arg = program->clone_native();
+            if (arg == NULL)
+                return STATUS_NO_MEM;
+            if (!vargs.add(arg))
+            {
+                free(arg);
+                return STATUS_NO_MEM;
+            }
+
+            // Put program arguments to the list
+            for (; (args != NULL) && (*args != NULL); ++args)
+            {
+                arg = (*args)->clone_native();
+                if (arg == NULL)
+                    return STATUS_NO_MEM;
+                if (!vargs.add(arg))
+                {
+                    free(arg);
+                    return STATUS_NO_MEM;
+                }
+            }
+
+            // Put terminating NULL pointer
+            if (!vargs.add(static_cast<char *>(NULL)))
+                return STATUS_NO_MEM;
+
+            return do_exec_detached(program->get_native(), vargs.array());
+        }
+#endif /* PLATFORM_WINDOWS */
 
     } /* namespace system */
 } /* namespace lsp */

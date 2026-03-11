@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 7 сент. 2019 г.
@@ -42,7 +42,7 @@ UTEST_BEGIN("runtime.fmt", roomeqwizard)
         UTEST_ASSERT(float_equals_absolute(f->fc, fc));
         UTEST_ASSERT(float_equals_absolute(f->gain, gain));
         if (Q >= 0.0)
-            UTEST_ASSERT(float_equals_absolute(f->Q, Q, 0.5e-3f));
+            UTEST_ASSERT(float_equals_adaptive(f->Q, Q, 0.5e-3f));
     }
 
     void read_file(const char *fname)
@@ -131,6 +131,43 @@ UTEST_BEGIN("runtime.fmt", roomeqwizard)
         ::free(cfg);
     }
 
+    void read_file3(const char *fname)
+    {
+        room_ew::config_t *cfg = NULL;
+
+        // Load the equalizer settings
+        io::Path path;
+        UTEST_ASSERT(path.set(resources()) == STATUS_OK);
+        UTEST_ASSERT(path.append_child(fname) == STATUS_OK);
+        UTEST_ASSERT(room_ew::load(&path, &cfg) == STATUS_OK);
+
+        // Check configuration
+        UTEST_ASSERT(cfg != NULL);
+        UTEST_ASSERT(::strcmp(cfg->sNotes, "") == 0);
+        UTEST_ASSERT(::strcmp(cfg->sEqType, "") == 0);
+        UTEST_ASSERT(cfg->nVerMaj == 0);
+        UTEST_ASSERT(cfg->nVerMin == 0);
+        UTEST_ASSERT(float_equals_adaptive(cfg->fPreamp, -6.9));
+        UTEST_ASSERT(cfg->nFilters == 10);
+        UTEST_ASSERT(cfg->vFilters != NULL);
+
+        room_ew::filter_t *vf = cfg->vFilters;
+        size_t idx = 0;
+
+        check_filter(&vf[idx++], true, room_ew::PK, 91.0, -1.7, 1.525);
+        check_filter(&vf[idx++], true, room_ew::LSC, 112.0, 2.1, 1.387);
+        check_filter(&vf[idx++], true, room_ew::PK, 539.0, 5.4, 0.585);
+        check_filter(&vf[idx++], true, room_ew::PK, 1918.0, -4.1, 2.221);
+        check_filter(&vf[idx++], true, room_ew::PK, 3103.0, 7.8, 1.502);
+        check_filter(&vf[idx++], true, room_ew::PK, 4493.0, -6.6, 3.300);
+        check_filter(&vf[idx++], true, room_ew::PK, 6100.0, 4.4, 1.900);
+        check_filter(&vf[idx++], true, room_ew::HSC, 8600.0, 2.0, 2.537);
+        check_filter(&vf[idx++], true, room_ew::PK, 11200.0, -7.0, 3.001);
+        check_filter(&vf[idx++], true, room_ew::PK, 14886.0, 4.2, 2.100);
+
+        ::free(cfg);
+    }
+
     UTEST_MAIN
     {
         printf("Testing binary file...\n");
@@ -141,6 +178,9 @@ UTEST_BEGIN("runtime.fmt", roomeqwizard)
 
         printf("Testing another file...\n");
         read_file2("fmt/apo/demo.txt");
+
+        printf("Testing another file...\n");
+        read_file3("fmt/apo/effects.apo.txt");
     }
 
 UTEST_END

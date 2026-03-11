@@ -34,7 +34,7 @@ namespace lsp
             nDataSize   = 0;
             pCatalog    = NULL;
             nCatSize    = 0;
-            nBufSize    = 0;
+            nBufRank    = 0;
         }
 
         BuiltinLoader::~BuiltinLoader()
@@ -43,20 +43,20 @@ namespace lsp
             nDataSize   = 0;
             pCatalog    = NULL;
             nCatSize    = 0;
-            nBufSize    = 0;
+            nBufRank    = 0;
         }
 
         status_t BuiltinLoader::init(
             const void *data, size_t data_size,
             const raw_resource_t *catalog, size_t catalog_size,
-            size_t buf_size
+            size_t log_buf_size
         )
         {
             pData       = reinterpret_cast<const uint8_t *>(data);
             nDataSize   = data_size;
             pCatalog    = catalog;
             nCatSize    = catalog_size;
-            nBufSize    = buf_size;
+            nBufRank    = log_buf_size;
 
             return STATUS_OK;
         }
@@ -138,7 +138,7 @@ namespace lsp
             }
 
             // Initialize decompressor and skip the desired amount of data to access the entry
-            res = d->init(&pData[ent->segment], nDataSize - ent->segment, ent->offset + ent->length, nBufSize);
+            res = d->init(&pData[ent->segment], nDataSize - ent->segment, ent->offset + ent->length, nBufRank);
             if (res == STATUS_OK)
             {
                 wssize_t skipped = d->skip(ent->offset);

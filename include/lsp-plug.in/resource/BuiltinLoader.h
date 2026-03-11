@@ -44,7 +44,7 @@ namespace lsp
                 size_t                          nDataSize;  // Data size
                 const raw_resource_t           *pCatalog;   // Catalog
                 size_t                          nCatSize;   // Catalog size
-                size_t                          nBufSize;   // Size of compression buffer
+                size_t                          nBufRank;   // Size of compression buffer
 
             protected:
                 status_t                        find_entry(ssize_t *out, const io::Path *path);
@@ -66,13 +66,13 @@ namespace lsp
                  * @param data_size size of compression data
                  * @param catalog catalog with entries
                  * @param catalog_size size of catalog
-                 * @param buf_size size of compression buffer
+                 * @param log_buf_size size of compression buffer (the exponent of power-of-two value)
                  * @return status of operation
                  */
-                status_t init(const void *data, size_t data_size,
-                              const raw_resource_t *catalog, size_t catalog_size,
-                              size_t buf_size
-                );
+                status_t init(
+                    const void *data, size_t data_size,
+                    const raw_resource_t *catalog, size_t catalog_size,
+                    size_t log_buf_size);
 
             public:
                 virtual io::IInStream      *read_stream(const io::Path *name) override;
