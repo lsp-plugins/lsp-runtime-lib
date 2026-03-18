@@ -1552,7 +1552,7 @@ namespace lsp
             }
         }
 
-        constexpr uint32_t k_alpha = 0x100fe / 0xff;
+        constexpr uint32_t k_alpha = 0x1011;
 
         static void convert_rgba8888_to_prgba8888(uint8_t *dst, const uint8_t *src, size_t count)
         {
@@ -1560,9 +1560,9 @@ namespace lsp
             for ( ; count > 0; --count)
             {
                 v           = src[3] * k_alpha;
-                dst[0]      = uint8_t((v * src[0]) >> 16);
-                dst[1]      = uint8_t((v * src[1]) >> 16);
-                dst[2]      = uint8_t((v * src[2]) >> 16);
+                dst[0]      = uint8_t((v * src[0]) >> 20);
+                dst[1]      = uint8_t((v * src[1]) >> 20);
+                dst[2]      = uint8_t((v * src[2]) >> 20);
                 dst[3]      = src[3];
                 src        += 3;
                 dst        += 4;
@@ -1575,9 +1575,9 @@ namespace lsp
             for ( ; count > 0; --count)
             {
                 v           = src[3] * k_alpha;
-                dst[0]      = uint8_t((v * src[2]) >> 16);
-                dst[1]      = uint8_t((v * src[1]) >> 16);
-                dst[2]      = uint8_t((v * src[0]) >> 16);
+                dst[0]      = uint8_t((v * src[2]) >> 20);
+                dst[1]      = uint8_t((v * src[1]) >> 20);
+                dst[2]      = uint8_t((v * src[0]) >> 20);
                 dst[3]      = src[3];
                 src        += 3;
                 dst        += 4;
