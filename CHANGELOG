@@ -3,7 +3,9 @@
 *******************************************************************************
 
 === 1.0.33 ===
-
+* Additional color computation optimizations: removed extra multiplication when
+  converting RGB to XYZ and back.
+* Bugfixes in RGBA to PRGBA pixel conversions.
 
 === 1.0.32 ===
 * Added program lookup using in PATH environment variable when launching process.
