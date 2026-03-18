@@ -1564,7 +1564,7 @@ namespace lsp
                 dst[1]      = uint8_t((v * src[1]) >> 20);
                 dst[2]      = uint8_t((v * src[2]) >> 20);
                 dst[3]      = src[3];
-                src        += 3;
+                src        += 4;
                 dst        += 4;
             }
         }
@@ -1579,7 +1579,7 @@ namespace lsp
                 dst[1]      = uint8_t((v * src[1]) >> 20);
                 dst[2]      = uint8_t((v * src[0]) >> 20);
                 dst[3]      = src[3];
-                src        += 3;
+                src        += 4;
                 dst        += 4;
             }
         }
