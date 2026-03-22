@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 6 мар. 2019 г.
@@ -22,6 +22,7 @@
 #include <lsp-plug.in/io/StdioFile.h>
 
 #include <errno.h>
+#include <sys/file.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -110,6 +111,57 @@ namespace lsp
                     default:
                         return set_error(STATUS_UNKNOWN_ERR);
                 }
+            }
+
+            // Check that we need to lock the file
+            if (mode & FM_LOCK)
+            {
+            #ifdef PLATFORM_WINDOWS
+                const int ifd       = _fileno(fd);
+                const intptr_t hfd  = _get_osfhandle(ifd);
+
+                OVERLAPPED ov;
+                ov.Internal         = 0;
+                ov.InternalHigh     = 0;
+                ov.Offset           = 0;
+                ov.OffsetHigh       = 0;
+                ov.hEvent           = NULL;
+
+                const DWORD flags   = (mode & FM_NOWAIT) ? LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY : LOCKFILE_EXCLUSIVE_LOCK;
+                if (!LockFileEx(hfd, flags, 0, MAXDWORD, MAXDWORD, &ov))
+                {
+                    const DWORD code    = GetLastError();
+                    fclose(fd);
+
+                    status_t res        = STATUS_IO_ERROR;
+                    switch (code)
+                    {
+                        case ERROR_IO_PENDING: res = STATUS_LOCKED; break;
+                        default: break;
+                    }
+
+                    return set_error(res);
+                }
+            #else
+                const int lk_flags  = (mode & FM_NOWAIT) ? LOCK_EX | LOCK_NB : LOCK_EX;
+                const int lock_res  = flock(fileno(fd), lk_flags);
+                if (lock_res != 0)
+                {
+                    const int code      = errno;
+                    fclose(fd);
+
+                    status_t res        = STATUS_IO_ERROR;
+                    switch (code)
+                    {
+                        case EINTR: res = STATUS_INTERRUPTED; break;
+                        case ENOLCK: res = STATUS_NO_MEM; break;
+                        case EWOULDBLOCK: res = STATUS_LOCKED; break;
+                        default: break;
+                    }
+
+                    return set_error(res);
+                }
+            #endif /* PLATFORM_WINDOWS */
             }
 
             // Update state

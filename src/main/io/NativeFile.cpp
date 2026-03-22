@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 7 мар. 2019 г.
@@ -29,6 +29,7 @@
 
 #if defined(PLATFORM_UNIX_COMPATIBLE)
     #include <unistd.h>
+    #include <sys/file.h>
     #include <sys/stat.h>
     #include <fcntl.h>
     #include <errno.h>
@@ -166,6 +167,32 @@ namespace lsp
                 return set_error(res);
             }
 
+            // Check that we need to lock the file
+            if (mode & FM_LOCK)
+            {
+                OVERLAPPED ov;
+                ov.Internal         = 0;
+                ov.InternalHigh     = 0;
+                ov.Offset           = 0;
+                ov.OffsetHigh       = 0;
+                ov.hEvent           = NULL;
+
+                const DWORD flags   = (mode & FM_NOWAIT) ? LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY : LOCKFILE_EXCLUSIVE_LOCK;
+                if (!LockFileEx(fd, flags, 0, MAXDWORD, MAXDWORD, &ov))
+                {
+                    const DWORD code    = GetLastError();
+                    status_t res        = STATUS_IO_ERROR;
+
+                    switch (code)
+                    {
+                        case ERROR_IO_PENDING: res = STATUS_LOCKED; break;
+                        default: break;
+                    }
+
+                    return set_error(res);
+                }
+            }
+
             hFD         = fd;
             nFlags      = fflags | SF_CLOSE;
 
@@ -213,7 +240,7 @@ namespace lsp
             fhandle_t fd        = ::open(path->get_native(), oflags, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
             if (fd < 0)
             {
-                int code = errno;
+                const int code = errno;
                 status_t res = STATUS_IO_ERROR;
 
                 switch (code)
@@ -232,6 +259,30 @@ namespace lsp
 
                 return set_error(res);
             }
+
+            // Check that we need to lock the file
+            if (mode & FM_LOCK)
+            {
+                const int lk_flags  = (mode & FM_NOWAIT) ? LOCK_EX | LOCK_NB : LOCK_EX;
+                const int lock_res  = flock(fd, lk_flags);
+                if (lock_res != 0)
+                {
+                    const int code = errno;
+                    ::close(fd);
+
+                    status_t res = STATUS_IO_ERROR;
+                    switch (code)
+                    {
+                        case EINTR: res = STATUS_INTERRUPTED; break;
+                        case ENOLCK: res = STATUS_NO_MEM; break;
+                        case EWOULDBLOCK: res = STATUS_LOCKED; break;
+                        default: break;
+                    }
+
+                    return set_error(res);
+                }
+            }
+
 
             hFD         = fd;
             nFlags      = fflags | SF_CLOSE;
