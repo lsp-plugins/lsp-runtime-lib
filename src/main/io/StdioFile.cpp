@@ -118,7 +118,7 @@ namespace lsp
             {
             #ifdef PLATFORM_WINDOWS
                 const int ifd       = _fileno(fd);
-                const intptr_t hfd  = _get_osfhandle(ifd);
+                const HANDLE hfd    = reinterpret_cast<HANDLE>(_get_osfhandle(ifd));
 
                 OVERLAPPED ov;
                 ov.Internal         = 0;
