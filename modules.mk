@@ -53,6 +53,11 @@ LIBDL_NAME                 := libdl
 LIBDL_TYPE                 := opt
 LIBDL_LDFLAGS              := -ldl
 
+LIBBE_VERSION             := system
+LIBBE_NAME                := libbe
+LIBBE_TYPE                := opt
+LIBBE_LDFLAGS             := -lbe
+
 LIBGNU_VERSION             := system
 LIBGNU_NAME                := libgnu
 LIBGNU_TYPE                := opt

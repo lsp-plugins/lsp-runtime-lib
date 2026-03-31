@@ -48,6 +48,8 @@
 #elif defined(PLATFORM_DRAGONFLYBSD)
     #include <sched.h>
     #include <lwp.h>
+#elif defined(PLATFORM_HAIKU)
+    #include <kernel/OS.h>
 #endif /* PLATFORM_WINDOWS */
 
 namespace lsp
@@ -369,6 +371,8 @@ namespace lsp
             result                  = lwpid;
         #elif defined(PLATFORM_DRAGONFLYBSD)
             result                  = lwp_gettid();
+        #elif defined (PLATFORM_HAIKU)
+            result                  = find_thread(NULL);
         #else
             #warning "need to implement Thread::current_thread_id"
         #endif
