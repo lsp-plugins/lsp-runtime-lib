@@ -19,6 +19,7 @@
  * along with lsp-runtime-lib. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/io/File.h>
 #include <lsp-plug.in/io/Dir.h>
@@ -1417,7 +1418,7 @@ namespace lsp
             status_t res = final_path(&tmp);
             if (res == STATUS_OK)
                 sPath.swap(tmp.sPath);
-            return STATUS_OK;
+            return res;
         }
 
         status_t Path::final_path(LSPString *path) const
@@ -1521,13 +1522,19 @@ namespace lsp
 
             while (true)
             {
+                lsp_trace("File::stat path=%s", tmp.as_native());
+
                 // Read file attributes
                 if ((res = File::stat(&tmp, &attr)) != STATUS_OK)
+                {
+                    lsp_trace("Failed File::stat: error=%d", int(res));
                     return res;
+                }
 
                 // We're done if it is not a symbolic link
                 if (attr.type != fattr_t::FT_SYMLINK)
                 {
+                    lsp_trace("Not a symbolic link (type=%d), returning path=%s", int(attr.type), tmp.as_native());
                     tmp.swap(path);
                     return STATUS_OK;
                 }
@@ -1544,7 +1551,9 @@ namespace lsp
                 ssize_t count = readlink(tmp.as_native(), buf, PATH_MAX - 1);
                 if (count < 0)
                 {
-                    int error = errno;
+                    const int error = errno;
+
+                    lsp_trace("readlink for %s failed: errno=%d", tmp.as_native(), int(error));
 
                     switch (error)
                     {
@@ -1564,9 +1573,14 @@ namespace lsp
                 }
                 buf[count] = '\0';
 
+                lsp_trace("readlink returned: %s", buf);
+
                 // Initialize link path
                 if ((res = link.set_native(buf)) != STATUS_OK)
+                {
+                    lsp_trace("failed set_native for %s failed: result=%d", tmp.as_native(), int(res));
                     return res;
+                }
 
                 // Analyze link path: if it is relative symbolic link or not
                 if (link.is_relative())
@@ -1576,23 +1590,33 @@ namespace lsp
                         return res;
                     if ((res = tmp.append_child(&link)) != STATUS_OK)
                         return res;
+                    lsp_trace("Link is relative, new path set to: %s", tmp.as_native());
                 }
                 else
                     tmp.swap(&link);
                 if ((res = tmp.canonicalize()) != STATUS_OK)
                     return res;
+                lsp_trace("Canonicalized path: %s", tmp.as_native());
 
                 // Test if we already have visited such path and remember it
                 if (visited.contains(&tmp))
+                {
+                    lsp_trace("Loop detected for path: %s", tmp.as_native());
                     return STATUS_OVERFLOW;
+                }
                 Path *clone = tmp.clone();
                 if (clone == NULL)
+                {
+                    lsp_trace("Failed to clone path: %s", tmp.as_native());
                     return STATUS_NO_MEM;
+                }
                 if (!visited.create(clone))
                 {
+                    lsp_trace("Failed to register visited path: %s", tmp.as_native());
                     delete clone;
                     return STATUS_NO_MEM;
                 }
+                lsp_trace("Registered visited path: %s", tmp.as_native());
             }
         #endif /* PLATFORM_WINDOWS */
         }

@@ -2,6 +2,14 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.33 ===
+* Additional color computation optimizations: removed extra multiplication when
+  converting RGB to XYZ and back.
+* Bugfixes in RGBA to PRGBA pixel conversions.
+* Added file descriptor locking mechanism on file open.
+* Better Haiku support.
+* Updated module versions in dependencies.
+
 === 1.0.32 ===
 * Added program lookup using in PATH environment variable when launching process.
 * Added system::exec_detached functions for launching detached processes.

@@ -49,12 +49,14 @@ namespace lsp
                 };
 
                 enum mode_t {
-                    FM_READ     = 1 << 0,       // Open for reading
-                    FM_WRITE    = 1 << 1,       // Open for writing
-                    FM_CREATE   = 1 << 2,       // Create file if not exists
-                    FM_TRUNC    = 1 << 3,       // Truncate file
-                    FM_DIRECT   = 1 << 4,       // Do not use buffered input/output if possible
-                    FM_EXCL     = 1 << 5,       // Do not create file if it already exists, return STATUS_ALREADY_EXISTS as error
+                    FM_READ         = 1 << 0,       // Open for reading
+                    FM_WRITE        = 1 << 1,       // Open for writing
+                    FM_CREATE       = 1 << 2,       // Create file if not exists
+                    FM_TRUNC        = 1 << 3,       // Truncate file
+                    FM_DIRECT       = 1 << 4,       // Do not use buffered input/output if possible
+                    FM_EXCL         = 1 << 5,       // Do not create file if it already exists, return STATUS_ALREADY_EXISTS as error
+                    FM_LOCK         = 1 << 6,       // Obtain an exclusive lock on a file
+                    FM_NOWAIT       = 1 << 7,       // Do not wait for acquiring the exclusive lock
 
                     FM_READWRITE = FM_READ | FM_WRITE,
                     FM_WRITE_NEW = FM_CREATE | FM_WRITE | FM_TRUNC,

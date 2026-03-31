@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 25 февр. 2019 г.
@@ -48,6 +48,8 @@
 #elif defined(PLATFORM_DRAGONFLYBSD)
     #include <sched.h>
     #include <lwp.h>
+#elif defined(PLATFORM_HAIKU)
+    #include <kernel/OS.h>
 #endif /* PLATFORM_WINDOWS */
 
 namespace lsp
@@ -56,11 +58,11 @@ namespace lsp
     {
         __thread Thread *Thread::pThis = NULL;
         
-#if defined(PLATFORM_WINDOWS)
-    #define CLR_HANDLE(hThread) hThread     = INVALID_HANDLE_VALUE;
-#else
-    #define CLR_HANDLE(hThread) hThread     = 0;
-#endif
+    #if defined(PLATFORM_WINDOWS)
+        #define CLR_HANDLE(hThread) hThread     = INVALID_HANDLE_VALUE;
+    #else
+        #define CLR_HANDLE(hThread) hThread     = 0;
+    #endif
 
         Thread::Thread()
         {
@@ -108,10 +110,10 @@ namespace lsp
 
         Thread::~Thread()
         {
-#if defined(PLATFORM_WINDOWS)
+    #if defined(PLATFORM_WINDOWS)
             if (hThread != INVALID_HANDLE_VALUE)
                 CloseHandle(hThread);
-#endif /* PLATFORM_WINDOWS */
+    #endif /* PLATFORM_WINDOWS */
 
             CLR_HANDLE(hThread);
         }
@@ -140,7 +142,7 @@ namespace lsp
             return STATUS_OK;
         }
     
-#if defined(PLATFORM_WINDOWS)
+    #if defined(PLATFORM_WINDOWS)
         DWORD WINAPI Thread::thread_launcher(_In_ LPVOID lpParameter)
         {
             Thread *_this = reinterpret_cast<Thread *>(lpParameter);
@@ -233,7 +235,7 @@ namespace lsp
             SwitchToThread();
         }
 
-#else
+    #else
         void *Thread::thread_launcher(void *arg)
         {
             Thread *_this   = reinterpret_cast<Thread *>(arg);
@@ -344,7 +346,7 @@ namespace lsp
             sched_yield();
         }
 
-#endif /* PLATFORM_WINDOWS */
+    #endif /* PLATFORM_WINDOWS */
 
 
         thread_id_t Thread::current_thread_id()
@@ -369,8 +371,10 @@ namespace lsp
             result                  = lwpid;
         #elif defined(PLATFORM_DRAGONFLYBSD)
             result                  = lwp_gettid();
+        #elif defined (PLATFORM_HAIKU)
+            result                  = find_thread(NULL);
         #else
-            #warning "need to implement Thread::current_thread_id"
+            #error "need to implement Thread::current_thread_id"
         #endif
             return result;
         }

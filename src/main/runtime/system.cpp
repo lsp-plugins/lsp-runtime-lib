@@ -63,8 +63,11 @@
 
 #ifdef PLATFORM_HAIKU
     #include <posix/stdlib.h>
-    #include <sys/mount.h>
-    #include <sys/param.h>
+    #include <kernel/fs_info.h>
+    #include <storage/Directory.h>
+    #include <storage/Path.h>
+    #include <storage/Volume.h>
+    #include <storage/VolumeRoster.h>
 #endif /* PLATFORM_HAIKU */
 
 #ifdef PLATFORM_POSIX
@@ -128,7 +131,7 @@ namespace lsp
                     return STATUS_NO_MEM;
             }
             return STATUS_OK;
-#endif /* PLATFORM_WINDOWS */
+        #endif /* PLATFORM_WINDOWS */
         }
 
         status_t get_env_var(const char *name, LSPString *dst)
@@ -289,7 +292,7 @@ namespace lsp
                 return STATUS_BAD_ARGUMENTS;
             LSPString upath;
 
-#ifdef PLATFORM_WINDOWS
+        #ifdef PLATFORM_WINDOWS
             status_t res = get_env_var("LOCALAPPDATA", &upath);
             if (res != STATUS_OK)
             {
@@ -303,7 +306,15 @@ namespace lsp
                         return STATUS_NO_MEM;
                 }
             }
-#else
+        #elif defined(PLATFORM_HAIKU)
+            status_t res = get_env_var("HOME", &upath);
+            if (res != STATUS_OK)
+                return res;
+            if (!upath.append_ascii(
+                FILE_SEPARATOR_S "config"
+                FILE_SEPARATOR_S "settings"))
+                return STATUS_NO_MEM;
+        #else
             status_t res = get_env_var("XDG_CONFIG_HOME", &upath);
             if (res != STATUS_OK)
             {
@@ -313,7 +324,7 @@ namespace lsp
                 if (!upath.append_ascii(FILE_SEPARATOR_S ".config"))
                     return STATUS_NO_MEM;
             }
-#endif /* PLATFORM_WINDOWS */
+        #endif /* PLATFORM_WINDOWS */
 
             path->swap(&upath);
             return STATUS_OK;
@@ -1006,7 +1017,7 @@ namespace lsp
                     return STATUS_NO_MEM;
                 if (!info->target.set_utf8(mnt->mnt_dir))
                     return STATUS_NO_MEM;
-                if (!info->root.set_ascii("/"))
+                if (!info->root.set_ascii(FILE_SEPARATOR_S))
                     return STATUS_NO_MEM;
                 if (!info->name.set_utf8(mnt->mnt_type))
                     return STATUS_NO_MEM;
@@ -1090,7 +1101,7 @@ namespace lsp
                     return STATUS_NO_MEM;
                 if (!info->target.set_utf8(fsp->f_mntonname))
                     return STATUS_NO_MEM;
-                if (!info->root.set_ascii("/"))
+                if (!info->root.set_ascii(FILE_SEPARATOR_S))
                     return STATUS_NO_MEM;
                 if (!info->name.set_utf8(fsp->f_fstypename))
                     return STATUS_NO_MEM;
@@ -1110,6 +1121,61 @@ namespace lsp
             return STATUS_OK;
         }
     #endif /* PLATFORM_BSD || PLATFORM_MACOSX */
+
+    #ifdef PLATFORM_HAIKU
+        static status_t read_haiku_mntinfo(lltl::parray<volume_info_t> *volumes)
+        {
+            lltl::parray<volume_info_t> list;
+            lsp_finally { free_volume_info(&list); };
+
+            BVolumeRoster roster;
+            BVolume bvol;
+
+            while (roster.GetNextVolume(&bvol) == B_OK)
+            {
+                fs_info info;
+                if (fs_stat_dev(bvol.Device(), &info) != B_OK)
+                    continue;
+
+                volume_info_t *vi = new volume_info_t();
+                if (vi == NULL)
+                    return STATUS_NO_MEM;
+                if (!list.add(vi))
+                {
+                    delete vi;
+                    return STATUS_NO_MEM;
+                }
+
+                if (!vi->device.set_utf8(info.device_name))
+                    return STATUS_NO_MEM;
+                if (!vi->name.set_utf8(info.fsh_name))
+                    return STATUS_NO_MEM;
+                if (!vi->root.set_ascii(FILE_SEPARATOR_S))
+                    return STATUS_NO_MEM;
+
+                BDirectory bdir;
+                if (bvol.GetRootDirectory(&bdir) == B_OK)
+                {
+                    BPath bpath(&bdir, NULL);
+                    if (bpath.InitCheck() == B_OK && bpath.Path() != NULL)
+                        if (!vi->target.set_utf8(bpath.Path()))
+                            return STATUS_NO_MEM;
+                }
+
+                vi->flags = 0;
+
+                if ((info.flags & B_FS_IS_PERSISTENT) == 0)
+                    vi->flags |= VF_DUMMY;
+                if ((info.flags & B_FS_IS_SHARED) || is_remote_fs(&vi->device, &vi->name))
+                    vi->flags |= VF_REMOTE;
+                if ((info.flags & B_FS_IS_REMOVABLE) || is_posix_drive(&vi->device))
+                    vi->flags |= VF_DRIVE;
+            }
+
+            list.swap(volumes);
+            return STATUS_OK;
+        }
+    #endif /* PLATFORM_HAIKU */
 
     #ifdef PLATFORM_WINDOWS
         status_t read_pathnames(const WCHAR *volume, WCHAR **list, size_t *cap)
@@ -1372,12 +1438,8 @@ namespace lsp
         }
     #endif /* PLATFORM_WINDOWS */
 
-        status_t get_volume_info(lltl::parray<volume_info_t> *volumes)
+        static status_t get_volume_info_impl(lltl::parray<volume_info_t> *volumes)
         {
-            // Verify input
-            if (volumes == NULL)
-                return STATUS_BAD_ARGUMENTS;
-
             status_t res = STATUS_NOT_IMPLEMENTED;
         #if defined(PLATFORM_LINUX)
             if ((res = read_linux_mountinfo(volumes)) != STATUS_NOT_SUPPORTED)
@@ -1391,11 +1453,31 @@ namespace lsp
         #elif defined(PLATFORM_BSD) || defined(PLATFORM_MACOSX)
             if ((res = read_fsstat_mntinfo(volumes)) != STATUS_NOT_SUPPORTED)
                 return res;
+        #elif defined(PLATFORM_HAIKU)
+            res = read_haiku_mntinfo(volumes);
         #elif defined(PLATFORM_WINDOWS)
             res = read_windows_mntinfo(volumes);
             if (res == STATUS_OK)
                 res = read_windows_netinfo(volumes);
         #endif
+
+            return res;
+        }
+
+        status_t get_volume_info(lltl::parray<volume_info_t> *volumes)
+        {
+            // Verify input
+            if (volumes == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            // Read volumes to temporary array
+            lltl::parray<volume_info_t> temp;
+            lsp_finally { free_volume_info(&temp); };
+            status_t res = get_volume_info_impl(&temp);
+
+            // Commit changes if operation succeeded
+            if (res == STATUS_OK)
+                temp.swap(volumes);
 
             return res;
         }

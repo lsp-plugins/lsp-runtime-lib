@@ -258,9 +258,12 @@ namespace lsp
                 decode_file_type(attr, &hfi);
             #else
                 struct stat sb;
-                if (::lstat(path->get_native(), &sb) != 0)
+                const char * const s = path->get_native();
+                if (::lstat(s, &sb) != 0)
                 {
-                    int code = errno;
+                    const int code = errno;
+                    lsp_trace("lstat() falied for %s: errno=%d", s, code);
+
                     switch (code)
                     {
                         case EACCES: return STATUS_PERMISSION_DENIED;
@@ -388,10 +391,12 @@ namespace lsp
                 decode_file_type(attr, &hfi);
             #else
                 struct stat sb;
-                const char *s = path->get_native();
+                const char * const s = path->get_native();
                 if (::stat(s, &sb) != 0)
                 {
-                    int code = errno;
+                    const int code = errno;
+                    lsp_trace("stat falied for %s: errno=%d", s, code);
+
                     switch (code)
                     {
                         case EACCES: return STATUS_PERMISSION_DENIED;

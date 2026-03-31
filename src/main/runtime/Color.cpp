@@ -609,9 +609,9 @@ namespace lsp
             return false;
 
         // Convert XYZ to RGB
-        float r     = 0.01f * (xyz.X *  3.2406f + xyz.Y * -1.5372f + xyz.Z * -0.4986f);
-        float g     = 0.01f * (xyz.X * -0.9689f + xyz.Y *  1.8758f + xyz.Z *  0.0415f);
-        float b     = 0.01f * (xyz.X *  0.0557f + xyz.Y * -0.2040f + xyz.Z *  1.0570f);
+        float r     = xyz.X *  0.032406f + xyz.Y * -0.015372f + xyz.Z * -0.004986f;
+        float g     = xyz.X * -0.009689f + xyz.Y *  0.018758f + xyz.Z *  0.000415f;
+        float b     = xyz.X *  0.000557f + xyz.Y * -0.002040f + xyz.Z *  0.010570f;
 
         r           = (r > 0.0031308f) ? 1.055f * (powf(r, ONE_DIV_2p4)) - 0.055f : ONE_DIV_12p92 * r;
         g           = (g > 0.0031308f) ? 1.055f * (powf(g, ONE_DIV_2p4)) - 0.055f : ONE_DIV_12p92 * g;
@@ -776,9 +776,9 @@ namespace lsp
         float g     = (rgb.G > 0.04045f) ? powf((rgb.G + 0.055f) * ONE_DIV_1p055, 2.4f) : rgb.G * ONE_DIV_12p92;
         float b     = (rgb.B > 0.04045f) ? powf((rgb.B + 0.055f) * ONE_DIV_1p055, 2.4f) : rgb.B * ONE_DIV_12p92;
 
-        xyz.X       = 100.0f * (r * 0.4124f + g * 0.3576f + b * 0.1805f);
-        xyz.Y       = 100.0f * (r * 0.2126f + g * 0.7152f + b * 0.0722f);
-        xyz.Z       = 100.0f * (r * 0.0193f + g * 0.1192f + b * 0.9505f);
+        xyz.X       = r * 41.24f + g * 35.76f + b * 18.05f;
+        xyz.Y       = r * 21.26f + g * 71.52f + b *  7.22f;
+        xyz.Z       = r *  1.93f + g * 11.92f + b * 95.05f;
 
         mask       |= M_XYZ;
 
