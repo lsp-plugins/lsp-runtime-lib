@@ -7,6 +7,7 @@
   converting RGB to XYZ and back.
 * Bugfixes in RGBA to PRGBA pixel conversions.
 * Added file descriptor locking mechanism on file open.
+* Better Haiku support.
 
 === 1.0.32 ===
 * Added program lookup using in PATH environment variable when launching process.

@@ -91,6 +91,7 @@ endif
 # Haiku dependencies
 HAIKU_DEPENDENCIES = \
   LIBPTHREAD \
+  LIBBE \
   LIBGNU \
   LIBICONV \
   LIBSNDFILE
