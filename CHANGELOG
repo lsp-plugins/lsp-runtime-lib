@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.34 ===
+
+
 === 1.0.33 ===
 * Additional color computation optimizations: removed extra multiplication when
   converting RGB to XYZ and back.
