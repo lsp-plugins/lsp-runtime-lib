@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.34 ===
-
+* Updated build scripts.
 
 === 1.0.33 ===
 * Additional color computation optimizations: removed extra multiplication when
