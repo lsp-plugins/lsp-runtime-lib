@@ -194,27 +194,26 @@ UTEST_BEGIN("runtime.expr", expression)
     static status_t func_hello(void *context, value_t *result, size_t num_args, const value_t *args)
     {
         context_t *ctx = static_cast<context_t *>(context);
-        const char *__test_group = ctx->pThis->group();
-        const char *__test_name = ctx->pThis->name();
+        test_type_t * const self = ctx->pThis;
 
-        UTEST_ASSERT(context != NULL);
-        UTEST_ASSERT(result != NULL);
-        UTEST_ASSERT(num_args == 4);
-        UTEST_ASSERT(args != NULL);
+        UTEST_ASSERT_PTR(self, context != NULL);
+        UTEST_ASSERT_PTR(self, result != NULL);
+        UTEST_ASSERT_PTR(self, num_args == 4);
+        UTEST_ASSERT_PTR(self, args != NULL);
 
         // Check arguments
-        UTEST_ASSERT(args[0].type == VT_FLOAT);
-        UTEST_ASSERT_MSG(float_equals_relative(args[0].v_float, 3.0f),
+        UTEST_ASSERT_PTR(self, args[0].type == VT_FLOAT);
+        UTEST_ASSERT_MSG_PTR(self, float_equals_relative(args[0].v_float, 3.0f),
             "Argument 0: result (%f) != expected (%f)", double(args[0].v_float), 3.0f);
-        UTEST_ASSERT(args[1].type == VT_FLOAT);
-        UTEST_ASSERT_MSG(float_equals_relative(args[1].v_float, 2.0f),
+        UTEST_ASSERT_PTR(self, args[1].type == VT_FLOAT);
+        UTEST_ASSERT_MSG_PTR(self, float_equals_relative(args[1].v_float, 2.0f),
             "Argument 1: result (%f) != expected (%f)", double(args[1].v_float), 2.0f);
-        UTEST_ASSERT(args[2].type == VT_UNDEF);
-        UTEST_ASSERT(args[3].type == VT_INT);
-        UTEST_ASSERT_MSG(args[3].v_int == -1,
+        UTEST_ASSERT_PTR(self, args[2].type == VT_UNDEF);
+        UTEST_ASSERT_PTR(self, args[3].type == VT_INT);
+        UTEST_ASSERT_MSG_PTR(self, args[3].v_int == -1,
             "Argument 3: result (%d) != expected (%d)", int(args[3].v_int), int(-1));
 
-        UTEST_ASSERT(set_value_string(result, "Hello, ") == STATUS_OK);
+        UTEST_ASSERT_PTR(self, set_value_string(result, "Hello, ") == STATUS_OK);
 
         return STATUS_OK;
     }
@@ -222,26 +221,25 @@ UTEST_BEGIN("runtime.expr", expression)
     static status_t func_world(void *context, value_t *result, size_t num_args, const value_t *args)
     {
         context_t *ctx = static_cast<context_t *>(context);
-        const char *__test_group = ctx->pThis->group();
-        const char *__test_name = ctx->pThis->name();
+        test_type_t * const self = ctx->pThis;
 
-        UTEST_ASSERT(context != NULL);
-        UTEST_ASSERT(result != NULL);
-        UTEST_ASSERT(num_args == 5);
-        UTEST_ASSERT(args != NULL);
+        UTEST_ASSERT_PTR(self, context != NULL);
+        UTEST_ASSERT_PTR(self, result != NULL);
+        UTEST_ASSERT_PTR(self, num_args == 5);
+        UTEST_ASSERT_PTR(self, args != NULL);
 
         // Check arguments
-        UTEST_ASSERT(args[0].type == VT_NULL);
-        UTEST_ASSERT(args[1].type == VT_FLOAT);
-        UTEST_ASSERT_MSG(float_equals_relative(args[1].v_float, 0.7f),
+        UTEST_ASSERT_PTR(self, args[0].type == VT_NULL);
+        UTEST_ASSERT_PTR(self, args[1].type == VT_FLOAT);
+        UTEST_ASSERT_MSG_PTR(self, float_equals_relative(args[1].v_float, 0.7f),
             "Argument 1: result (%f) != expected (%f)", double(args[1].v_float), 0.7f);
-        UTEST_ASSERT(args[2].type == VT_BOOL);
-        UTEST_ASSERT(args[2].v_bool == true);
-        UTEST_ASSERT(args[3].type == VT_UNDEF);
-        UTEST_ASSERT(args[4].type == VT_STRING);
-        UTEST_ASSERT(args[4].v_str->equals_ascii("test"));
+        UTEST_ASSERT_PTR(self, args[2].type == VT_BOOL);
+        UTEST_ASSERT_PTR(self, args[2].v_bool == true);
+        UTEST_ASSERT_PTR(self, args[3].type == VT_UNDEF);
+        UTEST_ASSERT_PTR(self, args[4].type == VT_STRING);
+        UTEST_ASSERT_PTR(self, args[4].v_str->equals_ascii("test"));
 
-        UTEST_ASSERT(set_value_string(result, "World!") == STATUS_OK);
+        UTEST_ASSERT_PTR(self, set_value_string(result, "World!") == STATUS_OK);
 
         return STATUS_OK;
     }
