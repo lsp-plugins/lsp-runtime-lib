@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 13 мар. 2019 г.
@@ -33,7 +33,9 @@ namespace lsp
 {
     namespace io
     {
-        
+        /**
+         * Input file stream. Allows to read file in byte streaming mode.
+         */
         class InFileStream: public IInStream
         {
             protected:
@@ -44,10 +46,18 @@ namespace lsp
                 explicit InFileStream();
                 InFileStream(const InFileStream &)=delete;
                 InFileStream(InFileStream &&)=delete;
-                virtual ~InFileStream();
+                virtual ~InFileStream() override;
 
                 InFileStream & operator = (const InFileStream &) = delete;
                 InFileStream & operator = (InFileStream &&) = delete;
+
+            public: // io::IInStream
+                virtual wssize_t    avail() override;
+                virtual wssize_t    position() override;
+                virtual ssize_t     read(void *dst, size_t count) override;
+                virtual wssize_t    seek(wsize_t position) override;
+                virtual wssize_t    skip(wsize_t amount) override;
+                virtual status_t    close() override;
 
             public:
                 /** Wrap stdio file descriptor. The Reader should be in closed state.
@@ -95,18 +105,6 @@ namespace lsp
                  * @return status of operation
                  */
                 status_t open(const Path *path);
-
-                virtual wssize_t    avail();
-
-                virtual wssize_t    position();
-
-                virtual ssize_t     read(void *dst, size_t count);
-
-                virtual wssize_t    seek(wsize_t position);
-
-                virtual wssize_t    skip(wsize_t amount);
-
-                virtual status_t    close();
         };
     
     } /* namespace io */
