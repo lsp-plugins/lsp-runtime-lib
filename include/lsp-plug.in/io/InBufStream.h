@@ -63,7 +63,7 @@ namespace lsp
                 bool                init_buffer();
                 inline void         clear_buffer();
                 status_t            do_close();
-                inline status_t     do_wrap(IInStream *is, size_t flags);
+                status_t            do_wrap(IInStream *is, size_t flags);
 
             public:
                 explicit InBufStream(size_t buf_size = 0x1000);
