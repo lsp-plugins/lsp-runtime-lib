@@ -66,7 +66,7 @@ namespace lsp
                  * Check that library is opened
                  * @return true if library is opened
                  */
-                inline bool id_opened() const { return hDlSym != NULL; }
+                inline bool is_opened() const { return hDlSym != NULL; }
 
                 /**
                  * Return last error
