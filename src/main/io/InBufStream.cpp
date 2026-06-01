@@ -310,10 +310,18 @@ namespace lsp
             return res + nBufSize - nBufOff;
         }
 
+    // Fixing GCC 16.1 false positive warnings
+    #ifdef COMPILER_GCC
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Warray-bounds"
+    #endif /* COMPILER_GCC */
         wssize_t InBufStream::position()
         {
             return nPosition + nBufOff;
         }
+    #ifdef COMPILER_GCC
+        #pragma GCC diagnostic pop
+    #endif /* COMPILER_GCC */
 
         ssize_t InBufStream::read_byte()
         {
