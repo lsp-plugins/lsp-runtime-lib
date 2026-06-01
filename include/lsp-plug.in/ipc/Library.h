@@ -77,23 +77,26 @@ namespace lsp
                 /**
                  * Load library at specified path
                  * @param path UTF-8 path
+                 * @param new_space load library into new namespace
                  * @return status of operation
                  */
-                status_t open(const char *path);
+                status_t open(const char *path, bool new_space = false);
 
                 /**
                  * Load library at specified path
                  * @param path path
+                 * @param new_space load library into new namespace
                  * @return status of operation
                  */
-                status_t open(const LSPString *path);
+                status_t open(const LSPString *path, bool new_space = false);
 
                 /**
                  * Load library at specified path
                  * @param path UTF-8 path
+                 * @param new_space load library into new namespace
                  * @return status of operation
                  */
-                status_t open(const io::Path *path);
+                status_t open(const io::Path *path, bool new_space = false);
 
                 /**
                  * Import symbol from library
