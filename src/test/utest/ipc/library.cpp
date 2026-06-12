@@ -35,28 +35,39 @@ UTEST_BEGIN("runtime.ipc", library)
 
         static const char *lib1 = "library.dll";
         static const char *lib2 = "library.so";
-        static const char *lib3 = "path/to/library.dll";
-        static const char *lib4 = "path/to/library.so";
+        static const char *lib3 = "library.dylib";
+        static const char *lib4 = "path/to/library.dll";
+        static const char *lib5 = "path/to/library.so";
+        static const char *lib6 = "path/to/library.dylib";
 
-        static const char *lib5 = "library" FILE_LIBRARY_EXT_S;
-        static const char *lib6 = "path/to/library" FILE_LIBRARY_EXT_S;
+        static const char *lib7 = "library" FILE_LIBRARY_EXT_S;
+        static const char *lib8 = "path/to/library" FILE_LIBRARY_EXT_S;
 
-    #ifdef PLATFORM_WINDOWS
+    #if defined(PLATFORM_WINDOWS)
         UTEST_ASSERT(ipc::Library::valid_library_name(lib1));
+        UTEST_ASSERT(!ipc::Library::valid_library_name(lib2));
+        UTEST_ASSERT(!ipc::Library::valid_library_name(lib3));
+        UTEST_ASSERT(ipc::Library::valid_library_name(lib4));
+        UTEST_ASSERT(!ipc::Library::valid_library_name(lib5));
+        UTEST_ASSERT(!ipc::Library::valid_library_name(lib6));
+    #elif defined(PLATFORM_MACOSX)
+        UTEST_ASSERT(!ipc::Library::valid_library_name(lib1));
         UTEST_ASSERT(!ipc::Library::valid_library_name(lib2));
         UTEST_ASSERT(ipc::Library::valid_library_name(lib3));
         UTEST_ASSERT(!ipc::Library::valid_library_name(lib4));
-    #endif
-
-    #ifdef PLATFORM_UNIX_COMPATIBLE
+        UTEST_ASSERT(!ipc::Library::valid_library_name(lib5));
+        UTEST_ASSERT(ipc::Library::valid_library_name(lib6));
+    #elif defined(PLATFORM_UNIX_COMPATIBLE)
         UTEST_ASSERT(!ipc::Library::valid_library_name(lib1));
         UTEST_ASSERT(ipc::Library::valid_library_name(lib2));
         UTEST_ASSERT(!ipc::Library::valid_library_name(lib3));
-        UTEST_ASSERT(ipc::Library::valid_library_name(lib4));
+        UTEST_ASSERT(!ipc::Library::valid_library_name(lib4));
+        UTEST_ASSERT(ipc::Library::valid_library_name(lib5));
+        UTEST_ASSERT(!ipc::Library::valid_library_name(lib6));
     #endif
 
-        UTEST_ASSERT(ipc::Library::valid_library_name(lib5));
-        UTEST_ASSERT(ipc::Library::valid_library_name(lib6));
+        UTEST_ASSERT(ipc::Library::valid_library_name(lib7));
+        UTEST_ASSERT(ipc::Library::valid_library_name(lib8));
     }
 
     void test_module_filename()

@@ -154,8 +154,8 @@ namespace lsp
 
             pthread_condattr_t cond_attr;
             pthread_condattr_init(&cond_attr);
-
             pthread_cond_init(&sCondition, &cond_attr);
+            pthread_condattr_destroy(&cond_attr);
         }
 
         Condition::~Condition()

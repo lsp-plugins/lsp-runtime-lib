@@ -104,14 +104,14 @@ namespace lsp
             return true;
         }
 
-        inline status_t InBufStream::do_wrap(IInStream *is, size_t flags)
+        status_t InBufStream::do_wrap(IInStream *is, size_t flags)
         {
             // Obtain the position of the input stream
             wssize_t pos = is->position();
             if (pos < 0)
             {
                 if (pos != -STATUS_NOT_IMPLEMENTED)
-                    return set_error(status_t(-pos));
+                    return pos;
                 else
                     pos = 0;
             }
@@ -125,7 +125,7 @@ namespace lsp
             nWrapFlags  = (nWrapFlags & (~uint32_t(WRAP_FULL))) | (uint32_t(flags) & WRAP_FULL);
             nPosition   = pos;
 
-            return set_error(STATUS_OK);
+            return STATUS_OK;
         }
 
         status_t InBufStream::open(const char *path)
@@ -150,7 +150,7 @@ namespace lsp
                 delete ofs;
             }
 
-            return res;
+            return set_error(res);
         }
 
         status_t InBufStream::open(const LSPString *path)
@@ -175,7 +175,7 @@ namespace lsp
                 delete ofs;
             }
 
-            return res;
+            return set_error(res);
         }
 
         status_t InBufStream::open(const Path *path)
@@ -200,7 +200,7 @@ namespace lsp
                 delete ofs;
             }
 
-            return res;
+            return set_error(res);
         }
 
         status_t InBufStream::wrap(FILE *fd, bool close)
@@ -225,7 +225,7 @@ namespace lsp
                 delete ofs;
             }
 
-            return res;
+            return set_error(res);
         }
 
         status_t InBufStream::wrap_native(fhandle_t fd, bool close)
@@ -250,7 +250,7 @@ namespace lsp
                 delete ofs;
             }
 
-            return res;
+            return set_error(res);
         }
 
         status_t InBufStream::wrap(File *fd, size_t flags)
@@ -275,7 +275,7 @@ namespace lsp
                 delete ofs;
             }
 
-            return res;
+            return set_error(res);
         }
 
         status_t InBufStream::wrap(IInStream *is, size_t flags)
@@ -288,7 +288,7 @@ namespace lsp
             if (!init_buffer())
                 return set_error(STATUS_NO_MEM);
 
-            return do_wrap(is, flags);
+            return set_error(do_wrap(is, flags));
         }
 
         void InBufStream::set_buffering(bool enable)
@@ -310,10 +310,18 @@ namespace lsp
             return res + nBufSize - nBufOff;
         }
 
+    // Fixing GCC 16.1 false positive warnings
+    #ifdef COMPILER_GCC
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Warray-bounds"
+    #endif /* COMPILER_GCC */
         wssize_t InBufStream::position()
         {
             return nPosition + nBufOff;
         }
+    #ifdef COMPILER_GCC
+        #pragma GCC diagnostic pop
+    #endif /* COMPILER_GCC */
 
         ssize_t InBufStream::read_byte()
         {

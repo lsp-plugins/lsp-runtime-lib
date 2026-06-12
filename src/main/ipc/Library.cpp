@@ -43,7 +43,7 @@ namespace lsp
             close();
         }
     
-        status_t Library::open(const char *path)
+        status_t Library::open(const char *path, bool new_namespace)
         {
             if (path == NULL)
                 return nLastError = STATUS_BAD_ARGUMENTS;
@@ -53,7 +53,7 @@ namespace lsp
             return open(&tmp);
         }
 
-        status_t Library::open(const LSPString *path)
+        status_t Library::open(const LSPString *path, bool new_namespace)
         {
             if (path == NULL)
                 return nLastError = STATUS_BAD_ARGUMENTS;
@@ -72,7 +72,14 @@ namespace lsp
                 const char *str  = path->get_utf8();
                 if (str == NULL)
                     return STATUS_NO_MEM;
-                void *handle    = ::dlopen(str, RTLD_NOW);
+
+            #ifdef _GNU_SOURCE
+                void * const handle    = (new_namespace) ?
+                    ::dlmopen(LM_ID_NEWLM, str, RTLD_NOW) :
+                    ::dlopen(str, RTLD_NOW);
+            #else
+                void * const handle    = ::dlopen(str, RTLD_NOW);
+            #endif /* _GNU_SOURCE */
                 if (handle == NULL)
                 {
                     lsp_warn("Error loading module %s: %s", path->get_native(), ::dlerror());
@@ -84,7 +91,7 @@ namespace lsp
             return nLastError = STATUS_OK;
         }
 
-        status_t Library::open(const io::Path *path)
+        status_t Library::open(const io::Path *path, bool new_namespace)
         {
             if (path == NULL)
                 return nLastError = STATUS_BAD_ARGUMENTS;

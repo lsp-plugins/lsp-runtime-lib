@@ -44,13 +44,25 @@ These modules provide currently:
   * ipc::Library for loading and accessing shared objects (SO) and dynamic libraries (DLLs).
   * ipc::Process for launching nested processes.
   * ipc::Thread for launching custom threads.
-* Basic multimedia (MM) streaming primitives:
+* Basic multimedia (MM) processing primitives:
   * set of functions for converting audio samples from one form to another.
+  * set of functions for converting pixel formats from one format to another.
   * mm::IInAudioStream, mm::InAudioFileStream for reading audio files.
   * mm::IOutAudioStream, mm::OutAudioFileStream for writing audio files.
+  * mm::Bitmap for loading raster images, supported formats: XPM1, XPM2, XPM3.
 * Different musical protocol support:
   * Support of MIDI message encoding and decoding.
   * Support of OSC message encoding and decoding.
+
+## Supported platforms
+
+The build and correct unit test execution has been confirmed for following platforms:
+* FreeBSD
+* GNU/Linux
+* Haiku
+* MacOS (ARM-based)
+* Windows 32-bit
+* Windows 64-bit
 
 ## Requirements
 
@@ -58,13 +70,6 @@ The following packages need to be installed for building:
 
 * gcc >= 4.9 or clang >= 11.0.1
 * make >= 4.0
-
-## Supported platforms
-
-* FreeBSD
-* GNU/Linux
-* MacOS
-* Windows
 
 ## Building
 
