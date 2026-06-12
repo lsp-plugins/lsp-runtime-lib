@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.35 ===
+
+
 === 1.0.34 ===
 * Fixed typo in is_open method name of ipc::Library class.
 * Introduced ability to load library into a separate namespace using dlmopen
