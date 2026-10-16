@@ -7,6 +7,7 @@
   on ipc::Thread::cancel(); the sleep is no longer split into 100 ms intervals.
 * The ipc/Thread.h header no longer includes platform headers (Windows or
   pthread); the platform-specific state of ipc::Thread is kept in Thread.cpp.
+* Fixed InBitStream 64-bit data read on 32-bit Windows.
 
 === 1.0.36 ===
 * Updated build scripts.

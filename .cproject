@@ -229,6 +229,24 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="cdt.managedbuild.config.gnu.exe.debug.1011521175.833645419.1072009669" name="avx.cpp" rcbsApplicability="disable" resourcePath="modules/lsp-common-lib/src/arch/x86/avx.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1199237640.173718499">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1199237640.173718499" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1199237640">
+							<option id="gnu.cpp.compiler.option.other.other.40008593" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0  -mavx" valueType="string"/>
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.318973018" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.config.gnu.exe.debug.1011521175.833645419.1852543603" name="avx512.cpp" rcbsApplicability="disable" resourcePath="modules/lsp-common-lib/src/arch/x86/avx512.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1199237640.501080200">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1199237640.501080200" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1199237640">
+							<option id="gnu.cpp.compiler.option.other.other.1453626040" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0  -mavx512f -mavx512vl" valueType="string"/>
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1468116075" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.config.gnu.exe.debug.1011521175.833645419.1255391226" name="sse.cpp" rcbsApplicability="disable" resourcePath="modules/lsp-common-lib/src/arch/x86/sse.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1199237640.931460348">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1199237640.931460348" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1199237640">
+							<option id="gnu.cpp.compiler.option.other.other.537846325" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -msse" valueType="string"/>
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1080856901" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
 					<sourceEntries>
 						<entry excluding="modules/lsp-lltl-lib/src/test/main.cpp|modules/lsp-test-fw/src/test/main.cpp|modules/lsp-common-lib/src/test/main.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
