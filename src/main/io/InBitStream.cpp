@@ -414,7 +414,13 @@ namespace lsp
 
                 // Estimate number of bits to read
                 size_t to_read      = lsp_min(nBits, bits - nread);
-                v                   = (to_read < BITSTREAM_BUFSZ) ? (v << to_read) | (nBuffer >> (BITSTREAM_BUFSZ - to_read)) : nBuffer;
+                if (to_read < BITSTREAM_BUFSZ)
+                    v                   = (v << to_read) | (nBuffer >> (BITSTREAM_BUFSZ - to_read));
+                else if (BITSTREAM_BUFSZ <= sizeof(uint64_t) * 8)
+                    v                   = (v << to_read) | uint64_t(nBuffer);
+                else
+                    v                   = uint64_t(nBuffer);
+
                 nBuffer           <<= to_read;
                 nBits              -= to_read;
                 nread              += to_read;

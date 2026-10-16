@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 25 февр. 2019 г.
@@ -27,12 +27,6 @@
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
 
-#if defined(PLATFORM_WINDOWS)
-    #include <processthreadsapi.h>
-#else
-    #include <pthread.h>
-#endif /* PLATFORM_WINDOWS */
-
 #include <lsp-plug.in/ipc/IRunnable.h>
 #include <lsp-plug.in/runtime/system.h>
 
@@ -43,9 +37,11 @@ namespace lsp
         enum thread_state_t
         {
             TS_CREATED,
+            TS_STARTING,
             TS_PENDING,
             TS_RUNNING,
-            TS_FINISHED
+            TS_FINISHED,
+            TS_UNKNOWN,
         };
 
         /**
@@ -59,51 +55,36 @@ namespace lsp
 
         constexpr thread_id_t INVALID_THREAD_ID     = 0;
 
+        namespace detail
+        {
+            struct thread_impl_t;
+        } /* namespace detail */
+
         /**
          * Thread class
          */
         class Thread: public IRunnable
         {
-            protected:
-                typedef struct binding_t
-                {
-                    thread_proc_t   proc;
-                    union
-                    {
-                        IRunnable      *runnable;
-                        void           *arg;
-                    };
-                } binding_t;
-
             private:
                 static __thread Thread     *pThis;
-                mutable int                 enState;
-                volatile bool               bCancelled;
-                volatile status_t           nResult;
-
-#if defined(PLATFORM_WINDOWS)
-                HANDLE                      hThread;        // Windows threads
-#else
-                pthread_t                   hThread;        // POSIX threads
-#endif  /* PLATFORM_WINDOWS */
-
-            protected:
-                binding_t                   sBinding;
+                detail::thread_impl_t      *pImpl;          // Platform-specific thread handle and cancellation wake-up
 
             private:
-#if defined(PLATFORM_WINDOWS)
-                static DWORD WINAPI thread_launcher(_In_ LPVOID lpParameter);
-#else
-                static void *thread_launcher(void *arg);
-#endif /* PLATFORM_WINDOWS */
+                friend struct detail::thread_impl_t;
 
-                Thread & operator = (const Thread &src);    // Deny copying
+                void                        init_impl();
+                void                        release_impl();
 
             public:
                 explicit Thread();
                 explicit Thread(thread_proc_t proc);
                 explicit Thread(thread_proc_t proc, void *arg);
                 explicit Thread(IRunnable *runnable);
+
+                Thread(const Thread & src) = delete;
+                Thread(Thread && src) = delete;
+                Thread & operator = (const Thread & src) = delete;
+                Thread & operator = (Thread && src) = delete;
 
                 virtual ~Thread();
 
@@ -148,35 +129,36 @@ namespace lsp
                  * Return the current thread
                  * @return current thread or NULL if current thread is not an instance of ipc::Thread class
                  */
-                static inline Thread *current() { return pThis; }
-
-                /** Check that cancellation signal has been delivered to the current thread
-                 * @return true if cancellation signal is pending
-                 */
-                static inline bool is_cancelled() { return (pThis != NULL) ? pThis->bCancelled : false; };
+                static inline Thread *current()     { return pThis;     }
 
                 /** Check that cancellation signal has been delivered to the thread
                  * @return true if thread has been cancelled
                  */
-                inline bool cancelled() const { return bCancelled; };
+                bool cancelled() const;
+
+                /** Check that cancellation signal has been delivered to the current thread
+                 * @return true if cancellation signal is pending
+                 */
+                static inline bool is_cancelled()   { return (pThis != NULL) ? pThis->cancelled() : false; };
 
                 /**
                  * Check whether thread has finished
                  * @return true if thread has finished
                  */
-                inline bool finished() const { return atomic_load(&enState) == TS_FINISHED; }
+                bool finished() const;
 
                 /**
                  * Get thread state
                  * @return thread state
                  */
-                inline thread_state_t state() const { return thread_state_t(atomic_load(&enState)); };
+                thread_state_t state() const;
 
                 /**
                  * Return the execution result of the thread
                  * @return execution result of the thread
                  */
-                status_t get_result() const { return (atomic_load(&enState) == TS_FINISHED) ? nResult : STATUS_BAD_STATE; };
+                status_t get_result() const;
+                inline status_t result() const      { return get_result();  }
 
                 /**
                  * Return number of execution cores supported by the system
