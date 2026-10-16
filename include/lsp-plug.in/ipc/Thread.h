@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-runtime-lib
  * Created on: 25 февр. 2019 г.
@@ -26,12 +26,6 @@
 #include <lsp-plug.in/common/atomic.h>
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/common/status.h>
-
-#if defined(PLATFORM_WINDOWS)
-    #include <processthreadsapi.h>
-#else
-    #include <pthread.h>
-#endif /* PLATFORM_WINDOWS */
 
 #include <lsp-plug.in/ipc/IRunnable.h>
 #include <lsp-plug.in/runtime/system.h>
@@ -59,6 +53,11 @@ namespace lsp
 
         constexpr thread_id_t INVALID_THREAD_ID     = 0;
 
+        namespace detail
+        {
+            struct thread_impl_t;
+        } /* namespace detail */
+
         /**
          * Thread class
          */
@@ -81,23 +80,18 @@ namespace lsp
                 volatile bool               bCancelled;
                 volatile status_t           nResult;
 
-#if defined(PLATFORM_WINDOWS)
-                HANDLE                      hThread;        // Windows threads
-#else
-                pthread_t                   hThread;        // POSIX threads
-#endif  /* PLATFORM_WINDOWS */
+                detail::thread_impl_t      *pImpl;          // Platform-specific thread handle and cancellation wake-up
 
             protected:
                 binding_t                   sBinding;
 
             private:
-#if defined(PLATFORM_WINDOWS)
-                static DWORD WINAPI thread_launcher(_In_ LPVOID lpParameter);
-#else
-                static void *thread_launcher(void *arg);
-#endif /* PLATFORM_WINDOWS */
+                friend struct detail::thread_impl_t;
 
+                Thread(const Thread &src);                  // Deny copying
                 Thread & operator = (const Thread &src);    // Deny copying
+
+                void                        init_impl();
 
             public:
                 explicit Thread();
@@ -105,7 +99,7 @@ namespace lsp
                 explicit Thread(thread_proc_t proc, void *arg);
                 explicit Thread(IRunnable *runnable);
 
-                virtual ~Thread();
+                virtual ~Thread();                          // The thread must be joined before it is destroyed
 
             public:
                 /**

@@ -3,7 +3,10 @@
 *******************************************************************************
 
 === 1.0.37 ===
-
+* Implemented immediate wake-up of a thread sleeping in ipc::Thread::sleep()
+  on ipc::Thread::cancel(); the sleep is no longer split into 100 ms intervals.
+* The ipc/Thread.h header no longer includes platform headers (Windows or
+  pthread); the platform-specific state of ipc::Thread is kept in Thread.cpp.
 
 === 1.0.36 ===
 * Updated build scripts.
