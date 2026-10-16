@@ -20,6 +20,7 @@
  */
 
 #include <lsp-plug.in/common/types.h>
+#include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/common/atomic.h>
 #include <lsp-plug.in/ipc/Thread.h>
 
@@ -67,6 +68,17 @@ namespace lsp
         {
             struct thread_impl_t
             {
+                atomic_t                    nReferences;    // Number of references
+                atomic_t                    enState;        // Thread state
+                atomic_t                    bCancelled;     // Cancelled flag
+                status_t                    nResult;        // Execution result
+                thread_proc_t               pProc;          // Thread function
+                union
+                {
+                    IRunnable                  *pRunnable;      // Runnable interface
+                    void                       *pArg;           // Thread function argument
+                };
+
             #if defined(PLATFORM_WINDOWS)
                 HANDLE                      hThread;        // Windows threads
                 CRITICAL_SECTION            sLock;          // Lock for cancellation wake-up
@@ -78,10 +90,135 @@ namespace lsp
                 pthread_mutex_t             sLock;          // Lock for cancellation wake-up
                 pthread_cond_t              sCancel;        // Cancellation wake-up for sleep()
                 clockid_t                   nClockId;       // Clock used by sleep()
+                atomic_t                    bJoined;        // Joined flag
 
                 static void                *launcher(void *arg);
             #endif /* PLATFORM_WINDOWS */
+
+                void                        init();
+                void                        release();
             };
+
+            void thread_impl_t::init()
+            {
+                atomic_store(&nReferences, 1);
+                atomic_store(&enState, TS_CREATED);
+                nResult     = STATUS_OK;
+                atomic_store(&bCancelled, 0);
+
+            #if defined(PLATFORM_WINDOWS)
+                hThread       = INVALID_HANDLE_VALUE;
+                InitializeCriticalSection(&sLock);
+                InitializeConditionVariable(&sCancel);
+            #else
+                pthread_mutex_init(&sLock, NULL);
+
+                // Use CLOCK_MONOTONIC for sleep() if possible, CLOCK_REALTIME otherwise. MacOS has no
+                // pthread_condattr_setclock() and waits for the time left until CLOCK_MONOTONIC deadline.
+                pthread_condattr_t attr;
+                pthread_condattr_init(&attr);
+                nClockId     = CLOCK_MONOTONIC;
+            #if !defined(PLATFORM_MACOSX)
+                if (pthread_condattr_setclock(&attr, CLOCK_MONOTONIC) != 0)
+                    nClockId     = CLOCK_REALTIME;
+            #endif /* PLATFORM_MACOSX */
+                pthread_cond_init(&sCancel, &attr);
+                pthread_condattr_destroy(&attr);
+
+                atomic_store(&bJoined, 0);
+        #endif /* PLATFORM_WINDOWS */
+            }
+
+            void thread_impl_t::release()
+            {
+                if (atomic_add(&nReferences, -1) > 1)
+                    return;
+
+                lsp_finally { ::free(this); };
+
+            #if defined(PLATFORM_WINDOWS)
+                if (hThread != INVALID_HANDLE_VALUE)
+                    CloseHandle(hThread);
+                DeleteCriticalSection(&sLock);
+            #else
+                // Check if we need to detach thread (thread has not been joined)
+                if (!atomic_load(&bJoined))
+                {
+                    switch (atomic_load(&enState))
+                    {
+                        case TS_PENDING:
+                        case TS_RUNNING:
+                        case TS_FINISHED:
+                            pthread_detach(hThread);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                pthread_cond_destroy(&sCancel);
+                pthread_mutex_destroy(&sLock);
+            #endif /* PLATFORM_WINDOWS */
+            }
+
+        #if defined(PLATFORM_WINDOWS)
+            DWORD WINAPI detail::thread_impl_t::launcher(_In_ LPVOID lpParameter)
+            {
+                Thread * const self                 = reinterpret_cast<Thread *>(lpParameter);
+                detail::thread_impl_t * const impl  = self->pImpl;
+                if (impl == NULL)
+                    return 0;
+
+                lsp_finally { impl->release(); };
+                Thread::pThis   = self;
+
+                // Wait until we are ready to launch
+                while (!atomic_cas(&impl->enState, TS_PENDING, TS_RUNNING)) {}
+
+                // Execute the thread
+                impl->nResult   = self->run();
+                Thread::pThis   = NULL;
+
+                // Commit the 'FINISHED' status
+                int state;
+                do
+                {
+                    state       = atomic_load(&impl->enState);
+                } while (!atomic_cas(&impl->enState, state, TS_FINISHED));
+
+                return 0;
+            }
+        #else
+            void *detail::thread_impl_t::launcher(void *arg)
+            {
+                Thread * const self                 = reinterpret_cast<Thread *>(arg);
+                detail::thread_impl_t * const impl  = self->pImpl;
+                if (impl == NULL)
+                    return NULL;
+                lsp_finally { impl->release(); };
+
+                Thread::pThis                       = self;
+
+                // Cleanup cancellation state
+                pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+                pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
+
+                // Wait until we are ready to launch
+                while (!atomic_cas(&impl->enState, TS_PENDING, TS_RUNNING)) {}
+
+                // Execute the thread
+                impl->nResult                       = self->run();
+                Thread::pThis                       = NULL;
+
+                // Commit the 'FINISHED' status
+                int state;
+                do
+                {
+                    state       = atomic_load(&impl->enState);
+                } while (!atomic_cas(&impl->enState, state, TS_FINISHED));
+
+                return NULL;
+            }
+        #endif /* PLATFORM_WINDOWS */
         } /* namespace detail */
 
         __thread Thread *Thread::pThis = NULL;
@@ -131,105 +268,86 @@ namespace lsp
 
         Thread::Thread()
         {
-            atomic_store(&enState, TS_CREATED);
-            nResult             = STATUS_OK;
-            bCancelled          = false;
             init_impl();
-            sBinding.proc       = NULL;
-            sBinding.arg        = NULL;
-            sBinding.runnable   = NULL;
+
+            pImpl->pProc        = NULL;
+            pImpl->pArg         = NULL;
         }
         
         Thread::Thread(thread_proc_t proc)
         {
-            atomic_store(&enState, TS_CREATED);
-            nResult             = STATUS_OK;
-            bCancelled          = false;
             init_impl();
-            sBinding.proc       = proc;
-            sBinding.arg        = NULL;
-            sBinding.runnable   = NULL;
+
+            pImpl->pProc        = proc;
+            pImpl->pArg         = NULL;
         }
 
         Thread::Thread(thread_proc_t proc, void *arg)
         {
-            atomic_store(&enState, TS_CREATED);
-            nResult             = STATUS_OK;
-            bCancelled          = false;
             init_impl();
-            sBinding.proc       = proc;
-            sBinding.runnable   = NULL;
-            sBinding.arg        = arg;
+
+            pImpl->pProc        = proc;
+            pImpl->pArg         = arg;
         }
 
         Thread::Thread(IRunnable *runnable)
         {
-            atomic_store(&enState, TS_CREATED);
-            nResult             = STATUS_OK;
-            bCancelled          = false;
             init_impl();
-            sBinding.proc       = NULL;
-            sBinding.arg        = NULL;
-            sBinding.runnable   = runnable;
+
+            pImpl->pProc        = NULL;
+            pImpl->pRunnable    = runnable;
         }
 
         Thread::~Thread()
         {
-            if (pImpl == NULL)
-                return;
-
-    #if defined(PLATFORM_WINDOWS)
-            if (pImpl->hThread != INVALID_HANDLE_VALUE)
-                CloseHandle(pImpl->hThread);
-            DeleteCriticalSection(&pImpl->sLock);
-    #else
-            pthread_cond_destroy(&pImpl->sCancel);
-            pthread_mutex_destroy(&pImpl->sLock);
-    #endif /* PLATFORM_WINDOWS */
-
-            delete pImpl;
-            pImpl               = NULL;
+            release_impl();
         }
 
         void Thread::init_impl()
         {
-            pImpl               = new detail::thread_impl_t;
-            if (pImpl == NULL)
+            // Allocate implementation pointer
+            detail::thread_impl_t *impl    = malloc_count<detail::thread_impl_t>(1);
+            if (impl == NULL)
                 return;
+            lsp_finally {
+                if (impl != NULL)
+                    ::free(impl);
+            };
 
-    #if defined(PLATFORM_WINDOWS)
-            pImpl->hThread      = INVALID_HANDLE_VALUE;
-            InitializeCriticalSection(&pImpl->sLock);
-            InitializeConditionVariable(&pImpl->sCancel);
-    #else
-            pthread_mutex_init(&pImpl->sLock, NULL);
+            // Initialize thread implementation
+            impl->init();
 
-            // Use CLOCK_MONOTONIC for sleep() if possible, CLOCK_REALTIME otherwise. MacOS has no
-            // pthread_condattr_setclock() and waits for the time left until CLOCK_MONOTONIC deadline.
-            pthread_condattr_t attr;
-            pthread_condattr_init(&attr);
-            pImpl->nClockId     = CLOCK_MONOTONIC;
-        #if !defined(PLATFORM_MACOSX)
-            if (pthread_condattr_setclock(&attr, CLOCK_MONOTONIC) != 0)
-                pImpl->nClockId     = CLOCK_REALTIME;
-        #endif /* PLATFORM_MACOSX */
-            pthread_cond_init(&pImpl->sCancel, &attr);
-            pthread_condattr_destroy(&attr);
-    #endif /* PLATFORM_WINDOWS */
+            // Finally, store the implementation pointer
+            pImpl               = release_ptr(impl);
+        }
+
+        void Thread::release_impl()
+        {
+            detail::thread_impl_t * const impl  = release_ptr(pImpl);
+            if (impl != NULL)
+                impl->release();
         }
 
         status_t Thread::run()
         {
-            if (sBinding.proc != NULL)
-                return sBinding.proc(sBinding.arg);
-            else if (sBinding.runnable != NULL)
-                return sBinding.runnable->run();
+            detail::thread_impl_t * const impl  = pImpl;
+            if (impl == NULL)
+                return STATUS_BAD_STATE;
+
+            if (impl->pProc != NULL)
+                return impl->pProc(impl->pArg);
+            else if (impl->pRunnable != NULL)
+                return impl->pRunnable->run();
+
             return STATUS_OK;
         }
 
         status_t Thread::cancel()
         {
-            switch (atomic_load(&enState))
+            if (pImpl == NULL)
+                return STATUS_BAD_STATE;
+
+            switch (atomic_load(&pImpl->enState))
             {
                 case TS_PENDING:
                 case TS_RUNNING:
@@ -242,12 +360,12 @@ namespace lsp
             // so pImpl is not NULL.
     #if defined(PLATFORM_WINDOWS)
             EnterCriticalSection(&pImpl->sLock);
-            bCancelled  = true;
+            atomic_store(&pImpl->bCancelled, 1);
             WakeConditionVariable(&pImpl->sCancel);
             LeaveCriticalSection(&pImpl->sLock);
     #else
             pthread_mutex_lock(&pImpl->sLock);
-            bCancelled  = true;
+            atomic_store(&pImpl->bCancelled, 1);
             pthread_cond_signal(&pImpl->sCancel);
             pthread_mutex_unlock(&pImpl->sLock);
     #endif /* PLATFORM_WINDOWS */
@@ -256,49 +374,44 @@ namespace lsp
         }
     
     #if defined(PLATFORM_WINDOWS)
-        DWORD WINAPI detail::thread_impl_t::launcher(_In_ LPVOID lpParameter)
-        {
-            Thread *_this = reinterpret_cast<Thread *>(lpParameter);
-            Thread::pThis   = _this;
-
-            // Wait until we are ready to launch
-            while (!atomic_cas(&_this->enState, TS_PENDING, TS_RUNNING)) {}
-
-            // Execute the thread
-            status_t res    = _this->run();
-            Thread::pThis   = NULL;
-
-            // Commit the 'FINISHED' status
-            int state;
-            do
-            {
-                state       = atomic_load(&_this->enState);
-            } while (!atomic_cas(&_this->enState, state, TS_FINISHED));
-
-            _this->nResult  = res;
-            return 0;
-        }
-
         status_t Thread::start()
         {
             if (pImpl == NULL)
-                return STATUS_NO_MEM;
+                return STATUS_BAD_STATE;
+
+            // Make atomic barrier for thread state change
+            do
+            {
+                const thread_state_t state  = atomic_load(&pImpl->enState);
+                if (state != TS_CREATED)
+                    return STATUS_BAD_STATE;
+            } while (!atomic_cas(&pImpl->enState, TS_CREATED, TS_STARTING));
+
+            // Create thread object
+            atomic_add(&pImpl->nReferences, 1);
 
             DWORD tid;
             HANDLE thandle = CreateThread(NULL, 0, detail::thread_impl_t::launcher, this, 0, &tid);
             if (thandle == INVALID_HANDLE_VALUE)
+            {
+                // Roll-back state
+                atomic_add(&pImpl->nReferences, -1);
+                atomic_store(&pImpl->enState, TS_CREATED);
                 return STATUS_UNKNOWN_ERR;
+            }
 
             pImpl->hThread  = thandle;
-            atomic_store(&enState, TS_PENDING);
+            atomic_store(&pImpl->enState, TS_PENDING);
+
             return STATUS_OK;
         }
 
         status_t Thread::join()
         {
-            switch (atomic_load(&enState))
+            switch (atomic_load(&pImpl->enState))
             {
                 case TS_CREATED:
+                case TS_STARTING:
                     return STATUS_BAD_STATE;
                 case TS_PENDING:
                 case TS_RUNNING:
@@ -322,49 +435,54 @@ namespace lsp
             {
                 while (millis > 0)
                 {
-                    DWORD interval  = (millis > 500) ? 500 : millis;
+                    DWORD interval  = lsp_min(millis, 500);
                     Sleep(interval);
                     millis         -= interval;
                 }
+                return STATUS_OK;
             }
-            else
+
+            // Wait until the timeout expires or the thread is cancelled
+            Thread * const self                 = pThis;
+            detail::thread_impl_t * const impl  = self->pImpl;
+
+            if (impl == NULL)
+                return STATUS_BAD_STATE;
+            if (atomic_load(&impl->bCancelled))
+                return STATUS_CANCELLED;
+
+            status_t res            = STATUS_OK;
+            wsize_t left            = millis;
+            LARGE_INTEGER freq, start, now;
+            QueryPerformanceFrequency(&freq);
+            QueryPerformanceCounter(&start);
+
+            EnterCriticalSection(&impl->sLock);
+            lsp_finally { LeaveCriticalSection(&impl->sLock); };
+
+            while (left > 0)
             {
-                if (pThis->bCancelled)
-                    return STATUS_CANCELLED;
-
-                // Wait until the timeout expires or the thread is cancelled
-                Thread *self        = pThis;
-                detail::thread_impl_t *impl = self->pImpl;
-                status_t res        = STATUS_OK;
-                wsize_t left        = millis;
-                LARGE_INTEGER freq, start, now;
-                QueryPerformanceFrequency(&freq);
-                QueryPerformanceCounter(&start);
-
-                EnterCriticalSection(&impl->sLock);
-                while ((!self->bCancelled) && (left > 0))
+                if (atomic_load(&impl->bCancelled))
                 {
-                    const DWORD timeout = (left >= INFINITE) ? INFINITE - 1 : DWORD(left);
-                    if ((!SleepConditionVariableCS(&impl->sCancel, &impl->sLock, timeout)) &&
-                        (GetLastError() != ERROR_TIMEOUT))
-                    {
-                        res                 = STATUS_UNKNOWN_ERR;
-                        break;
-                    }
-
-                    // Compute the time left, the timeout may expire early and wake-ups may be spurious
-                    QueryPerformanceCounter(&now);
-                    const wsize_t passed = wsize_t(now.QuadPart - start.QuadPart) * 1000 / wsize_t(freq.QuadPart);
-                    left                = (passed < millis) ? millis - passed : 0;
+                    res             = STATUS_CANCELLED;
+                    break;
                 }
-                if (self->bCancelled)
-                    res                 = STATUS_CANCELLED;
-                LeaveCriticalSection(&impl->sLock);
 
-                return res;
+                const DWORD timeout = (left >= INFINITE) ? INFINITE - 1 : DWORD(left);
+                if ((!SleepConditionVariableCS(&impl->sCancel, &impl->sLock, timeout)) &&
+                    (GetLastError() != ERROR_TIMEOUT))
+                {
+                    res                 = STATUS_UNKNOWN_ERR;
+                    break;
+                }
+
+                // Compute the time left, the timeout may expire early and wake-ups may be spurious
+                QueryPerformanceCounter(&now);
+                const wsize_t passed = wsize_t(now.QuadPart - start.QuadPart) * 1000 / wsize_t(freq.QuadPart);
+                left                = (passed < millis) ? millis - passed : 0;
             }
 
-            return STATUS_OK;
+            return res;
         }
 
         void Thread::yield()
@@ -373,51 +491,48 @@ namespace lsp
         }
 
     #else
-        void *detail::thread_impl_t::launcher(void *arg)
-        {
-            Thread *_this   = reinterpret_cast<Thread *>(arg);
-            Thread::pThis   = _this;
-
-            // Cleanup cancellation state
-            pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-            pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
-
-            // Wait until we are ready to launch
-            while (!atomic_cas(&_this->enState, TS_PENDING, TS_RUNNING)) {}
-
-            // Execute the thread
-            status_t res    = _this->run();
-
-            // Commit the 'FINISHED' status
-            int state;
-            do
-            {
-                state       = atomic_load(&_this->enState);
-            } while (!atomic_cas(&_this->enState, state, TS_FINISHED));
-
-            _this->nResult  = res;
-            return NULL;
-        }
-
         status_t Thread::start()
         {
             if (pImpl == NULL)
-                return STATUS_NO_MEM;
+                return STATUS_BAD_STATE;
 
+            // Make atomic barrier for thread state change
+            do
+            {
+                const atomic_t state  = atomic_load(&pImpl->enState);
+                if (state != TS_CREATED)
+                    return STATUS_BAD_STATE;
+            } while (!atomic_cas(&pImpl->enState, TS_CREATED, TS_STARTING));
+
+            // Create thread object
+            atomic_add(&pImpl->nReferences, 1);
             pthread_t tid;
             if (pthread_create(&tid, NULL, &detail::thread_impl_t::launcher, this) != 0)
+            {
+                // Roll-back state
+                atomic_add(&pImpl->nReferences, -1);
+                atomic_store(&pImpl->enState, TS_CREATED);
                 return STATUS_UNKNOWN_ERR;
+            }
 
             pImpl->hThread  = tid;
-            atomic_store(&enState, TS_PENDING);
+            atomic_store(&pImpl->enState, TS_PENDING);
+
             return STATUS_OK;
         }
 
         status_t Thread::join()
         {
-            switch (atomic_load(&enState))
+            if (pImpl == NULL)
+                return STATUS_BAD_STATE;
+
+            if (!atomic_cas(&pImpl->bJoined, 0, 1))
+                return (atomic_load(&pImpl->enState) == TS_FINISHED) ? STATUS_OK : STATUS_BAD_STATE;
+
+            switch (atomic_load(&pImpl->enState))
             {
                 case TS_CREATED:
+                case TS_STARTING:
                     return STATUS_BAD_STATE;
                 case TS_PENDING:
                 case TS_RUNNING:
@@ -448,60 +563,66 @@ namespace lsp
                         return STATUS_UNKNOWN_ERR;
                     req = rem;
                 }
+
+                return STATUS_OK;
             }
-            else
+
+            // Compute the deadline
+            Thread * const self                 = pThis;
+            detail::thread_impl_t * const impl  = self->pImpl;
+
+            if (impl == NULL)
+                return STATUS_BAD_STATE;
+            if (atomic_load(&impl->bCancelled))
+                return STATUS_CANCELLED;
+
+            status_t res        = STATUS_OK;
+            struct timespec deadline;
+
+            if (::clock_gettime(impl->nClockId, &deadline) != 0)
+                return STATUS_UNKNOWN_ERR;
+            add_millis(&deadline, millis);
+
+            // Wait until the deadline is reached or the thread is cancelled
+            pthread_mutex_lock(&impl->sLock);
+            lsp_finally { pthread_mutex_unlock(&impl->sLock); };
+            while (true)
             {
-                if (pThis->bCancelled)
-                    return STATUS_CANCELLED;
-
-                // Compute the deadline
-                Thread *self        = pThis;
-                detail::thread_impl_t *impl = self->pImpl;
-                status_t res        = STATUS_OK;
-                struct timespec deadline;
-
-                if (::clock_gettime(impl->nClockId, &deadline) != 0)
-                    return STATUS_UNKNOWN_ERR;
-                add_millis(&deadline, millis);
-
-                // Wait until the deadline is reached or the thread is cancelled
-                pthread_mutex_lock(&impl->sLock);
-                while (!self->bCancelled)
+                if (atomic_load(&impl->bCancelled))
                 {
-        #if defined(PLATFORM_MACOSX)
-                    struct timespec left;
-                    if (::clock_gettime(CLOCK_MONOTONIC, &left) != 0)
-                    {
-                        res                 = STATUS_UNKNOWN_ERR;
-                        break;
-                    }
-                    if (!time_left(&left, &deadline))
-                        break;
-                    const int code      = pthread_cond_timedwait_relative_np(&impl->sCancel, &impl->sLock, &left);
-                    if ((code != 0) && (code != ETIMEDOUT))
-                    {
-                        res                 = STATUS_UNKNOWN_ERR;
-                        break;
-                    }
-        #else
-                    const int code      = pthread_cond_timedwait(&impl->sCancel, &impl->sLock, &deadline);
-                    if (code == ETIMEDOUT)
-                        break;
-                    else if (code != 0)
-                    {
-                        res                 = STATUS_UNKNOWN_ERR;
-                        break;
-                    }
-        #endif /* PLATFORM_MACOSX */
-                }
-                if (self->bCancelled)
                     res                 = STATUS_CANCELLED;
-                pthread_mutex_unlock(&impl->sLock);
+                    break;
+                }
 
-                return res;
+        #if defined(PLATFORM_MACOSX)
+                struct timespec left;
+                if (::clock_gettime(CLOCK_MONOTONIC, &left) != 0)
+                {
+                    res                 = STATUS_UNKNOWN_ERR;
+                    break;
+                }
+                if (!time_left(&left, &deadline))
+                    break;
+                const int code      = pthread_cond_timedwait_relative_np(&impl->sCancel, &impl->sLock, &left);
+                if ((code != 0) && (code != ETIMEDOUT))
+                {
+                    res                 = STATUS_UNKNOWN_ERR;
+                    break;
+                }
+        #else
+                const int code      = pthread_cond_timedwait(&impl->sCancel, &impl->sLock, &deadline);
+                if (code == ETIMEDOUT)
+                    break;
+                else if (code != 0)
+                {
+                    res                 = STATUS_UNKNOWN_ERR;
+                    break;
+                }
+        #endif /* PLATFORM_MACOSX */
             }
 
-            return STATUS_OK;
+            return res;
+
         }
 
         void Thread::yield()
@@ -511,6 +632,28 @@ namespace lsp
 
     #endif /* PLATFORM_WINDOWS */
 
+        status_t Thread::get_result() const
+        {
+            if (pImpl == NULL)
+                return STATUS_BAD_STATE;
+
+            return (atomic_load(&pImpl->enState) == TS_FINISHED) ? pImpl->nResult : STATUS_BAD_STATE;
+        }
+
+        bool Thread::cancelled() const
+        {
+            return (pImpl != NULL) ? atomic_load(&pImpl->bCancelled) : false;
+        }
+
+        bool Thread::finished() const
+        {
+            return (pImpl != NULL) ? atomic_load(&pImpl->enState) == TS_FINISHED : false;
+        }
+
+        thread_state_t Thread::state() const
+        {
+            return (pImpl != NULL) ? thread_state_t(atomic_load(&pImpl->enState)) : TS_UNKNOWN;
+        }
 
         thread_id_t Thread::current_thread_id()
         {
