@@ -382,7 +382,7 @@ namespace lsp
             // Make atomic barrier for thread state change
             do
             {
-                const thread_state_t state  = atomic_load(&pImpl->enState);
+                const atomic_t state    = atomic_load(&pImpl->enState);
                 if (state != TS_CREATED)
                     return STATUS_BAD_STATE;
             } while (!atomic_cas(&pImpl->enState, TS_CREATED, TS_STARTING));
@@ -435,7 +435,7 @@ namespace lsp
             {
                 while (millis > 0)
                 {
-                    DWORD interval  = lsp_min(millis, 500);
+                    DWORD interval  = lsp_min(millis, DWORD(500));
                     Sleep(interval);
                     millis         -= interval;
                 }
