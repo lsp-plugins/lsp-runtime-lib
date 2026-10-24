@@ -8,6 +8,7 @@
 * The ipc/Thread.h header no longer includes platform headers (Windows or
   pthread); the platform-specific state of ipc::Thread is kept in Thread.cpp.
 * Fixed InBitStream 64-bit data read on 32-bit Windows.
+* Fixed crash in system::get_localtime function implementation for Windows.
 * Updated build scripts.
 
 === 1.0.36 ===
