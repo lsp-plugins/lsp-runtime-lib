@@ -9,6 +9,8 @@
   pthread); the platform-specific state of ipc::Thread is kept in Thread.cpp.
 * Fixed InBitStream 64-bit data read on 32-bit Windows.
 * Fixed crash in system::get_localtime function implementation for Windows.
+* Fixed ipc::Thread::join() not releasing the resources of a thread that has
+  already finished on POSIX systems (the stack of the thread remained mapped).
 * Updated build scripts.
 
 === 1.0.36 ===
