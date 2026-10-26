@@ -4,9 +4,14 @@
 
 === 1.0.37 ===
 * Implemented immediate wake-up of a thread sleeping in ipc::Thread::sleep()
-  on ipc::Thread::cancel(); the sleep is no longer split into 100 ms intervals.
+  on ipc::Thread::cancel(); the sleep is no longer split into 100 ms intervals -
+  contributed by Chris Simpson.
 * The ipc/Thread.h header no longer includes platform headers (Windows or
-  pthread); the platform-specific state of ipc::Thread is kept in Thread.cpp.
+  pthread); the platform-specific state of ipc::Thread is kept in Thread.cpp -
+  contributed by Chris Simpson.
+* Fixed ipc::Thread::join() not releasing the resources of a thread that has
+  already finished on POSIX systems (the stack of the thread remained mapped) -
+  contributed by Chris Simpson.
 * Fixed InBitStream 64-bit data read on 32-bit Windows.
 * Fixed crash in system::get_localtime function implementation for Windows.
 * Updated build scripts.

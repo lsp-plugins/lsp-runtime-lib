@@ -536,11 +536,11 @@ namespace lsp
                     return STATUS_BAD_STATE;
                 case TS_PENDING:
                 case TS_RUNNING:
+                case TS_FINISHED:
+                    // A finished thread must still be joined to release its resources
                     if (pthread_join(pImpl->hThread, NULL) != 0)
                         return STATUS_UNKNOWN_ERR;
                     break;
-                case TS_FINISHED:
-                    return STATUS_OK;
                 default:
                     return STATUS_BAD_STATE;
             }
