@@ -22,9 +22,10 @@
 #include <lsp-plug.in/test-fw/utest.h>
 #include <lsp-plug.in/ipc/Thread.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <lsp-plug.in/common/alloc.h>
+#include <lsp-plug.in/stdlib/stdio.h>
+#include <lsp-plug.in/stdlib/stdlib.h>
+#include <lsp-plug.in/stdlib/string.h>
 
 #if defined(PLATFORM_LINUX)
     #include <pthread.h>
@@ -40,7 +41,7 @@ namespace
         ssize_t result = -1;
     #if defined(PLATFORM_LINUX)
         char line[256];
-        FILE *fd = fopen("/proc/self/status", "r");
+        FILE * const fd = fopen("/proc/self/status", "r");
         if (fd == NULL)
             return result;
         while (fgets(line, sizeof(line), fd) != NULL)
@@ -109,8 +110,9 @@ UTEST_BEGIN("runtime.ipc", thread_join)
     ssize_t join_after_finish(size_t count, size_t batch, bool measure)
     {
         ssize_t stack_kb = -1;
-        ShortThread **vt = static_cast<ShortThread **>(malloc(sizeof(ShortThread *) * batch));
+        ShortThread ** const vt = malloc_count<ShortThread *>(batch);
         UTEST_ASSERT(vt != NULL);
+        lsp_finally { free(vt); };
 
         for (size_t i=0; i<count; i += batch)
         {
@@ -133,7 +135,6 @@ UTEST_BEGIN("runtime.ipc", thread_join)
             }
         }
 
-        free(vt);
         return stack_kb;
     }
 
