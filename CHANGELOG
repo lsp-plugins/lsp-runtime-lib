@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.38 ===
+
+
 === 1.0.37 ===
 * Implemented immediate wake-up of a thread sleeping in ipc::Thread::sleep()
   on ipc::Thread::cancel(); the sleep is no longer split into 100 ms intervals -
