@@ -385,7 +385,7 @@ namespace lsp
             local->hour     = t.wHour;
             local->min      = t.wMinute;
             local->sec      = t.wSecond;
-            local->nanos    = time->nanos;
+            local->nanos    = t.wMilliseconds * 1000000;
         }
 
         status_t sleep_msec(size_t delay)
