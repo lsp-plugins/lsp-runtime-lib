@@ -15,6 +15,7 @@
 * Fixed InBitStream 64-bit data read on 32-bit Windows.
 * Fixed crash in system::get_localtime function implementation for Windows.
 * Updated build scripts.
+* Updated module versions in dependencies.
 
 === 1.0.36 ===
 * Updated build scripts.
